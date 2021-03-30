@@ -7,12 +7,6 @@ app.listen(process.env.PORT || 3000, () => {
     console.log("Server running on port " + (process.env.PORT || 3000));
 });
 
-const ethers = require("ethers");
-const BigNumber = require("ethers/utils/bignumber");
-const infura = new ethers.providers.InfuraProvider(
-    "homestead",
-    process.env.ARCHIVE_NODE
-);
 const thalesData = require("thales-data");
 const redis = require("redis");
 let redisClient = null;
