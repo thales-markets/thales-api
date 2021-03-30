@@ -40,7 +40,7 @@ if (process.env.REDIS_URL) {
         mainnetOptionsMapRaw = obj;
         console.log("mainnetOptionsMapRaw:" + mainnetOptionsMapRaw);
         if (mainnetOptionsMapRaw) {
-            mainnetOptionsMap = new Map(JSON.parse(mainnetOptionsMap));
+            mainnetOptionsMap = new Map(JSON.parse(mainnetOptionsMapRaw));
             console.log("mainnetOptionsMap:" + mainnetOptionsMap);
         }
     });
@@ -49,7 +49,7 @@ if (process.env.REDIS_URL) {
         ropstenOptionsMapRaw = obj;
         console.log("ropstenOptionsMapRaw:" + ropstenOptionsMapRaw);
         if (ropstenOptionsMapRaw) {
-            ropstenOptionsMap = new Map(JSON.parse(ropstenOptionsMap));
+            ropstenOptionsMap = new Map(JSON.parse(ropstenOptionsMapRaw));
             console.log("ropstenOptionsMap:" + ropstenOptionsMap);
         }
     });
