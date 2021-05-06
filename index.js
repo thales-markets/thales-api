@@ -6,8 +6,8 @@ var app = express();
 var cors = require('cors');
 app.use(cors());
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log("Server running on port " + (process.env.PORT || 3000));
+app.listen(process.env.PORT || 3002, () => {
+    console.log("Server running on port " + (process.env.PORT || 3002));
 });
 
 const thalesData = require("thales-data");
@@ -31,6 +31,10 @@ app.get("/options/:networkParam/:addressParam", (req, res) => {
             res.send(ropstenOptionsMap.get(add) + "");
         } else res.send("0");
     }
+});
+
+app.get("/", (req, res) => {
+    res.sendStatus(200);
 });
 
 if (process.env.REDIS_URL) {
