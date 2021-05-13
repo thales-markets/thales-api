@@ -1,10 +1,10 @@
 require("dotenv").config();
-
-var express = require("express");
-var app = express();
+const express = require("express");
+const app = express();
 
 var cors = require('cors');
 app.use(cors());
+app.use(express.json());
 
 app.listen(process.env.PORT || 3002, () => {
     console.log("Server running on port " + (process.env.PORT || 3002));
@@ -16,6 +16,8 @@ let redisClient = null;
 
 let mainnetOptionsMap = new Map();
 let ropstenOptionsMap = new Map();
+let mainnetWatchlistMap = new Map();
+let ropstenWatchlistMap = new Map();
 
 const fetch = require("node-fetch");
 
@@ -33,12 +35,75 @@ app.get("/options/:networkParam/:addressParam", (req, res) => {
     }
 });
 
+app.get("/watchlist/:networkParam/:walletAddressParam", (req, res) => {
+    let walletAddress = req.params.walletAddressParam;
+    let network = req.params.networkParam;
+    if(network == 1) {
+        res.send({'data': mainnetWatchlistMap.get(walletAddress)});
+    } else {
+        res.send({'data': ropstenWatchlistMap.get(walletAddress)});
+    }
+});
+
+app.post('/watchlist', (req, res) => {
+    const network = req.body.network;
+    const walletAddress = req.body.walletAddress;
+    const marketAddress = req.body.marketAddress;
+
+    if(network == 1) {
+        const walletMarkets = mainnetWatchlistMap.get(walletAddress);
+        console.log("mainnet walletMarkets", walletMarkets);
+        if(walletMarkets) {
+            if (!walletMarkets.includes(marketAddress)) {          
+                walletMarkets.push(marketAddress);
+            } else {
+                walletMarkets.splice(walletMarkets.indexOf(marketAddress), 1);
+            }
+        } else {
+            walletMarkets = [];
+            walletMarkets.push(marketAddress);
+        }
+      
+        mainnetWatchlistMap.set(walletAddress, walletMarkets);
+        redisClient.set(
+            "mainnetWatchlistMap",
+            JSON.stringify([...mainnetWatchlistMap]),
+            function () {
+            }
+        )
+        res.send({'data': mainnetWatchlistMap.get(walletAddress)});
+    } else {
+        let walletMarkets = ropstenWatchlistMap.get(walletAddress);
+        console.log("ropsten walletMarkets", walletMarkets);
+        if(walletMarkets) {
+            if (!walletMarkets.includes(marketAddress)) {          
+                walletMarkets.push(marketAddress);
+            } else {
+                walletMarkets.splice(walletMarkets.indexOf(marketAddress), 1);
+            }
+        } else {
+            walletMarkets = [];
+            walletMarkets.push(marketAddress);
+        }
+      
+        ropstenWatchlistMap.set(walletAddress, walletMarkets);
+        redisClient.set(
+            "ropstenWatchlistMap",
+            JSON.stringify([...ropstenWatchlistMap]),
+            function () {
+            }
+        )
+        res.send({'data': ropstenWatchlistMap.get(walletAddress)});
+    }
+});
+
 app.get("/", (req, res) => {
     res.sendStatus(200);
 });
 
 if (process.env.REDIS_URL) {
     redisClient = redis.createClient(process.env.REDIS_URL);
+    console.log("create client from index");
     redisClient.on("error", function (error) {
         console.error(error);
     });
@@ -58,6 +123,24 @@ if (process.env.REDIS_URL) {
         if (ropstenOptionsMapRaw) {
             ropstenOptionsMap = new Map(JSON.parse(ropstenOptionsMapRaw));
             console.log("ropstenOptionsMap:" + ropstenOptionsMap);
+        }
+    });
+
+    redisClient.get("ropstenWatchlistMap", function (err, obj) {
+        ropstenWatchlistMapRaw = obj;
+        console.log("ropstenWatchlistMap:" + ropstenWatchlistMapRaw);
+        if (ropstenWatchlistMapRaw) {
+            ropstenWatchlistMap = new Map(JSON.parse(ropstenWatchlistMapRaw));
+            console.log("ropstenWatchlistMap:" + ropstenWatchlistMap);
+        }
+    });
+
+    redisClient.get("mainnetWatchlistMap", function (err, obj) {
+        mainnetWatchlistMapRaw = obj;
+        console.log("mainnetWatchlistMapRaw:" + mainnetWatchlistMapRaw);
+        if (mainnetWatchlistMapRaw) {
+            mainnetWatchlistMap = new Map(JSON.parse(mainnetWatchlistMapRaw));
+            console.log("ropstenWatchlistMap:" + mainnetWatchlistMap);
         }
     });
 }
