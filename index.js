@@ -46,12 +46,12 @@ app.get("/watchlist/:networkParam/:walletAddressParam", (req, res) => {
 });
 
 app.post('/watchlist', (req, res) => {
-    const network = req.body.network;
+    const network = req.body.networkId;
     const walletAddress = req.body.walletAddress;
     const marketAddress = req.body.marketAddress;
 
     if(network == 1) {
-        const walletMarkets = mainnetWatchlistMap.get(walletAddress);
+        let walletMarkets = mainnetWatchlistMap.get(walletAddress);
         console.log("mainnet walletMarkets", walletMarkets);
         if(walletMarkets) {
             if (!walletMarkets.includes(marketAddress)) {          
