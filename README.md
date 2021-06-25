@@ -1,5 +1,5 @@
 # thales-api
 REST api endpoints to help with some dAPP features  
 Available endpoints:  
-* Open orders on a market  TODO: add example
-* Watchlist: TODO: add example
+* Get the count of open orders on a market  TODO: add example
+* Read and write into the watchlist per user: TODO: add examples
