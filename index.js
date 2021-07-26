@@ -250,11 +250,11 @@ async function processRopstenMarkets() {
           );
         }
       } catch (e) {
-        mainnetOptionsMap.set(o.address, 0);
+        ropstenOptionsMap.set(o.address, 0);
         if (process.env.REDIS_URL) {
           redisClient.set(
-            "mainnetOptionsMap",
-            JSON.stringify([...mainnetOptionsMap]),
+            "ropstenOptionsMap",
+            JSON.stringify([...ropstenOptionsMap]),
             function () {}
           );
         }
