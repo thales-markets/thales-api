@@ -1,3 +1,6 @@
+const SYNTH_USD_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
+const SYNTH_USD_ROPSTEN = "0x21718c0fbd10900565fa57c76e1862cd3f6a4d8e";
+
 require("dotenv").config();
 const express = require("express");
 const app = express();
@@ -18,6 +21,8 @@ let mainnetOptionsMap = new Map();
 let ropstenOptionsMap = new Map();
 let mainnetWatchlistMap = new Map();
 let ropstenWatchlistMap = new Map();
+let leaderboardMainnetMap = new Map();
+let leaderboardRopstenMap = new Map();
 
 const fetch = require("node-fetch");
 
@@ -45,6 +50,15 @@ app.get("/watchlist/:networkParam/:walletAddressParam", (req, res) => {
   }
 });
 
+app.get("/leaderboard/:networkParam", (req, res) => {
+  let network = req.params.networkParam;
+  if (network == 1) {
+    res.send({ data: Array.from(leaderboardMainnetMap) });
+  } else {
+    res.send({ data: Array.from(leaderboardRopstenMap) });
+  }
+});
+
 app.post("/watchlist", (req, res) => {
   const network = req.body.networkId;
   const walletAddress = req.body.walletAddress;
@@ -52,7 +66,6 @@ app.post("/watchlist", (req, res) => {
 
   if (network == 1) {
     let walletMarkets = mainnetWatchlistMap.get(walletAddress);
-    console.log("mainnet walletMarkets", walletMarkets);
     if (walletMarkets) {
       if (!walletMarkets.includes(marketAddress)) {
         walletMarkets.push(marketAddress);
@@ -73,7 +86,6 @@ app.post("/watchlist", (req, res) => {
     res.send({ data: mainnetWatchlistMap.get(walletAddress) });
   } else {
     let walletMarkets = ropstenWatchlistMap.get(walletAddress);
-    console.log("ropsten walletMarkets", walletMarkets);
     if (walletMarkets) {
       if (!walletMarkets.includes(marketAddress)) {
         walletMarkets.push(marketAddress);
@@ -141,6 +153,22 @@ if (process.env.REDIS_URL) {
       console.log("ropstenWatchlistMap:" + mainnetWatchlistMap);
     }
   });
+
+  redisClient.get("mainnetLeaderboardMap", function (err, obj) {
+    mainnetLeaderboardMapRaw = obj;
+    console.log("mainnetLeaderboardMap:" + mainnetLeaderboardMapRaw);
+    if (mainnetLeaderboardMapRaw) {
+      leaderboardMainnetMap = new Map(JSON.parse(mainnetLeaderboardMapRaw));
+    }
+  });
+
+  redisClient.get("ropstenLeaderboardMap", function (err, obj) {
+    ropstenLeaderboardMapRaw = obj;
+    console.log("ropstenLeaderboardMap:" + ropstenLeaderboardMapRaw);
+    if (ropstenLeaderboardMapRaw) {
+      leaderboardRopstenMap = new Map(JSON.parse(ropstenLeaderboardMapRaw));
+    }
+  });
 }
 
 async function processMainnetMarkets() {
@@ -149,6 +177,15 @@ async function processMainnetMarkets() {
     network: 1,
   });
 
+  leaderboardMainnetMap = await getLeaderboard(mainnetOptionsMarkets, 1);
+
+  if (process.env.REDIS_URL) {
+    redisClient.set(
+      "mainnetLeaderboardMap",
+      JSON.stringify([...leaderboardMainnetMap]),
+      function () {}
+    );
+  }
   for (const o of mainnetOptionsMarkets) {
     if (
       "trading" ==
@@ -201,14 +238,21 @@ async function processMainnetMarkets() {
   }
 }
 
-setTimeout(processMainnetMarkets, 1000 * 3);
-setInterval(processMainnetMarkets, 1000 * 30);
-
 async function processRopstenMarkets() {
   const ropstenOptionsMarkets = await thalesData.binaryOptions.markets({
     max: Infinity,
     network: 3,
   });
+
+  leaderboardRopstenMap = await getLeaderboard(ropstenOptionsMarkets, 3);
+
+  if (process.env.REDIS_URL) {
+    redisClient.set(
+      "ropstenLeaderboardMap",
+      JSON.stringify([...leaderboardRopstenMap]),
+      function () {}
+    );
+  }
 
   for (const o of ropstenOptionsMarkets) {
     if (
@@ -239,7 +283,6 @@ async function processRopstenMarkets() {
         const totalShort = responseJ.bids.total + responseJ.asks.total;
 
         ordersCount = totalLong + totalShort;
-        console.log("found " + ordersCount + " for market " + o.address);
 
         ropstenOptionsMap.set(o.address, ordersCount);
         if (process.env.REDIS_URL) {
@@ -262,6 +305,9 @@ async function processRopstenMarkets() {
     }
   }
 }
+
+setTimeout(processMainnetMarkets, 1000 * 3);
+setInterval(processMainnetMarkets, 1000 * 30);
 
 setTimeout(processRopstenMarkets, 1000 * 3);
 setInterval(processRopstenMarkets, 1000 * 30);
@@ -294,4 +340,62 @@ function getPhaseAndEndDate(biddingEndDate, maturityDate, expiryDate) {
     phase: "expiry",
     timeRemaining: expiryDate,
   };
+}
+
+async function getLeaderboard(markets, network) {
+  const leaderboard = new Map();
+  await Promise.all(
+    markets.map(async (market) => {
+      const trades0 = await thalesData.binaryOptions.trades({
+        network: network,
+        makerToken: market.longAddress,
+        takerToken: getStableToken(network),
+      });
+      const trades2 = await thalesData.binaryOptions.trades({
+        network: network,
+        makerToken: getStableToken(network),
+        takerToken: market.longAddress,
+      });
+
+      const trades1 = await thalesData.binaryOptions.trades({
+        network: network,
+        makerToken: market.shortAddress,
+        takerToken: getStableToken(network),
+      });
+
+      const trades3 = await thalesData.binaryOptions.trades({
+        network: network,
+        makerToken: getStableToken(network),
+        takerToken: market.shortAddress,
+      });
+
+      const allTradesForMarket = [
+        ...trades0,
+        ...trades1,
+        ...trades2,
+        ...trades3,
+      ];
+      allTradesForMarket.map((trade) => {
+        leaderboard.set(
+          trade.maker,
+          (leaderboard.get(trade.maker) ? leaderboard.get(trade.maker) : 0) +
+            (trade.makerToken === getStableToken(network)
+              ? trade.makerAmount
+              : trade.takerAmount)
+        );
+        leaderboard.set(
+          trade.taker,
+          (leaderboard.get(trade.taker) ? leaderboard.get(trade.taker) : 0) +
+            (trade.makerToken === getStableToken(network)
+              ? trade.makerAmount
+              : trade.takerAmount)
+        );
+      });
+    })
+  );
+  return leaderboard;
+}
+
+function getStableToken(network) {
+  return network === 1 ? SYNTH_USD_MAINNET : SYNTH_USD_ROPSTEN;
 }
