@@ -14,13 +14,29 @@ The API is available on [api.thales.market](https://api.thales.market).
 -   Redis
 -   [thales-data](https://github.com/thales-markets/thales-data)
 
+## Development
+
+### Install dependencies
+
+```bash
+npm i
+```
+
+### Run
+
+```bash
+npm run dev
+```
+
+Runs the API in the development mode on [http://localhost:3002](http://localhost:3002).
+
 ## API endpoints
 
 The following endpoints are available:
 
 -   [GET /options/[networkId]/[marketId]](#get-optionsnetworkidmarketid)
--   [GET /watchlist/[networkId]/[marketId]](#)
--   [POST /watchlist](#)
+-   [GET /watchlist/[networkId]/[wallet]](#get-optionsnetworkidwallet)
+-   [POST /watchlist](#post-watchlist)
 
 ### GET /options/[networkId]/[marketId]
 
@@ -30,14 +46,52 @@ Example: https://api.thales.market/options/1/0x983522030d52cfee5a6cf5a076f55b189
 
 Response body:
 
-```javascript
-15;
+```json
+15
 ```
 
-# thales-api
+### GET /watchlist/[networkId]/[wallet]
 
-REST api endpoints to help with some dAPP features  
-Available endpoints:
+Read the markets watchlist per user's wallet.
 
--   Get the count of open orders on a market TODO: add example
--   Read and write into the watchlist per user: TODO: add examples
+Example: https://api.thales.market/watchlist/1/0x4284Cd22fE319Fd7ECd060480b240FcdCB075D11
+
+Response body:
+
+```json
+{
+    "data": [
+        "0x75bbbfe4b4f2a7e9d3b0e97c74d83c9998c387b5",
+        "0x84c58576ae251819073b04d52c8251b3ac97e6a0",
+        "0x47c4da7f94471f4490f805b061ba88310627bd25"
+    ]
+}
+```
+
+### POST /watchlist
+
+Add the market to the user's watchlist.
+
+Example: https://api.thales.market/watchlist
+
+Request body:
+
+```json
+{
+    "networkId": 1,
+    "walletAddress": "0x4284Cd22fE319Fd7ECd060480b240FcdCB075D11",
+    "marketAddress": "0x47c4da7f94471f4490f805b061ba88310627bd25"
+}
+```
+
+Response body:
+
+```json
+{
+    "data": [
+        "0x75bbbfe4b4f2a7e9d3b0e97c74d83c9998c387b5",
+        "0x84c58576ae251819073b04d52c8251b3ac97e6a0",
+        "0x47c4da7f94471f4490f805b061ba88310627bd25"
+    ]
+}
+```
