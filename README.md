@@ -3,7 +3,7 @@
 [![Discord](https://img.shields.io/discord/816415414404907089.svg?color=768AD4&label=discord&logo=https%3A%2F%2Fdiscordapp.com%2Fassets%2F8c9701b98ad4372b58f13fd9f65f966e.svg)](https://discord.com/invite/cFGv5zyVEj)
 [![Twitter Follow](https://img.shields.io/twitter/follow/thalesmarket.svg?label=thalesmarket&style=social)](https://twitter.com/thalesmarket)
 
-The REST API to help with some dApp feautures.
+The REST API to help with some dApp features.
 
 The API is available on [api.thales.market](https://api.thales.market).
 
@@ -35,7 +35,7 @@ Runs the API in the development mode on [http://localhost:3002](http://localhost
 The following endpoints are available:
 
 -   [GET /options/[networkId]/[marketId]](#get-optionsnetworkidmarketid)
--   [GET /watchlist/[networkId]/[wallet]](#get-optionsnetworkidwallet)
+-   [GET /watchlist/[networkId]/[wallet]](#get-watchlistnetworkidwallet)
 -   [POST /watchlist](#post-watchlist)
 
 ### GET /options/[networkId]/[marketId]
