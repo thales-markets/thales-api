@@ -375,21 +375,33 @@ async function getLeaderboard(markets, network) {
         ...trades2,
         ...trades3,
       ];
+
       allTradesForMarket.map((trade) => {
-        leaderboard.set(
-          trade.maker,
-          (leaderboard.get(trade.maker) ? leaderboard.get(trade.maker) : 0) +
-            (trade.makerToken === getStableToken(network)
-              ? trade.makerAmount
-              : trade.takerAmount)
+        if (!leaderboard.get(trade.maker)) {
+          leaderboard.set(trade.maker, { volume: 0, trades: 0 });
+        }
+        let volume = Number(
+          leaderboard.get(trade.maker).volume +
+            getTradeSizeInSUSD(trade, network)
         );
-        leaderboard.set(
-          trade.taker,
-          (leaderboard.get(trade.taker) ? leaderboard.get(trade.taker) : 0) +
-            (trade.makerToken === getStableToken(network)
-              ? trade.makerAmount
-              : trade.takerAmount)
+        let trades = leaderboard.get(trade.maker).trades + 1;
+        leaderboard.set(trade.maker, {
+          volume,
+          trades,
+        });
+
+        if (!leaderboard.get(trade.taker)) {
+          leaderboard.set(trade.taker, { volume: 0, trades: 0 });
+        }
+        volume = Number(
+          leaderboard.get(trade.taker).volume +
+            getTradeSizeInSUSD(trade, network)
         );
+        trades = leaderboard.get(trade.taker).trades + 1;
+        leaderboard.set(trade.taker, {
+          volume,
+          trades,
+        });
       });
     })
   );
@@ -398,4 +410,10 @@ async function getLeaderboard(markets, network) {
 
 function getStableToken(network) {
   return network === 1 ? SYNTH_USD_MAINNET : SYNTH_USD_ROPSTEN;
+}
+
+function getTradeSizeInSUSD(trade, network) {
+  return trade.makerToken === getStableToken(network)
+    ? trade.makerAmount
+    : trade.takerAmount;
 }
