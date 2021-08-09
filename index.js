@@ -15,6 +15,8 @@ app.listen(process.env.PORT || 3002, () => {
 
 const thalesData = require("thales-data");
 const redis = require("redis");
+const sigUtil = require("eth-sig-util");
+
 let redisClient = null;
 
 let mainnetOptionsMap = new Map();
@@ -23,6 +25,7 @@ let mainnetWatchlistMap = new Map();
 let ropstenWatchlistMap = new Map();
 let leaderboardMainnetMap = new Map();
 let leaderboardRopstenMap = new Map();
+let displayNameMap = new Map();
 
 const fetch = require("node-fetch");
 
@@ -56,6 +59,36 @@ app.get("/leaderboard/:networkParam", (req, res) => {
     res.send({ data: Array.from(leaderboardMainnetMap) });
   } else {
     res.send({ data: Array.from(leaderboardRopstenMap) });
+  }
+});
+
+app.get("/display-name/", (req, res) => {
+  res.send({ data: Array.from(displayNameMap) });
+});
+
+app.get("/display-name/:walletAddress", (req, res) => {
+  let walletAddress = req.params.walletAddress;
+  res.send({ name: displayNameMap.get(walletAddress) });
+});
+
+app.post("/display-name", (req, res) => {
+  const walletAddress = req.body.walletAddress;
+  const displayName = req.body.displayName;
+  const signature = req.body.signature;
+
+  const recovered = sigUtil.recoverPersonalSignature({
+    data: displayName,
+    sig: signature,
+  });
+
+  if (recovered.toLowerCase() === walletAddress.toLowerCase()) {
+    displayNameMap.set(walletAddress.toLowerCase(), displayName);
+    redisClient.set(
+      "displayNameMap",
+      JSON.stringify([...displayNameMap]),
+      function () {}
+    );
+    res.send({ name: displayNameMap.get(walletAddress) });
   }
 });
 
@@ -110,7 +143,6 @@ app.post("/watchlist", (req, res) => {
 app.get("/", (req, res) => {
   res.sendStatus(200);
 });
-
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -167,6 +199,14 @@ if (process.env.REDIS_URL) {
     console.log("ropstenLeaderboardMap:" + ropstenLeaderboardMapRaw);
     if (ropstenLeaderboardMapRaw) {
       leaderboardRopstenMap = new Map(JSON.parse(ropstenLeaderboardMapRaw));
+    }
+  });
+
+  redisClient.get("displayNameMap", function (err, obj) {
+    displayNameMapRaw = obj;
+    console.log("displayNameMap:" + displayNameMapRaw);
+    if (displayNameMapRaw) {
+      displayNameMap = new Map(JSON.parse(displayNameMapRaw));
     }
   });
 }
