@@ -219,6 +219,8 @@ async function processMainnetMarkets() {
 
   leaderboardMainnetMap = await getLeaderboard(mainnetOptionsMarkets, 1);
 
+  console.log(leaderboardMainnetMap);
+
   if (process.env.REDIS_URL) {
     redisClient.set(
       "mainnetLeaderboardMap",
@@ -352,38 +354,9 @@ setInterval(processMainnetMarkets, 1000 * 30);
 setTimeout(processRopstenMarkets, 1000 * 3);
 setInterval(processRopstenMarkets, 1000 * 30);
 
-function getPhaseAndEndDate(biddingEndDate, maturityDate, expiryDate) {
-  const now = Date.now();
-
-  if (biddingEndDate > now) {
-    return {
-      phase: "bidding",
-      timeRemaining: biddingEndDate,
-    };
-  }
-
-  if (maturityDate > now) {
-    return {
-      phase: "trading",
-      timeRemaining: maturityDate,
-    };
-  }
-
-  if (expiryDate > now) {
-    return {
-      phase: "maturity",
-      timeRemaining: expiryDate,
-    };
-  }
-
-  return {
-    phase: "expiry",
-    timeRemaining: expiryDate,
-  };
-}
-
 async function getLeaderboard(markets, network) {
   const leaderboard = new Map();
+
   await Promise.all(
     markets.map(async (market) => {
       const trades0 = await thalesData.binaryOptions.trades({
@@ -407,6 +380,30 @@ async function getLeaderboard(markets, network) {
         network: network,
         makerToken: getStableToken(network),
         takerToken: market.shortAddress,
+      });
+
+      const transactions = await thalesData.binaryOptions.optionTransactions({
+        network,
+        market: market.address,
+      });
+
+      const mintsForMarket = transactions.filter(
+        (tx) =>
+          tx.type === "mint" &&
+          !addressesToExclude.includes(tx.account.toLowerCase())
+      );
+
+      mintsForMarket.map((tx) => {
+        if (!leaderboard.get(tx.account)) {
+          leaderboard.set(tx.account, { volume: 0, trades: 0 });
+        }
+
+        const volume = leaderboard.get(tx.account).volume + tx.amount / 2;
+        const trades = leaderboard.get(tx.account).trades;
+        leaderboard.set(tx.account, {
+          volume,
+          trades,
+        });
       });
 
       const allTradesForMarket = [
@@ -457,3 +454,44 @@ function getTradeSizeInSUSD(trade, network) {
     ? trade.makerAmount
     : trade.takerAmount;
 }
+
+function getPhaseAndEndDate(biddingEndDate, maturityDate, expiryDate) {
+  const now = Date.now();
+
+  if (biddingEndDate > now) {
+    return {
+      phase: "bidding",
+      timeRemaining: biddingEndDate,
+    };
+  }
+
+  if (maturityDate > now) {
+    return {
+      phase: "trading",
+      timeRemaining: maturityDate,
+    };
+  }
+
+  if (expiryDate > now) {
+    return {
+      phase: "maturity",
+      timeRemaining: expiryDate,
+    };
+  }
+
+  return {
+    phase: "expiry",
+    timeRemaining: expiryDate,
+  };
+}
+
+const addressesToExclude = [
+  "0x461783a831e6db52d68ba2f3194f6fd1e0087e04",
+  "0xcae07c9bec312a69856148f9821359d7c27dc51c",
+  "0xd558914fa43581584b460bba220f25175bbcf67a",
+  "0xd76224d26b01e9733a0e67209929b2eadff67d36",
+  "0x6eb3f5d9b8f83fef7411709e0dfb42da9d4a85da",
+  "0x6b16d808c4c9055b1d5b121cf100b9126178acb1",
+  "0x2a468adaa4080f2c2fe29ea1755ce48dbdc0185b",
+  "0x924ef47993be036ebe72be1449d8bef627cd30a2",
+];
