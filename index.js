@@ -219,8 +219,6 @@ async function processMainnetMarkets() {
 
   leaderboardMainnetMap = await getLeaderboard(mainnetOptionsMarkets, 1);
 
-  console.log(leaderboardMainnetMap);
-
   if (process.env.REDIS_URL) {
     redisClient.set(
       "mainnetLeaderboardMap",
@@ -229,10 +227,7 @@ async function processMainnetMarkets() {
     );
   }
   for (const o of mainnetOptionsMarkets) {
-    if (
-      "trading" ==
-      getPhaseAndEndDate(o.biddingEndDate, o.maturityDate, o.expiryDate).phase
-    ) {
+    if ("trading" == getPhaseAndEndDate(o.maturityDate, o.expiryDate).phase) {
       try {
         let ordersCount = 0;
         let baseUrl = "https://api.0x.org/sra/v4/";
@@ -297,10 +292,7 @@ async function processRopstenMarkets() {
   }
 
   for (const o of ropstenOptionsMarkets) {
-    if (
-      "trading" ==
-      getPhaseAndEndDate(o.biddingEndDate, o.maturityDate, o.expiryDate).phase
-    ) {
+    if ("trading" == getPhaseAndEndDate(o.maturityDate, o.expiryDate).phase) {
       try {
         let ordersCount = 0;
         let baseUrl = "https://ropsten.api.0x.org/sra/v4/";
@@ -393,16 +385,51 @@ async function getLeaderboard(markets, network) {
           !addressesToExclude.includes(tx.account.toLowerCase())
       );
 
+      const excercisesForMarket = transactions.filter(
+        (tx) =>
+          tx.type === "exercise" &&
+          !addressesToExclude.includes(tx.account.toLowerCase())
+      );
+
       mintsForMarket.map((tx) => {
         if (!leaderboard.get(tx.account)) {
-          leaderboard.set(tx.account, { volume: 0, trades: 0 });
+          leaderboard.set(tx.account, { volume: 0, trades: 0, netProfit: 0 });
+        }
+        const leader = leaderboard.get(tx.account);
+
+        const volume = leader.volume + tx.amount / 2;
+        const trades = leader.trades;
+        let netProfit;
+        if (
+          "maturity" ==
+          getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
+        ) {
+          netProfit = leader.netProfit - tx.amount / 2;
+        } else {
+          netProfit = leader.netProfit;
         }
 
-        const volume = leaderboard.get(tx.account).volume + tx.amount / 2;
-        const trades = leaderboard.get(tx.account).trades;
         leaderboard.set(tx.account, {
           volume,
           trades,
+          netProfit,
+        });
+      });
+
+      excercisesForMarket.map((tx) => {
+        if (!leaderboard.get(tx.account)) {
+          leaderboard.set(tx.account, { volume: 0, trades: 0, netProfit: 0 });
+        }
+        const leader = leaderboard.get(tx.account);
+
+        const volume = leader.volume;
+        const trades = leader.trades;
+        const netProfit = leader.netProfit + tx.amount;
+
+        leaderboard.set(tx.account, {
+          volume,
+          trades,
+          netProfit,
         });
       });
 
@@ -415,29 +442,47 @@ async function getLeaderboard(markets, network) {
 
       allTradesForMarket.map((trade) => {
         if (!leaderboard.get(trade.maker)) {
-          leaderboard.set(trade.maker, { volume: 0, trades: 0 });
+          leaderboard.set(trade.maker, { volume: 0, trades: 0, netProfit: 0 });
         }
+
         let volume = Number(
           leaderboard.get(trade.maker).volume +
             getTradeSizeInSUSD(trade, network)
         );
+
         let trades = leaderboard.get(trade.maker).trades + 1;
+
+        let netProfit = calculateNetProfit(
+          trade,
+          network,
+          leaderboard.get(trade.maker).netProfit,
+          trade.makerToken
+        );
+
         leaderboard.set(trade.maker, {
           volume,
           trades,
+          netProfit,
         });
 
         if (!leaderboard.get(trade.taker)) {
-          leaderboard.set(trade.taker, { volume: 0, trades: 0 });
+          leaderboard.set(trade.taker, { volume: 0, trades: 0, netProfit: 0 });
         }
         volume = Number(
           leaderboard.get(trade.taker).volume +
             getTradeSizeInSUSD(trade, network)
         );
         trades = leaderboard.get(trade.taker).trades + 1;
+        netProfit = calculateNetProfit(
+          trade,
+          network,
+          leaderboard.get(trade.taker).netProfit,
+          trade.takerToken
+        );
         leaderboard.set(trade.taker, {
           volume,
           trades,
+          netProfit,
         });
       });
     })
@@ -455,15 +500,14 @@ function getTradeSizeInSUSD(trade, network) {
     : trade.takerAmount;
 }
 
-function getPhaseAndEndDate(biddingEndDate, maturityDate, expiryDate) {
-  const now = Date.now();
+function calculateNetProfit(trade, network, currentProfit, token) {
+  return token === getStableToken(network)
+    ? currentProfit - getTradeSizeInSUSD(trade, network)
+    : currentProfit + getTradeSizeInSUSD(trade, network);
+}
 
-  if (biddingEndDate > now) {
-    return {
-      phase: "bidding",
-      timeRemaining: biddingEndDate,
-    };
-  }
+function getPhaseAndEndDate(maturityDate, expiryDate) {
+  const now = Date.now();
 
   if (maturityDate > now) {
     return {
