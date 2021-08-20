@@ -20,6 +20,7 @@
     "express-prom-bundle": "^6.2.0",
     "node-fetch": "^2.6.1",
     "redis": "^3.0.2",
-    "thales-data": "^0.0.15"
+    "thales-data": "^0.0.15",
+    "web3": "^1.5.2"
   }
 }

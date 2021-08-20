@@ -16,6 +16,10 @@ app.listen(process.env.PORT || 3002, () => {
 const thalesData = require("thales-data");
 const redis = require("redis");
 const sigUtil = require("eth-sig-util");
+const Web3 = require("web3");
+const Web3Client = new Web3(
+  new Web3.providers.HttpProvider(process.env.INFURA_URL)
+);
 
 let redisClient = null;
 
@@ -351,6 +355,7 @@ async function getLeaderboard(markets, network) {
 
   await Promise.all(
     markets.map(async (market) => {
+      const allUsersForMarket = new Set();
       const trades0 = await thalesData.binaryOptions.trades({
         network: network,
         makerToken: market.longAddress,
@@ -404,6 +409,7 @@ async function getLeaderboard(markets, network) {
           "maturity" ==
           getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
         ) {
+          allUsersForMarket.add(tx.account);
           netProfit = leader.netProfit - tx.amount / 2;
         } else {
           netProfit = leader.netProfit;
@@ -417,6 +423,7 @@ async function getLeaderboard(markets, network) {
       });
 
       excercisesForMarket.map((tx) => {
+        allUsersForMarket.add(tx.account);
         if (!leaderboard.get(tx.account)) {
           leaderboard.set(tx.account, { volume: 0, trades: 0, netProfit: 0 });
         }
@@ -441,6 +448,13 @@ async function getLeaderboard(markets, network) {
       ];
 
       allTradesForMarket.map((trade) => {
+        if (
+          "maturity" ==
+          getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
+        ) {
+          allUsersForMarket.add(trade.maker);
+          allUsersForMarket.add(trade.taker);
+        }
         if (!leaderboard.get(trade.maker)) {
           leaderboard.set(trade.maker, { volume: 0, trades: 0, netProfit: 0 });
         }
@@ -452,13 +466,16 @@ async function getLeaderboard(markets, network) {
 
         let trades = leaderboard.get(trade.maker).trades + 1;
 
-        let netProfit = calculateNetProfit(
-          trade,
-          network,
-          leaderboard.get(trade.maker).netProfit,
-          trade.makerToken
-        );
-
+        let netProfit =
+          "maturity" ==
+          getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
+            ? calculateNetProfit(
+                trade,
+                network,
+                leaderboard.get(trade.maker).netProfit,
+                trade.makerToken
+              )
+            : leaderboard.get(trade.maker).netProfit;
         leaderboard.set(trade.maker, {
           volume,
           trades,
@@ -473,18 +490,49 @@ async function getLeaderboard(markets, network) {
             getTradeSizeInSUSD(trade, network)
         );
         trades = leaderboard.get(trade.taker).trades + 1;
-        netProfit = calculateNetProfit(
-          trade,
-          network,
-          leaderboard.get(trade.taker).netProfit,
-          trade.takerToken
-        );
+        netProfit =
+          "maturity" ==
+          getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
+            ? calculateNetProfit(
+                trade,
+                network,
+                leaderboard.get(trade.taker).netProfit,
+                trade.takerToken
+              )
+            : leaderboard.get(trade.taker).netProfit;
         leaderboard.set(trade.taker, {
           volume,
           trades,
           netProfit,
         });
       });
+
+      if (
+        "maturity" ==
+          getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase &&
+        network === 1
+      ) {
+        allUsersForMarket.forEach(async (user) => {
+          if (!leaderboard.get(user)) {
+            leaderboard.set(user, { volume: 0, trades: 0, netProfit: 0 });
+          }
+          const result = await getBalance(market.address, user);
+          const longOptions = Web3Client.utils.fromWei(result.long);
+          const shortOptions = Web3Client.utils.fromWei(result.short);
+          const leader = leaderboard.get(user);
+          let profit = Number(leader.netProfit);
+          if (market.result === "long") {
+            profit += Number(longOptions);
+          } else {
+            profit += Number(shortOptions);
+          }
+          leaderboard.set(user, {
+            volume: leader.volume,
+            trades: leader.trades,
+            netProfit: profit,
+          });
+        });
+      }
     })
   );
   return leaderboard;
@@ -527,6 +575,45 @@ function getPhaseAndEndDate(maturityDate, expiryDate) {
     phase: "expiry",
     timeRemaining: expiryDate,
   };
+}
+
+const balanceAbi = [
+  {
+    constant: true,
+    inputs: [
+      {
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+    ],
+    name: "balancesOf",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "long",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "short",
+        type: "uint256",
+      },
+    ],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+];
+
+async function getBalance(marketAddress, walletAddress) {
+  const contract = new Web3Client.eth.Contract(balanceAbi, marketAddress);
+  try {
+    const result = await contract.methods.balancesOf(walletAddress).call();
+    return result;
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 const addressesToExclude = [
