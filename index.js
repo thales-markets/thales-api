@@ -353,63 +353,76 @@ setInterval(processRopstenMarkets, 1000 * 30);
 async function getLeaderboard(markets, network) {
   const leaderboard = new Map();
 
-  await Promise.all(
-    markets.map(async (market) => {
-      const allUsersForMarket = new Set();
-      const trades0 = await thalesData.binaryOptions.trades({
+  // const addressForReport = "0xb8d08d9537fc8e5624c298302137c5b5ce2f301d";
+  // let index = 0;
+  for (let market of markets) {
+    // index++;
+    // if (network === 1) console.log("index: ", index);
+    // let mints = 0;
+    // let excercises = 0;
+    // let leftToExcercise = 0;
+    // let buys = 0;
+    // let sells = 0;
+
+    const allUsersForMarket = new Set();
+    const allTradesForMarket = [];
+    const tradesPromiseArray = await Promise.all([
+      thalesData.binaryOptions.optionTransactions({
+        network,
+        market: market.address,
+      }),
+      thalesData.binaryOptions.trades({
         network: network,
         makerToken: market.longAddress,
         takerToken: getStableToken(network),
-      });
-      const trades2 = await thalesData.binaryOptions.trades({
+      }),
+      thalesData.binaryOptions.trades({
         network: network,
         makerToken: getStableToken(network),
         takerToken: market.longAddress,
-      });
-
-      const trades1 = await thalesData.binaryOptions.trades({
+      }),
+      thalesData.binaryOptions.trades({
         network: network,
         makerToken: market.shortAddress,
         takerToken: getStableToken(network),
-      });
-
-      const trades3 = await thalesData.binaryOptions.trades({
+      }),
+      thalesData.binaryOptions.trades({
         network: network,
         makerToken: getStableToken(network),
         takerToken: market.shortAddress,
-      });
+      }),
+    ]);
 
-      const transactions = await thalesData.binaryOptions.optionTransactions({
-        network,
-        market: market.address,
-      });
+    tradesPromiseArray.slice(1).map((arr) => {
+      allTradesForMarket.push(...arr);
+    });
 
-      const mintsForMarket = transactions.filter(
-        (tx) =>
-          tx.type === "mint" &&
-          !addressesToExclude.includes(tx.account.toLowerCase())
-      );
+    const transactions = tradesPromiseArray[0];
 
-      const excercisesForMarket = transactions.filter(
-        (tx) =>
-          tx.type === "exercise" &&
-          !addressesToExclude.includes(tx.account.toLowerCase())
-      );
+    transactions.map((tx) => {
+      allUsersForMarket.add(tx.account);
+      if (!leaderboard.get(tx.account)) {
+        leaderboard.set(tx.account, { volume: 0, trades: 0, netProfit: 0 });
+      }
+      const leader = leaderboard.get(tx.account);
+      if (tx.type === "mint") {
+        let volume;
 
-      mintsForMarket.map((tx) => {
-        if (!leaderboard.get(tx.account)) {
-          leaderboard.set(tx.account, { volume: 0, trades: 0, netProfit: 0 });
+        if (addressesToExclude.includes(tx.account.toLowerCase())) {
+          volume = leader.volume;
+        } else {
+          volume = leader.volume + tx.amount / 2;
         }
-        const leader = leaderboard.get(tx.account);
-
-        const volume = leader.volume + tx.amount / 2;
         const trades = leader.trades;
         let netProfit;
         if (
           "maturity" ==
           getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
         ) {
-          allUsersForMarket.add(tx.account);
+          // if (network === 1 && tx.account.toLowerCase() === addressForReport) {
+          //   mints += tx.amount / 2;
+          // }
+
           netProfit = leader.netProfit - tx.amount / 2;
         } else {
           netProfit = leader.netProfit;
@@ -420,15 +433,9 @@ async function getLeaderboard(markets, network) {
           trades,
           netProfit,
         });
-      });
+      }
 
-      excercisesForMarket.map((tx) => {
-        allUsersForMarket.add(tx.account);
-        if (!leaderboard.get(tx.account)) {
-          leaderboard.set(tx.account, { volume: 0, trades: 0, netProfit: 0 });
-        }
-        const leader = leaderboard.get(tx.account);
-
+      if (tx.type === "exercise") {
         const volume = leader.volume;
         const trades = leader.trades;
         const netProfit = leader.netProfit + tx.amount;
@@ -438,81 +445,108 @@ async function getLeaderboard(markets, network) {
           trades,
           netProfit,
         });
-      });
+        // if (network === 1 && tx.account.toLowerCase() === addressForReport) {
+        //   excercises += tx.amount;
+        // }
+      }
+    });
 
-      const allTradesForMarket = [
-        ...trades0,
-        ...trades1,
-        ...trades2,
-        ...trades3,
-      ];
-
-      allTradesForMarket.map((trade) => {
-        if (
-          "maturity" ==
-          getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
-        ) {
-          allUsersForMarket.add(trade.maker);
-          allUsersForMarket.add(trade.taker);
-        }
-        if (!leaderboard.get(trade.maker)) {
-          leaderboard.set(trade.maker, { volume: 0, trades: 0, netProfit: 0 });
-        }
-
-        let volume = Number(
-          leaderboard.get(trade.maker).volume +
-            getTradeSizeInSUSD(trade, network)
-        );
-
-        let trades = leaderboard.get(trade.maker).trades + 1;
-
-        let netProfit =
-          "maturity" ==
-          getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
-            ? calculateNetProfit(
-                trade,
-                network,
-                leaderboard.get(trade.maker).netProfit,
-                trade.makerToken
-              )
-            : leaderboard.get(trade.maker).netProfit;
-        leaderboard.set(trade.maker, {
-          volume,
-          trades,
-          netProfit,
-        });
-
-        if (!leaderboard.get(trade.taker)) {
-          leaderboard.set(trade.taker, { volume: 0, trades: 0, netProfit: 0 });
-        }
-        volume = Number(
-          leaderboard.get(trade.taker).volume +
-            getTradeSizeInSUSD(trade, network)
-        );
-        trades = leaderboard.get(trade.taker).trades + 1;
-        netProfit =
-          "maturity" ==
-          getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
-            ? calculateNetProfit(
-                trade,
-                network,
-                leaderboard.get(trade.taker).netProfit,
-                trade.takerToken
-              )
-            : leaderboard.get(trade.taker).netProfit;
-        leaderboard.set(trade.taker, {
-          volume,
-          trades,
-          netProfit,
-        });
-      });
-
+    allTradesForMarket.map((trade) => {
       if (
         "maturity" ==
-          getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase &&
-        network === 1
+        getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
       ) {
-        allUsersForMarket.forEach(async (user) => {
+        allUsersForMarket.add(trade.maker);
+        allUsersForMarket.add(trade.taker);
+      }
+      if (!leaderboard.get(trade.maker)) {
+        leaderboard.set(trade.maker, { volume: 0, trades: 0, netProfit: 0 });
+      }
+
+      if (!leaderboard.get(trade.taker)) {
+        leaderboard.set(trade.taker, {
+          volume: 0,
+          trades: 0,
+          netProfit: 0,
+        });
+      }
+
+      let volume = Number(
+        leaderboard.get(trade.maker).volume + getTradeSizeInSUSD(trade, network)
+      );
+
+      let trades = leaderboard.get(trade.maker).trades + 1;
+
+      let netProfit =
+        "maturity" ==
+        getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
+          ? calculateNetProfit(
+              trade,
+              network,
+              leaderboard.get(trade.maker).netProfit,
+              trade.makerToken
+            )
+          : leaderboard.get(trade.maker).netProfit;
+
+      leaderboard.set(trade.maker, {
+        volume,
+        trades,
+        netProfit,
+      });
+
+      // if (
+      //   "maturity" ==
+      //   getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
+      // ) {
+      //   if (network === 1 && addressForReport === trade.maker.toLowerCase()) {
+      //     if (trade.makerToken === getStableToken(1)) {
+      //       buys += getTradeSizeInSUSD(trade, 1);
+      //     } else {
+      //       sells += getTradeSizeInSUSD(trade, 1);
+      //     }
+      //   }
+      // }
+
+      let amount = Number(
+        leaderboard.get(trade.taker).volume + getTradeSizeInSUSD(trade, network)
+      );
+      trades = leaderboard.get(trade.taker).trades + 1;
+      netProfit =
+        "maturity" ==
+        getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
+          ? calculateNetProfit(
+              trade,
+              network,
+              leaderboard.get(trade.taker).netProfit,
+              trade.takerToken
+            )
+          : leaderboard.get(trade.taker).netProfit;
+      leaderboard.set(trade.taker, {
+        volume: amount,
+        trades,
+        netProfit,
+      });
+      // if (
+      //   "maturity" ==
+      //   getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
+      // ) {
+      //   if (network === 1 && addressForReport === trade.taker.toLowerCase()) {
+      //     if (trade.takerToken === getStableToken(1)) {
+      //       buys += getTradeSizeInSUSD(trade, 1);
+      //     } else {
+      //       sells += getTradeSizeInSUSD(trade, 1);
+      //     }
+      //   }
+      // }
+    });
+
+    if (
+      "maturity" ==
+        getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase &&
+      network === 1
+    ) {
+      await Promise.all(
+        [...allUsersForMarket].map(async (user) => {
           if (!leaderboard.get(user)) {
             leaderboard.set(user, { volume: 0, trades: 0, netProfit: 0 });
           }
@@ -523,18 +557,24 @@ async function getLeaderboard(markets, network) {
           let profit = Number(leader.netProfit);
           if (market.result === "long") {
             profit += Number(longOptions);
+            // if (user.toLowerCase() === addressForReport) {
+            //   leftToExcercise += Number(longOptions);
+            // }
           } else {
             profit += Number(shortOptions);
+            // if (user.toLowerCase() === addressForReport) {
+            //   leftToExcercise += Number(shortOptions);
+            // }
           }
           leaderboard.set(user, {
             volume: leader.volume,
             trades: leader.trades,
             netProfit: profit,
           });
-        });
-      }
-    })
-  );
+        })
+      );
+    }
+  }
   return leaderboard;
 }
 
