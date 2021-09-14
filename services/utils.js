@@ -12,16 +12,26 @@ function getTradeSizeInSUSD(trade, network) {
     : trade.takerAmount;
 }
 
-function calculateNetProfit(trade, network, currentProfit, token) {
-  return token === getStableToken(network)
-    ? currentProfit - getTradeSizeInSUSD(trade, network)
-    : currentProfit + getTradeSizeInSUSD(trade, network);
+function calculateNetProfit(trade, market, network, currentProfit, token) {
+  if (isMarketInMaturity(market)) {
+    if (token === getStableToken(network)) {
+      return currentProfit - getTradeSizeInSUSD(trade, network);
+    } else {
+      return currentProfit + getTradeSizeInSUSD(trade, network);
+    }
+  }
+  return currentProfit;
 }
 
-function calculateInvestment(trade, network, currentInvestment, token) {
-  return token === getStableToken(network)
-    ? currentInvestment + getTradeSizeInSUSD(trade, network)
-    : currentInvestment;
+function calculateInvestment(trade, market, network, currentInvestment, token) {
+  if (isMarketInMaturity(market)) {
+    if (token === getStableToken(network)) {
+      return currentInvestment + getTradeSizeInSUSD(trade, network);
+    } else {
+      return currentInvestment;
+    }
+  }
+  return currentInvestment;
 }
 
 function getPhaseAndEndDate(maturityDate, expiryDate) {
@@ -57,6 +67,13 @@ async function getBalance(marketAddress, walletAddress) {
   }
 }
 
+function isMarketInMaturity(market) {
+  return (
+    "maturity" ==
+    getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
+  );
+}
+
 module.exports = {
   getStableToken,
   getTradeSizeInSUSD,
@@ -64,4 +81,5 @@ module.exports = {
   calculateInvestment,
   getPhaseAndEndDate,
   getBalance,
+  isMarketInMaturity,
 };

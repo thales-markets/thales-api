@@ -7,6 +7,7 @@ const {
   calculateNetProfit,
   calculateInvestment,
   getBalance,
+  isMarketInMaturity,
 } = require("../services/utils");
 
 async function processLeaderboard(markets, network) {
@@ -41,10 +42,7 @@ async function processLeaderboard(markets, network) {
 
     // calculating trades
     allTradesForMarket.map((trade) => {
-      if (
-        "maturity" ==
-        getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
-      ) {
+      if (isMarketInMaturity(market)) {
         allUsersForMarket.add(trade.maker);
         allUsersForMarket.add(trade.taker);
       }
@@ -71,11 +69,7 @@ async function processLeaderboard(markets, network) {
     });
 
     // calculating options that were not excercised
-    if (
-      "maturity" ==
-        getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase &&
-      network === 1
-    ) {
+    if (isMarketInMaturity(market) && network === 1) {
       await processUnclaimedOptions(market, allUsersForMarket, leaderboard);
     }
   }
@@ -137,40 +131,65 @@ async function getAllTxForMarket(market, network) {
 function processMintTx(leaderboard, market, tx) {
   try {
     const leader = leaderboard.get(tx.account);
-    const trades = leader.trades;
+    const allTimeStats = leader.leaderboard;
+    const competitionStats = leader.competition;
     const profile = leader.profile;
-    let volume;
-    let netProfit;
-    let investment;
 
-    if (addressesToExclude.includes(tx.account.toLowerCase())) {
-      volume = leader.volume;
-    } else {
-      volume = leader.volume + tx.amount / 2;
+    let trades = allTimeStats.trades;
+    let volume = allTimeStats.volume;
+    let netProfit = allTimeStats.netProfit;
+    let investment = allTimeStats.investment;
+
+    if (!addressesToExclude.includes(tx.account.toLowerCase())) {
+      volume = allTimeStats.volume + tx.amount / 2;
     }
 
-    if (
-      "maturity" ==
-      getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
-    ) {
-      netProfit = leader.netProfit - tx.amount / 2;
-      investment = leader.investment + tx.amount / 2;
-    } else {
-      investment = leader.investment;
-      netProfit = leader.netProfit;
+    if (isMarketInMaturity(market)) {
+      netProfit = netProfit - tx.amount / 2;
+      investment = investment + tx.amount / 2;
     }
-    const gain = ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(
-      1
-    );
 
-    profile.mints.push({ market, tx });
+    let gain =
+      investment > 0
+        ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
+        : 0;
 
-    leaderboard.set(tx.account, {
+    const leaderboardAllTimeData = {
       volume,
       trades,
       netProfit,
       investment,
       gain,
+    };
+
+    trades = competitionStats.trades;
+    volume = competitionStats.volume;
+    netProfit = competitionStats.netProfit;
+    investment = competitionStats.investment;
+
+    if (isTxEligibleForCompetition(tx, market)) {
+      volume = allTimeStats.volume + tx.amount / 2;
+      netProfit = netProfit - tx.amount / 2;
+      investment = investment + tx.amount / 2;
+      gain =
+        investment > 0
+          ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
+          : 0;
+    }
+
+    const competitionData = {
+      volume,
+      trades,
+      netProfit,
+      investment,
+      gain,
+    };
+
+    profile.mints.push({ market, tx });
+
+    leaderboard.set(tx.account, {
+      leaderboard: leaderboardAllTimeData,
+      competition: competitionData,
       profile,
     });
   } catch (e) {
@@ -181,23 +200,53 @@ function processMintTx(leaderboard, market, tx) {
 function processExcerciseTx(leaderboard, market, tx) {
   try {
     const leader = leaderboard.get(tx.account);
-    const volume = leader.volume;
-    const trades = leader.trades;
-    const netProfit = leader.netProfit + tx.amount;
-    const investment = leader.investment;
+    const allTimeStats = leader.leaderboard;
+    const competitionStats = leader.competition;
     const profile = leader.profile;
-    const gain = ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(
-      1
-    );
 
-    profile.excercises.push({ market, tx });
+    let volume = allTimeStats.volume;
+    let trades = allTimeStats.trades;
+    let netProfit = allTimeStats.netProfit + tx.amount;
+    let investment = allTimeStats.investment;
 
-    leaderboard.set(tx.account, {
+    let gain =
+      investment > 0
+        ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
+        : 0;
+
+    const leaderboardAllTimeData = {
       volume,
       trades,
       netProfit,
       investment,
       gain,
+    };
+
+    volume = competitionStats.volume;
+    trades = competitionStats.trades;
+    netProfit = isTxEligibleForCompetition(tx, market)
+      ? competitionStats.netProfit + tx.amount
+      : competitionStats.netProfit;
+    investment = competitionStats.investment;
+
+    gain =
+      investment > 0
+        ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
+        : 0;
+
+    const competitionData = {
+      volume,
+      trades,
+      netProfit,
+      investment,
+      gain,
+    };
+
+    profile.excercises.push({ market, tx });
+
+    leaderboard.set(tx.account, {
+      leaderboard: leaderboardAllTimeData,
+      competition: competitionData,
       profile,
     });
   } catch (e) {
@@ -207,41 +256,87 @@ function processExcerciseTx(leaderboard, market, tx) {
 
 function processTradeTx(leaderboard, market, trade, user, token, network) {
   try {
-    const volume = Number(
-      leaderboard.get(user).volume + getTradeSizeInSUSD(trade, network)
+    const leader = leaderboard.get(user);
+    const allTimeStats = leader.leaderboard;
+    const competitionStats = leader.competition;
+    const profile = leader.profile;
+
+    let volume = Number(
+      allTimeStats.volume + getTradeSizeInSUSD(trade, network)
     );
-    const trades = leaderboard.get(user).trades + 1;
-    const profile = leaderboard.get(user).profile;
-    const netProfit =
-      "maturity" ==
-      getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
-        ? calculateNetProfit(
-            trade,
-            network,
-            leaderboard.get(user).netProfit,
-            token
-          )
-        : leaderboard.get(user).netProfit;
+    let trades = allTimeStats.trades + 1;
 
-    const investment =
-      "maturity" ==
-      getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
-        ? calculateInvestment(
-            trade,
-            network,
-            leaderboard.get(user).investment,
-            token
-          )
-        : leaderboard.get(user).investment;
+    let netProfit = calculateNetProfit(
+      trade,
+      market,
+      network,
+      allTimeStats.netProfit,
+      token
+    );
 
-    profile.trades.push({ market, trade });
+    let investment = calculateInvestment(
+      trade,
+      market,
+      network,
+      allTimeStats.investment,
+      token
+    );
 
-    leaderboard.set(user, {
+    let gain =
+      investment > 0
+        ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
+        : 0;
+
+    const leaderboardAllTimeData = {
       volume,
       trades,
       netProfit,
       investment,
-      gain: ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1),
+      gain,
+    };
+
+    volume = competitionStats.volume;
+    trades = competitionStats.trades;
+    netProfit = competitionStats.netProfit;
+    investment = competitionStats.investment;
+
+    if (isTxEligibleForCompetition(trade, market)) {
+      volume = volume + getTradeSizeInSUSD(trade, network);
+      trades = trades + 1;
+      netProfit = calculateNetProfit(
+        trade,
+        market,
+        network,
+        competitionStats.netProfit,
+        token
+      );
+      investment = calculateInvestment(
+        trade,
+        market,
+        network,
+        competitionStats.investment,
+        token
+      );
+    }
+
+    gain =
+      investment > 0
+        ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
+        : 0;
+
+    const competitionData = {
+      volume,
+      trades,
+      netProfit,
+      investment,
+      gain,
+    };
+
+    profile.trades.push({ market, trade });
+
+    leaderboard.set(user, {
+      leaderboard: leaderboardAllTimeData,
+      competition: competitionData,
       profile,
     });
   } catch (e) {
@@ -254,17 +349,38 @@ async function processUnclaimedOptions(market, allUsersForMarket, leaderboard) {
     await Promise.all(
       [...allUsersForMarket].map(async (user) => {
         initUser(leaderboard, user);
+        const leader = leaderboard.get(user);
+        const allTimeStats = leader.leaderboard;
+        const competitionStats = leader.competition;
+        const profile = leader.profile;
+
         const result = await getBalance(market.address, user);
         const longOptions = Web3Client.utils.fromWei(result.long);
         const shortOptions = Web3Client.utils.fromWei(result.short);
-        const leader = leaderboard.get(user);
-        const profile = leader.profile;
-        let profit = Number(leader.netProfit);
+
+        let volume = allTimeStats.volume;
+        let trades = allTimeStats.trades;
+        let netProfit = allTimeStats.netProfit;
+        let investment = allTimeStats.investment;
+
         if (market.result === "long") {
-          profit += Number(longOptions);
+          netProfit += Number(longOptions);
         } else {
-          profit += Number(shortOptions);
+          netProfit += Number(shortOptions);
         }
+
+        let gain =
+          investment > 0
+            ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
+            : 0;
+
+        const leaderboardAllTimeData = {
+          volume,
+          trades,
+          netProfit,
+          investment,
+          gain,
+        };
 
         if (longOptions > 0 || shortOptions > 0) {
           profile.unclaimed.push({
@@ -275,14 +391,8 @@ async function processUnclaimedOptions(market, allUsersForMarket, leaderboard) {
         }
 
         leaderboard.set(user, {
-          volume: leader.volume,
-          trades: leader.trades,
-          netProfit: profit,
-          investment: leader.investment,
-          gain: (
-            (parseInt(profit) / parseInt(leader.investment)) *
-            100
-          ).toFixed(3),
+          leaderboard: leaderboardAllTimeData,
+          competition: competitionStats,
           profile,
         });
       })
@@ -300,11 +410,20 @@ async function processUnclaimedOptions(market, allUsersForMarket, leaderboard) {
 function initUser(leaderboard, user) {
   if (!leaderboard.get(user)) {
     leaderboard.set(user, {
-      volume: 0,
-      trades: 0,
-      netProfit: 0,
-      investment: 0,
-      gain: 0,
+      leaderboard: {
+        volume: 0,
+        trades: 0,
+        netProfit: 0,
+        investment: 0,
+        gain: 0,
+      },
+      competition: {
+        volume: 0,
+        trades: 0,
+        netProfit: 0,
+        investment: 0,
+        gain: 0,
+      },
       profile: {
         mints: [],
         trades: [],
@@ -313,6 +432,14 @@ function initUser(leaderboard, user) {
       },
     });
   }
+}
+
+function isTxEligibleForCompetition(tx, market) {
+  if (isMarketInMaturity(market)) {
+    const txDate = new Date(tx.timestamp);
+    return txDate >= COMPETITION_START_DATE && txDate < COMPETITION_END_DATE;
+  }
+  return false;
 }
 
 const addressesToExclude = [
@@ -325,5 +452,8 @@ const addressesToExclude = [
   "0x2a468adaa4080f2c2fe29ea1755ce48dbdc0185b",
   "0x924ef47993be036ebe72be1449d8bef627cd30a2",
 ];
+
+const COMPETITION_START_DATE = new Date("August 01, 2021 00:00:01");
+const COMPETITION_END_DATE = new Date("October 1, 2021 00:00:00");
 
 module.exports = processLeaderboard;
