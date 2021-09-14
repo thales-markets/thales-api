@@ -141,7 +141,7 @@ function processMintTx(leaderboard, market, tx) {
     let investment = allTimeStats.investment;
 
     if (!addressesToExclude.includes(tx.account.toLowerCase())) {
-      volume = allTimeStats.volume + tx.amount / 2;
+      volume = volume + tx.amount / 2;
     }
 
     if (isMarketInMaturity(market)) {
@@ -168,7 +168,10 @@ function processMintTx(leaderboard, market, tx) {
     investment = competitionStats.investment;
 
     if (isTxEligibleForCompetition(tx, market)) {
-      volume = allTimeStats.volume + tx.amount / 2;
+      if (!addressesToExclude.includes(tx.account.toLowerCase())) {
+        volume = volume + tx.amount / 2;
+      }
+
       netProfit = netProfit - tx.amount / 2;
       investment = investment + tx.amount / 2;
       gain =
@@ -301,7 +304,7 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
     investment = competitionStats.investment;
 
     if (isTxEligibleForCompetition(trade, market)) {
-      volume = volume + getTradeSizeInSUSD(trade, network);
+      volume = Number(volume + getTradeSizeInSUSD(trade, network));
       trades = trades + 1;
       netProfit = calculateNetProfit(
         trade,
