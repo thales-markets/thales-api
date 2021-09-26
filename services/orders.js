@@ -9,8 +9,11 @@ const Ox_URL_ROPSTEN = "https://ropsten.api.0x.org/sra/v4/";
 const { getPhaseAndEndDate } = require("../services/utils");
 
 async function processOrders(markets, network) {
-  for (const o of markets) {
-    if ("trading" == getPhaseAndEndDate(o.maturityDate, o.expiryDate).phase) {
+  for (const market of markets) {
+    if (
+      "trading" ==
+      getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
+    ) {
       try {
         const baseUrl = network === 1 ? Ox_URL_MAINNET : Ox_URL_ROPSTEN;
         const token = network === 1 ? SYNTH_USD_MAINNET : SYNTH_USD_ROPSTEN;
@@ -18,14 +21,14 @@ async function processOrders(markets, network) {
           fetch(
             baseUrl +
               `orderbook?baseToken=` +
-              o.longAddress +
+              market.longAddress +
               "&quoteToken=" +
               token
           ),
           fetch(
             baseUrl +
               `orderbook?baseToken=` +
-              o.shortAddress +
+              market.shortAddress +
               "&quoteToken=" +
               token
           ),
@@ -40,8 +43,8 @@ async function processOrders(markets, network) {
         const ordersCount = totalLong + totalShort;
 
         network === 1
-          ? mainnetOptionsMap.set(o.address, ordersCount)
-          : ropstenOptionsMap.set(o.address, ordersCount);
+          ? mainnetOptionsMap.set(market.address, ordersCount)
+          : ropstenOptionsMap.set(market.address, ordersCount);
         if (process.env.REDIS_URL) {
           redisClient.set(
             network === 1 ? KEYS.MAINNET_ORDERS : KEYS.ROPSTEN_ORDERS,
@@ -54,8 +57,8 @@ async function processOrders(markets, network) {
       } catch (e) {
         console.log("fail");
         network === 1
-          ? mainnetOptionsMap.set(o.address, 0)
-          : ropstenOptionsMap.set(o.address, 0);
+          ? mainnetOptionsMap.set(market.address, 0)
+          : ropstenOptionsMap.set(market.address, 0);
 
         if (process.env.REDIS_URL) {
           redisClient.set(
