@@ -9,6 +9,7 @@ leaderboardRopstenMap = new Map();
 displayNameMap = new Map();
 verifiedUsers = new Set();
 verifiedTwitterIds = new Set();
+tokenMap = new Object();
 
 require("dotenv").config();
 
@@ -24,6 +25,7 @@ fetch = require("node-fetch");
 
 const processLeaderboard = require("./services/leaderboard");
 const processOrders = require("./services/orders");
+const processToken = require("./services/token");
 const { verifyAccounts } = require("./services/twitter");
 
 setInterval(processMainnetMarkets, 1000 * 30);
@@ -37,6 +39,7 @@ async function processMainnetMarkets() {
   });
   processLeaderboard(mainnetOptionsMarkets, 1);
   processOrders(mainnetOptionsMarkets, 1);
+  processToken();
 }
 
 async function processRopstenMarkets() {
@@ -46,4 +49,5 @@ async function processRopstenMarkets() {
   });
   processLeaderboard(ropstenOptionsMarkets, 3);
   processOrders(ropstenOptionsMarkets, 3);
+  processToken();
 }

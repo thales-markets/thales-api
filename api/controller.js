@@ -73,11 +73,7 @@ app.post(ENDPOINTS.DISPLAY_NAME, (req, res) => {
 
   if (recovered.toLowerCase() === walletAddress.toLowerCase()) {
     displayNameMap.set(walletAddress.toLowerCase(), displayName);
-    redisClient.set(
-      "displayNameMap",
-      JSON.stringify([...displayNameMap]),
-      function () {}
-    );
+    redisClient.set("displayNameMap", JSON.stringify([...displayNameMap]), function () {});
     res.send({ name: displayNameMap.get(walletAddress) });
   }
 });
@@ -113,11 +109,7 @@ app.post(ENDPOINTS.WATCHLIST, (req, res) => {
     }
 
     mainnetWatchlistMap.set(walletAddress, walletMarkets);
-    redisClient.set(
-      "mainnetWatchlistMap",
-      JSON.stringify([...mainnetWatchlistMap]),
-      function () {}
-    );
+    redisClient.set("mainnetWatchlistMap", JSON.stringify([...mainnetWatchlistMap]), function () {});
     res.send({ data: mainnetWatchlistMap.get(walletAddress) });
   } else {
     let walletMarkets = ropstenWatchlistMap.get(walletAddress);
@@ -133,11 +125,11 @@ app.post(ENDPOINTS.WATCHLIST, (req, res) => {
     }
 
     ropstenWatchlistMap.set(walletAddress, walletMarkets);
-    redisClient.set(
-      "ropstenWatchlistMap",
-      JSON.stringify([...ropstenWatchlistMap]),
-      function () {}
-    );
+    redisClient.set("ropstenWatchlistMap", JSON.stringify([...ropstenWatchlistMap]), function () {});
     res.send({ data: ropstenWatchlistMap.get(walletAddress) });
   }
+});
+
+app.get(ENDPOINTS.TOKEN, (req, res) => {
+  res.send(tokenMap);
 });

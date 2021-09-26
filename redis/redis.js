@@ -68,4 +68,12 @@ if (process.env.REDIS_URL) {
       displayNameMap = new Map(JSON.parse(displayNameMapRaw));
     }
   });
+
+  redisClient.get(KEYS.TOKEN, function (err, obj) {
+    const tokenMapRaw = obj;
+    console.log("tokenMap:" + tokenMapRaw);
+    if (tokenMapRaw) {
+      tokenMap = new Object(JSON.parse(tokenMapRaw));
+    }
+  });
 }

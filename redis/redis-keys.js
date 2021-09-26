@@ -6,6 +6,7 @@ const KEYS = {
   ROPSTEN_ORDERS: "ropstenOrders",
   ROPSTEN_WATCHLIST: "ropstenWatchlistMap",
   ROPSTEN_LEADERBOARD: "ropstenLeaderboard",
+  TOKEN: "token",
 };
 
 module.exports = KEYS;
