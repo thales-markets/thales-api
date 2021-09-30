@@ -102,7 +102,7 @@ async function getPrice() {
 
 function getCirculatingSupply() {
   try {
-    const startDate = new Date("2021-09-16");
+    const startDate = new Date("2021-09-14");
     const todaysDate = new Date();
     var dif = Math.round(todaysDate - startDate);
     var weeks = Math.round(dif / 604800000);
