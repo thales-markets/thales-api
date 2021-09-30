@@ -8,8 +8,7 @@ app.use(express.json());
 
 const ENDPOINTS = require("./endpoints");
 const sigUtil = require("eth-sig-util");
-
-const { checkAddress } = require("../services/twitter");
+const KEYS = require("../redis/redis-keys");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -23,13 +22,19 @@ app.get(ENDPOINTS.OPTIONS, (req, res) => {
   let add = req.params.addressParam;
   let network = req.params.networkParam;
   if (network == 1) {
-    if (mainnetOptionsMap.has(add)) {
-      res.send(mainnetOptionsMap.get(add) + "");
-    } else res.send("0");
+    redisClient.get(KEYS.MAINNET_ORDERS, function (err, obj) {
+      const orders = new Map(JSON.parse(obj));
+      if (orders.has(add)) {
+        res.send(orders.get(add) + "");
+      } else res.send("0");
+    });
   } else {
-    if (ropstenOptionsMap.has(add)) {
-      res.send(ropstenOptionsMap.get(add) + "");
-    } else res.send("0");
+    redisClient.get(KEYS.ROPSTEN_ORDERS, function (err, obj) {
+      const orders = new Map(JSON.parse(obj));
+      if (orders.has(add)) {
+        res.send(orders.get(add) + "");
+      } else res.send("0");
+    });
   }
 });
 
@@ -46,10 +51,37 @@ app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
 app.get(ENDPOINTS.LEADERBOARD, (req, res) => {
   let network = req.params.networkParam;
   if (network == 1) {
-    res.send({ data: Array.from(leaderboardMainnetMap) });
+    redisClient.get(KEYS.MAINNET_LEADERBOARD, function (err, obj) {
+      const leaderboard = new Map(JSON.parse(obj));
+      res.send({ data: Array.from(leaderboard) });
+    });
   } else {
-    res.send({ data: Array.from(leaderboardRopstenMap) });
+    redisClient.get(KEYS.ROPSTEN_LEADERBOARD, function (err, obj) {
+      const leaderboard = new Map(JSON.parse(obj));
+      res.send({ data: Array.from(leaderboard) });
+    });
   }
+});
+
+app.get(ENDPOINTS.TOKEN_PRICE, (req, res) => {
+  redisClient.get(KEYS.TOKEN, function (err, obj) {
+    const tokenMap = new Map(JSON.parse(obj));
+    res.send(tokenMap.get("price") + "");
+  });
+});
+
+app.get(ENDPOINTS.TOKEN_SUPLY, (req, res) => {
+  redisClient.get(KEYS.TOKEN, function (err, obj) {
+    const tokenMap = new Map(JSON.parse(obj));
+    res.send(tokenMap.get("circulatingsupply") + "");
+  });
+});
+
+app.get(ENDPOINTS.TOKEN_CAP, (req, res) => {
+  redisClient.get(KEYS.TOKEN, function (err, obj) {
+    const tokenMap = new Map(JSON.parse(obj));
+    res.send(tokenMap.get("marketcap") + "");
+  });
 });
 
 app.get(ENDPOINTS.DISPLAY_NAME, (req, res) => {
@@ -80,13 +112,10 @@ app.post(ENDPOINTS.DISPLAY_NAME, (req, res) => {
 
 app.get(ENDPOINTS.AUTH, (req, res) => {
   let walletAddress = req.params.walletAddress.toLowerCase();
-  res.send(verifiedUsers.has(walletAddress));
-});
-
-app.get(ENDPOINTS.TWITTER_CHECK, (req, res) => {
-  let walletAddress = req.params.walletAddress.toLowerCase();
-  checkAddress(walletAddress).then((val) => {
-    res.send(val);
+  redisClient.get(KEYS.VERIFIED_ACCOUNTS, function (err, obj) {
+    console.log("auth: ", obj);
+    const verifiedUsers = new Set(JSON.parse(obj));
+    res.send(verifiedUsers.has(walletAddress));
   });
 });
 
@@ -128,8 +157,4 @@ app.post(ENDPOINTS.WATCHLIST, (req, res) => {
     redisClient.set("ropstenWatchlistMap", JSON.stringify([...ropstenWatchlistMap]), function () {});
     res.send({ data: ropstenWatchlistMap.get(walletAddress) });
   }
-});
-
-app.get(ENDPOINTS.TOKEN, (req, res) => {
-  res.send(tokenMap);
 });

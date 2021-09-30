@@ -1,0 +1,31 @@
+### BUILD ALL IMAGES ###
+
+docker build -f Dockerfile.api -t thalesmarket/api .
+docker build -f Dockerfile.token -t thalesmarket/token  .
+docker build -f Dockerfile.twitter -t thalesmarket/twitter  .
+docker build -f Dockerfile.orders -t thalesmarket/orders  .
+docker build -f Dockerfile.leaderboard -t thalesmarket/leaderboard  .
+
+### PUSH IMAGES TO GIT ###
+
+docker push thalesmarket/api
+docker push thalesmarket/token
+docker push thalesmarket/twitter
+docker push thalesmarket/orders
+docker push thalesmarket/leaderboard
+
+### RUN SERVER LOCALLY ###
+docker-compose -f docker-compose-dev.yml up
+
+
+### ENDPOINTS
+
+ROOT: "/",
+AUTH: "/auth/:walletAddress",
+OPTIONS: "/options/:networkParam/:addressParam",
+WATCHLIST_ADDRESS: "/watchlist/:networkParam/:walletAddressParam",
+DISPLAY_NAME_ADDRESS: "/display-name/:walletAddress",
+LEADERBOARD: "/leaderboard/:networkParam",
+TOKEN_PRICE: "/token/price",
+TOKEN_SUPLY: "/token/circulatingsupply",
+TOKEN_CAP: "/token/marketcap",

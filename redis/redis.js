@@ -9,24 +9,6 @@ if (process.env.REDIS_URL) {
     console.error(error);
   });
 
-  redisClient.get(KEYS.MAINNET_ORDERS, function (err, obj) {
-    const mainnetOptionsMapRaw = obj;
-    console.log("mainnetOptionsMapRaw:" + mainnetOptionsMapRaw);
-    if (mainnetOptionsMapRaw) {
-      mainnetOptionsMap = new Map(JSON.parse(mainnetOptionsMapRaw));
-      console.log("mainnetOptionsMap:" + mainnetOptionsMap);
-    }
-  });
-
-  redisClient.get(KEYS.ROPSTEN_ORDERS, function (err, obj) {
-    const ropstenOptionsMapRaw = obj;
-    console.log("ropstenOptionsMapRaw:" + ropstenOptionsMapRaw);
-    if (ropstenOptionsMapRaw) {
-      ropstenOptionsMap = new Map(JSON.parse(ropstenOptionsMapRaw));
-      console.log("ropstenOptionsMap:" + ropstenOptionsMap);
-    }
-  });
-
   redisClient.get(KEYS.ROPSTEN_WATCHLIST, function (err, obj) {
     const ropstenWatchlistMapRaw = obj;
     console.log("ropstenWatchlistMap:" + ropstenWatchlistMapRaw);
@@ -45,35 +27,11 @@ if (process.env.REDIS_URL) {
     }
   });
 
-  redisClient.get(KEYS.MAINNET_LEADERBOARD, function (err, obj) {
-    const mainnetLeaderboardMapRaw = obj;
-    console.log("mainnetLeaderboardMap:" + mainnetLeaderboardMapRaw);
-    if (mainnetLeaderboardMapRaw) {
-      leaderboardMainnetMap = new Map(JSON.parse(mainnetLeaderboardMapRaw));
-    }
-  });
-
-  redisClient.get(KEYS.ROPSTEN_LEADERBOARD, function (err, obj) {
-    const ropstenLeaderboardMapRaw = obj;
-    console.log("ropstenLeaderboardMap:" + ropstenLeaderboardMapRaw);
-    if (ropstenLeaderboardMapRaw) {
-      leaderboardRopstenMap = new Map(JSON.parse(ropstenLeaderboardMapRaw));
-    }
-  });
-
   redisClient.get(KEYS.DISPLAY_NAME, function (err, obj) {
     const displayNameMapRaw = obj;
     console.log("displayNameMap:" + displayNameMapRaw);
     if (displayNameMapRaw) {
       displayNameMap = new Map(JSON.parse(displayNameMapRaw));
-    }
-  });
-
-  redisClient.get(KEYS.TOKEN, function (err, obj) {
-    const tokenMapRaw = obj;
-    console.log("tokenMap:" + tokenMapRaw);
-    if (tokenMapRaw) {
-      tokenMap = new Object(JSON.parse(tokenMapRaw));
     }
   });
 }

@@ -1,14 +1,15 @@
 const ENDPOINTS = {
-    ROOT: "/",
-    OPTIONS: "/options/:networkParam/:addressParam",
-    WATCHLIST: "/watchlist",
-    WATCHLIST_ADDRESS: "/watchlist/:networkParam/:walletAddressParam",
-    DISPLAY_NAME: "/display-name",
-    DISPLAY_NAME_ADDRESS: "/display-name/:walletAddress",
-    LEADERBOARD: "/leaderboard/:networkParam",
-    AUTH: "/auth/:walletAddress",
-    TWITTER_CHECK: "/twitter/:walletAddress",
-    TOKEN: "/token",
+  ROOT: "/",
+  AUTH: "/auth/:walletAddress",
+  DISPLAY_NAME: "/display-name",
+  DISPLAY_NAME_ADDRESS: "/display-name/:walletAddress",
+  OPTIONS: "/options/:networkParam/:addressParam",
+  WATCHLIST: "/watchlist",
+  WATCHLIST_ADDRESS: "/watchlist/:networkParam/:walletAddressParam",
+  LEADERBOARD: "/leaderboard/:networkParam",
+  TOKEN_PRICE: "/token/price",
+  TOKEN_SUPLY: "/token/circulatingsupply",
+  TOKEN_CAP: "/token/marketcap",
 };
 
 module.exports = ENDPOINTS;

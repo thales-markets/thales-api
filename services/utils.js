@@ -7,9 +7,7 @@ function getStableToken(network) {
 }
 
 function getTradeSizeInSUSD(trade, network) {
-  return trade.makerToken === getStableToken(network)
-    ? trade.makerAmount
-    : trade.takerAmount;
+  return trade.makerToken === getStableToken(network) ? trade.makerAmount : trade.takerAmount;
 }
 
 function calculateNetProfit(trade, market, network, currentProfit, token) {
@@ -68,10 +66,13 @@ async function getBalance(marketAddress, walletAddress) {
 }
 
 function isMarketInMaturity(market) {
-  return (
-    "maturity" ==
-    getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase
-  );
+  return "maturity" == getPhaseAndEndDate(market.maturityDate, market.expiryDate).phase;
+}
+
+function delay(time) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, time);
+  });
 }
 
 module.exports = {
@@ -82,4 +83,5 @@ module.exports = {
   getPhaseAndEndDate,
   getBalance,
   isMarketInMaturity,
+  delay,
 };

@@ -1,0 +1,54 @@
+version: "3.8"
+services:
+  redis:
+    restart: always
+    image: "redis:alpine"
+    container_name: redis
+    volumes:
+      - redis-data:/data
+    entrypoint: redis-server --appendonly yes
+    ports:
+      - 6379:6379
+  thales-api:
+    restart: always
+    image: thalesmarket/api
+    depends_on:
+      - redis
+    environment:
+      - "REDIS_URL=redis://redis:6379"
+      - "INFURA_URL=https://mainnet.infura.io/v3/d3587dd16b0740219618067e9e517a54"
+    ports:
+      - 3002:3002
+  orders:
+    restart: always
+    image: thalesmarket/orders
+    depends_on:
+      - redis
+    environment:
+      - "REDIS_URL=redis://redis:6379"
+      - "INFURA_URL=https://mainnet.infura.io/v3/d3587dd16b0740219618067e9e517a54"
+  leaderboard:
+    restart: always
+    image: thalesmarket/leaderboard
+    depends_on:
+      - redis
+    environment:
+      - "REDIS_URL=redis://redis:6379"
+      - "INFURA_URL=https://mainnet.infura.io/v3/d3587dd16b0740219618067e9e517a54"
+  twitter:
+    restart: always
+    image: thalesmarket/twitter
+    depends_on:
+      - redis
+    environment:
+      - "REDIS_URL=redis://redis:6379"
+  token:
+    restart: always
+    image: thalesmarket/token
+    depends_on:
+      - redis
+    environment:
+      - "REDIS_URL=redis://redis:6379"
+      - "INFURA_URL=https://mainnet.infura.io/v3/d3587dd16b0740219618067e9e517a54"
+volumes:
+  redis-data:

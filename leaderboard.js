@@ -1,18 +1,56 @@
-const KEYS = require("../redis/redis-keys");
+const KEYS = require("./redis/redis-keys");
 
 const {
   getStableToken,
-  getPhaseAndEndDate,
   getTradeSizeInSUSD,
   calculateNetProfit,
   calculateInvestment,
   getBalance,
   isMarketInMaturity,
-} = require("../services/utils");
+  delay,
+} = require("./services/utils");
 
-async function processLeaderboard(markets, network) {
+require("dotenv").config();
+const redis = require("redis");
+thalesData = require("thales-data");
+
+const Web3 = require("web3");
+Web3Client = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
+
+if (process.env.REDIS_URL) {
+  redisClient = redis.createClient(process.env.REDIS_URL);
+  console.log("create client from index");
+
+  redisClient.on("error", function (error) {
+    console.error(error);
+  });
+  setTimeout(async () => {
+    while (true) {
+      try {
+        console.log("process leaderboard on mainnet");
+        await processLeaderboard(1);
+      } catch (error) {
+        console.log("leaderboard on mainnet error: ", error);
+      }
+
+      try {
+        console.log("process leaderboard on ropsten");
+        await processLeaderboard(3);
+      } catch (error) {
+        console.log("leaderboard on ropsten error: ", error);
+      }
+
+      await delay(20 * 1000);
+    }
+  }, 3000);
+}
+
+async function processLeaderboard(network) {
   const leaderboard = new Map();
-
+  const markets = await thalesData.binaryOptions.markets({
+    max: Infinity,
+    network,
+  });
   for (let market of markets) {
     const allUsersForMarket = new Set();
     const allTradesForMarket = [];
@@ -48,24 +86,10 @@ async function processLeaderboard(markets, network) {
       }
 
       initUser(leaderboard, trade.maker);
-      processTradeTx(
-        leaderboard,
-        market,
-        trade,
-        trade.maker,
-        trade.makerToken,
-        network
-      );
+      processTradeTx(leaderboard, market, trade, trade.maker, trade.makerToken, network);
 
       initUser(leaderboard, trade.taker);
-      processTradeTx(
-        leaderboard,
-        market,
-        trade,
-        trade.taker,
-        trade.takerToken,
-        network
-      );
+      processTradeTx(leaderboard, market, trade, trade.taker, trade.takerToken, network);
     });
 
     // calculating options that were not excercised
@@ -84,7 +108,7 @@ async function processLeaderboard(markets, network) {
     redisClient.set(
       network === 1 ? KEYS.MAINNET_LEADERBOARD : KEYS.ROPSTEN_LEADERBOARD,
       JSON.stringify([...leaderboard]),
-      function () {}
+      function () {},
     );
   }
 }
@@ -149,10 +173,7 @@ function processMintTx(leaderboard, market, tx) {
       investment = investment + tx.amount / 2;
     }
 
-    let gain =
-      investment > 0
-        ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
-        : 0;
+    let gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const leaderboardAllTimeData = {
       volume,
@@ -174,10 +195,7 @@ function processMintTx(leaderboard, market, tx) {
 
       netProfit = netProfit - tx.amount / 2;
       investment = investment + tx.amount / 2;
-      gain =
-        investment > 0
-          ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
-          : 0;
+      gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
     }
 
     const competitionData = {
@@ -212,10 +230,7 @@ function processExcerciseTx(leaderboard, market, tx) {
     let netProfit = allTimeStats.netProfit + tx.amount;
     let investment = allTimeStats.investment;
 
-    let gain =
-      investment > 0
-        ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
-        : 0;
+    let gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const leaderboardAllTimeData = {
       volume,
@@ -232,10 +247,7 @@ function processExcerciseTx(leaderboard, market, tx) {
       : competitionStats.netProfit;
     investment = competitionStats.investment;
 
-    gain =
-      investment > 0
-        ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
-        : 0;
+    gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const competitionData = {
       volume,
@@ -264,31 +276,14 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
     const competitionStats = leader.competition;
     const profile = leader.profile;
 
-    let volume = Number(
-      allTimeStats.volume + getTradeSizeInSUSD(trade, network)
-    );
+    let volume = Number(allTimeStats.volume + getTradeSizeInSUSD(trade, network));
     let trades = allTimeStats.trades + 1;
 
-    let netProfit = calculateNetProfit(
-      trade,
-      market,
-      network,
-      allTimeStats.netProfit,
-      token
-    );
+    let netProfit = calculateNetProfit(trade, market, network, allTimeStats.netProfit, token);
 
-    let investment = calculateInvestment(
-      trade,
-      market,
-      network,
-      allTimeStats.investment,
-      token
-    );
+    let investment = calculateInvestment(trade, market, network, allTimeStats.investment, token);
 
-    let gain =
-      investment > 0
-        ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
-        : 0;
+    let gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const leaderboardAllTimeData = {
       volume,
@@ -306,26 +301,11 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
     if (isTxEligibleForCompetition(trade, market)) {
       volume = Number(volume + getTradeSizeInSUSD(trade, network));
       trades = trades + 1;
-      netProfit = calculateNetProfit(
-        trade,
-        market,
-        network,
-        competitionStats.netProfit,
-        token
-      );
-      investment = calculateInvestment(
-        trade,
-        market,
-        network,
-        competitionStats.investment,
-        token
-      );
+      netProfit = calculateNetProfit(trade, market, network, competitionStats.netProfit, token);
+      investment = calculateInvestment(trade, market, network, competitionStats.investment, token);
     }
 
-    gain =
-      investment > 0
-        ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
-        : 0;
+    gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const competitionData = {
       volume,
@@ -372,10 +352,7 @@ async function processUnclaimedOptions(market, allUsersForMarket, leaderboard) {
           netProfit += Number(shortOptions);
         }
 
-        let gain =
-          investment > 0
-            ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1)
-            : 0;
+        let gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
         const leaderboardAllTimeData = {
           volume,
@@ -398,7 +375,7 @@ async function processUnclaimedOptions(market, allUsersForMarket, leaderboard) {
           competition: competitionStats,
           profile,
         });
-      })
+      }),
     );
   } catch (e) {
     console.log(e);
@@ -458,5 +435,3 @@ const addressesToExclude = [
 
 const COMPETITION_START_DATE = new Date("August 01, 2021 00:00:01");
 const COMPETITION_END_DATE = new Date("October 1, 2021 00:00:00");
-
-module.exports = processLeaderboard;
