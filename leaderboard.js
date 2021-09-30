@@ -8,6 +8,10 @@ const {
   getBalance,
   isMarketInMaturity,
   delay,
+  getAmountOfTokens,
+  getPricePerToken,
+  getTradeType,
+  getSidePerTrade,
 } = require("./services/utils");
 
 require("dotenv").config();
@@ -315,7 +319,7 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
       gain,
     };
 
-    profile.trades.push({ market, trade });
+    profile.trades.push({ market, trade: mapToOptionTransactions(trade, market, network) });
 
     leaderboard.set(user, {
       leaderboard: leaderboardAllTimeData,
@@ -435,3 +439,14 @@ const addressesToExclude = [
 
 const COMPETITION_START_DATE = new Date("August 01, 2021 00:00:01");
 const COMPETITION_END_DATE = new Date("October 1, 2021 00:00:00");
+
+function mapToOptionTransactions(trade, market, network) {
+  return {
+    timestamp: trade.timestamp,
+    hash: trade.transactionHash,
+    type: getTradeType(trade, network),
+    side: getSidePerTrade(trade, market, network),
+    amount: getAmountOfTokens(trade, network),
+    price: getPricePerToken(trade, network),
+  };
+}

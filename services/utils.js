@@ -10,6 +10,28 @@ function getTradeSizeInSUSD(trade, network) {
   return trade.makerToken === getStableToken(network) ? trade.makerAmount : trade.takerAmount;
 }
 
+function getAmountOfTokens(trade, network) {
+  return trade.makerToken === getStableToken(network) ? trade.takerAmount : trade.makerAmount;
+}
+
+function getPricePerToken(trade, network) {
+  return trade.makerToken === getStableToken(network)
+    ? trade.makerAmount / trade.takerAmount
+    : trade.takerAmount / trade.makerAmount;
+}
+
+function getTradeType(trade, network) {
+  return trade.makerToken === getStableToken(network) ? "buy" : "sell";
+}
+
+function getSidePerTrade(trade, market, network) {
+  if (trade.makerToken === getStableToken(network)) {
+    return trade.takerToken === market.longAddress ? "long" : "short";
+  } else {
+    return trade.makerToken === market.longAddress ? "long" : "short";
+  }
+}
+
 function calculateNetProfit(trade, market, network, currentProfit, token) {
   if (isMarketInMaturity(market)) {
     if (token === getStableToken(network)) {
@@ -84,4 +106,8 @@ module.exports = {
   getBalance,
   isMarketInMaturity,
   delay,
+  getAmountOfTokens,
+  getPricePerToken,
+  getTradeType,
+  getSidePerTrade,
 };
