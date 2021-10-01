@@ -12,6 +12,7 @@ const KEYS = {
   ROPSTEN_PROFILES: "ropstenProfiles",
   TOKEN: "tokenMap",
   VERIFIED_ACCOUNTS: "verifiedAccounts",
+  TWITTER_ACCOUNTS: "twitterAccounts",
 };
 
 module.exports = KEYS;

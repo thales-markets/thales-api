@@ -9,6 +9,7 @@ const THREE_MONTHS = 1000 /*ms*/ * 60 /*s*/ * 60 /*min*/ * 24 /*h*/ * 30 /*days*
 const keyTweet = "Please let me join the Thales trading competition with address";
 const verifiedUsers = new Set();
 const verifiedTwitterIds = new Set();
+const twitterAccMap = new Map();
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -33,26 +34,31 @@ if (process.env.REDIS_URL) {
 async function verifyAccounts() {
   const searchResult = await twitterClient.search(keyTweet, {
     expansions: "author_id",
-    "user.fields": "created_at",
+    "user.fields": "created_at,profile_image_url,name,username",
   });
 
   const tweets = searchResult.data.data;
   const users = searchResult.includes.users;
 
   if (tweets) {
-    const createdAt = users.reduce(function (map, user) {
-      map[user.id] = user.created_at;
+    const usersInfoMap = users.reduce(function (map, user) {
+      map[user.id] = {
+        createdAt: user.created_at,
+        avatar: user.profile_image_url,
+        name: user.name,
+        twitter: "https://twitter.com/" + user.username,
+      };
       return map;
     }, {});
 
     tweets.map((tweet) => {
       if (!verifiedTwitterIds.has(tweet.author_id)) {
         const address = tweet.text.substring(keyTweet.length).trim().toLowerCase();
-        console.log("add address: ", address);
-        const createdDate = new Date(createdAt[tweet.author_id]);
+        const createdDate = new Date(usersInfoMap[tweet.author_id].createdAt);
         if (!verifiedUsers.has(address) && new Date() - createdDate > THREE_MONTHS) {
           verifiedUsers.add(address);
           verifiedTwitterIds.add(tweet.author_id);
+          twitterAccMap.set(address, usersInfoMap[tweet.author_id]);
         }
       }
     });
@@ -61,5 +67,6 @@ async function verifyAccounts() {
   if (process.env.REDIS_URL) {
     const users = Array.from(verifiedUsers);
     redisClient.set(KEYS.VERIFIED_ACCOUNTS, JSON.stringify(users));
+    redisClient.set(KEYS.TWITTER_ACCOUNTS, JSON.stringify([...twitterAccMap]), function () {});
   }
 }

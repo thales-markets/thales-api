@@ -13,6 +13,7 @@ const ENDPOINTS = {
   TOKEN_PRICE: "/token/price",
   TOKEN_SUPLY: "/token/circulatingsupply",
   TOKEN_CAP: "/token/marketcap",
+  TWITTER: "/twitter/:walletAddress",
 };
 
 module.exports = ENDPOINTS;

@@ -63,6 +63,14 @@ app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.TWITTER, (req, res) => {
+  let walletAddress = req.params.walletAddress;
+  redisClient.get(KEYS.TWITTER_ACCOUNTS, function (err, obj) {
+    const twitterAccMap = new Map(JSON.parse(obj));
+    res.send(twitterAccMap.get(walletAddress));
+  });
+});
+
 app.get(ENDPOINTS.LEADERBOARD, (req, res) => {
   const network = req.params.networkParam;
   if (network == 1) {
