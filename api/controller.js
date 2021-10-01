@@ -19,8 +19,8 @@ app.get(ENDPOINTS.ROOT, (req, res) => {
 });
 
 app.get(ENDPOINTS.OPTIONS, (req, res) => {
-  let add = req.params.addressParam;
-  let network = req.params.networkParam;
+  const add = req.params.addressParam;
+  const network = req.params.networkParam;
   if (network == 1) {
     redisClient.get(KEYS.MAINNET_ORDERS, function (err, obj) {
       const orders = new Map(JSON.parse(obj));
@@ -38,9 +38,24 @@ app.get(ENDPOINTS.OPTIONS, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.ORDERS, (req, res) => {
+  const network = req.params.networkParam;
+  if (network == 1) {
+    redisClient.get(KEYS.MAINNET_ORDERS, function (err, obj) {
+      const orders = new Map(JSON.parse(obj));
+      res.send(Array.from(orders));
+    });
+  } else {
+    redisClient.get(KEYS.ROPSTEN_ORDERS, function (err, obj) {
+      const orders = new Map(JSON.parse(obj));
+      res.send(Array.from(orders));
+    });
+  }
+});
+
 app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
-  let walletAddress = req.params.walletAddressParam;
-  let network = req.params.networkParam;
+  const walletAddress = req.params.walletAddressParam;
+  const network = req.params.networkParam;
   if (network == 1) {
     res.send({ data: mainnetWatchlistMap.get(walletAddress) });
   } else {
@@ -49,16 +64,46 @@ app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
 });
 
 app.get(ENDPOINTS.LEADERBOARD, (req, res) => {
-  let network = req.params.networkParam;
+  const network = req.params.networkParam;
   if (network == 1) {
     redisClient.get(KEYS.MAINNET_LEADERBOARD, function (err, obj) {
       const leaderboard = new Map(JSON.parse(obj));
-      res.send({ data: Array.from(leaderboard) });
+      res.send(Array.from(leaderboard));
     });
   } else {
     redisClient.get(KEYS.ROPSTEN_LEADERBOARD, function (err, obj) {
       const leaderboard = new Map(JSON.parse(obj));
-      res.send({ data: Array.from(leaderboard) });
+      res.send(Array.from(leaderboard));
+    });
+  }
+});
+
+app.get(ENDPOINTS.COMPETITION, (req, res) => {
+  const network = req.params.networkParam;
+  if (network == 1) {
+    redisClient.get(KEYS.MAINNET_COMPETITION, function (err, obj) {
+      const competition = new Map(JSON.parse(obj));
+      res.send(Array.from(competition));
+    });
+  } else {
+    redisClient.get(KEYS.ROPSTEN_COMPETITION, function (err, obj) {
+      const competition = new Map(JSON.parse(obj));
+      res.send(Array.from(competition));
+    });
+  }
+});
+
+app.get(ENDPOINTS.PROFILES, (req, res) => {
+  const network = req.params.networkParam;
+  if (network == 1) {
+    redisClient.get(KEYS.MAINNET_PROFILES, function (err, obj) {
+      const profiles = new Map(JSON.parse(obj));
+      res.send(Array.from(profiles));
+    });
+  } else {
+    redisClient.get(KEYS.ROPSTEN_PROFILES, function (err, obj) {
+      const profiles = new Map(JSON.parse(obj));
+      res.send(Array.from(profiles));
     });
   }
 });
@@ -111,7 +156,7 @@ app.post(ENDPOINTS.DISPLAY_NAME, (req, res) => {
 });
 
 app.get(ENDPOINTS.AUTH, (req, res) => {
-  let walletAddress = req.params.walletAddress.toLowerCase();
+  const walletAddress = req.params.walletAddress.toLowerCase();
   redisClient.get(KEYS.VERIFIED_ACCOUNTS, function (err, obj) {
     console.log("auth: ", obj);
     const verifiedUsers = new Set(JSON.parse(obj));

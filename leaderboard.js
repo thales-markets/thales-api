@@ -108,13 +108,7 @@ async function processLeaderboard(network) {
     leaderboardRopstenMap = leaderboard;
   }
 
-  if (process.env.REDIS_URL) {
-    redisClient.set(
-      network === 1 ? KEYS.MAINNET_LEADERBOARD : KEYS.ROPSTEN_LEADERBOARD,
-      JSON.stringify([...leaderboard]),
-      function () {},
-    );
-  }
+  saveToRedis(leaderboard, network);
 }
 
 /**
@@ -168,16 +162,14 @@ function processMintTx(leaderboard, market, tx) {
     let netProfit = allTimeStats.netProfit;
     let investment = allTimeStats.investment;
 
-    if (!addressesToExclude.includes(tx.account.toLowerCase())) {
-      volume = volume + tx.amount / 2;
-    }
+    volume = volume + tx.amount / 2;
 
     if (isMarketInMaturity(market)) {
       netProfit = netProfit - tx.amount / 2;
       investment = investment + tx.amount / 2;
     }
 
-    let gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
+    let gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const leaderboardAllTimeData = {
       volume,
@@ -193,13 +185,11 @@ function processMintTx(leaderboard, market, tx) {
     investment = competitionStats.investment;
 
     if (isTxEligibleForCompetition(tx, market)) {
-      if (!addressesToExclude.includes(tx.account.toLowerCase())) {
-        volume = volume + tx.amount / 2;
-      }
+      volume = volume + tx.amount / 2;
 
       netProfit = netProfit - tx.amount / 2;
       investment = investment + tx.amount / 2;
-      gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
+      gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
     }
 
     const competitionData = {
@@ -234,7 +224,7 @@ function processExcerciseTx(leaderboard, market, tx) {
     let netProfit = allTimeStats.netProfit + tx.amount;
     let investment = allTimeStats.investment;
 
-    let gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
+    let gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const leaderboardAllTimeData = {
       volume,
@@ -251,7 +241,7 @@ function processExcerciseTx(leaderboard, market, tx) {
       : competitionStats.netProfit;
     investment = competitionStats.investment;
 
-    gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
+    gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const competitionData = {
       volume,
@@ -287,7 +277,7 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
 
     let investment = calculateInvestment(trade, market, network, allTimeStats.investment, token);
 
-    let gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
+    let gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const leaderboardAllTimeData = {
       volume,
@@ -309,7 +299,7 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
       investment = calculateInvestment(trade, market, network, competitionStats.investment, token);
     }
 
-    gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
+    gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const competitionData = {
       volume,
@@ -356,7 +346,8 @@ async function processUnclaimedOptions(market, allUsersForMarket, leaderboard) {
           netProfit += Number(shortOptions);
         }
 
-        let gain = investment > 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
+        let gain =
+          investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
         const leaderboardAllTimeData = {
           volume,
@@ -415,6 +406,36 @@ function initUser(leaderboard, user) {
         unclaimed: [],
       },
     });
+  }
+}
+
+function saveToRedis(leaderboard, network) {
+  const array = Array.from(leaderboard);
+  const leaderboardMap = new Map();
+  const competitionMap = new Map();
+  const profilesMap = new Map();
+
+  array.map((data) => {
+    leaderboardMap.set(data[0], data[1].leaderboard);
+    competitionMap.set(data[0], data[1].competition);
+    profilesMap.set(data[0], data[1].profile);
+  });
+  if (process.env.REDIS_URL) {
+    redisClient.set(
+      network === 1 ? KEYS.MAINNET_LEADERBOARD : KEYS.ROPSTEN_LEADERBOARD,
+      JSON.stringify([...leaderboardMap]),
+      function () {},
+    );
+    redisClient.set(
+      network === 1 ? KEYS.MAINNET_COMPETITION : KEYS.ROPSTEN_COMPETITION,
+      JSON.stringify([...competitionMap]),
+      function () {},
+    );
+    redisClient.set(
+      network === 1 ? KEYS.MAINNET_PROFILES : KEYS.ROPSTEN_PROFILES,
+      JSON.stringify([...profilesMap]),
+      function () {},
+    );
   }
 }
 
