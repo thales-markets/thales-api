@@ -47,8 +47,6 @@ function calculateInvestment(trade, market, network, currentInvestment, token) {
   if (isMarketInMaturity(market)) {
     if (token === getStableToken(network)) {
       return currentInvestment + getTradeSizeInSUSD(trade, network);
-    } else {
-      return currentInvestment;
     }
   }
   return currentInvestment;

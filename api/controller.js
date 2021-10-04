@@ -63,11 +63,18 @@ app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.TWITTER, (req, res) => {
+app.get(ENDPOINTS.TWITTER_ADDRESS, (req, res) => {
   let walletAddress = req.params.walletAddress;
   redisClient.get(KEYS.TWITTER_ACCOUNTS, function (err, obj) {
     const twitterAccMap = new Map(JSON.parse(obj));
     res.send(twitterAccMap.get(walletAddress));
+  });
+});
+
+app.get(ENDPOINTS.TWITTER, (req, res) => {
+  redisClient.get(KEYS.TWITTER_ACCOUNTS, function (err, obj) {
+    const twitterAccMap = new Map(JSON.parse(obj));
+    res.send(Array.from(twitterAccMap));
   });
 });
 
