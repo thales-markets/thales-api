@@ -162,7 +162,9 @@ function processMintTx(leaderboard, market, tx) {
     let netProfit = allTimeStats.netProfit;
     let investment = allTimeStats.investment;
 
-    volume = volume + tx.amount / 2;
+    if (!addressesToExclude.includes(tx.account.toLowerCase())) {
+      volume = volume + tx.amount / 2;
+    }
 
     if (isMarketInMaturity(market)) {
       netProfit = netProfit - tx.amount / 2;
@@ -186,7 +188,6 @@ function processMintTx(leaderboard, market, tx) {
 
     if (isTxEligibleForCompetition(tx, market)) {
       volume = volume + tx.amount / 2;
-
       netProfit = netProfit - tx.amount / 2;
       investment = investment + tx.amount / 2;
       gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
