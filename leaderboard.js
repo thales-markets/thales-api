@@ -186,7 +186,7 @@ function processMintTx(leaderboard, market, tx) {
     netProfit = competitionStats.netProfit;
     investment = competitionStats.investment;
 
-    if (isTxEligibleForCompetition(tx, market)) {
+    if (isMarketEligibleForCompetition(market)) {
       volume = volume + tx.amount / 2;
       netProfit = netProfit - tx.amount / 2;
       investment = investment + tx.amount / 2;
@@ -237,7 +237,7 @@ function processExcerciseTx(leaderboard, market, tx) {
 
     volume = competitionStats.volume;
     trades = competitionStats.trades;
-    netProfit = isTxEligibleForCompetition(tx, market)
+    netProfit = isMarketEligibleForCompetition(market)
       ? competitionStats.netProfit + tx.amount
       : competitionStats.netProfit;
     investment = competitionStats.investment;
@@ -273,11 +273,8 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
 
     let volume = Number(allTimeStats.volume + getTradeSizeInSUSD(trade, network));
     let trades = allTimeStats.trades + 1;
-
     let netProfit = calculateNetProfit(trade, market, network, allTimeStats.netProfit, token);
-
     let investment = calculateInvestment(trade, market, network, allTimeStats.investment, token);
-
     let gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const leaderboardAllTimeData = {
@@ -293,7 +290,7 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
     netProfit = competitionStats.netProfit;
     investment = competitionStats.investment;
 
-    if (isTxEligibleForCompetition(trade, market)) {
+    if (isMarketEligibleForCompetition(market)) {
       volume = Number(volume + getTradeSizeInSUSD(trade, network));
       trades = trades + 1;
       netProfit = calculateNetProfit(trade, market, network, competitionStats.netProfit, token);
@@ -358,6 +355,29 @@ async function processUnclaimedOptions(market, allUsersForMarket, leaderboard) {
           gain,
         };
 
+        volume = competitionStats.volume;
+        trades = competitionStats.trades;
+        netProfit = competitionStats.netProfit;
+        investment = competitionStats.investment;
+
+        if (isMarketEligibleForCompetition(market)) {
+          if (market.result === "long") {
+            netProfit += Number(longOptions);
+          } else {
+            netProfit += Number(shortOptions);
+          }
+        }
+
+        gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
+
+        const competitionStatsNew = {
+          volume,
+          trades,
+          netProfit,
+          investment,
+          gain,
+        };
+
         if (longOptions > 0 || shortOptions > 0) {
           profile.unclaimed.push({
             market,
@@ -368,7 +388,7 @@ async function processUnclaimedOptions(market, allUsersForMarket, leaderboard) {
 
         leaderboard.set(user, {
           leaderboard: leaderboardAllTimeData,
-          competition: competitionStats,
+          competition: competitionStatsNew,
           profile,
         });
       }),
@@ -440,10 +460,11 @@ function saveToRedis(leaderboard, network) {
   }
 }
 
-function isTxEligibleForCompetition(tx, market) {
-  if (isMarketInMaturity(market)) {
-    const txDate = new Date(tx.timestamp);
-    return txDate >= COMPETITION_START_DATE && txDate < COMPETITION_END_DATE;
+function isMarketEligibleForCompetition(market) {
+  const marketCreatedAt = new Date(market.timestamp);
+  const marketExpiresAt = new Date(market.maturityDate);
+  if (marketCreatedAt >= COMPETITION_START_DATE && marketExpiresAt <= COMPETITION_END_DATE) {
+    return true;
   }
   return false;
 }
@@ -460,7 +481,7 @@ const addressesToExclude = [
 ];
 
 const COMPETITION_START_DATE = new Date("August 01, 2021 00:00:01");
-const COMPETITION_END_DATE = new Date("October 1, 2021 00:00:00");
+const COMPETITION_END_DATE = new Date("October 01, 2021 00:00:00");
 
 function mapToOptionTransactions(trade, market, network) {
   return {

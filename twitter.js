@@ -6,7 +6,7 @@ const { TwitterApi } = require("twitter-api-v2");
 const twitterClient = new TwitterApi(bearerToken);
 const { delay } = require("./services/utils");
 const THREE_MONTHS = 1000 /*ms*/ * 60 /*s*/ * 60 /*min*/ * 24 /*h*/ * 30 /*days*/ * 3; /*months*/
-const keyTweet = "Please let me join the Thales trading competition with address";
+const keyTweet = "I'm joining the @Thalesmarket trading competition with address";
 const verifiedUsers = new Set();
 const verifiedTwitterIds = new Set();
 const twitterAccMap = new Map();
@@ -53,7 +53,8 @@ async function verifyAccounts() {
 
     tweets.map((tweet) => {
       if (!verifiedTwitterIds.has(tweet.author_id)) {
-        const address = tweet.text.substring(keyTweet.length).trim().toLowerCase();
+        const dotPosition = tweet.text.indexOf(".");
+        const address = tweet.text.substring(keyTweet.length, dotPosition).trim().toLowerCase();
         const createdDate = new Date(usersInfoMap[tweet.author_id].createdAt);
         if (!verifiedUsers.has(address) && new Date() - createdDate > THREE_MONTHS) {
           verifiedUsers.add(address);

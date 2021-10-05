@@ -11,7 +11,7 @@ if (process.env.REDIS_URL) {
 
   redisClient.get(KEYS.ROPSTEN_WATCHLIST, function (err, obj) {
     const ropstenWatchlistMapRaw = obj;
-    console.log("ropstenWatchlistMap:" + ropstenWatchlistMapRaw);
+    console.log("ropstenWatchlistMapRaw:" + ropstenWatchlistMapRaw);
     if (ropstenWatchlistMapRaw) {
       ropstenWatchlistMap = new Map(JSON.parse(ropstenWatchlistMapRaw));
       console.log("ropstenWatchlistMap:" + ropstenWatchlistMap);
@@ -23,7 +23,7 @@ if (process.env.REDIS_URL) {
     console.log("mainnetWatchlistMapRaw:" + mainnetWatchlistMapRaw);
     if (mainnetWatchlistMapRaw) {
       mainnetWatchlistMap = new Map(JSON.parse(mainnetWatchlistMapRaw));
-      console.log("ropstenWatchlistMap:" + mainnetWatchlistMap);
+      console.log("mainnetWatchlistMapRaw:" + mainnetWatchlistMap);
     }
   });
 

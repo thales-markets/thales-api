@@ -15,6 +15,7 @@ const ENDPOINTS = {
   TOKEN_CAP: "/token/marketcap",
   TWITTER: "/twitter",
   TWITTER_ADDRESS: "/twitter/:walletAddress",
+  VERIFIED_USERS: "/verified-users",
 };
 
 module.exports = ENDPOINTS;

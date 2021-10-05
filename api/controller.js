@@ -173,9 +173,14 @@ app.post(ENDPOINTS.DISPLAY_NAME, (req, res) => {
 app.get(ENDPOINTS.AUTH, (req, res) => {
   const walletAddress = req.params.walletAddress.toLowerCase();
   redisClient.get(KEYS.VERIFIED_ACCOUNTS, function (err, obj) {
-    console.log("auth: ", obj);
     const verifiedUsers = new Set(JSON.parse(obj));
     res.send(verifiedUsers.has(walletAddress));
+  });
+});
+
+app.get(ENDPOINTS.VERIFIED_USERS, (req, res) => {
+  redisClient.get(KEYS.VERIFIED_ACCOUNTS, function (err, obj) {
+    res.send(obj);
   });
 });
 
