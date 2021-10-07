@@ -1,31 +1,38 @@
-### BUILD ALL IMAGES ###
-
+###### BUILD ALL IMAGES ######
 docker build -f Dockerfile.api -t thalesmarket/api .
 docker build -f Dockerfile.token -t thalesmarket/token  .
 docker build -f Dockerfile.twitter -t thalesmarket/twitter  .
 docker build -f Dockerfile.orders -t thalesmarket/orders  .
 docker build -f Dockerfile.leaderboard -t thalesmarket/leaderboard  .
 
-### PUSH IMAGES TO GIT ###
-
+###### PUSH IMAGES TO GIT ######
 docker push thalesmarket/api
 docker push thalesmarket/token
 docker push thalesmarket/twitter
 docker push thalesmarket/orders
 docker push thalesmarket/leaderboard
 
-### RUN SERVER LOCALLY ###
+###### RUN SERVER LOCALLY ######
 docker-compose -f docker-compose-dev.yml up
 
 
-### ENDPOINTS
+###### DEPLOY IMAGES ON PROD ######
+docker-compose pull thales-api
+docker-compose stop thales-api
+docker-compose up -d thales-api
 
-ROOT: "/",
-AUTH: "/auth/:walletAddress",
-OPTIONS: "/options/:networkParam/:addressParam",
-WATCHLIST_ADDRESS: "/watchlist/:networkParam/:walletAddressParam",
-DISPLAY_NAME_ADDRESS: "/display-name/:walletAddress",
-LEADERBOARD: "/leaderboard/:networkParam",
-TOKEN_PRICE: "/token/price",
-TOKEN_SUPLY: "/token/circulatingsupply",
-TOKEN_CAP: "/token/marketcap",
+docker-compose pull twitter
+docker-compose stop twitter
+docker-compose up -d twitter
+
+docker-compose pull leaderboard
+docker-compose stop leaderboard
+docker-compose up -d leaderboard
+
+docker-compose pull orders
+docker-compose stop orders
+docker-compose up -d orders
+
+docker-compose pull token
+docker-compose stop token
+docker-compose up -d token
