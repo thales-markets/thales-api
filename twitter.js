@@ -1,7 +1,7 @@
 const redis = require("redis");
 const KEYS = require("./redis/redis-keys");
 const bearerToken =
-  "AAAAAAAAAAAAAAAAAAAAAGz6TQEAAAAA8WX%2FHd3qh7tphr62GpkPpy6Me2c%3D5G4axPWp5ANxy2a4sAwir5mi7wZRGKV39TqFqlly6tuPL7mAJL";
+  "AAAAAAAAAAAAAAAAAAAAAAPYUQEAAAAAx%2FGZtMGWAFJ%2BphCQciCzs7hIxzI%3DaxjEg5QRRADRu4Qjqm3KLXMm5xRhxpTe4ouMV3lqrHsmgYnHRj";
 const { TwitterApi } = require("twitter-api-v2");
 const twitterClient = new TwitterApi(bearerToken);
 const { delay } = require("./services/utils");
@@ -35,6 +35,7 @@ async function verifyAccounts() {
   const searchResult = await twitterClient.search(keyTweet, {
     expansions: "author_id",
     "user.fields": "created_at,profile_image_url,name,username",
+    max_results: 100,
   });
 
   const tweets = searchResult.data.data;
@@ -52,7 +53,7 @@ async function verifyAccounts() {
     }, {});
 
     tweets.map((tweet) => {
-      if (!verifiedTwitterIds.has(tweet.author_id)) {
+      if (tweet.text.startsWith(keyTweet) && !verifiedTwitterIds.has(tweet.author_id)) {
         const dotPosition = tweet.text.indexOf(".");
         const address = tweet.text.substring(keyTweet.length, dotPosition).trim().toLowerCase();
         const createdDate = new Date(usersInfoMap[tweet.author_id].createdAt);
