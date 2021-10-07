@@ -26,7 +26,7 @@ if (process.env.REDIS_URL) {
       } catch (e) {
         console.log("Verify Accounts Error: ", e);
       }
-      await delay(2 * 1000);
+      await delay(5 * 1000);
     }
   }, 3000);
 }
