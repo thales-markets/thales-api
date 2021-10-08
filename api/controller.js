@@ -223,3 +223,10 @@ app.post(ENDPOINTS.WATCHLIST, (req, res) => {
     res.send({ data: ropstenWatchlistMap.get(walletAddress) });
   }
 });
+
+app.get(ENDPOINTS.ETH_BURNED, (req, res) => {
+  redisClient.get(KEYS.TOKEN, function (err, obj) {
+    const tokenMap = new Map(JSON.parse(obj));
+    res.send(JSON.parse(tokenMap.get("ethburned")));
+  });
+});

@@ -16,6 +16,7 @@ const ENDPOINTS = {
   TWITTER: "/twitter",
   TWITTER_ADDRESS: "/twitter/:walletAddress",
   VERIFIED_USERS: "/verified-users",
+  ETH_BURNED: "/utils/ethburned",
 };
 
 module.exports = ENDPOINTS;
