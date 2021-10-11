@@ -1,15 +1,15 @@
 const redis = require("redis");
 const KEYS = require("./redis/redis-keys");
 const bearerToken =
-  "AAAAAAAAAAAAAAAAAAAAAAPYUQEAAAAAx%2FGZtMGWAFJ%2BphCQciCzs7hIxzI%3DaxjEg5QRRADRu4Qjqm3KLXMm5xRhxpTe4ouMV3lqrHsmgYnHRj";
+  "AAAAAAAAAAAAAAAAAAAAAOf%2FUQEAAAAAmhcWd7CcVviCHSB2ACLpvmUQCJg%3DuhC8qkgLQSe8Br41zRv0nviBbgwbzvKRzzRVUk7KcnmcI0TWt6";
 const { TwitterApi } = require("twitter-api-v2");
 const twitterClient = new TwitterApi(bearerToken);
 const { delay } = require("./services/utils");
 const THREE_MONTHS = 1000 /*ms*/ * 60 /*s*/ * 60 /*min*/ * 24 /*h*/ * 30 /*days*/ * 3; /*months*/
 const keyTweet = "I'm joining the @Thalesmarket trading competition with address";
-const verifiedUsers = new Set();
-const verifiedTwitterIds = new Set();
-const twitterAccMap = new Map();
+let verifiedUsers = new Set();
+let verifiedTwitterIds = new Set();
+let twitterAccMap = new Map();
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -18,6 +18,17 @@ if (process.env.REDIS_URL) {
   redisClient.on("error", function (error) {
     console.error(error);
   });
+
+  redisClient.get(KEYS.VERIFIED_ACCOUNTS, function (err, obj) {
+    verifiedUsers = new Set(JSON.parse(obj));
+    console.log("verified users: ", verifiedUsers);
+  });
+
+  redisClient.get(KEYS.TWITTER_ACCOUNTS, function (err, obj) {
+    twitterAccMap = new Map(JSON.parse(obj));
+    console.log("twitterAccMap: ", twitterAccMap);
+  });
+
   setTimeout(async () => {
     while (true) {
       try {
@@ -26,16 +37,15 @@ if (process.env.REDIS_URL) {
       } catch (e) {
         console.log("Verify Accounts Error: ", e);
       }
-      await delay(5 * 1000);
+      await delay(10 * 1000);
     }
-  }, 3000);
+  }, 5000);
 }
 
 async function verifyAccounts() {
   const searchResult = await twitterClient.search(keyTweet, {
     expansions: "author_id",
     "user.fields": "created_at,profile_image_url,name,username",
-    max_results: 100,
   });
 
   const tweets = searchResult.data.data;
