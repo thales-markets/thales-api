@@ -21,6 +21,8 @@ thalesData = require("thales-data");
 const Web3 = require("web3");
 Web3Client = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 
+let verifiedUsers;
+
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -28,6 +30,7 @@ if (process.env.REDIS_URL) {
   redisClient.on("error", function (error) {
     console.error(error);
   });
+
   setTimeout(async () => {
     while (true) {
       try {
@@ -51,6 +54,15 @@ if (process.env.REDIS_URL) {
 
 async function processLeaderboard(network) {
   const leaderboard = new Map();
+  redisClient.get(KEYS.VERIFIED_ACCOUNTS, function (err, obj) {
+    verifiedUsers = JSON.parse(obj);
+    console.log("verified users: ", verifiedUsers);
+  });
+
+  verifiedUsers.map((user) => {
+    initUser(leaderboard, user);
+  });
+
   const markets = await thalesData.binaryOptions.markets({
     max: Infinity,
     network,
@@ -188,10 +200,12 @@ function processMintTx(leaderboard, market, tx) {
 
     if (isMarketEligibleForCompetition(market)) {
       volume = volume + tx.amount / 2;
-      netProfit = netProfit - tx.amount / 2;
-      investment = investment + tx.amount / 2;
-      gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
+      if (isMarketInMaturity(market)) {
+        netProfit = netProfit - tx.amount / 2;
+        investment = investment + tx.amount / 2;
+      }
     }
+    gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const competitionData = {
       volume,
@@ -293,8 +307,10 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
     if (isMarketEligibleForCompetition(market)) {
       volume = Number(volume + getTradeSizeInSUSD(trade, network));
       trades = trades + 1;
-      netProfit = calculateNetProfit(trade, market, network, competitionStats.netProfit, token);
-      investment = calculateInvestment(trade, market, network, competitionStats.investment, token);
+      if (isMarketInMaturity(market)) {
+        netProfit = calculateNetProfit(trade, market, network, competitionStats.netProfit, token);
+        investment = calculateInvestment(trade, market, network, competitionStats.investment, token);
+      }
     }
 
     gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
@@ -468,7 +484,6 @@ function isMarketEligibleForCompetition(market) {
   }
   return false;
 }
-
 const addressesToExclude = [
   "0x461783a831e6db52d68ba2f3194f6fd1e0087e04",
   "0xcae07c9bec312a69856148f9821359d7c27dc51c",
@@ -480,8 +495,14 @@ const addressesToExclude = [
   "0x924ef47993be036ebe72be1449d8bef627cd30a2",
 ];
 
-const COMPETITION_START_DATE = new Date("August 01, 2021 00:00:01");
-const COMPETITION_END_DATE = new Date("October 01, 2021 00:00:00");
+const marketsForCompetition = [
+  "0x6c23b126799ac6e35ed7e46b475db63f66221ef6",
+  "0x2f6dd67cbfba9cbcf1ab536296cf6976711bcfcc",
+  "0xf585adc6cf19286346d5004cb39805012fa4fadd",
+];
+
+const COMPETITION_START_DATE = new Date("Oct 10 2021 10:00:00 UTC");
+const COMPETITION_END_DATE = new Date("Nov 01 2021 11:00:00 UTC");
 
 function mapToOptionTransactions(trade, market, network) {
   return {
