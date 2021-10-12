@@ -43,12 +43,11 @@ function calculateNetProfit(trade, market, network, currentProfit, token) {
   return currentProfit;
 }
 
-function calculateInvestment(trade, market, network, currentInvestment, token) {
-  if (isMarketInMaturity(market)) {
-    if (token === getStableToken(network)) {
-      return currentInvestment + getTradeSizeInSUSD(trade, network);
-    }
+function calculateInvestment(trade, network, currentInvestment, token) {
+  if (token === getStableToken(network)) {
+    return currentInvestment + getTradeSizeInSUSD(trade, network);
   }
+
   return currentInvestment;
 }
 
