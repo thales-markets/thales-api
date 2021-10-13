@@ -1,7 +1,7 @@
 const redis = require("redis");
 const KEYS = require("./redis/redis-keys");
 const bearerToken =
-  "AAAAAAAAAAAAAAAAAAAAAOf%2FUQEAAAAAmhcWd7CcVviCHSB2ACLpvmUQCJg%3DuhC8qkgLQSe8Br41zRv0nviBbgwbzvKRzzRVUk7KcnmcI0TWt6";
+  "AAAAAAAAAAAAAAAAAAAAAGz6TQEAAAAAV7KlHytYVP%2B9qg%2FwUQkbM1DRDPo%3D5I6aipmnznMoxExDZDUity9k6N5hLyPTXH8d5U2tBw2ocTAl0d";
 const { TwitterApi } = require("twitter-api-v2");
 const twitterClient = new TwitterApi(bearerToken);
 const { delay } = require("./services/utils");
@@ -26,10 +26,19 @@ if (process.env.REDIS_URL) {
 
   redisClient.get(KEYS.TWITTER_ACCOUNTS, function (err, obj) {
     twitterAccMap = new Map(JSON.parse(obj));
-    console.log("twitterAccMap: ", twitterAccMap);
+    for (const [key, value] of twitterAccMap.entries()) {
+      const username = value.twitter.substring("https://twitter.com/".length);
+      twitterClient.v2.userByUsername(username).then((user) => {
+        console.log("user: ", user);
+        verifiedTwitterIds.add(user.data.id);
+      });
+    }
   });
 
   setTimeout(async () => {
+    console.log(verifiedTwitterIds);
+    const twitterIds = Array.from(verifiedTwitterIds);
+    redisClient.set(KEYS.TWITTER_IDS, JSON.stringify(twitterIds));
     while (true) {
       try {
         console.log("Verify Accounts");
@@ -37,7 +46,7 @@ if (process.env.REDIS_URL) {
       } catch (e) {
         console.log("Verify Accounts Error: ", e);
       }
-      await delay(10 * 1000);
+      await delay(30 * 1000);
     }
   }, 5000);
 }
@@ -79,6 +88,8 @@ async function verifyAccounts() {
   if (process.env.REDIS_URL) {
     const users = Array.from(verifiedUsers);
     redisClient.set(KEYS.VERIFIED_ACCOUNTS, JSON.stringify(users));
+    const twitterIds = Array.from(verifiedTwitterIds);
+    redisClient.set(KEYS.TWITTER_IDS, JSON.stringify(twitterIds));
     redisClient.set(KEYS.TWITTER_ACCOUNTS, JSON.stringify([...twitterAccMap]), function () {});
   }
 }

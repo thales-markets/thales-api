@@ -13,6 +13,7 @@ const KEYS = {
   TOKEN: "tokenMap",
   VERIFIED_ACCOUNTS: "verifiedAccounts",
   TWITTER_ACCOUNTS: "twitterAccounts",
+  TWITTER_IDS: "twitterIds",
 };
 
 module.exports = KEYS;
