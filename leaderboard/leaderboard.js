@@ -1,5 +1,6 @@
-const KEYS = require("./redis/redis-keys");
+const KEYS = require("../redis/redis-keys");
 
+const { delay } = require("../services/utils");
 const {
   getStableToken,
   getTradeSizeInSUSD,
@@ -7,12 +8,11 @@ const {
   calculateInvestment,
   getBalance,
   isMarketInMaturity,
-  delay,
   getAmountOfTokens,
   getPricePerToken,
   getTradeType,
   getSidePerTrade,
-} = require("./services/utils");
+} = require("./utils");
 
 require("dotenv").config();
 const redis = require("redis");
