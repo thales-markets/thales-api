@@ -288,7 +288,7 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
     let volume = Number(allTimeStats.volume + getTradeSizeInSUSD(trade, network));
     let trades = allTimeStats.trades + 1;
     let netProfit = calculateNetProfit(trade, market, network, allTimeStats.netProfit, token);
-    let investment = calculateInvestment(trade, market, network, allTimeStats.investment, token);
+    let investment = calculateInvestment(trade, network, allTimeStats.investment, token);
     let gain = investment > 0 && netProfit !== 0 ? ((parseInt(netProfit) / parseInt(investment)) * 100).toFixed(1) : 0;
 
     const leaderboardAllTimeData = {
@@ -309,7 +309,7 @@ function processTradeTx(leaderboard, market, trade, user, token, network) {
       trades = trades + 1;
       if (isMarketInMaturity(market)) {
         netProfit = calculateNetProfit(trade, market, network, competitionStats.netProfit, token);
-        investment = calculateInvestment(trade, market, network, competitionStats.investment, token);
+        investment = calculateInvestment(trade, network, competitionStats.investment, token);
       }
     }
 
