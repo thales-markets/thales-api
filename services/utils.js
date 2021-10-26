@@ -21,7 +21,7 @@ function getPricePerToken(trade, network) {
 }
 
 function getTradeType(trade, network) {
-  return trade.makerToken === getStableToken(network) ? "buy" : "sell";
+  return trade.takerToken === getStableToken(network) ? "buy" : "sell";
 }
 
 function getSidePerTrade(trade, market, network) {
