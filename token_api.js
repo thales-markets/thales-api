@@ -1,7 +1,4 @@
-const DODO_LP_ADDRESS = "0x031816fd297228e4fd537c1789d51509247d0b43";
 const DAO_TREASURY_AMOUNT = 18000000;
-
-const dodoLpAbi = require("./abi/dodoLp");
 const circulatingSupplyList = require("./assets/circulating-supply.json");
 
 require("dotenv").config();
@@ -93,15 +90,11 @@ setTimeout(processToken, 1000 * 3);
 setInterval(processToken, 1000 * 30);
 
 async function getPrice() {
-  const contract = new Web3Client.eth.Contract(dodoLpAbi, DODO_LP_ADDRESS);
   try {
-    const priceInEth = await contract.methods.getMidPrice().call();
+    const gcThalesResponse = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=thales&vs_currencies=usd");
+    const gcThalesResponseJson = await gcThalesResponse.json();
+    const price = gcThalesResponseJson.thales.usd;
 
-    const gcEthResponse = await fetch("https://api.coingecko.com/api/v3/coins/ethereum");
-    const gcEthResponseJson = await gcEthResponse.json();
-    const ethPrice = gcEthResponseJson.market_data.current_price.usd;
-
-    const price = (priceInEth * ethPrice) / 1e18;
     return price;
   } catch (e) {
     console.log(e);
