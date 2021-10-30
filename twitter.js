@@ -1,7 +1,7 @@
 const redis = require("redis");
 const KEYS = require("./redis/redis-keys");
 const bearerToken =
-  "AAAAAAAAAAAAAAAAAAAAAGz6TQEAAAAAV7KlHytYVP%2B9qg%2FwUQkbM1DRDPo%3D5I6aipmnznMoxExDZDUity9k6N5hLyPTXH8d5U2tBw2ocTAl0d";
+  "AAAAAAAAAAAAAAAAAAAAALK4VAEAAAAAG25WupiUd7xDANrA%2BwiBy%2FGUj7w%3D1zbb5ixozinHtXznJ64X8Ai2qPxGWo9IRZ4hU6i8MKMMPxMr8P";
 const { TwitterApi } = require("twitter-api-v2");
 const twitterClient = new TwitterApi(bearerToken);
 const { delay } = require("./services/utils");
