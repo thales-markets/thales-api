@@ -78,6 +78,13 @@ app.get(ENDPOINTS.TWITTER, (req, res) => {
   });
 });
 
+app.get(ENDPOINTS.THALES_ROYALE, (req, res) => {
+  redisClient.get(KEYS.DISCORD_USERS, function (err, obj) {
+    const discordData = new Map(JSON.parse(obj));
+    res.send(Array.from(discordData));
+  });
+});
+
 app.get(ENDPOINTS.LEADERBOARD, (req, res) => {
   const network = req.params.networkParam;
   if (network == 1) {

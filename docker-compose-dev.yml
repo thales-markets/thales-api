@@ -50,5 +50,16 @@ services:
     environment:
       - "REDIS_URL=redis://redis:6379"
       - "INFURA_URL=https://mainnet.infura.io/v3/d3587dd16b0740219618067e9e517a54"
+  royale:
+    restart: always
+    image: thalesmarket/royale
+    depends_on:
+      - redis
+    environment:
+      - "REDIS_URL=redis://redis:6379"
+      - "INFURA_URL=https://optimism-kovan.infura.io/v3/16f15a8ff9f54b2394086bda0b237611"
+      - "SENDER=0xA4218B01d75C2AEede0f7213c59cD137A41Ab720"
+      - "SIGN=3846cc8fcb01a21d96b1986c25845f3ff4e781fa3c6d9111535c4a141f92ddc2"
+      - "AMOUNT=0.001"
 volumes:
   redis-data:

@@ -14,6 +14,10 @@ const KEYS = {
   VERIFIED_ACCOUNTS: "verifiedAccounts",
   TWITTER_ACCOUNTS: "twitterAccounts",
   TWITTER_IDS: "twitterIds",
+  DISCORD_IDS: "discordIds",
+  VERIFIED_ADDRESSES_DISCORD: "verifiedUsersDiscord",
+  DISCORD_USERS: "discordUsers",
+  FAUCET_CONSUMERS: "faucetConsumers",
 };
 
 module.exports = KEYS;
