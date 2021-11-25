@@ -70,11 +70,11 @@ const verifyUsers = async () => {
   let hasNewData = false;
   let nonce = await web3.eth.getTransactionCount(SENDER);
   for (const [key, value] of Object.entries(data)) {
+    discordData.set(key.toLowerCase(), value);
     if (!verifiedDiscordIds.has(value.id) && !verifiedAddresses.has(key)) {
       console.log("New User verified");
       verifiedAddresses.add(key);
       verifiedDiscordIds.add(value.id);
-      discordData.set(key.toLowerCase(), value);
       hasNewData = true;
       arrPromises.push(transferFund(key, nonce));
       nonce = nonce + 1;
@@ -88,14 +88,14 @@ const verifyUsers = async () => {
     } catch (e) {
       console.log(e);
     }
+  }
 
-    if (REDIS_URL) {
-      const addresses = Array.from(verifiedAddresses);
-      redisClient.set(KEYS.VERIFIED_ADDRESSES_DISCORD, JSON.stringify(addresses));
-      const discordIDs = Array.from(verifiedDiscordIds);
-      redisClient.set(KEYS.DISCORD_IDS, JSON.stringify(discordIDs));
-      redisClient.set(KEYS.DISCORD_USERS, JSON.stringify([...discordData]), function () {});
-    }
+  if (REDIS_URL) {
+    const addresses = Array.from(verifiedAddresses);
+    redisClient.set(KEYS.VERIFIED_ADDRESSES_DISCORD, JSON.stringify(addresses));
+    const discordIDs = Array.from(verifiedDiscordIds);
+    redisClient.set(KEYS.DISCORD_IDS, JSON.stringify(discordIDs));
+    redisClient.set(KEYS.DISCORD_USERS, JSON.stringify([...discordData]), function () {});
   }
 };
 
