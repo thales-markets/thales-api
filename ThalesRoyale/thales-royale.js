@@ -69,6 +69,7 @@ const verifyUsers = async () => {
   const arrPromises = [];
   let hasNewData = false;
   let nonce = await web3.eth.getTransactionCount(SENDER);
+  discordData = new Map();
   for (const [key, value] of Object.entries(data)) {
     discordData.set(key.toLowerCase(), value);
     if (!verifiedDiscordIds.has(value.id) && !verifiedAddresses.has(key)) {
