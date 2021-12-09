@@ -10,6 +10,7 @@ const KEYS = {
   ROPSTEN_LEADERBOARD: "ropstenLeaderboard",
   ROPSTEN_COMPETITION: "ropstenCompetition",
   ROPSTEN_PROFILES: "ropstenProfiles",
+  OPTIMISM_ORDERS: "optimismOrders",
   TOKEN: "tokenMap",
   VERIFIED_ACCOUNTS: "verifiedAccounts",
   TWITTER_ACCOUNTS: "twitterAccounts",

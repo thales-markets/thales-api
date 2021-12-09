@@ -29,7 +29,7 @@ app.get(ENDPOINTS.OPTIONS, (req, res) => {
       } else res.send("0");
     });
   } else {
-    redisClient.get(KEYS.ROPSTEN_ORDERS, function (err, obj) {
+    redisClient.get(KEYS.OPTIMISM_ORDERS, function (err, obj) {
       const orders = new Map(JSON.parse(obj));
       if (orders.has(add)) {
         res.send(orders.get(add) + "");
@@ -46,7 +46,7 @@ app.get(ENDPOINTS.ORDERS, (req, res) => {
       res.send(Array.from(orders));
     });
   } else {
-    redisClient.get(KEYS.ROPSTEN_ORDERS, function (err, obj) {
+    redisClient.get(KEYS.OPTIMISM_ORDERS, function (err, obj) {
       const orders = new Map(JSON.parse(obj));
       res.send(Array.from(orders));
     });
