@@ -61,18 +61,17 @@ async function processOrders(network) {
         ]);
 
         const responseLongBuy = await responses[0].json();
-        const totalLongBuy = responseLongBuy.length;
-
         const responseShortBuy = await responses[1].json();
-        const totalShortBuy = responseShortBuy.length;
-
         const responseLongSell = await responses[2].json();
-        const totalLongSell = responseLongSell.length;
-
         const responseShortSell = await responses[3].json();
-        const totalShortSell = responseShortSell.length;
 
-        const ordersCount = totalLongBuy + totalShortBuy + totalLongSell + totalShortSell;
+        const ordersCount = [...responseLongBuy, ...responseShortBuy, ...responseLongSell, ...responseShortSell].filter(
+          (order) => {
+            const hexTimestmap = "0x" + order.data.predicate.split("63592c2b")[1].substr(0, 64);
+            const timeRemaining = parseInt(hexTimestmap, 16) * 1000;
+            return timeRemaining >= Date.now();
+          },
+        ).length;
 
         network === 1
           ? mainnetOptionsMap.set(market.address, ordersCount)
