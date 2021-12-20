@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const ammABI = require("./abi/amm");
 const redis = require("redis");
+const ethers = require("ethers");
 thalesData = require("thales-data");
 const KEYS = require("./redis/redis-keys");
 fetch = require("node-fetch");
@@ -13,7 +14,7 @@ const optimismOptionsMap = new Map();
 const SYNTH_USD_ETH_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
 const SYNTH_USD_OP_MAINNET = "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9";
 
-const AMM_ADDRESS = "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9";
+const AMM_ADDRESS = "0x5ae7454827D83526261F3871C1029792644Ef1B1";
 
 const ONEINCH_URL_ETH_MAINNET = "https://limit-orders.1inch.io/v1.0/1/limit-order/";
 const ONEINCH_URL_OP_MAINNET = "https://limit-orders.1inch.io/v1.0/10/limit-order/";
@@ -57,6 +58,7 @@ async function processOrders(network) {
       try {
         const baseUrl = network === 1 ? ONEINCH_URL_ETH_MAINNET : ONEINCH_URL_OP_MAINNET;
         const token = network === 1 ? SYNTH_USD_ETH_MAINNET : SYNTH_USD_OP_MAINNET;
+
         const responses = await Promise.all([
           fetch(baseUrl + `all?limit=500&takerAsset=` + market.longAddress + `&makerAsset=` + token),
           fetch(baseUrl + `all?limit=500&takerAsset=` + market.shortAddress + `&makerAsset=` + token),
@@ -80,16 +82,25 @@ async function processOrders(network) {
         let marketInfoObject = {};
         marketInfoObject.ordersCount = ordersCount;
 
-        const Web3ClientTemp = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
+        let etherprovider;
         if ("optimism" == process.env.NETWORK) {
-          const Web3ClientTemp = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL_OPTIMISM));
+          etherprovider = new ethers.providers.InfuraProvider(
+            { chainId: Number(process.env.NETWORK_ID), name: process.env.NETWORK },
+            process.env.INFURA_URL_OPTIMISM,
+          );
+        } else {
+          etherprovider = new ethers.providers.InfuraProvider(
+            { chainId: Number(process.env.NETWORK_ID), name: process.env.NETWORK },
+            process.env.INFURA_URL,
+          );
         }
-        const ammContract = new Web3ClientTemp.eth.Contract(ammABI, AMM_ADDRESS);
+        const ammContract = new ethers.Contract(AMM_ADDRESS, ammABI, etherprovider);
+
         try {
-          const availableLongs = await contract.methods.availableToBuyFromAMM(market.address, 0).call();
-          const availableShorts = await contract.methods.availableToBuyFromAMM(market.address, 1).call();
-          marketInfoObject.availableLongs = availableLongs;
-          marketInfoObject.availableShorts = availableShorts;
+          const availableLongs = await ammContract.availableToBuyFromAMM(market.address, 0);
+          const availableShorts = await ammContract.availableToBuyFromAMM(market.address, 1);
+          marketInfoObject.availableLongs = ethers.utils.formatEther(availableLongs);
+          marketInfoObject.availableShorts = ethers.utils.formatEther(availableShorts);
         } catch (e) {
           console.log(e);
         }
