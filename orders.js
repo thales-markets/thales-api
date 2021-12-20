@@ -1,4 +1,6 @@
 require("dotenv").config();
+
+const ammABI = require("./abi/amm");
 const redis = require("redis");
 thalesData = require("thales-data");
 const KEYS = require("./redis/redis-keys");
@@ -10,6 +12,8 @@ const optimismOptionsMap = new Map();
 
 const SYNTH_USD_ETH_MAINNET = "0x57ab1ec28d129707052df4df418d58a2d46d5f51";
 const SYNTH_USD_OP_MAINNET = "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9";
+
+const AMM_ADDRESS = "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9";
 
 const ONEINCH_URL_ETH_MAINNET = "https://limit-orders.1inch.io/v1.0/1/limit-order/";
 const ONEINCH_URL_OP_MAINNET = "https://limit-orders.1inch.io/v1.0/10/limit-order/";
@@ -73,9 +77,26 @@ async function processOrders(network) {
           },
         ).length;
 
+        let marketInfoObject = {};
+        marketInfoObject.ordersCount = ordersCount;
+
+        const Web3ClientTemp = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
+        if ("optimism" == process.env.NETWORK) {
+          const Web3ClientTemp = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL_OPTIMISM));
+        }
+        const ammContract = new Web3ClientTemp.eth.Contract(ammABI, AMM_ADDRESS);
+        try {
+          const availableLongs = await contract.methods.availableToBuyFromAMM(market.address, 0).call();
+          const availableShorts = await contract.methods.availableToBuyFromAMM(market.address, 1).call();
+          marketInfoObject.availableLongs = availableLongs;
+          marketInfoObject.availableShorts = availableShorts;
+        } catch (e) {
+          console.log(e);
+        }
+
         network === 1
-          ? mainnetOptionsMap.set(market.address, ordersCount)
-          : optimismOptionsMap.set(market.address, ordersCount);
+          ? mainnetOptionsMap.set(market.address, marketInfoObject)
+          : optimismOptionsMap.set(market.address, marketInfoObject);
         if (process.env.REDIS_URL) {
           redisClient.set(
             network === 1 ? KEYS.MAINNET_ORDERS : KEYS.OPTIMISM_ORDERS,
