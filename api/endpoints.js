@@ -18,6 +18,8 @@ const ENDPOINTS = {
   VERIFIED_USERS: "/verified-users",
   ETH_BURNED: "/utils/ethburned",
   THALES_ROYALE: "/thales-royale",
+  GAME_STARTED: "/game-started",
+  GAME_ENDED: "/game-ended",
 };
 
 module.exports = ENDPOINTS;

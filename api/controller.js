@@ -237,3 +237,32 @@ app.get(ENDPOINTS.ETH_BURNED, (req, res) => {
     res.send(JSON.parse(tokenMap.get("ethburned")));
   });
 });
+
+app.post(ENDPOINTS.GAME_STARTED, (req, res) => {
+  const walletAddress = req.body.walletAddress;
+  let gameStartedCount = gameFinishersMap.get('gameStartedCount') || 0;
+  gameFinishersMap.set('gameStartedCount', gameStartedCount + 1);
+
+  if (walletAddress) {
+    const userObject = gameFinishersMap.get(walletAddress);
+    gameFinishersMap.set(walletAddress, {...userObject, startedTime: Date.now()});
+  }
+
+  redisClient.set("gameFinishersMap", JSON.stringify([...gameFinishersMap]), function () {});
+  res.send();
+});
+
+app.post(ENDPOINTS.GAME_ENDED, (req, res) => {
+  const walletAddress = req.body.walletAddress;
+  let gameFinishedCount = gameFinishersMap.get('gameFinishedCount') || 0;
+  gameFinishersMap.set('gameFinishedCount', gameFinishedCount + 1);
+
+  if (walletAddress) {
+    const userObject = gameFinishersMap.get(walletAddress);
+    const endedTime = Date.now();
+    gameFinishersMap.set(walletAddress, {...userObject, endedTime, finished: userObject.finished || (endedTime - userObject.startedTime > 120000)});
+  }
+
+  redisClient.set("gameFinishersMap", JSON.stringify([...gameFinishersMap]), function () {});
+  res.send();
+});
