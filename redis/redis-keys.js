@@ -19,7 +19,7 @@ const KEYS = {
   VERIFIED_ADDRESSES_DISCORD: "verifiedUsersDiscord",
   DISCORD_USERS: "discordUsers",
   FAUCET_CONSUMERS: "faucetConsumers",
-  GAME_FINISHERS: "gameFinishers",
+  GAME_FINISHERS: "gameFinishersMap",
 };
 
 module.exports = KEYS;

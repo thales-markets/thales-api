@@ -248,7 +248,7 @@ app.post(ENDPOINTS.GAME_STARTED, (req, res) => {
     gameFinishersMap.set(walletAddress, {...userObject, startedTime: Date.now()});
   }
 
-  redisClient.set("gameFinishersMap", JSON.stringify([...gameFinishersMap]), function () {});
+  redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]), function () {});
   res.send();
 });
 
@@ -263,6 +263,6 @@ app.post(ENDPOINTS.GAME_ENDED, (req, res) => {
     gameFinishersMap.set(walletAddress, {...userObject, endedTime, finished: userObject.finished || (endedTime - userObject.startedTime > 120000)});
   }
 
-  redisClient.set("gameFinishersMap", JSON.stringify([...gameFinishersMap]), function () {});
+  redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]), function () {});
   res.send();
 });
