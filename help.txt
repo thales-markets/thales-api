@@ -42,3 +42,10 @@ docker-compose up -d token
 docker-compose pull royale
 docker-compose stop royale
 docker-compose up -d royale
+
+
+### OPEN REDIS CLI ON SERVER ###
+- Access SERVER
+- Run: docker ps
+- Copy "CONTAINER ID" of redis:alpine
+- Run: docker exec -it "CONTAINER ID" redis-cli
