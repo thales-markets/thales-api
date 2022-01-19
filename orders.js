@@ -101,6 +101,11 @@ async function processOrders(network) {
           const availableShorts = await ammContract.availableToBuyFromAMM(market.address, 1);
           marketInfoObject.availableLongs = ethers.utils.formatEther(availableLongs);
           marketInfoObject.availableShorts = ethers.utils.formatEther(availableShorts);
+
+          const longPrice = await ammContract.buyFromAmmQuote(market.address, 0, ethers.utils.parseEther("1"));
+          const shortPrice = await ammContract.buyFromAmmQuote(market.address, 1, ethers.utils.parseEther("1"));
+          marketInfoObject.longPrice = ethers.utils.formatEther(longPrice);
+          marketInfoObject.shortPrice = ethers.utils.formatEther(shortPrice);
         } catch (e) {
           console.log(e);
         }
