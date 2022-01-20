@@ -34,6 +34,14 @@ if (process.env.REDIS_URL) {
       displayNameMap = new Map(JSON.parse(displayNameMapRaw));
     }
   });
+  
+  redisClient.get(KEYS.ROYALE_USERS, function (err, obj) {
+    const royaleUsersDataRaw = obj;
+    console.log("royaleUsers:" + royaleUsersDataRaw);
+    if (royaleUsersDataRaw) {
+      royaleUsersDataMap = new Map(JSON.parse(royaleUsersDataRaw));
+    }
+  });
 
   redisClient.get(KEYS.GAME_FINISHERS, function (err, obj) {
     const gameFinishersMapRaw = obj;

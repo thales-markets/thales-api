@@ -85,6 +85,32 @@ app.get(ENDPOINTS.THALES_ROYALE, (req, res) => {
   });
 });
 
+app.get(ENDPOINTS.ROYALE_USERS, (req, res) => {
+  redisClient.get(KEYS.ROYALE_USERS, function (err, obj) {
+    const royaleUsersData = new Map(JSON.parse(obj));
+    res.send(Array.from(royaleUsersData));
+  });
+});
+
+app.post(ENDPOINTS.ROYALE_USER_DATA, (req, res) => {
+  const walletAddress = req.body.walletAddress;
+  const name = req.body.name;
+  const avatar = req.body.avatar;
+  const signature = req.body.signature;
+
+  const recovered = sigUtil.recoverPersonalSignature({
+    data: name,
+    sig: signature,
+  });
+
+  if (recovered.toLowerCase() === walletAddress.toLowerCase()) {
+    const userData = { name: name, avatar: avatar };
+    royaleUsersDataMap.set(walletAddress.toLowerCase(), userData);
+    redisClient.set(KEYS.ROYALE_USERS, JSON.stringify([...royaleUsersDataMap]), function () {});
+    res.send({ name: royaleUsersDataMap.get(walletAddress) });
+  }
+});
+
 app.get(ENDPOINTS.LEADERBOARD, (req, res) => {
   const network = req.params.networkParam;
   if (network == 1) {

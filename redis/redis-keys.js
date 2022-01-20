@@ -18,6 +18,8 @@ const KEYS = {
   DISCORD_IDS: "discordIds",
   VERIFIED_ADDRESSES_DISCORD: "verifiedUsersDiscord",
   DISCORD_USERS: "discordUsers",
+  ROYALE_USERS: "royaleUsers",
+  ROYALE_USER_DATA: "royaleUserData",
   FAUCET_CONSUMERS: "faucetConsumers",
   GAME_FINISHERS: "gameFinishersMap",
 };

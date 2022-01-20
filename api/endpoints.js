@@ -18,6 +18,8 @@ const ENDPOINTS = {
   VERIFIED_USERS: "/verified-users",
   ETH_BURNED: "/utils/ethburned",
   THALES_ROYALE: "/thales-royale",
+  ROYALE_USERS: "/royale-users",
+  ROYALE_USER_DATA: "/royale-user-data",
   GAME_STARTED: "/game-started",
   GAME_ENDED: "/game-ended",
 };
