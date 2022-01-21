@@ -143,7 +143,7 @@ async function getEthBurned() {
 }
 
 app.get(ENDPOINTS.TOKEN_DO_TRANSITION_MANUALLY, (req, res) => {
-  const walletAddress = req.body.walletAddress;
+  const walletAddress = req.params.walletAddress;
   redisClient.get(KEYS.USERS_REQUESTED_MANUAL_TRANSITION, function (err, obj) {
     const usersRequestedManualTransitionMap = new Map(JSON.parse(obj));
     if (usersRequestedManualTransitionMap.has(walletAddress)) {
