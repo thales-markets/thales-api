@@ -20,6 +20,7 @@ const KEYS = {
   DISCORD_USERS: "discordUsers",
   FAUCET_CONSUMERS: "faucetConsumers",
   GAME_FINISHERS: "gameFinishersMap",
+  USERS_REQUESTED_MANUAL_TRANSITION: "usersRequestedManualTransitionMap",
 };
 
 module.exports = KEYS;

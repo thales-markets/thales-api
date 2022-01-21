@@ -4,6 +4,7 @@ mainnetWatchlistMap = new Map();
 ropstenWatchlistMap = new Map();
 displayNameMap = new Map();
 gameFinishersMap = new Map();
+usersRequestedManualTransitionMap = new Map();
 
 require("dotenv").config();
 require("./redis/redis");

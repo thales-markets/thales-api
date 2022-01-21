@@ -18,6 +18,7 @@ const Web3 = require("web3");
 const Web3Client = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 
 const fetch = require("node-fetch");
+const KEYS = require("./redis/redis-keys");
 
 let redisClient = null;
 
@@ -140,3 +141,22 @@ async function getEthBurned() {
     yesterdayUsd: 0,
   };
 }
+
+app.get(ENDPOINTS.TOKEN_DO_TRANSITION_MANUALLY, (req, res) => {
+  const walletAddress = req.body.walletAddress;
+  redisClient.get(KEYS.USERS_REQUESTED_MANUAL_TRANSITION, function (err, obj) {
+    const usersRequestedManualTransitionMap = new Map(JSON.parse(obj));
+    if (usersRequestedManualTransitionMap.has(walletAddress)) {
+      res.send({ doTransactionManually: usersRequestedManualTransitionMap.get(walletAddress) });
+    } else {
+      res.send({ doTransactionManually: false });
+    }
+  });
+});
+app.post(ENDPOINTS.TOKEN_DO_TRANSITION_MANUALLY, (req, res) => {
+  const walletAddress = req.body.walletAddress;
+  const doTransactionManually = req.body.doTransactionManually;
+  usersRequestedManualTransitionMap.set(walletAddress, doTransactionManually)
+  redisClient.set(KEYS.USERS_REQUESTED_MANUAL_TRANSITION, JSON.stringify(usersRequestedManualTransitionMap), function () {});
+  res.send({ doTransactionManually: doTransactionManually });
+});

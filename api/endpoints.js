@@ -20,6 +20,7 @@ const ENDPOINTS = {
   THALES_ROYALE: "/thales-royale",
   GAME_STARTED: "/game-started",
   GAME_ENDED: "/game-ended",
+  TOKEN_DO_TRANSITION_MANUALLY: "/token/do-transition-manually",
 };
 
 module.exports = ENDPOINTS;
