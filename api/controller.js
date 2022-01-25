@@ -111,6 +111,13 @@ app.post(ENDPOINTS.ROYALE_USER_DATA, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.ROYALE_USER, (req, res) => {
+  const walletAddress = req.params.walletAddress;
+  const user = royaleUsersDataMap.get(walletAddress.toLowerCase());
+
+  res.send({ user: user });
+});
+
 app.get(ENDPOINTS.LEADERBOARD, (req, res) => {
   const network = req.params.networkParam;
   if (network == 1) {
@@ -266,12 +273,12 @@ app.get(ENDPOINTS.ETH_BURNED, (req, res) => {
 
 app.post(ENDPOINTS.GAME_STARTED, (req, res) => {
   const walletAddress = req.body.walletAddress;
-  let gameStartedCount = gameFinishersMap.get('gameStartedCount') || 0;
-  gameFinishersMap.set('gameStartedCount', gameStartedCount + 1);
+  let gameStartedCount = gameFinishersMap.get("gameStartedCount") || 0;
+  gameFinishersMap.set("gameStartedCount", gameStartedCount + 1);
 
   if (walletAddress) {
     const userObject = gameFinishersMap.get(walletAddress);
-    gameFinishersMap.set(walletAddress, {...userObject, startedTime: Date.now()});
+    gameFinishersMap.set(walletAddress, { ...userObject, startedTime: Date.now() });
   }
 
   redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]), function () {});
@@ -280,15 +287,23 @@ app.post(ENDPOINTS.GAME_STARTED, (req, res) => {
 
 app.post(ENDPOINTS.GAME_ENDED, (req, res) => {
   const walletAddress = req.body.walletAddress;
-  let gameFinishedCount = gameFinishersMap.get('gameFinishedCount') || 0;
-  gameFinishersMap.set('gameFinishedCount', gameFinishedCount + 1);
+  let gameFinishedCount = gameFinishersMap.get("gameFinishedCount") || 0;
+  gameFinishersMap.set("gameFinishedCount", gameFinishedCount + 1);
 
   if (walletAddress) {
     const userObject = gameFinishersMap.get(walletAddress);
     const endedTime = Date.now();
-    gameFinishersMap.set(walletAddress, {...userObject, endedTime, finished: userObject.finished || (endedTime - userObject.startedTime > 120000)});
+    gameFinishersMap.set(walletAddress, {
+      ...userObject,
+      endedTime,
+      finished: userObject.finished || endedTime - userObject.startedTime > 120000,
+    });
   }
 
   redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]), function () {});
   res.send();
+});
+
+app.get(ENDPOINTS.GAME_FINISHERS, (req, res) => {
+  res.send(Array.from(gameFinishersMap));
 });

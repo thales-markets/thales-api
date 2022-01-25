@@ -19,9 +19,11 @@ const ENDPOINTS = {
   ETH_BURNED: "/utils/ethburned",
   THALES_ROYALE: "/thales-royale",
   ROYALE_USERS: "/royale-users",
+  ROYALE_USER: "/royale-user/:walletAddress",
   ROYALE_USER_DATA: "/royale-user-data",
   GAME_STARTED: "/game-started",
   GAME_ENDED: "/game-ended",
+  GAME_FINISHERS: "/game-finishers",
 };
 
 module.exports = ENDPOINTS;
