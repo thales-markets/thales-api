@@ -34,13 +34,19 @@ if (process.env.REDIS_URL) {
       displayNameMap = new Map(JSON.parse(displayNameMapRaw));
     }
   });
-  
-  redisClient.get(KEYS.ROYALE_USERS, function (err, obj) {
-    const royaleUsersDataRaw = obj;
-    console.log("royaleUsers:" + royaleUsersDataRaw);
-    if (royaleUsersDataRaw) {
-      royaleUsersDataMap = new Map(JSON.parse(royaleUsersDataRaw));
-    }
+
+  redisClient.get(KEYS.DISCORD_USERS, function (err, obj) {
+    discordData = new Map(JSON.parse(obj));
+    migrateUsers(discordData);
+    // this shoud be moved outside the block after migration --------- //
+    redisClient.get(KEYS.ROYALE_USERS, function (err, obj) {
+      const royaleUsersDataRaw = obj;
+      console.log("royaleUsers:" + royaleUsersDataRaw);
+      if (royaleUsersDataRaw) {
+        royaleUsersDataMap = new Map(JSON.parse(royaleUsersDataRaw));
+      }
+    });
+    // this shoud be moved outside the block after migration --------- //
   });
 
   redisClient.get(KEYS.GAME_FINISHERS, function (err, obj) {
@@ -51,3 +57,13 @@ if (process.env.REDIS_URL) {
     }
   });
 }
+
+const migrateUsers = (discordUsers) => {
+  const newMap = new Map();
+  console.log("hello: ", discordUsers);
+  discordUsers.forEach(function (value, key) {
+    console.log(key + " = " + value);
+    newMap.set(key, { name: value.name, avatar: value.avatar });
+  });
+  redisClient.set(KEYS.ROYALE_USERS, JSON.stringify([...newMap]), function () {});
+};
