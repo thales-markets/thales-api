@@ -22,6 +22,12 @@ const KEYS = {
   ROYALE_USER_DATA: "royaleUserData",
   FAUCET_CONSUMERS: "faucetConsumers",
   GAME_FINISHERS: "gameFinishersMap",
+  LEADERBOARD: {
+    10: "optimismLeaderboard",
+    137: "polygonLeaderboard",
+    69: "kovanOpLeaderboard",
+    80001: "mumbaiLeaderboard",
+  },
 };
 
 module.exports = KEYS;

@@ -120,16 +120,12 @@ app.get(ENDPOINTS.ROYALE_USER, (req, res) => {
 
 app.get(ENDPOINTS.LEADERBOARD, (req, res) => {
   const network = req.params.networkParam;
-  if (network == 1) {
-    redisClient.get(KEYS.MAINNET_LEADERBOARD, function (err, obj) {
-      const leaderboard = new Map(JSON.parse(obj));
-      res.send(Array.from(leaderboard));
+  if ([10, 69, 137, 80001].includes(Number(network))) {
+    redisClient.get(KEYS.LEADERBOARD[network], function (err, obj) {
+      res.send(obj);
     });
   } else {
-    redisClient.get(KEYS.ROPSTEN_LEADERBOARD, function (err, obj) {
-      const leaderboard = new Map(JSON.parse(obj));
-      res.send(Array.from(leaderboard));
-    });
+    res.send("Bad Network");
   }
 });
 
