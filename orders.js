@@ -26,7 +26,7 @@ if (process.env.REDIS_URL) {
         console.log("orders on optimism error: ", error);
       }
 
-      await delay(5 * 1000);
+      await delay(10 * 1000);
 
       try {
         console.log("process orders on polygon");
@@ -35,7 +35,7 @@ if (process.env.REDIS_URL) {
         console.log("orders on optimism error: ", error);
       }
 
-      await delay(5 * 1000);
+      await delay(10 * 1000);
 
       try {
         console.log("process orders on mumbai");
@@ -44,7 +44,7 @@ if (process.env.REDIS_URL) {
         console.log("orders on optimism error: ", error);
       }
 
-      await delay(5 * 1000);
+      await delay(10 * 1000);
 
       try {
         console.log("process orders on kovan-OVM");
@@ -53,7 +53,7 @@ if (process.env.REDIS_URL) {
         console.log("orders on optimism error: ", error);
       }
 
-      await delay(20 * 1000);
+      await delay(60 * 1000);
     }
   }, 3000);
 }
