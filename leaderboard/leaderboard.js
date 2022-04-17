@@ -10,6 +10,9 @@ const { delay } = require("../services/utils");
 const KEYS = require("../redis/redis-keys");
 const ammContract = require("../contracts/amm");
 
+const START_DATE = new Date(Date.UTC(2022, 3, 18, 15));
+const END_DATE = new Date(Date.UTC(2022, 4, 9, 15));
+
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -59,87 +62,84 @@ const processLeaderboard = async (networkId) => {
 
       marketTxs.map((tx) => {
         if (tx.account.toLowerCase() !== ammContract.addresses[networkId].toLowerCase()) {
-          let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
-          if (map.has(tx.account)) {
-            const user = map.get(tx.account.toLowerCase());
-            [profit, volume, trades, gain, investment] = [
-              user.profit,
-              user.volume,
-              user.trades,
-              user.gain,
-              user.investment,
-            ];
-          }
+          if (networkId !== 137 || (START_DATE <= new Date(tx.timestamp) && new Date(tx.timestamp) <= END_DATE)) {
+            let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
+            if (map.has(tx.account)) {
+              const user = map.get(tx.account.toLowerCase());
+              [profit, volume, trades, gain, investment] = [
+                user.profit,
+                user.volume,
+                user.trades,
+                user.gain,
+                user.investment,
+              ];
+            }
 
-          if (tx.type === "mint") {
-            volume += tx.amount / 2;
-            profit -= tx.amount / 2;
-            investment += tx.amount / 2;
-          } else {
-            profit += tx.amount;
-          }
+            if (tx.type === "mint") {
+              volume += tx.amount / 2;
+              profit -= tx.amount / 2;
+              investment += tx.amount / 2;
+            } else {
+              profit += tx.amount;
+            }
 
-          if (profit === 0 || investment === 0) {
-            gain = 0;
-          } else {
-            gain = profit / investment;
-          }
+            if (profit === 0 || investment === 0) {
+              gain = 0;
+            } else {
+              gain = profit / investment;
+            }
 
-          map.set(tx.account.toLowerCase(), { walletAddress: tx.account, trades, gain, profit, volume, investment });
+            map.set(tx.account.toLowerCase(), { walletAddress: tx.account, trades, gain, profit, volume, investment });
+          }
         }
       });
 
       trades.map((tx) => {
         let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
-
-        if (tx.orderSide === "buy") {
-          if (tx.taker.toLowerCase() !== ammContract.addresses[networkId].toLowerCase()) {
-            if (map.has(tx.taker.toLowerCase())) {
-              const user = map.get(tx.taker.toLowerCase());
-              [profit, volume, trades, gain, investment] = [
-                user.profit,
-                user.volume,
-                user.trades,
-                user.gain,
-                user.investment,
-              ];
-            }
-            trades += 1;
-            volume += tx.takerAmount;
-            profit -= tx.takerAmount;
-            investment += tx.takerAmount;
-            if (profit === 0 || investment === 0) {
-              gain = 0;
+        if (tx.taker.toLowerCase() !== ammContract.addresses[networkId].toLowerCase()) {
+          if (networkId !== 137 || (START_DATE <= new Date(tx.timestamp) && new Date(tx.timestamp) <= END_DATE)) {
+            if (tx.orderSide === "buy") {
+              if (map.has(tx.taker.toLowerCase())) {
+                const user = map.get(tx.taker.toLowerCase());
+                [profit, volume, trades, gain, investment] = [
+                  user.profit,
+                  user.volume,
+                  user.trades,
+                  user.gain,
+                  user.investment,
+                ];
+              }
+              trades += 1;
+              volume += tx.takerAmount;
+              profit -= tx.takerAmount;
+              investment += tx.takerAmount;
+              if (profit === 0 || investment === 0) {
+                gain = 0;
+              } else {
+                gain = profit / investment;
+              }
+              map.set(tx.taker.toLowerCase(), { walletAddress: tx.taker, trades, gain, profit, volume, investment });
             } else {
-              gain = profit / investment;
+              if (map.has(tx.taker.toLowerCase())) {
+                const user = map.get(tx.taker.toLowerCase());
+                [profit, volume, trades, gain, investment] = [
+                  user.profit,
+                  user.volume,
+                  user.trades,
+                  user.gain,
+                  user.investment,
+                ];
+              }
+              trades += 1;
+              volume += tx.makerAmount;
+              profit += tx.makerAmount;
+              if (profit === 0 || investment === 0) {
+                gain = 0;
+              } else {
+                gain = profit / investment;
+              }
+              map.set(tx.taker.toLowerCase(), { walletAddress: tx.taker, trades, gain, profit, volume, investment });
             }
-            map.set(tx.taker.toLowerCase(), { walletAddress: tx.taker, trades, gain, profit, volume, investment });
-          } else {
-            console.log("tx that is malicious: ", tx);
-          }
-        } else {
-          if (tx.taker.toLowerCase() !== ammContract.addresses[networkId].toLowerCase()) {
-            if (map.has(tx.taker.toLowerCase())) {
-              const user = map.get(tx.taker.toLowerCase());
-              [profit, volume, trades, gain, investment] = [
-                user.profit,
-                user.volume,
-                user.trades,
-                user.gain,
-                user.investment,
-              ];
-            }
-            trades += 1;
-            volume += tx.makerAmount;
-            profit += tx.makerAmount;
-            if (profit === 0 || investment === 0) {
-              gain = 0;
-            } else {
-              gain = profit / investment;
-            }
-            map.set(tx.taker.toLowerCase(), { walletAddress: tx.taker, trades, gain, profit, volume, investment });
-          } else {
-            console.log("tx that is malicious: ", tx);
           }
         }
       });
