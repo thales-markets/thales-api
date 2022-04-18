@@ -10,7 +10,7 @@ const { delay } = require("../services/utils");
 const KEYS = require("../redis/redis-keys");
 const ammContract = require("../contracts/amm");
 
-const START_DATE = new Date(Date.UTC(2022, 3, 18, 15));
+const START_DATE = new Date(Date.UTC(2022, 3, 18, 13));
 const END_DATE = new Date(Date.UTC(2022, 4, 9, 15));
 
 if (process.env.REDIS_URL) {
