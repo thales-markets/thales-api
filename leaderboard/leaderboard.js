@@ -13,6 +13,8 @@ const ammContract = require("../contracts/amm");
 const START_DATE = new Date(Date.UTC(2022, 3, 18, 13));
 const END_DATE = new Date(Date.UTC(2022, 4, 9, 15));
 
+const LEIFU_ADDRESS = "0x5027ce356c375a934b4d1de9240ba789072a5af1";
+
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -61,7 +63,10 @@ const processLeaderboard = async (networkId) => {
       ]);
 
       marketTxs.map((tx) => {
-        if (tx.account.toLowerCase() !== ammContract.addresses[networkId].toLowerCase()) {
+        if (
+          tx.account.toLowerCase() !== ammContract.addresses[networkId].toLowerCase() &&
+          tx.account.toLowerCase() !== LEIFU_ADDRESS.toLowerCase()
+        ) {
           if (networkId !== 137 || (START_DATE <= new Date(tx.timestamp) && new Date(tx.timestamp) <= END_DATE)) {
             let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
             if (map.has(tx.account)) {
@@ -96,7 +101,10 @@ const processLeaderboard = async (networkId) => {
 
       trades.map((tx) => {
         let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
-        if (tx.taker.toLowerCase() !== ammContract.addresses[networkId].toLowerCase()) {
+        if (
+          tx.account.toLowerCase() !== ammContract.addresses[networkId].toLowerCase() &&
+          tx.account.toLowerCase() !== LEIFU_ADDRESS.toLowerCase()
+        ) {
           if (networkId !== 137 || (START_DATE <= new Date(tx.timestamp) && new Date(tx.timestamp) <= END_DATE)) {
             if (tx.orderSide === "buy") {
               if (map.has(tx.taker.toLowerCase())) {
