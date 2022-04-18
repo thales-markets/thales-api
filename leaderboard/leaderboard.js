@@ -102,8 +102,8 @@ const processLeaderboard = async (networkId) => {
       trades.map((tx) => {
         let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
         if (
-          tx.account.toLowerCase() !== ammContract.addresses[networkId].toLowerCase() &&
-          tx.account.toLowerCase() !== LEIFU_ADDRESS.toLowerCase()
+          tx.taker.toLowerCase() !== ammContract.addresses[networkId].toLowerCase() &&
+          tx.taker.toLowerCase() !== LEIFU_ADDRESS.toLowerCase()
         ) {
           if (networkId !== 137 || (START_DATE <= new Date(tx.timestamp) && new Date(tx.timestamp) <= END_DATE)) {
             if (tx.orderSide === "buy") {
