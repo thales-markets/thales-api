@@ -8,6 +8,7 @@ const ENDPOINTS = {
   WATCHLIST: "/watchlist",
   WATCHLIST_ADDRESS: "/watchlist/:networkParam/:walletAddressParam",
   LEADERBOARD: "/leaderboard/:networkParam",
+  RANGED_LIQUIDITY: "/ranged-liquidity/:networkParam",
   COMPETITION: "/competition/:networkParam",
   PROFILES: "/profiles/:networkParam",
   TOKEN_PRICE: "/token/price",

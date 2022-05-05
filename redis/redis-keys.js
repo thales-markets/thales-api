@@ -28,6 +28,12 @@ const KEYS = {
     69: "kovanOpLeaderboard",
     80001: "mumbaiLeaderboard",
   },
+  RANGED_AMM_LIQUIDITY: {
+    10: "optimismRangedLiq",
+    137: "polygonRangedLiq",
+    69: "kovanOpRangedLiq",
+    80001: "mumbaiRangedLiq",
+  },
 };
 
 module.exports = KEYS;
