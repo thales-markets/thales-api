@@ -1,14 +1,12 @@
-thalesData = require("thales-data");
-
 require("dotenv").config();
-
 const redis = require("redis");
-thalesData = require("thales-data");
+const ethers = require("ethers");
 
 fetch = require("node-fetch");
 const { delay } = require("../services/utils");
 const KEYS = require("../redis/redis-keys");
 const ammContract = require("../contracts/amm");
+const thalesData = require("thales-data");
 
 const START_DATE = new Date(Date.UTC(2022, 3, 18, 13));
 const END_DATE = new Date(Date.UTC(2022, 4, 9, 15));
@@ -24,32 +22,32 @@ if (process.env.REDIS_URL) {
   });
   setTimeout(async () => {
     while (true) {
-      await processLeaderboard(10);
-      await delay(10 * 1000);
-
-      await processLeaderboard(69);
-      await delay(10 * 1000);
-
       await processLeaderboard(137);
       await delay(10 * 1000);
 
-      await processLeaderboard(80001);
-      await delay(60 * 1000);
+      // await processLeaderboard(10);
+      // await delay(10 * 1000);
+
+      // await processLeaderboard(69);
+      // await delay(10 * 1000);
+
+      // await processLeaderboard(80001);
+      // await delay(60 * 1000);
     }
   }, 3000);
 }
 
 const processLeaderboard = async (networkId) => {
   const map = new Map();
+  console.log("Network id: ", networkId);
 
-  console.log("hello, network id: ", networkId);
-
-  const markets = await thalesData.binaryOptions.markets({
-    network: networkId,
-  });
-
-  console.log("Processing Markets...: ", markets.length);
   try {
+    const markets = await thalesData.binaryOptions.markets({
+      network: networkId,
+    });
+
+    console.log("Processing Markets...: ", markets.length);
+
     for (let market of markets) {
       const [marketTxs, trades] = await Promise.all([
         thalesData.binaryOptions.optionTransactions({
@@ -153,17 +151,38 @@ const processLeaderboard = async (networkId) => {
       });
     }
 
-    console.log(
-      "result is: ",
-      Array.from(map, ([name, value]) => ({ ...value, walletAddress: name })),
-    );
+    const leaderboardArray = Array.from(map, ([name, value]) => ({ ...value, walletAddress: name }));
+
+    if (networkId === 137) {
+      await Promise.all(
+        leaderboardArray.map(async (userData) => {
+          await delay(1000);
+          const positions = await thalesData.binaryOptions.positionBalances({
+            network: networkId,
+            account: userData.walletAddress,
+          });
+          if (positions && positions.length > 0) {
+            positions
+              .filter((data) => data.amount > 0 && data.position.market.result !== null)
+              .map((positionBalance) => {
+                if (
+                  (positionBalance.position.side === "short" && positionBalance.position.market.result === 1) ||
+                  (positionBalance.position.side === "long" && positionBalance.position.market.result === 0)
+                ) {
+                  userData.profit += Number(ethers.utils.formatEther(positionBalance.amount));
+                }
+              });
+            userData.gain = userData.profit / userData.investment;
+          }
+
+          return userData;
+        }),
+      );
+    }
+    console.log("result is: ", leaderboardArray);
 
     if (process.env.REDIS_URL) {
-      redisClient.set(
-        KEYS.LEADERBOARD[networkId],
-        JSON.stringify(Array.from(map, ([name, value]) => ({ ...value, walletAddress: name }))),
-        function () {},
-      );
+      redisClient.set(KEYS.LEADERBOARD[networkId], JSON.stringify(leaderboardArray), function () {});
     }
   } catch (e) {
     console.log("error: ", e);
