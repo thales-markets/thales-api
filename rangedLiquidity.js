@@ -19,12 +19,12 @@ if (process.env.REDIS_URL) {
   });
   setTimeout(async () => {
     while (true) {
-      //   try {
-      //     console.log("process orders on optimism");
-      //     await processOrders(10);
-      //   } catch (error) {
-      //     console.log("orders on optimism error: ", error);
-      //   }
+      try {
+        console.log("process orders on optimism");
+        await processOrders(10);
+      } catch (error) {
+        console.log("orders on optimism error: ", error);
+      }
 
       //   await delay(10 * 1000);
 
@@ -84,28 +84,30 @@ async function processOrders(network) {
         };
 
         try {
-          const [availableIn, availableOut, inPrice, outPrice] = await Promise.all([
+          const [availableIn, availableOut] = await Promise.all([
             ammContractInit.availableToBuyFromAMM(market.address, 0),
             ammContractInit.availableToBuyFromAMM(market.address, 1),
-            ammContractInit.buyFromAmmQuote(market.address, 0, ethers.utils.parseEther("1")),
-            ammContractInit.buyFromAmmQuote(market.address, 1, ethers.utils.parseEther("1")),
           ]);
 
-          marketInfoObject.availableIn = ethers.utils.formatEther(availableIn);
-          marketInfoObject.availableOut = ethers.utils.formatEther(availableOut);
-          marketInfoObject.inPrice = ethers.utils.formatEther(inPrice);
-          marketInfoObject.outPrice = ethers.utils.formatEther(outPrice);
-        } catch (e) {
-          console.log(e);
-        }
+          if (availableIn > 0) {
+            const inPrice = await ammContractInit.buyFromAmmQuote(market.address, 0, ethers.utils.parseEther("1"));
+
+            marketInfoObject.inPrice = ethers.utils.formatEther(inPrice);
+            marketInfoObject.availableIn = ethers.utils.formatEther(availableIn);
+          }
+          if (availableOut > 0) {
+            const outPrice = await ammContractInit.buyFromAmmQuote(market.address, 1, ethers.utils.parseEther("1"));
+
+            marketInfoObject.outPrice = ethers.utils.formatEther(outPrice);
+            marketInfoObject.availableOut = ethers.utils.formatEther(availableOut);
+          }
+        } catch (e) {}
 
         rangedAMMLiquidity.set(market.address, marketInfoObject);
         if (process.env.REDIS_URL) {
           redisClient.set(KEYS.RANGED_AMM_LIQUIDITY[network], JSON.stringify([...rangedAMMLiquidity]), function () {});
         }
-      } catch (e) {
-        console.log("Error", e);
-      }
+      } catch (e) {}
     }
   }
 }

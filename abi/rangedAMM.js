@@ -137,6 +137,19 @@ const rangedAMM = [
       {
         indexed: false,
         internalType: "uint256",
+        name: "capPerMarket",
+        type: "uint256",
+      },
+    ],
+    name: "SetCapPerMarket",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
         name: "_spread",
         type: "uint256",
       },
@@ -155,6 +168,32 @@ const rangedAMM = [
       },
     ],
     name: "SetMinSupportedPrice",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "_spread",
+        type: "uint256",
+      },
+    ],
+    name: "SetMinimalDifBetweenStrikes",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "rangedAmmFee",
+        type: "uint256",
+      },
+    ],
+    name: "SetRangedAmmFee",
     type: "event",
   },
   {
@@ -194,6 +233,32 @@ const rangedAMM = [
       },
     ],
     name: "SetSafeBoxImpact",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "_stakingThales",
+        type: "address",
+      },
+    ],
+    name: "SetStakingThales",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "amm",
+        type: "address",
+      },
+    ],
+    name: "SetThalesAMM",
     type: "event",
   },
   {
@@ -589,6 +654,19 @@ const rangedAMM = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "minimalDifBetweenStrikes",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "address",
@@ -823,12 +901,35 @@ const rangedAMM = [
     inputs: [
       {
         internalType: "uint256",
+        name: "_capPerMarket",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_rangedAMMFee",
+        type: "uint256",
+      },
+    ],
+    name: "setCapPerMarketAndRangedAMMFee",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
         name: "_minSupportedPrice",
         type: "uint256",
       },
       {
         internalType: "uint256",
         name: "_maxSupportedPrice",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_minDiffBetweenStrikes",
         type: "uint256",
       },
     ],
@@ -893,6 +994,50 @@ const rangedAMM = [
     inputs: [
       {
         internalType: "address",
+        name: "_safeBox",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "_safeBoxImpact",
+        type: "uint256",
+      },
+    ],
+    name: "setSafeBoxData",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "contract IStakingThales",
+        name: "_stakingThales",
+        type: "address",
+      },
+    ],
+    name: "setStakingThales",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_thalesAMM",
+        type: "address",
+      },
+    ],
+    name: "setThalesAMM",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "",
         type: "address",
       },
@@ -903,6 +1048,19 @@ const rangedAMM = [
         internalType: "uint256",
         name: "",
         type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "stakingThales",
+    outputs: [
+      {
+        internalType: "contract IStakingThales",
+        name: "",
+        type: "address",
       },
     ],
     stateMutability: "view",

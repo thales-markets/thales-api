@@ -18,7 +18,7 @@ const rangedAMMContract = {
     [NetworkId.Kovan]: "TBD",
     // added to resolve error with typings
     [NetworkId.Goerli]: "TBD", // TODO: goerli network remove or implement
-    [NetworkId.Optimism]: "TBD",
+    [NetworkId.Optimism]: "0x64cb6EF981e5E432d4362F6A561A31B22E328cC5",
     [NetworkId.OptimismKovan]: "0x0690F410FB54d76268e4fa97486CBD605e68dC62",
     [NetworkId.Mumbai]: "TBD",
     [NetworkId.Polygon]: "TBD",
@@ -162,6 +162,19 @@ const rangedAMMContract = {
         {
           indexed: false,
           internalType: "uint256",
+          name: "capPerMarket",
+          type: "uint256",
+        },
+      ],
+      name: "SetCapPerMarket",
+      type: "event",
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: "uint256",
           name: "_spread",
           type: "uint256",
         },
@@ -180,6 +193,32 @@ const rangedAMMContract = {
         },
       ],
       name: "SetMinSupportedPrice",
+      type: "event",
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: "uint256",
+          name: "_spread",
+          type: "uint256",
+        },
+      ],
+      name: "SetMinimalDifBetweenStrikes",
+      type: "event",
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: "uint256",
+          name: "rangedAmmFee",
+          type: "uint256",
+        },
+      ],
+      name: "SetRangedAmmFee",
       type: "event",
     },
     {
@@ -219,6 +258,32 @@ const rangedAMMContract = {
         },
       ],
       name: "SetSafeBoxImpact",
+      type: "event",
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: "address",
+          name: "_stakingThales",
+          type: "address",
+        },
+      ],
+      name: "SetStakingThales",
+      type: "event",
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: "address",
+          name: "amm",
+          type: "address",
+        },
+      ],
+      name: "SetThalesAMM",
       type: "event",
     },
     {
@@ -614,6 +679,19 @@ const rangedAMMContract = {
       type: "function",
     },
     {
+      inputs: [],
+      name: "minimalDifBetweenStrikes",
+      outputs: [
+        {
+          internalType: "uint256",
+          name: "",
+          type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
       inputs: [
         {
           internalType: "address",
@@ -848,12 +926,35 @@ const rangedAMMContract = {
       inputs: [
         {
           internalType: "uint256",
+          name: "_capPerMarket",
+          type: "uint256",
+        },
+        {
+          internalType: "uint256",
+          name: "_rangedAMMFee",
+          type: "uint256",
+        },
+      ],
+      name: "setCapPerMarketAndRangedAMMFee",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "uint256",
           name: "_minSupportedPrice",
           type: "uint256",
         },
         {
           internalType: "uint256",
           name: "_maxSupportedPrice",
+          type: "uint256",
+        },
+        {
+          internalType: "uint256",
+          name: "_minDiffBetweenStrikes",
           type: "uint256",
         },
       ],
@@ -918,6 +1019,50 @@ const rangedAMMContract = {
       inputs: [
         {
           internalType: "address",
+          name: "_safeBox",
+          type: "address",
+        },
+        {
+          internalType: "uint256",
+          name: "_safeBoxImpact",
+          type: "uint256",
+        },
+      ],
+      name: "setSafeBoxData",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "contract IStakingThales",
+          name: "_stakingThales",
+          type: "address",
+        },
+      ],
+      name: "setStakingThales",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
+          name: "_thalesAMM",
+          type: "address",
+        },
+      ],
+      name: "setThalesAMM",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+    {
+      inputs: [
+        {
+          internalType: "address",
           name: "",
           type: "address",
         },
@@ -928,6 +1073,19 @@ const rangedAMMContract = {
           internalType: "uint256",
           name: "",
           type: "uint256",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [],
+      name: "stakingThales",
+      outputs: [
+        {
+          internalType: "contract IStakingThales",
+          name: "",
+          type: "address",
         },
       ],
       stateMutability: "view",
