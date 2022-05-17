@@ -18,7 +18,7 @@ const rangedAMMContract = {
     [NetworkId.Kovan]: "TBD",
     // added to resolve error with typings
     [NetworkId.Goerli]: "TBD", // TODO: goerli network remove or implement
-    [NetworkId.Optimism]: "0x64cb6EF981e5E432d4362F6A561A31B22E328cC5",
+    [NetworkId.Optimism]: "0x2d356b114cbCA8DEFf2d8783EAc2a5A5324fE1dF",
     [NetworkId.OptimismKovan]: "0x0690F410FB54d76268e4fa97486CBD605e68dC62",
     [NetworkId.Mumbai]: "TBD",
     [NetworkId.Polygon]: "TBD",

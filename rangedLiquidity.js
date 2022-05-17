@@ -26,7 +26,7 @@ if (process.env.REDIS_URL) {
         console.log("orders on optimism error: ", error);
       }
 
-      //   await delay(10 * 1000);
+      await delay(10 * 1000);
 
       //   try {
       //     console.log("process orders on polygon");
