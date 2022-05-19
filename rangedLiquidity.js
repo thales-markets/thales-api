@@ -93,13 +93,21 @@ async function processOrders(network) {
             const inPrice = await ammContractInit.buyFromAmmQuote(market.address, 0, ethers.utils.parseEther("1"));
 
             marketInfoObject.inPrice = ethers.utils.formatEther(inPrice);
-            marketInfoObject.availableIn = ethers.utils.formatEther(availableIn);
+            if (marketInfoObject.inPrice === 0) {
+              marketInfoObject.availableIn = 0;
+            } else {
+              marketInfoObject.availableIn = ethers.utils.formatEther(availableIn);
+            }
           }
           if (availableOut > 0) {
             const outPrice = await ammContractInit.buyFromAmmQuote(market.address, 1, ethers.utils.parseEther("1"));
 
             marketInfoObject.outPrice = ethers.utils.formatEther(outPrice);
-            marketInfoObject.availableOut = ethers.utils.formatEther(availableOut);
+            if (marketInfoObject.outPrice === 0) {
+              marketInfoObject.availableOut = 0;
+            } else {
+              marketInfoObject.availableOut = ethers.utils.formatEther(availableOut);
+            }
           }
         } catch (e) {}
 
