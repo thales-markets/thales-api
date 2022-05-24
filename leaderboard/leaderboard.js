@@ -23,7 +23,7 @@ if (process.env.REDIS_URL) {
   setTimeout(async () => {
     while (true) {
       await processLeaderboard(137);
-      await delay(10 * 1000);
+      await delay(60 * 1000);
 
       // await processLeaderboard(10);
       // await delay(10 * 1000);
@@ -48,7 +48,20 @@ const processLeaderboard = async (networkId) => {
 
     console.log("Processing Markets...: ", markets.length);
 
-    for (let market of markets) {
+    const eligibleMarketsSet = new Set();
+    const eligibleMarketsArray = [];
+
+    markets.map((market) => {
+      if (new Date(market.timestamp) <= new Date(Date.UTC(2022, 4, 9, 15))) {
+        eligibleMarketsSet.add(market.address.toLowerCase());
+        eligibleMarketsArray.push(market);
+      }
+    });
+
+    console.log("eligible markets: ", eligibleMarketsSet);
+
+    for (let market of eligibleMarketsArray) {
+      await delay(100);
       const [marketTxs, trades] = await Promise.all([
         thalesData.binaryOptions.optionTransactions({
           network: networkId,
@@ -60,12 +73,12 @@ const processLeaderboard = async (networkId) => {
         }),
       ]);
 
-      marketTxs.map((tx) => {
-        if (
-          tx.account.toLowerCase() !== ammContract.addresses[networkId].toLowerCase() &&
-          tx.account.toLowerCase() !== LEIFU_ADDRESS.toLowerCase()
-        ) {
-          if (networkId !== 137 || (START_DATE <= new Date(tx.timestamp) && new Date(tx.timestamp) <= END_DATE)) {
+      try {
+        marketTxs.map((tx) => {
+          if (
+            tx.account.toLowerCase() !== ammContract.addresses[networkId].toLowerCase() &&
+            tx.account.toLowerCase() !== LEIFU_ADDRESS.toLowerCase()
+          ) {
             let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
             if (map.has(tx.account)) {
               const user = map.get(tx.account.toLowerCase());
@@ -94,16 +107,18 @@ const processLeaderboard = async (networkId) => {
 
             map.set(tx.account.toLowerCase(), { walletAddress: tx.account, trades, gain, profit, volume, investment });
           }
-        }
-      });
+        });
+      } catch (e) {
+        console.log("failed marketsTX processing: ", e);
+      }
 
-      trades.map((tx) => {
-        let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
-        if (
-          tx.taker.toLowerCase() !== ammContract.addresses[networkId].toLowerCase() &&
-          tx.taker.toLowerCase() !== LEIFU_ADDRESS.toLowerCase()
-        ) {
-          if (networkId !== 137 || (START_DATE <= new Date(tx.timestamp) && new Date(tx.timestamp) <= END_DATE)) {
+      try {
+        trades.map((tx) => {
+          let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
+          if (
+            tx.taker.toLowerCase() !== ammContract.addresses[networkId].toLowerCase() &&
+            tx.taker.toLowerCase() !== LEIFU_ADDRESS.toLowerCase()
+          ) {
             if (tx.orderSide === "buy") {
               if (map.has(tx.taker.toLowerCase())) {
                 const user = map.get(tx.taker.toLowerCase());
@@ -147,9 +162,13 @@ const processLeaderboard = async (networkId) => {
               map.set(tx.taker.toLowerCase(), { walletAddress: tx.taker, trades, gain, profit, volume, investment });
             }
           }
-        }
-      });
+        });
+      } catch (e) {
+        console.log("failed TRADES processing: ", e);
+      }
     }
+
+    console.log("markets processed");
 
     const leaderboardArray = Array.from(map, ([name, value]) => ({ ...value, walletAddress: name }));
 
@@ -163,7 +182,12 @@ const processLeaderboard = async (networkId) => {
           });
           if (positions && positions.length > 0) {
             positions
-              .filter((data) => data.amount > 0 && data.position.market.result !== null)
+              .filter(
+                (data) =>
+                  data.amount > 0 &&
+                  data.position.market.result !== null &&
+                  eligibleMarketsSet.has(data.position.market.id.toLowerCase()),
+              )
               .map((positionBalance) => {
                 if (
                   (positionBalance.position.side === "short" && positionBalance.position.market.result === 1) ||
@@ -179,6 +203,9 @@ const processLeaderboard = async (networkId) => {
         }),
       );
     }
+
+    console.log("positions processed");
+
     console.log("result is: ", leaderboardArray);
 
     if (process.env.REDIS_URL) {
