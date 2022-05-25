@@ -6,10 +6,11 @@ fetch = require("node-fetch");
 const { delay } = require("../services/utils");
 const KEYS = require("../redis/redis-keys");
 const ammContract = require("../contracts/amm");
+const rangedAmmContract = require("../contracts/rangedAMM");
 const thalesData = require("thales-data");
 
-const START_DATE = new Date(Date.UTC(2022, 3, 18, 13));
-const END_DATE = new Date(Date.UTC(2022, 4, 9, 15));
+const START_DATE = new Date(Date.UTC(2022, 4, 5, 13));
+const END_DATE = new Date(Date.UTC(2022, 4, 25, 15));
 
 const LEIFU_ADDRESS = "0x5027ce356c375a934b4d1de9240ba789072a5af1";
 
@@ -22,11 +23,11 @@ if (process.env.REDIS_URL) {
   });
   setTimeout(async () => {
     while (true) {
-      await processLeaderboard(137);
+      await processLeaderboard(10);
       await delay(60 * 1000);
 
-      // await processLeaderboard(10);
-      // await delay(10 * 1000);
+      // await processLeaderboard(137);
+      // await delay(60 * 1000);
 
       // await processLeaderboard(69);
       // await delay(10 * 1000);
@@ -45,14 +46,23 @@ const processLeaderboard = async (networkId) => {
     const markets = await thalesData.binaryOptions.markets({
       network: networkId,
     });
+    const rangedMarkets =
+      networkId === 10
+        ? await thalesData.binaryOptions.rangedMarkets({
+            network: networkId,
+          })
+        : [];
+
+    console.log("Range markets: ", rangedMarkets.length);
 
     console.log("Processing Markets...: ", markets.length);
 
     const eligibleMarketsSet = new Set();
     const eligibleMarketsArray = [];
 
-    markets.map((market) => {
-      if (new Date(market.timestamp) <= new Date(Date.UTC(2022, 4, 9, 15))) {
+    [...markets, ...rangedMarkets].map((market) => {
+      const marketCreatedTimestamp = new Date(market.timestamp);
+      if (START_DATE <= marketCreatedTimestamp && marketCreatedTimestamp <= END_DATE) {
         eligibleMarketsSet.add(market.address.toLowerCase());
         eligibleMarketsArray.push(market);
       }
@@ -77,6 +87,7 @@ const processLeaderboard = async (networkId) => {
         marketTxs.map((tx) => {
           if (
             tx.account.toLowerCase() !== ammContract.addresses[networkId].toLowerCase() &&
+            tx.account.toLowerCase() !== rangedAmmContract.addresses[networkId].toLowerCase() &&
             tx.account.toLowerCase() !== LEIFU_ADDRESS.toLowerCase()
           ) {
             let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
@@ -112,12 +123,15 @@ const processLeaderboard = async (networkId) => {
         console.log("failed marketsTX processing: ", e);
       }
 
+      console.log("markets processed");
+
       try {
         trades.map((tx) => {
           let [profit, volume, trades, gain, investment] = [0, 0, 0, 0, 0];
           if (
             tx.taker.toLowerCase() !== ammContract.addresses[networkId].toLowerCase() &&
-            tx.taker.toLowerCase() !== LEIFU_ADDRESS.toLowerCase()
+            tx.taker.toLowerCase() !== LEIFU_ADDRESS.toLowerCase() &&
+            tx.taker.toLowerCase() !== rangedAmmContract.addresses[networkId].toLowerCase()
           ) {
             if (tx.orderSide === "buy") {
               if (map.has(tx.taker.toLowerCase())) {
@@ -168,14 +182,14 @@ const processLeaderboard = async (networkId) => {
       }
     }
 
-    console.log("markets processed");
+    console.log("trades processed");
 
     const leaderboardArray = Array.from(map, ([name, value]) => ({ ...value, walletAddress: name }));
 
-    if (networkId === 137) {
+    if (networkId === 137 || networkId === 10) {
       await Promise.all(
         leaderboardArray.map(async (userData) => {
-          await delay(1000);
+          await delay(100);
           const positions = await thalesData.binaryOptions.positionBalances({
             network: networkId,
             account: userData.walletAddress,
@@ -205,6 +219,40 @@ const processLeaderboard = async (networkId) => {
     }
 
     console.log("positions processed");
+
+    if (networkId === 10) {
+      await Promise.all(
+        leaderboardArray.map(async (userData) => {
+          await delay(100);
+          const positions = await thalesData.binaryOptions.rangedPositionBalances({
+            network: networkId,
+            account: userData.walletAddress,
+          });
+          if (positions && positions.length > 0) {
+            positions
+              .filter(
+                (data) =>
+                  data.amount > 0 &&
+                  data.position.market.result !== null &&
+                  eligibleMarketsSet.has(data.position.market.id.toLowerCase()),
+              )
+              .map((positionBalance) => {
+                if (
+                  (positionBalance.position.side === "out" && positionBalance.position.market.result === 1) ||
+                  (positionBalance.position.side === "in" && positionBalance.position.market.result === 0)
+                ) {
+                  userData.profit += Number(ethers.utils.formatEther(positionBalance.amount));
+                }
+              });
+            userData.gain = userData.profit / userData.investment;
+          }
+
+          return userData;
+        }),
+      );
+    }
+
+    console.log("ranged positions processed");
 
     console.log("result is: ", leaderboardArray);
 
