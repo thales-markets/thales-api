@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const request = require("request");
 const app = express();
 
 var cors = require("cors");
@@ -314,4 +315,15 @@ app.post(ENDPOINTS.GAME_ENDED, (req, res) => {
 
 app.get(ENDPOINTS.GAME_FINISHERS, (req, res) => {
   res.send(Array.from(gameFinishersMap));
+});
+
+app.get(ENDPOINTS.MEDIUM, (req, res) => {
+  request({ url: "https://medium.com/feed/@thalesmarket" }, (error, response, body) => {
+    if (error || response.statusCode !== 200) {
+      return res.status(500).json({ type: "error", message: error.message });
+    }
+    res.header("Access-Control-Allow-Origin", "*");
+    res.set("Content-Type", "application/rss+xml");
+    res.send(Buffer.from(body));
+  });
 });

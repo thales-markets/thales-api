@@ -25,6 +25,7 @@ const ENDPOINTS = {
   GAME_STARTED: "/game-started",
   GAME_ENDED: "/game-ended",
   GAME_FINISHERS: "/game-finishers",
+  MEDIUM: "/medium",
 };
 
 module.exports = ENDPOINTS;
