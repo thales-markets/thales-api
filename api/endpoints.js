@@ -26,6 +26,7 @@ const ENDPOINTS = {
   GAME_ENDED: "/game-ended",
   GAME_FINISHERS: "/game-finishers",
   MEDIUM: "/medium",
+  OP_REWARDS: "/rewards/:networkParam/:period",
 };
 
 module.exports = ENDPOINTS;

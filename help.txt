@@ -6,6 +6,7 @@ docker build -f Dockerfile.orders -t thalesmarket/orders  .
 docker build -f Dockerfile.leaderboard -t thalesmarket/leaderboard  .
 docker build -f Dockerfile.royale -t thalesmarket/royale  .
 docker build -f Dockerfile.liquidity -t thalesmarket/liquidity  .
+docker build -f Dockerfile.rewards -t thalesmarket/rewards  .
 
 ###### PUSH IMAGES TO GIT ######
 docker push thalesmarket/api
@@ -15,6 +16,7 @@ docker push thalesmarket/orders
 docker push thalesmarket/leaderboard
 docker push thalesmarket/royale
 docker push thalesmarket/liquidity
+docker push thalesmarket/rewards
 
 ###### RUN SERVER LOCALLY ######
 docker-compose -f docker-compose-dev.yml up
@@ -48,6 +50,10 @@ docker-compose up -d royale
 docker-compose pull liquidity
 docker-compose stop liquidity
 docker-compose up -d liquidity
+
+docker-compose pull rewards
+docker-compose stop rewards
+docker-compose up -d rewards
 
 
 ### OPEN REDIS CLI ON SERVER ###

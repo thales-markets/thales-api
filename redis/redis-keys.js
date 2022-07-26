@@ -34,6 +34,10 @@ const KEYS = {
     69: "kovanOpRangedLiq",
     80001: "mumbaiRangedLiq",
   },
+  OP_REWARDS: {
+    10: "opRewards",
+    69: "opKovanRewards",
+  },
 };
 
 module.exports = KEYS;

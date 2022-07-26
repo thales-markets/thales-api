@@ -66,6 +66,23 @@ app.get(ENDPOINTS.RANGED_LIQUIDITY, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.OP_REWARDS, (req, res) => {
+  const network = req.params.networkParam;
+  const period = req.params.period;
+  if ([10, 69].includes(Number(network)) && [0, 1, 2, 3, 4, 5, 6, 7].includes(Number(period))) {
+    redisClient.get(KEYS.OP_REWARDS[network], function (err, obj) {
+      const rewards = new Map(JSON.parse(obj));
+      try {
+        res.send(Array.from(rewards.get(Number(period))));
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  } else {
+    res.send("Bad Network or bad period");
+  }
+});
+
 app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
   const walletAddress = req.params.walletAddressParam;
   const network = req.params.networkParam;
