@@ -111,7 +111,13 @@ async function processOrders(network) {
       arrUsers.set(trade.account, user);
     });
 
-    periodMap.set(period, Array.from(arrUsers.values()));
+    const finalArray = Array.from(arrUsers.values()).map((data) => {
+      data.totalRewards.op = data.stackingRewards + data.up.rewards.op + data.down.rewards.op + data.ranged.rewards.op;
+      data.totalRewards.thales = data.up.rewards.thales + data.down.rewards.thales + data.ranged.rewards.thales;
+      return data;
+    });
+
+    periodMap.set(period, finalArray);
   }
 
   redisClient.set(KEYS.OP_REWARDS[network], JSON.stringify([...periodMap]), function () {});
@@ -136,6 +142,7 @@ function initUser(tx) {
       percentage: 0,
       rewards: { op: 0, thales: 0 },
     },
+    totalRewards: { op: 0, thales: 0 },
   };
   return user;
 }
@@ -159,6 +166,7 @@ function initUserAddress(address) {
       percentage: 0,
       rewards: { op: 0, thales: 0 },
     },
+    totalRewards: { op: 0, thales: 0 },
   };
   return user;
 }
