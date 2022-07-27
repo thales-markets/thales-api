@@ -60,7 +60,13 @@ async function processOrders(network) {
     });
 
     transactions.map((tx) => {
-      arrUsers.set(tx.account, initUser(tx));
+      if (!arrUsers.get(tx.account)) {
+        arrUsers.set(tx.account, initUser(tx));
+      } else {
+        const user = arrUsers.get(tx.account);
+        user.stackingRewards = user.stackingRewards + tx.protocolRewards * 0.64;
+        arrUsers.set(tx.account, user);
+      }
     });
 
     const trades = await thalesData.binaryOptions.accountBuyVolumes({
