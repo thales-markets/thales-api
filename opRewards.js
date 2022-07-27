@@ -35,17 +35,17 @@ if (process.env.REDIS_URL) {
 }
 
 async function processOrders(network) {
-  const START_DATE = new Date(2022, 6, 13, 14, 30, 0);
+  const START_DATE = new Date(2022, 6, 13, 14, 23, 0);
   const periodMap = new Map();
 
   for (let period = 0; period < 8; period++) {
     const startDate = new Date();
-    startDate.setDate(START_DATE.getDate() + period * 7);
+    startDate.setDate(START_DATE.getDate() + period * 14);
     if (startDate > new Date()) {
       break;
     }
     const endDate = new Date();
-    endDate.setDate(START_DATE.getDate() + (period + 1) * 7);
+    endDate.setDate(START_DATE.getDate() + (period + 1) * 14);
 
     const arrUsers = new Map();
     let globalVolumeUp = 0;
