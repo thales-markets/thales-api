@@ -35,16 +35,17 @@ if (process.env.REDIS_URL) {
 }
 
 async function processOrders(network) {
-  const START_DATE = new Date(2022, 6, 13, 14, 23, 0);
+  const START_DATE = new Date(2022, 6, 13, 12, 23, 0);
   const periodMap = new Map();
 
   for (let period = 0; period < 8; period++) {
-    const startDate = new Date();
+    const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 14);
+
     if (startDate > new Date()) {
       break;
     }
-    const endDate = new Date();
+    const endDate = new Date(START_DATE.getTime());
     endDate.setDate(START_DATE.getDate() + (period + 1) * 14);
 
     const arrUsers = new Map();
@@ -76,14 +77,16 @@ async function processOrders(network) {
     });
 
     trades.map((trade) => {
-      if (trade.type === "buyUp") {
-        globalVolumeUp = globalVolumeUp + trade.amount;
-      }
-      if (trade.type === "buyDown") {
-        globalVolumeDown = globalVolumeDown + trade.amount;
-      }
-      if (trade.type === "buyRanged") {
-        globalVolumeRanged = globalVolumeRanged + trade.amount;
+      if (trade.account.toLowerCase() !== "0x2d356b114cbCA8DEFf2d8783EAc2a5A5324fE1dF".toLowerCase()) {
+        if (trade.type === "buyUp") {
+          globalVolumeUp = globalVolumeUp + trade.amount;
+        }
+        if (trade.type === "buyDown") {
+          globalVolumeDown = globalVolumeDown + trade.amount;
+        }
+        if (trade.type === "buyRanged") {
+          globalVolumeRanged = globalVolumeRanged + trade.amount;
+        }
       }
     });
 
@@ -92,29 +95,31 @@ async function processOrders(network) {
     // console.log("globalVolumeRanged: ", globalVolumeRanged);
 
     trades.map((trade) => {
-      if (!arrUsers.get(trade.account)) {
-        arrUsers.set(trade.account, initUserAddress(trade.account));
+      if (trade.account.toLowerCase() !== "0x2d356b114cbCA8DEFf2d8783EAc2a5A5324fE1dF".toLowerCase()) {
+        if (!arrUsers.get(trade.account)) {
+          arrUsers.set(trade.account, initUserAddress(trade.account));
+        }
+        const user = arrUsers.get(trade.account);
+        if (trade.type === "buyUp") {
+          user.up.volume = user.up.volume + trade.amount;
+          user.up.percentage = user.up.volume / globalVolumeUp;
+          user.up.rewards.op = user.up.percentage * 11000;
+          user.up.rewards.thales = user.up.percentage * 20000;
+        }
+        if (trade.type === "buyDown") {
+          user.down.volume = user.down.volume + trade.amount;
+          user.down.percentage = user.down.volume / globalVolumeDown;
+          user.down.rewards.op = user.down.percentage * 11000;
+          user.down.rewards.thales = user.down.percentage * 20000;
+        }
+        if (trade.type === "buyRanged") {
+          user.ranged.volume = user.ranged.volume + trade.amount;
+          user.ranged.percentage = user.ranged.volume / globalVolumeRanged;
+          user.ranged.rewards.op = user.ranged.percentage * 6000;
+          user.ranged.rewards.thales = user.ranged.percentage * 10000;
+        }
+        arrUsers.set(trade.account, user);
       }
-      const user = arrUsers.get(trade.account);
-      if (trade.type === "buyUp") {
-        user.up.volume = user.up.volume + trade.amount;
-        user.up.percentage = user.up.volume / globalVolumeUp;
-        user.up.rewards.op = user.up.percentage * 11000;
-        user.up.rewards.thales = user.up.percentage * 20000;
-      }
-      if (trade.type === "buyDown") {
-        user.down.volume = user.down.volume + trade.amount;
-        user.down.percentage = user.down.volume / globalVolumeDown;
-        user.down.rewards.op = user.down.percentage * 11000;
-        user.down.rewards.thales = user.down.percentage * 20000;
-      }
-      if (trade.type === "buyRanged") {
-        user.ranged.volume = user.ranged.volume + trade.amount;
-        user.ranged.percentage = user.ranged.volume / globalVolumeRanged;
-        user.ranged.rewards.op = user.ranged.percentage * 6000;
-        user.ranged.rewards.thales = user.ranged.percentage * 10000;
-      }
-      arrUsers.set(trade.account, user);
     });
 
     const finalArray = Array.from(arrUsers.values()).map((data) => {
