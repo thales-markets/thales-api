@@ -20,6 +20,13 @@ if (process.env.REDIS_URL) {
   setTimeout(async () => {
     while (true) {
       try {
+        console.log("process orders on polygon");
+        await processOrders(137);
+      } catch (error) {
+        console.log("orders on optimism error: ", error);
+      }
+      await delay(10 * 1000);
+      try {
         console.log("process orders on optimism");
         await processOrders(10);
       } catch (error) {
@@ -28,23 +35,14 @@ if (process.env.REDIS_URL) {
 
       await delay(10 * 1000);
 
-      //   try {
-      //     console.log("process orders on polygon");
-      //     await processOrders(137);
-      //   } catch (error) {
-      //     console.log("orders on optimism error: ", error);
-      //   }
+      // try {
+      //   console.log("process orders on mumbai");
+      //   await processOrders(80001);
+      // } catch (error) {
+      //   console.log("orders on optimism error: ", error);
+      // }
 
-      //   await delay(10 * 1000);
-
-      //   try {
-      //     console.log("process orders on mumbai");
-      //     await processOrders(80001);
-      //   } catch (error) {
-      //     console.log("orders on optimism error: ", error);
-      //   }
-
-      //   await delay(10 * 1000);
+      // await delay(10 * 1000);
 
       try {
         console.log("process orders on kovan-OVM");
