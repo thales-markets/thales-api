@@ -38,6 +38,10 @@ const KEYS = {
     10: "opRewards",
     69: "opKovanRewards",
   },
+  OVERTIME_REWARDS: {
+    10: "overtimeOpRewards",
+    42: "overtimeOpKovanRewards",
+  },
 };
 
 module.exports = KEYS;

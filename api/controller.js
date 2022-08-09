@@ -83,6 +83,23 @@ app.get(ENDPOINTS.OP_REWARDS, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.OVERTIME_REWARDS, (req, res) => {
+  const network = req.params.networkParam;
+  const period = req.params.period;
+  if ([10, 42].includes(Number(network)) && [0, 1].includes(Number(period))) {
+    redisClient.get(KEYS.OVERTIME_REWARDS[network], function (err, obj) {
+      const rewards = new Map(JSON.parse(obj));
+      try {
+        res.send(rewards.get(Number(period)));
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  } else {
+    res.send("Bad Network or bad period");
+  }
+});
+
 app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
   const walletAddress = req.params.walletAddressParam;
   const network = req.params.networkParam;
