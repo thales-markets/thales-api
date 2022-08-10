@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const redis = require("redis");
+const thalesData = require("thales-data");
 thalesData = require("thales-data");
 const KEYS = require("./redis/redis-keys");
 fetch = require("node-fetch");
@@ -47,18 +48,25 @@ async function processOrders(network) {
     const endDate = new Date(START_DATE.getTime());
     endDate.setDate(START_DATE.getDate() + (period + 1) * 14);
 
-    const allTx = await thalesData.sportMarkets.marketTransactions({
-      network: network,
-      minTimestamp: parseInt(startDate.getTime() / 1000),
-    });
+    const [allTx, claimTx, positionBalances] = await Promise.all([
+      thalesData.sportMarkets.marketTransactions({
+        network: network,
+        minTimestamp: parseInt(startDate.getTime() / 1000),
+      }),
+      thalesData.sportMarkets.claimTxes({
+        network: network,
+        minTimestamp: parseInt(startDate.getTime() / 1000),
+      }),
+      thalesData.sportMarkets.positionBalances({ network: network }),
+    ]);
 
     const usersMap = new Map();
 
-    allTx.flat().map((tx) => {
+    allTx.map((tx) => {
       if (
         new Date(Number(tx.wholeMarket.maturityDate * 1000)) > startDate &&
         new Date(Number(tx.wholeMarket.maturityDate * 1000)) < endDate &&
-        new Date(Number(tx.wholeMarket.maturityDate * 1000)) < new Date()
+        tx.wholeMarket.isResolved
       ) {
         let user = usersMap.get(tx.account);
         if (!user) user = initUser(tx);
@@ -69,11 +77,6 @@ async function processOrders(network) {
       }
     });
 
-    const claimTx = await thalesData.sportMarkets.claimTxes({
-      network: network,
-      minTimestamp: parseInt(startDate.getTime() / 1000),
-    });
-
     claimTx.map((tx) => {
       if (
         new Date(Number(tx.market.maturityDate * 1000)) < endDate &&
@@ -82,6 +85,19 @@ async function processOrders(network) {
         let user = usersMap.get(tx.account);
         if (!user) user = initUser(tx);
         user.pnl = user.pnl + Number(tx.amount) / 1e18;
+        usersMap.set(tx.account, user);
+      }
+    });
+
+    positionBalances.map((positionBalance) => {
+      if (
+        positionBalance.position.claimable &&
+        new Date(Number(positionBalance.position.market.maturityDate * 1000)) < endDate &&
+        new Date(Number(positionBalance.position.market.maturityDate * 1000)) > startDate
+      ) {
+        let user = usersMap.get(positionBalance.account);
+        if (!user) user = initUser(positionBalance);
+        user.pnl = user.pnl + Number(positionBalance.amount) / 1e18;
         usersMap.set(tx.account, user);
       }
     });
