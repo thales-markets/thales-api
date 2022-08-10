@@ -2,7 +2,6 @@ require("dotenv").config();
 
 const redis = require("redis");
 const thalesData = require("thales-data");
-thalesData = require("thales-data");
 const KEYS = require("./redis/redis-keys");
 fetch = require("node-fetch");
 const { delay } = require("./services/utils");
@@ -98,7 +97,7 @@ async function processOrders(network) {
         let user = usersMap.get(positionBalance.account);
         if (!user) user = initUser(positionBalance);
         user.pnl = user.pnl + Number(positionBalance.amount) / 1e18;
-        usersMap.set(tx.account, user);
+        usersMap.set(positionBalance.account, user);
       }
     });
 
