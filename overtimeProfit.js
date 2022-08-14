@@ -65,7 +65,8 @@ async function processOrders(network) {
       if (
         new Date(Number(tx.wholeMarket.maturityDate * 1000)) > startDate &&
         new Date(Number(tx.wholeMarket.maturityDate * 1000)) < endDate &&
-        tx.wholeMarket.isResolved
+        tx.wholeMarket.isResolved &&
+        !tx.wholeMarket.isCanceled
       ) {
         let user = usersMap.get(tx.account);
         if (!user) user = initUser(tx);
@@ -79,7 +80,8 @@ async function processOrders(network) {
     claimTx.map((tx) => {
       if (
         new Date(Number(tx.market.maturityDate * 1000)) < endDate &&
-        new Date(Number(tx.market.maturityDate * 1000)) > startDate
+        new Date(Number(tx.market.maturityDate * 1000)) > startDate &&
+        !tx.market.isCanceled
       ) {
         let user = usersMap.get(tx.account);
         if (!user) user = initUser(tx);
