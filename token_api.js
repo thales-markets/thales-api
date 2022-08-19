@@ -1,5 +1,9 @@
 const DAO_TREASURY_AMOUNT = 18000000;
+const THALES_L1_ADDRESS = "0x8947da500eb47f82df21143d0c01a29862a8c3c5";
+const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
+const MAX_SUPPLY = 100000000;
 const circulatingSupplyList = require("./assets/circulating-supply.json");
+const erc20Contract = require("./abi/erc20Contract.js");
 
 require("dotenv").config();
 const express = require("express");
@@ -29,6 +33,7 @@ let stakingMigrationOptOutTestnetMap = new Map();
 app.get("/token/price", (_, res) => res.send(tokenMap.get("price") + ""));
 app.get("/token/circulatingsupply", (_, res) => res.send(tokenMap.get("circulatingsupply") + ""));
 app.get("/token/marketcap", (_, res) => res.send(tokenMap.get("marketcap") + ""));
+app.get("/token/totalsupply", (_, res) => res.send(tokenMap.get("totalsupply") + ""));
 app.get("/token/ethburned", (_, res) => res.send(JSON.parse(tokenMap.get("ethburned"))));
 
 app.get("/token/staking-migration/opt-out/:networkId", (req, res) => {
@@ -140,6 +145,13 @@ async function processToken() {
     tokenMap.set("circulatingsupply", undefined);
   }
 
+  try {
+    const totalsupply = await getTotalSupply();
+    tokenMap.set("totalsupply", totalsupply);
+  } catch (e) {
+    tokenMap.set("totalsupply", undefined);
+  }
+
   const price = tokenMap.get("price");
   const circulatingsupply = tokenMap.get("circulatingsupply");
 
@@ -180,6 +192,17 @@ function getCirculatingSupply() {
 
     const circulatingSupply = circulatingSupplyList[period] - DAO_TREASURY_AMOUNT;
     return circulatingSupply;
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+async function getTotalSupply() {
+  try {
+    const contract = new Web3Client.eth.Contract(erc20Contract, THALES_L1_ADDRESS);
+    const result = await contract.methods.balanceOf(BURN_ADDRESS).call();
+    const burnedAmount = Web3Client.utils.fromWei(result);
+    return MAX_SUPPLY - burnedAmount;
   } catch (e) {
     console.log(e);
   }
