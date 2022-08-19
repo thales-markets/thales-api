@@ -41,20 +41,32 @@ async function processOrders(network) {
     const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 14);
 
+    console.log("*** Period: ", period + 1, " ***");
+    console.log("*** startDate: ", startDate, " ***");
+
     if (startDate > new Date()) {
       break;
     }
     const endDate = new Date(START_DATE.getTime());
     endDate.setDate(START_DATE.getDate() + (period + 1) * 14);
 
-    const [allTx, claimTx, positionBalances] = await Promise.all([
-      thalesData.sportMarkets.marketTransactions({
+    console.log("*** endDate: ", endDate, " ***");
+
+    let allTx;
+    if (period === 0) {
+      allTx = await thalesData.sportMarkets.marketTransactions({
         network: network,
         minTimestamp: parseInt(startDate.getTime() / 1000),
-      }),
+      });
+    } else {
+      allTx = await thalesData.sportMarkets.marketTransactions({
+        network: network,
+      });
+    }
+
+    const [claimTx, positionBalances] = await Promise.all([
       thalesData.sportMarkets.claimTxes({
         network: network,
-        minTimestamp: parseInt(startDate.getTime() / 1000),
       }),
       thalesData.sportMarkets.positionBalances({ network: network }),
     ]);
