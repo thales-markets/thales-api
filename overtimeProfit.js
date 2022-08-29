@@ -37,7 +37,7 @@ async function processOrders(network) {
   const START_DATE = new Date(2022, 7, 1, 0, 0, 0);
   const periodMap = new Map();
 
-  for (let period = 0; period < 2; period++) {
+  for (let period = 0; period < 6; period++) {
     const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 14);
 
@@ -82,38 +82,51 @@ async function processOrders(network) {
       ) {
         let user = usersMap.get(tx.account);
         if (!user) user = initUser(tx);
-        if (tx.type === "buy") {
-          user.pnl = user.pnl - tx.paid;
-        } else user.pnl = user.pnl + tx.paid;
+        if (period < 2) {
+          if (tx.type === "buy") {
+            user.pnl = user.pnl - tx.paid;
+          } else user.pnl = user.pnl + tx.paid;
+        } else {
+          if (Number(tx.position) + 1 !== tx.wholeMarket.finalResult) {
+            if (tx.type === "buy") {
+              user.pnl = user.pnl - tx.paid;
+            } else {
+              user.pnl = user.pnl + tx.paid;
+            }
+          }
+        }
+
         usersMap.set(tx.account, user);
       }
     });
 
-    claimTx.map((tx) => {
-      if (
-        new Date(Number(tx.market.maturityDate * 1000)) < endDate &&
-        new Date(Number(tx.market.maturityDate * 1000)) > startDate &&
-        !tx.market.isCanceled
-      ) {
-        let user = usersMap.get(tx.account);
-        if (!user) user = initUser(tx);
-        user.pnl = user.pnl + Number(tx.amount) / 1e18;
-        usersMap.set(tx.account, user);
-      }
-    });
+    if (period < 2) {
+      claimTx.map((tx) => {
+        if (
+          new Date(Number(tx.market.maturityDate * 1000)) < endDate &&
+          new Date(Number(tx.market.maturityDate * 1000)) > startDate &&
+          !tx.market.isCanceled
+        ) {
+          let user = usersMap.get(tx.account);
+          if (!user) user = initUser(tx);
+          user.pnl = user.pnl + Number(tx.amount);
+          usersMap.set(tx.account, user);
+        }
+      });
 
-    positionBalances.map((positionBalance) => {
-      if (
-        positionBalance.position.claimable &&
-        new Date(Number(positionBalance.position.market.maturityDate * 1000)) < endDate &&
-        new Date(Number(positionBalance.position.market.maturityDate * 1000)) > startDate
-      ) {
-        let user = usersMap.get(positionBalance.account);
-        if (!user) user = initUser(positionBalance);
-        user.pnl = user.pnl + Number(positionBalance.amount) / 1e18;
-        usersMap.set(positionBalance.account, user);
-      }
-    });
+      positionBalances.map((positionBalance) => {
+        if (
+          positionBalance.position.claimable &&
+          new Date(Number(positionBalance.position.market.maturityDate * 1000)) < endDate &&
+          new Date(Number(positionBalance.position.market.maturityDate * 1000)) > startDate
+        ) {
+          let user = usersMap.get(positionBalance.account);
+          if (!user) user = initUser(positionBalance);
+          user.pnl = user.pnl + Number(positionBalance.amount) / 1e18;
+          usersMap.set(positionBalance.account, user);
+        }
+      });
+    }
 
     let globalNegativePnl = 0;
 
