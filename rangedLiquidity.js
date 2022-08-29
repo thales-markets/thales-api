@@ -23,7 +23,7 @@ if (process.env.REDIS_URL) {
         console.log("process orders on polygon");
         await processOrders(137);
       } catch (error) {
-        console.log("orders on optimism error: ", error);
+        console.log("orders on polygon error: ", error);
       }
       await delay(10 * 1000);
       try {
@@ -48,9 +48,17 @@ if (process.env.REDIS_URL) {
         console.log("process orders on kovan-OVM");
         await processOrders(69);
       } catch (error) {
-        console.log("orders on optimism error: ", error);
+        console.log("orders on kovan error: ", error);
       }
 
+      await delay(10 * 1000);
+
+      try {
+        console.log("process orders on BSC");
+        await processOrders(56);
+      } catch (error) {
+        console.log("orders on BSC error: ", error);
+      }
       await delay(60 * 1000);
     }
   }, 3000);
@@ -64,10 +72,16 @@ async function processOrders(network) {
 
   const networkName = ethers.providers.getNetwork(network).name;
 
-  const etherprovider = new ethers.providers.InfuraProvider(
-    { chainId: network, name: networkName },
-    process.env.INFURA_URL,
-  );
+  const bscProvider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/", {
+    name: "binance",
+    chainId: 56,
+  });
+
+  // Infura does not have a provider for Binance Smart Chain so we need to provide a public one instead
+  const etherprovider =
+    network.toString() === "56"
+      ? bscProvider
+      : new ethers.providers.InfuraProvider({ chainId: network, name: networkName }, process.env.INFURA_URL);
 
   const ammContractInit = new ethers.Contract(ammContract.addresses[network], ammContract.abi, etherprovider);
 

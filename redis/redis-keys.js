@@ -33,6 +33,7 @@ const KEYS = {
     137: "polygonRangedLiq",
     69: "kovanOpRangedLiq",
     80001: "mumbaiRangedLiq",
+    56: "BSCRangedLiq",
   },
   OP_REWARDS: {
     10: "opRewards",
