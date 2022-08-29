@@ -8,6 +8,7 @@ const NetworkId = {
   OptimismKovan: 69,
   Mumbai: 80001,
   Polygon: 137,
+  BSC: 56,
 };
 
 const rangedAMMContract = {
@@ -22,6 +23,7 @@ const rangedAMMContract = {
     [NetworkId.OptimismKovan]: "0x0690F410FB54d76268e4fa97486CBD605e68dC62",
     [NetworkId.Mumbai]: "TBD",
     [NetworkId.Polygon]: "0xe8e022405505a9F2b0B7452C844F1e64423849fC",
+    [NetworkId.BSC]: "0xda5Bd4aBAFbE249bdC5684eAD594B0ac379687fd",
   },
   abi: [
     {
