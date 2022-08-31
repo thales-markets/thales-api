@@ -8,8 +8,6 @@ fetch = require("node-fetch");
 const { delay } = require("./services/utils");
 const ammContract = require("./contracts/rangedAMM");
 
-const rangedAMMLiquidity = new Map();
-
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -70,6 +68,8 @@ async function processOrders(network) {
     network,
   });
 
+  const rangedAMMLiquidity = new Map();
+
   const networkName = ethers.providers.getNetwork(network).name;
 
   const bscProvider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/", {
@@ -124,10 +124,10 @@ async function processOrders(network) {
         } catch (e) {}
 
         rangedAMMLiquidity.set(market.address, marketInfoObject);
-        if (process.env.REDIS_URL) {
-          redisClient.set(KEYS.RANGED_AMM_LIQUIDITY[network], JSON.stringify([...rangedAMMLiquidity]), function () {});
-        }
       } catch (e) {}
     }
+  }
+  if (process.env.REDIS_URL) {
+    redisClient.set(KEYS.RANGED_AMM_LIQUIDITY[network], JSON.stringify([...rangedAMMLiquidity]), function () {});
   }
 }
