@@ -141,8 +141,8 @@ async function processOrders(network) {
     Array.from(usersMap.values()).map((user) => {
       if (user.pnl < 0) {
         user.percentage = Math.abs(user.pnl / globalNegativePnl) * 100;
-        user.rewards.op = (user.percentage * 5000) / 100;
-        user.rewards.thales = (user.percentage * 5000) / 100;
+        user.rewards.op = (user.percentage * (period < 2 ? 5000 : 8000)) / 100;
+        user.rewards.thales = (user.percentage * (period < 2 ? 5000 : 8000)) / 100;
         finalArray.push(user);
       } else {
         user.percentage = 0;
