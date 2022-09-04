@@ -87,7 +87,7 @@ async function processOrders(network) {
             user.pnl = user.pnl - tx.paid;
           } else user.pnl = user.pnl + tx.paid;
         } else {
-          if (Number(tx.position) + 1 !== tx.wholeMarket.finalResult) {
+          if (Number(tx.position) + 1 !== Number(tx.wholeMarket.finalResult)) {
             if (tx.type === "buy") {
               user.pnl = user.pnl - tx.paid;
             } else {
