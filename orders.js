@@ -60,6 +60,15 @@ if (process.env.REDIS_URL) {
         console.log("orders on BSC error: ", error);
       }
 
+      await delay(10 * 1000);
+
+      try {
+        console.log("process orders on arbitrum");
+        await processOrders(42161);
+      } catch (error) {
+        console.log("orders on arbitrum error: ", error);
+      }
+
       await delay(60 * 1000);
     }
   }, 3000);

@@ -9,6 +9,7 @@ const NetworkId = {
   Mumbai: 80001,
   Polygon: 137,
   BSC: 56,
+  Arbitrum: 42161,
 };
 
 const rangedAMMContract = {
@@ -24,6 +25,7 @@ const rangedAMMContract = {
     [NetworkId.Mumbai]: "TBD",
     [NetworkId.Polygon]: "0xe8e022405505a9F2b0B7452C844F1e64423849fC",
     [NetworkId.BSC]: "0xda5Bd4aBAFbE249bdC5684eAD594B0ac379687fd",
+    [NetworkId.Arbitrum]: "0x5cf3b1882357BB66Cf3cd2c85b81AbBc85553962",
   },
   abi: [
     {
