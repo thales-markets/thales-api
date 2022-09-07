@@ -25,7 +25,7 @@ const ammContract = {
     [NetworkId.Mumbai]: "0xdf0A5bf80E8009f2702E7d164A7bdeaa79013eba",
     [NetworkId.Polygon]: "0x9b6d76B1C6140FbB0ABc9C4a348BFf4e4e8a1213",
     [NetworkId.BSC]: "0x85f1B57A1D3Ac7605de3Df8AdA056b3dB9676eCE",
-    [NetworkId.Arbitrum]: "0x5ae7454827D83526261F3871C1029792644Ef1B1",
+    [NetworkId.Arbitrum]: "0x2b89275efb9509c33d9ad92a4586bdf8c4d21505",
   },
   abi: [
     {

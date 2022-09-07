@@ -113,6 +113,9 @@ async function processOrders(network) {
             ammContractInit.buyFromAmmQuote(market.address, 1, ethers.utils.parseEther("1")),
           ]);
 
+          console.log("market: ", market);
+          console.log("liquidity: ", [availableLongs, availableShorts, longPrice, shortPrice]);
+
           marketInfoObject.availableLongs = ethers.utils.formatEther(availableLongs);
           marketInfoObject.availableShorts = ethers.utils.formatEther(availableShorts);
           marketInfoObject.longPrice = ethers.utils.formatEther(longPrice);
