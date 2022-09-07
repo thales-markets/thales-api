@@ -81,7 +81,6 @@ async function processOrders(network) {
   });
 
   const networkName = ethers.providers.getNetwork(network).name;
-  console.log(networkName);
 
   const bscProvider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/", {
     name: "binance",
@@ -112,9 +111,6 @@ async function processOrders(network) {
             ammContractInit.buyFromAmmQuote(market.address, 0, ethers.utils.parseEther("1")),
             ammContractInit.buyFromAmmQuote(market.address, 1, ethers.utils.parseEther("1")),
           ]);
-
-          console.log("market: ", market);
-          console.log("liquidity: ", [availableLongs, availableShorts, longPrice, shortPrice]);
 
           marketInfoObject.availableLongs = ethers.utils.formatEther(availableLongs);
           marketInfoObject.availableShorts = ethers.utils.formatEther(availableShorts);
