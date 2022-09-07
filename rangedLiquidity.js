@@ -114,7 +114,7 @@ async function processOrders(network) {
           if (availableIn > 0) {
             const inPrice = await ammContractInit.buyFromAmmQuote(market.address, 0, ethers.utils.parseEther("1"));
 
-            marketInfoObject.inPrice = ethers.utils.formatEther(inPrice);
+            marketInfoObject.inPrice = stableCoinFormatter(inPrice, network);
             if (marketInfoObject.inPrice === 0) {
               marketInfoObject.availableIn = 0;
             } else {
@@ -124,7 +124,7 @@ async function processOrders(network) {
           if (availableOut > 0) {
             const outPrice = await ammContractInit.buyFromAmmQuote(market.address, 1, ethers.utils.parseEther("1"));
 
-            marketInfoObject.outPrice = ethers.utils.formatEther(outPrice);
+            marketInfoObject.outPrice = stableCoinFormatter(outPrice, network);
             if (marketInfoObject.outPrice === 0) {
               marketInfoObject.availableOut = 0;
             } else {
@@ -141,3 +141,12 @@ async function processOrders(network) {
     redisClient.set(KEYS.RANGED_AMM_LIQUIDITY[network], JSON.stringify([...rangedAMMLiquidity]), function () {});
   }
 }
+
+const stableCoinFormatter = (value, networkId) => {
+  if (networkId == 137 || networkId == 42161) {
+    // polygon and arbi
+    return Number(ethers.utils.formatUnits(value, 6));
+  } else {
+    return Number(ethers.utils.formatUnits(value, 18));
+  }
+};

@@ -114,8 +114,8 @@ async function processOrders(network) {
 
           marketInfoObject.availableLongs = ethers.utils.formatEther(availableLongs);
           marketInfoObject.availableShorts = ethers.utils.formatEther(availableShorts);
-          marketInfoObject.longPrice = ethers.utils.formatEther(longPrice);
-          marketInfoObject.shortPrice = ethers.utils.formatEther(shortPrice);
+          marketInfoObject.longPrice = stableCoinFormatter(longPrice, network);
+          marketInfoObject.shortPrice = stableCoinFormatter(shortPrice, network);
         } catch (e) {
           console.log(e);
         }
@@ -130,3 +130,12 @@ async function processOrders(network) {
     }
   }
 }
+
+const stableCoinFormatter = (value, networkId) => {
+  if (networkId == 137 || networkId == 42161) {
+    // polygon and arbi
+    return Number(ethers.utils.formatUnits(value, 6));
+  } else {
+    return Number(ethers.utils.formatUnits(value, 18));
+  }
+};
