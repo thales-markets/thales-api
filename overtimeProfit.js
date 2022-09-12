@@ -64,11 +64,25 @@ async function processOrders(network) {
 
     console.log(allTx.length);
 
-    const [claimTx, positionBalances] = await Promise.all([
+    // const [claimTx, positionBalances] = await Promise.all([
+    //   thalesData.sportMarkets.claimTxes({
+    //     network: network,
+    //     startPeriod: parseInt(startDate.getTime() / 1000),
+    //     endPeriod: parseInt(endDate.getTime() / 1000),
+    //   }),
+    //   thalesData.sportMarkets.positionBalances({
+    //     network: network,
+    //     startPeriod: parseInt(startDate.getTime() / 1000),
+    //     endPeriod: parseInt(endDate.getTime() / 1000),
+    //   }),
+    // ]);
+
+    const [claimTx] = await Promise.all([
       thalesData.sportMarkets.claimTxes({
         network: network,
+        startPeriod: parseInt(startDate.getTime() / 1000),
+        endPeriod: parseInt(endDate.getTime() / 1000),
       }),
-      thalesData.sportMarkets.positionBalances({ network: network }),
     ]);
 
     const usersMap = new Map();
@@ -114,18 +128,18 @@ async function processOrders(network) {
         }
       });
 
-      positionBalances.map((positionBalance) => {
-        if (
-          positionBalance.position.claimable &&
-          new Date(Number(positionBalance.position.market.maturityDate * 1000)) < endDate &&
-          new Date(Number(positionBalance.position.market.maturityDate * 1000)) > startDate
-        ) {
-          let user = usersMap.get(positionBalance.account);
-          if (!user) user = initUser(positionBalance);
-          user.pnl = user.pnl + Number(positionBalance.amount) / 1e18;
-          usersMap.set(positionBalance.account, user);
-        }
-      });
+      // positionBalances.map((positionBalance) => {
+      //   if (
+      //     positionBalance.position.claimable &&
+      //     new Date(Number(positionBalance.position.market.maturityDate * 1000)) < endDate &&
+      //     new Date(Number(positionBalance.position.market.maturityDate * 1000)) > startDate
+      //   ) {
+      //     let user = usersMap.get(positionBalance.account);
+      //     if (!user) user = initUser(positionBalance);
+      //     user.pnl = user.pnl + Number(positionBalance.amount) / 1e18;
+      //     usersMap.set(positionBalance.account, user);
+      //   }
+      // });
     }
 
     let globalNegativePnl = 0;
