@@ -88,29 +88,30 @@ async function processOrders(network) {
     const usersMap = new Map();
 
     allTx.map((tx) => {
-      if (
-        new Date(Number(tx.wholeMarket.maturityDate * 1000)) > startDate &&
-        new Date(Number(tx.wholeMarket.maturityDate * 1000)) < endDate &&
-        tx.wholeMarket.isResolved &&
-        !tx.wholeMarket.isCanceled
-      ) {
-        let user = usersMap.get(tx.account);
-        if (!user) user = initUser(tx);
-        if (period < 2) {
-          if (tx.type === "buy") {
-            user.pnl = user.pnl - tx.paid;
-          } else user.pnl = user.pnl + tx.paid;
-        } else {
-          if (Number(tx.position) + 1 !== Number(tx.wholeMarket.finalResult)) {
+      if (tx.wholeMarket.isResolved && !tx.wholeMarket.isCanceled) {
+        if (
+          period >= 3 ||
+          (new Date(Number(tx.wholeMarket.maturityDate * 1000)) > startDate &&
+            new Date(Number(tx.wholeMarket.maturityDate * 1000)) < endDate)
+        ) {
+          let user = usersMap.get(tx.account);
+          if (!user) user = initUser(tx);
+          if (period < 2) {
             if (tx.type === "buy") {
               user.pnl = user.pnl - tx.paid;
-            } else {
-              user.pnl = user.pnl + tx.paid;
+            } else user.pnl = user.pnl + tx.paid;
+          } else {
+            if (Number(tx.position) + 1 !== Number(tx.wholeMarket.finalResult)) {
+              if (tx.type === "buy") {
+                user.pnl = user.pnl - tx.paid;
+              } else {
+                user.pnl = user.pnl + tx.paid;
+              }
             }
           }
-        }
 
-        usersMap.set(tx.account, user);
+          usersMap.set(tx.account, user);
+        }
       }
     });
 
