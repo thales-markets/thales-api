@@ -1,10 +1,14 @@
+const e = require("cors");
+const fetch = require("node-fetch");
+
 require("dotenv").config();
 
 const redis = require("redis");
 const thalesData = require("thales-data");
 const KEYS = require("./redis/redis-keys");
-fetch = require("node-fetch");
 const { delay } = require("./services/utils");
+
+const util = require("util");
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -22,22 +26,44 @@ if (process.env.REDIS_URL) {
         console.log("orders on optimism error: ", error);
       }
       await delay(60 * 1000);
-      // try {
-      //   console.log("process orders on kovan");
-      //   await processOrders(42);
-      // } catch (error) {
-      //   console.log("orders on optimism error: ", error);
-      // }
-      // await delay(20 * 1000);
     }
   }, 3000);
 }
 
+const getLastSevenDaysTwap = async (token, START_DATE) => {
+  const url = "https://api.coingecko.com/api/v3/coins/";
+  const suffix = "/history?date=";
+
+  const urlsToUse = [];
+
+  for (let day = 1; day < 8; day++) {
+    START_DATE.setDate(START_DATE.getDate() - 1);
+    const newDate = START_DATE.toISOString().replace(/T.*/, "").split("-").reverse().join("-");
+    const urlToUse = url + token + suffix + newDate;
+    urlsToUse.push(urlToUse);
+  }
+
+  const prices = await Promise.all(
+    urlsToUse.map(async (urlToUse) => {
+      const data = await fetch(urlToUse);
+      const formatedData = await data.json();
+      return formatedData.market_data.current_price.usd;
+    }),
+  );
+
+  let twap = 0;
+  prices.map((price) => {
+    twap += price;
+  });
+
+  return twap / 7;
+};
+
 async function processOrders(network) {
-  const START_DATE = new Date(2022, 7, 1, 0, 0, 0);
+  const START_DATE = new Date(2022, 8, 26, 0, 0, 0);
   const periodMap = new Map();
 
-  for (let period = 0; period < 6; period++) {
+  for (let period = 0; period < 1; period++) {
     const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 14);
 
@@ -52,119 +78,76 @@ async function processOrders(network) {
 
     console.log("*** endDate: ", endDate, " ***");
 
-    let allTx;
-
-    console.log(parseInt(startDate.getTime() / 1000), parseInt(endDate.getTime() / 1000));
-
-    allTx = await thalesData.sportMarkets.marketTransactions({
+    const allTx = await thalesData.sportMarkets.marketTransactions({
       network: network,
       startPeriod: parseInt(startDate.getTime() / 1000),
       endPeriod: parseInt(endDate.getTime() / 1000),
     });
 
-    console.log(allTx.length);
+    let twapArray = [];
 
-    // const [claimTx, positionBalances] = await Promise.all([
-    //   thalesData.sportMarkets.claimTxes({
-    //     network: network,
-    //     startPeriod: parseInt(startDate.getTime() / 1000),
-    //     endPeriod: parseInt(endDate.getTime() / 1000),
-    //   }),
-    //   thalesData.sportMarkets.positionBalances({
-    //     network: network,
-    //     startPeriod: parseInt(startDate.getTime() / 1000),
-    //     endPeriod: parseInt(endDate.getTime() / 1000),
-    //   }),
-    // ]);
+    redisClient.get = util.promisify(redisClient.get);
+    const twap = await redisClient.get(KEYS.TWAP_FOR_PERIOD);
 
-    const [claimTx] = await Promise.all([
-      thalesData.sportMarkets.claimTxes({
-        network: network,
-        startPeriod: parseInt(startDate.getTime() / 1000),
-        endPeriod: parseInt(endDate.getTime() / 1000),
-      }),
-    ]);
+    if (twap) {
+      twapArray = JSON.parse(twap);
+      if (twapArray[period]) {
+        periodTwap = twapArray[period];
+      } else {
+        const twapThales = await getLastSevenDaysTwap("thales", startDate);
+        const twapOp = await getLastSevenDaysTwap("optimism", startDate);
+        const finalTwap = 8000 * twapThales + 8000 * twapOp;
+        twapArray.push(finalTwap);
+      }
+    } else {
+      const twapThales = await getLastSevenDaysTwap("thales", new Date());
+      const twapOp = await getLastSevenDaysTwap("optimism", new Date());
+      const finalTwap = 8000 * twapThales + 8000 * twapOp;
+      twapArray.push(finalTwap);
+    }
+
+    redisClient.set(KEYS.TWAP_FOR_PERIOD, JSON.stringify([...twapArray]), function () {});
 
     const usersMap = new Map();
 
+    let globalVolume = 0;
+
     allTx.map((tx) => {
-      if (tx.wholeMarket.isResolved && !tx.wholeMarket.isCanceled) {
-        if (
-          period >= 3 ||
-          (new Date(Number(tx.wholeMarket.maturityDate * 1000)) > startDate &&
-            new Date(Number(tx.wholeMarket.maturityDate * 1000)) < endDate)
-        ) {
-          let user = usersMap.get(tx.account);
-          if (!user) user = initUser(tx);
-          if (period < 2) {
-            if (tx.type === "buy") {
-              user.pnl = user.pnl - tx.paid;
-            } else user.pnl = user.pnl + tx.paid;
-          } else {
-            if (Number(tx.position) + 1 !== Number(tx.wholeMarket.finalResult)) {
-              if (tx.type === "buy") {
-                user.pnl = user.pnl - tx.paid;
-              } else {
-                user.pnl = user.pnl + tx.paid;
-              }
-            }
-          }
-
-          usersMap.set(tx.account, user);
-        }
-      }
-    });
-
-    if (period < 2) {
-      claimTx.map((tx) => {
-        if (
-          new Date(Number(tx.market.maturityDate * 1000)) < endDate &&
-          new Date(Number(tx.market.maturityDate * 1000)) > startDate &&
-          !tx.market.isCanceled
-        ) {
-          let user = usersMap.get(tx.account);
-          if (!user) user = initUser(tx);
-          user.pnl = user.pnl + Number(tx.amount);
-          usersMap.set(tx.account, user);
-        }
-      });
-
-      // positionBalances.map((positionBalance) => {
-      //   if (
-      //     positionBalance.position.claimable &&
-      //     new Date(Number(positionBalance.position.market.maturityDate * 1000)) < endDate &&
-      //     new Date(Number(positionBalance.position.market.maturityDate * 1000)) > startDate
-      //   ) {
-      //     let user = usersMap.get(positionBalance.account);
-      //     if (!user) user = initUser(positionBalance);
-      //     user.pnl = user.pnl + Number(positionBalance.amount) / 1e18;
-      //     usersMap.set(positionBalance.account, user);
-      //   }
-      // });
-    }
-
-    let globalNegativePnl = 0;
-
-    Array.from(usersMap.values()).map((user) => {
-      if (user.pnl < 0) {
-        globalNegativePnl = globalNegativePnl + user.pnl;
-      }
+      let user = usersMap.get(tx.account);
+      if (!user) user = initUser(tx);
+      user.volume = user.volume + tx.paid;
+      globalVolume = globalVolume + tx.paid;
+      usersMap.set(tx.account, user);
     });
 
     const finalArray = [];
+    const finalTwap = twapArray[period];
+
+    const globalSafeboxFeesForPeriod = (globalVolume * 2) / 100;
+    const totalRebatesToPay = (9 / 10) * globalSafeboxFeesForPeriod;
 
     Array.from(usersMap.values()).map((user) => {
-      if (user.pnl < 0) {
-        user.percentage = Math.abs(user.pnl / globalNegativePnl) * 100;
-        user.rewards.op = (user.percentage * (period < 2 ? 5000 : 8000)) / 100;
-        user.rewards.thales = (user.percentage * (period < 2 ? 5000 : 8000)) / 100;
-        finalArray.push(user);
+      user.percentage = Math.abs(user.volume / globalVolume) * 100;
+      user.safebox = (user.volume * 2) / 100;
+      user.rebates = (user.safebox * 9) / 10;
+      if (finalTwap > totalRebatesToPay) {
+        user.rewards.op = (((8000 * user.percentage) / 100) * totalRebatesToPay) / finalTwap;
+        user.rewards.thales = (((8000 * user.percentage) / 100) * totalRebatesToPay) / finalTwap;
       } else {
-        user.percentage = 0;
+        user.rewards.op = (8000 * user.percentage) / 100;
+        user.rewards.thales = (8000 * user.percentage) / 100;
       }
+
+      finalArray.push(user);
       return user;
     });
-    periodMap.set(period, { negativePnlTotal: globalNegativePnl, users: finalArray });
+    periodMap.set(period, {
+      globalVolume: globalVolume,
+      safeBooxFees: globalSafeboxFeesForPeriod,
+      rebatesToPay: totalRebatesToPay,
+      twapForPeriod: finalTwap,
+      users: finalArray,
+    });
   }
 
   redisClient.set(KEYS.OVERTIME_REWARDS[network], JSON.stringify([...periodMap]), function () {});
@@ -173,7 +156,9 @@ async function processOrders(network) {
 function initUser(tx) {
   const user = {
     address: tx.account,
-    pnl: 0,
+    volume: 0,
+    safebox: 0,
+    rebates: 0,
     percentage: 0,
     rewards: { op: 0, thales: 0 },
   };

@@ -44,6 +44,7 @@ const KEYS = {
     10: "overtimeOpRewards",
     42: "overtimeOpKovanRewards",
   },
+  TWAP_FOR_PERIOD: "twapMap",
 };
 
 module.exports = KEYS;
