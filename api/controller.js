@@ -56,7 +56,7 @@ app.get(ENDPOINTS.ORDERS, (req, res) => {
 
 app.get(ENDPOINTS.RANGED_LIQUIDITY, (req, res) => {
   const network = req.params.networkParam;
-  if ([10, 69, 137, 80001, 56, 42161].includes(Number(network))) {
+  if ([10, 69, 420, 137, 80001, 56, 42161].includes(Number(network))) {
     redisClient.get(KEYS.RANGED_AMM_LIQUIDITY[network], function (err, obj) {
       const orders = new Map(JSON.parse(obj));
       res.send(Array.from(orders));

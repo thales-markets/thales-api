@@ -6,6 +6,7 @@ const NetworkId = {
   Kovan: 42,
   Optimism: 10,
   OptimismKovan: 69,
+  OptimismGoerli: 420,
   Mumbai: 80001,
   Polygon: 137,
   BSC: 56,
@@ -22,6 +23,7 @@ const rangedAMMContract = {
     [NetworkId.Goerli]: "TBD", // TODO: goerli network remove or implement
     [NetworkId.Optimism]: "0x2d356b114cbCA8DEFf2d8783EAc2a5A5324fE1dF",
     [NetworkId.OptimismKovan]: "0x0690F410FB54d76268e4fa97486CBD605e68dC62",
+    [NetworkId.OptimismGoerli]: "0x618D7aeab71f1C5E2264982c0C35DCbE62600ad9",
     [NetworkId.Mumbai]: "TBD",
     [NetworkId.Polygon]: "0xe8e022405505a9F2b0B7452C844F1e64423849fC",
     [NetworkId.BSC]: "0xda5Bd4aBAFbE249bdC5684eAD594B0ac379687fd",

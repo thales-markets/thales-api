@@ -47,10 +47,10 @@ if (process.env.REDIS_URL) {
       await delay(10 * 1000);
 
       try {
-        console.log("process orders on kovan-OVM");
-        await processOrders(69);
+        console.log("process orders on goerli-OVM");
+        await processOrders(420);
       } catch (error) {
-        console.log("orders on kovan-OVM error: ", error);
+        console.log("orders on goerli-OVM error: ", error);
       }
 
       try {
@@ -80,18 +80,9 @@ async function processOrders(network) {
     network,
   });
 
-  const networkName = ethers.providers.getNetwork(network).name;
-
-  const bscProvider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/", {
-    name: "binance",
-    chainId: 56,
-  });
-
   // Infura does not have a provider for Binance Smart Chain so we need to provide a public one instead
-  const etherprovider =
-    network.toString() === "56"
-      ? bscProvider
-      : new ethers.providers.InfuraProvider({ chainId: network, name: networkName }, process.env.INFURA_URL);
+  const etherprovider = getProvider(network);
+
   const ammContractInit = new ethers.Contract(ammContract.addresses[network], ammContract.abi, etherprovider);
 
   for (const market of markets) {
@@ -139,3 +130,31 @@ const stableCoinFormatter = (value, networkId) => {
     return Number(ethers.utils.formatUnits(value, 18));
   }
 };
+
+function getProvider(network) {
+  const networkName = ethers.providers.getNetwork(network).name;
+
+  switch (Number(network)) {
+    case 56:
+      const bscProvider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/", {
+        name: "binance",
+        chainId: 56,
+      });
+      return bscProvider;
+
+    case 420:
+      const opGoerliProvider = new ethers.providers.JsonRpcProvider(
+        "https://optimism-goerli.infura.io/v3/" + process.env.INFURA_URL,
+        { name: "optimism-goerli", chainId: 420 },
+      );
+      return opGoerliProvider;
+
+    default:
+      // Infura does not have a provider for Binance Smart Chain so we need to provide a public one instead
+      const etherprovider = new ethers.providers.InfuraProvider(
+        { chainId: network, name: networkName },
+        process.env.INFURA_URL,
+      );
+      return etherprovider;
+  }
+}

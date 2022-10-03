@@ -32,6 +32,7 @@ const KEYS = {
     10: "optimismRangedLiq",
     137: "polygonRangedLiq",
     69: "kovanOpRangedLiq",
+    420: "goerliRangedLiq",
     80001: "mumbaiRangedLiq",
     56: "BSCRangedLiq",
     42161: "arbitrumRangedLiq",
