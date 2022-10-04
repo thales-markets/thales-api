@@ -66,6 +66,18 @@ app.get(ENDPOINTS.RANGED_LIQUIDITY, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.DISCOUNTS, (req, res) => {
+  const network = req.params.networkParam;
+  if ([10, 420].includes(Number(network))) {
+    redisClient.get(KEYS.DISCOUNTS[network], function (err, obj) {
+      const orders = new Map(JSON.parse(obj));
+      res.send(Array.from(orders));
+    });
+  } else {
+    res.send("Bad Network");
+  }
+});
+
 app.get(ENDPOINTS.OP_REWARDS, (req, res) => {
   const network = req.params.networkParam;
   const period = req.params.period;

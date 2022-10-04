@@ -46,6 +46,10 @@ const KEYS = {
     42: "overtimeOpKovanRewards",
   },
   TWAP_FOR_PERIOD: "twapMap",
+  DISCOUNTS: {
+    10: "optimismDiscounts",
+    420: "opGoerliDiscounts",
+  },
 };
 
 module.exports = KEYS;
