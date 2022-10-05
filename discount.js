@@ -17,12 +17,12 @@ if (process.env.REDIS_URL) {
   });
   setTimeout(async () => {
     while (true) {
-      //   try {
-      //     console.log("process orders on optimism");
-      //     await processOrders(10);
-      //   } catch (error) {
-      //     console.log("orders on optimism error: ", error);
-      //   }
+      try {
+        console.log("process discounts on optimism");
+        await processOrders(10);
+      } catch (error) {
+        console.log("orders on optimism error: ", error);
+      }
 
       //   await delay(10 * 1000);
 
@@ -45,7 +45,7 @@ if (process.env.REDIS_URL) {
       //   await delay(10 * 1000);
 
       try {
-        console.log("process orders on goerli-OVM");
+        console.log("process discounts on goerli-OVM");
         await processOrders(420);
       } catch (error) {
         console.log("orders on goerli-OVM error: ", error);
