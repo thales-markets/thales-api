@@ -49,6 +49,8 @@ const KEYS = {
   DISCOUNTS: {
     10: "optimismDiscounts",
     420: "opGoerliDiscounts",
+    137: "polygonDiscounts",
+    42161: "arbitrumDiscounts",
   },
 };
 

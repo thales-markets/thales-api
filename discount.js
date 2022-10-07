@@ -24,14 +24,23 @@ if (process.env.REDIS_URL) {
         console.log("orders on optimism error: ", error);
       }
 
-      //   await delay(10 * 1000);
+      await delay(10 * 1000);
 
-      //   try {
-      //     console.log("process orders on polygon");
-      //     await processOrders(137);
-      //   } catch (error) {
-      //     console.log("orders on polygon error: ", error);
-      //   }
+      try {
+        console.log("process orders on arbitrum");
+        await processOrders(42161);
+      } catch (error) {
+        console.log("orders on arbitrum error: ", error);
+      }
+
+      await delay(10 * 1000);
+
+      try {
+        console.log("process orders on polygon");
+        await processOrders(137);
+      } catch (error) {
+        console.log("orders on polygon error: ", error);
+      }
 
       //   await delay(10 * 1000);
 
@@ -56,15 +65,6 @@ if (process.env.REDIS_URL) {
       //     await processOrders(56);
       //   } catch (error) {
       //     console.log("orders on BSC error: ", error);
-      //   }
-
-      //   await delay(10 * 1000);
-
-      //   try {
-      //     console.log("process orders on arbitrum");
-      //     await processOrders(42161);
-      //   } catch (error) {
-      //     console.log("orders on arbitrum error: ", error);
       //   }
 
       await delay(60 * 1000);
