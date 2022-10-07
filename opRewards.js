@@ -23,13 +23,13 @@ if (process.env.REDIS_URL) {
       }
       await delay(5 * 1000);
 
-      try {
-        console.log("process orders on kovan optimism");
-        await processOrders(69);
-      } catch (error) {
-        console.log("orders on optimism error: ", error);
-      }
-      await delay(5 * 1000);
+      // try {
+      //   console.log("process orders on kovan optimism");
+      //   await processOrders(69);
+      // } catch (error) {
+      //   console.log("orders on optimism error: ", error);
+      // }
+      // await delay(5 * 1000);
     }
   }, 3000);
 }
@@ -52,6 +52,7 @@ async function processOrders(network) {
     let globalVolumeUp = 0;
     let globalVolumeDown = 0;
     let globalVolumeRanged = 0;
+    let globalVolumeDiscounted = 0;
 
     const transactions = await thalesData.binaryOptions.tokenTransactions({
       network: network,
@@ -87,6 +88,9 @@ async function processOrders(network) {
         if (trade.type === "buyRanged") {
           globalVolumeRanged = globalVolumeRanged + trade.amount;
         }
+        if (trade.type === "buyDiscounted") {
+          globalVolumeDiscounted = globalVolumeDiscounted + trade.amount;
+        }
       }
     });
 
@@ -103,29 +107,44 @@ async function processOrders(network) {
         if (trade.type === "buyUp") {
           user.up.volume = user.up.volume + trade.amount;
           user.up.percentage = user.up.volume / globalVolumeUp;
-          user.up.rewards.op = user.up.percentage * 11000;
-          user.up.rewards.thales = user.up.percentage * 20000;
+          user.up.rewards.op = user.up.percentage * (period < 6 ? 11000 : 9000);
+          user.up.rewards.thales = user.up.percentage * (period < 6 ? 20000 : 15000);
         }
         if (trade.type === "buyDown") {
           user.down.volume = user.down.volume + trade.amount;
           user.down.percentage = user.down.volume / globalVolumeDown;
-          user.down.rewards.op = user.down.percentage * 11000;
-          user.down.rewards.thales = user.down.percentage * 20000;
+          user.down.rewards.op = user.down.percentage * (period < 6 ? 11000 : 9000);
+          user.down.rewards.thales = user.down.percentage * (period < 6 ? 20000 : 15000);
         }
         if (trade.type === "buyRanged") {
           user.ranged.volume = user.ranged.volume + trade.amount;
           user.ranged.percentage = user.ranged.volume / globalVolumeRanged;
-          user.ranged.rewards.op = user.ranged.percentage * 6000;
+          user.ranged.rewards.op = user.ranged.percentage * (period < 6 ? 6000 : 5000);
           user.ranged.rewards.thales = user.ranged.percentage * 10000;
         }
+        if (period >= 6) {
+          if (trade.type === "buyDiscounted") {
+            user.discounted.volume = user.discounted.volume + trade.amount;
+            user.discounted.percentage = user.discounted.volume / globalVolumeDiscounted;
+            user.discounted.rewards.op = user.discounted.percentage * 5000;
+            user.discounted.rewards.thales = user.discounted.percentage * 10000;
+          }
+        }
+
         arrUsers.set(trade.account, user);
       }
     });
 
-    const finalArray = Array.from(arrUsers.values()).map((data) => {
-      data.totalRewards.op = data.stackingRewards + data.up.rewards.op + data.down.rewards.op + data.ranged.rewards.op;
-      data.totalRewards.thales = data.up.rewards.thales + data.down.rewards.thales + data.ranged.rewards.thales;
-      return data;
+    const finalArray = Array.from(arrUsers.values()).map((user) => {
+      user.totalRewards.op =
+        user.stackingRewards +
+        user.up.rewards.op +
+        user.down.rewards.op +
+        user.ranged.rewards.op +
+        user.discounted.rewards.op;
+      user.totalRewards.thales =
+        user.up.rewards.thales + user.down.rewards.thales + user.ranged.rewards.thales + user.discounted.rewards.thales;
+      return user;
     });
 
     periodMap.set(period, finalArray);
@@ -153,6 +172,11 @@ function initUser(tx) {
       percentage: 0,
       rewards: { op: 0, thales: 0 },
     },
+    discounted: {
+      volume: 0,
+      percentage: 0,
+      rewards: { op: 0, thales: 0 },
+    },
     totalRewards: { op: 0, thales: 0 },
   };
   return user;
@@ -173,6 +197,11 @@ function initUserAddress(address) {
       rewards: { op: 0, thales: 0 },
     },
     ranged: {
+      volume: 0,
+      percentage: 0,
+      rewards: { op: 0, thales: 0 },
+    },
+    discounted: {
       volume: 0,
       percentage: 0,
       rewards: { op: 0, thales: 0 },
