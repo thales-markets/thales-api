@@ -63,7 +63,7 @@ async function processOrders(network) {
   const START_DATE = new Date(2022, 8, 26, 0, 0, 0);
   const periodMap = new Map();
 
-  for (let period = 0; period < 1; period++) {
+  for (let period = 0; period < 10; period++) {
     const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 14);
 
