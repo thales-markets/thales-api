@@ -52,6 +52,13 @@ const KEYS = {
     137: "polygonDiscounts",
     42161: "arbitrumDiscounts",
   },
+  OVERTIME_DISCOUNTS: {
+    5: "goerliOvertimeDiscounts",
+    10: "optimismOvertimeDiscounts",
+    420: "opGoerliOvertimeDiscounts",
+    137: "polygonOvertimeDiscounts",
+    42161: "arbitrumOvertimeDiscounts",
+  },
 };
 
 module.exports = KEYS;

@@ -29,6 +29,7 @@ const ENDPOINTS = {
   OP_REWARDS: "/rewards/:networkParam/:period",
   OVERTIME_REWARDS: "/overtime-rewards/:networkParam/:period",
   DISCOUNTS: "/discounts/:networkParam",
+  OVERTIME_DISCOUNTS: "/overtimeDiscounts/:networkParam",
 };
 
 module.exports = ENDPOINTS;

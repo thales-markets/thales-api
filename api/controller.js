@@ -78,6 +78,18 @@ app.get(ENDPOINTS.DISCOUNTS, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.OVERTIME_DISCOUNTS, (req, res) => {
+  const network = req.params.networkParam;
+  if ([5, 10].includes(Number(network))) {
+    redisClient.get(KEYS.OVERTIME_DISCOUNTS[network], function (err, obj) {
+      const orders = new Map(JSON.parse(obj));
+      res.send(Array.from(orders));
+    });
+  } else {
+    res.send("Bad Network");
+  }
+});
+
 app.get(ENDPOINTS.OP_REWARDS, (req, res) => {
   const network = req.params.networkParam;
   const period = req.params.period;

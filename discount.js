@@ -7,6 +7,7 @@ const KEYS = require("./redis/redis-keys");
 fetch = require("node-fetch");
 const { getPhaseAndEndDate, delay } = require("./services/utils");
 const ammContract = require("./contracts/amm");
+const sportsAmmContract = require("./contracts/sportsAMM");
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -20,6 +21,7 @@ if (process.env.REDIS_URL) {
       try {
         console.log("process discounts on optimism");
         await processOrders(10);
+        await processOvertimeOrders(10);
       } catch (error) {
         console.log("orders on optimism error: ", error);
       }
@@ -52,6 +54,13 @@ if (process.env.REDIS_URL) {
       //   }
 
       //   await delay(10 * 1000);
+
+      try {
+        console.log("process overtime orders on goerli");
+        await processOvertimeOrders(5);
+      } catch (error) {
+        console.log("orders on goerli error: ", error);
+      }
 
       try {
         console.log("process discounts on goerli-OVM");
@@ -114,6 +123,53 @@ async function processOrders(network) {
 
   if (process.env.REDIS_URL) {
     redisClient.set(KEYS.DISCOUNTS[network], JSON.stringify([...optimismOptionsMap]), function () {});
+  }
+}
+
+async function processOvertimeOrders(network) {
+  const markets = await thalesData.sportMarkets.markets({
+    max: Infinity,
+    network,
+  });
+
+  const optimismOptionsMap = new Map();
+
+  // Infura does not have a provider for Binance Smart Chain so we need to provide a public one instead
+  const etherprovider = getProvider(network);
+
+  const ammContractInit = new ethers.Contract(sportsAmmContract.addresses[network], sportsAmmContract.abi, etherprovider);
+
+  const now = Date.now();
+
+  for (const market of markets) {
+    if (market.maturityDate > now) {
+      try {
+        const marketInfoObject = {
+          longPriceImpact: 0,
+          shortPriceImpact: 0,
+        };
+
+        try {
+          const [longPriceImpact, shortPriceImpact] = await Promise.all([
+            ammContractInit.buyPriceImpact(market.address, 0, ethers.utils.parseEther("1")),
+            ammContractInit.buyPriceImpact(market.address, 1, ethers.utils.parseEther("1")),
+          ]);
+
+          marketInfoObject.longPriceImpact = Number(ethers.utils.formatEther(longPriceImpact)) * 100;
+          marketInfoObject.shortPriceImpact = Number(ethers.utils.formatEther(shortPriceImpact)) * 100;
+        } catch (e) {
+          console.log(e);
+        }
+
+        optimismOptionsMap.set(market.address, marketInfoObject);
+      } catch (e) {
+        console.log("Error", e);
+      }
+    }
+  }
+
+  if (process.env.REDIS_URL) {
+    redisClient.set(KEYS.OVERTIME_DISCOUNTS[network], JSON.stringify([...optimismOptionsMap]), function () {});
   }
 }
 
