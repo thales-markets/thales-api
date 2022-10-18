@@ -145,18 +145,21 @@ async function processOvertimeOrders(network) {
     if (market.maturityDate > now) {
       try {
         const marketInfoObject = {
-          longPriceImpact: 0,
-          shortPriceImpact: 0,
+          homePriceImpact: 0,
+          awayPriceImpact: 0,
+          drawPriceImpact: 0,
         };
 
         try {
-          const [longPriceImpact, shortPriceImpact] = await Promise.all([
+          const [homePriceImpact, awayPriceImpact, drawPriceImpact] = await Promise.all([
             ammContractInit.buyPriceImpact(market.address, 0, ethers.utils.parseEther("1")),
             ammContractInit.buyPriceImpact(market.address, 1, ethers.utils.parseEther("1")),
+            ammContractInit.buyPriceImpact(market.address, 2, ethers.utils.parseEther("1")),
           ]);
 
-          marketInfoObject.longPriceImpact = Number(ethers.utils.formatEther(longPriceImpact)) * 100;
-          marketInfoObject.shortPriceImpact = Number(ethers.utils.formatEther(shortPriceImpact)) * 100;
+          marketInfoObject.homePriceImpact = Number(ethers.utils.formatEther(homePriceImpact)) * 100;
+          marketInfoObject.awayPriceImpact = Number(ethers.utils.formatEther(awayPriceImpact)) * 100;
+          marketInfoObject.drawPriceImpact = Number(ethers.utils.formatEther(drawPriceImpact)) * 100;
         } catch (e) {
           console.log(e);
         }
