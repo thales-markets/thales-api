@@ -6,6 +6,8 @@ const KEYS = require("./redis/redis-keys");
 fetch = require("node-fetch");
 const { delay } = require("./services/utils");
 
+const periodMap = new Map();
+
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -18,6 +20,7 @@ if (process.env.REDIS_URL) {
       try {
         console.log("process orders on optimism");
         await processOrders(10);
+        await processRewards(10);
       } catch (error) {
         console.log("orders on optimism error: ", error);
       }
@@ -36,9 +39,8 @@ if (process.env.REDIS_URL) {
 
 async function processOrders(network) {
   const START_DATE = new Date(2022, 6, 13, 12, 23, 0);
-  const periodMap = new Map();
 
-  for (let period = 0; period < 8; period++) {
+  for (let period = 0; period < 7; period++) {
     const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 14);
 
@@ -153,6 +155,107 @@ async function processOrders(network) {
   redisClient.set(KEYS.OP_REWARDS[network], JSON.stringify([...periodMap]), function () {});
 }
 
+async function processRewards(network) {
+  const START_DATE = new Date(2022, 6, 13, 12, 23, 0);
+
+  for (let period = 7; period < 14; period++) {
+    const startDate = new Date(START_DATE.getTime());
+    startDate.setDate(START_DATE.getDate() + period * 14);
+    console.log("start date: ", startDate);
+
+    if (startDate > new Date()) {
+      break;
+    }
+    const endDate = new Date(START_DATE.getTime());
+    endDate.setDate(START_DATE.getDate() + (period + 1) * 14);
+    console.log("end date: ", endDate);
+    const arrUsers = new Map();
+    let globalITM = 0;
+    let globalOTM = 0;
+    let globalDSC = 0;
+
+    const transactions = await thalesData.binaryOptions.tokenTransactions({
+      network: network,
+      onlyWithProtocolReward: true,
+      minTimestamp: parseInt(startDate.getTime() / 1000),
+      maxTimestamp: parseInt(endDate.getTime() / 1000),
+    });
+
+    transactions.map((tx) => {
+      if (!arrUsers.get(tx.account)) {
+        arrUsers.set(tx.account, initUser(tx));
+      } else {
+        const user = arrUsers.get(tx.account);
+        user.stackingRewards = user.stackingRewards + tx.protocolRewards * 0.64;
+        arrUsers.set(tx.account, user);
+      }
+    });
+
+    const trades = await thalesData.binaryOptions.rewards({
+      network: network,
+      minTimestamp: parseInt(startDate.getTime() / 1000),
+      maxTimestamp: parseInt(endDate.getTime() / 1000),
+    });
+
+    trades.map((trade) => {
+      if (trade.account.toLowerCase() !== "0x2d356b114cbCA8DEFf2d8783EAc2a5A5324fE1dF".toLowerCase()) {
+        if (trade.type === "ITM") {
+          globalITM = globalITM + trade.amount;
+        }
+        if (trade.type === "OTM") {
+          globalOTM = globalOTM + trade.amount;
+        }
+        if (trade.type === "DSC") {
+          globalDSC = globalDSC + trade.amount;
+        }
+      }
+    });
+
+    // console.log("globalVolumeUp: ", globalVolumeUp);
+    // console.log("globalVolumeDown: ", globalVolumeDown);
+    // console.log("globalVolumeRanged: ", globalVolumeRanged);
+
+    trades.map((trade) => {
+      if (trade.account.toLowerCase() !== "0x2d356b114cbCA8DEFf2d8783EAc2a5A5324fE1dF".toLowerCase()) {
+        if (!arrUsers.get(trade.account)) {
+          arrUsers.set(trade.account, initUserAddress(trade.account));
+        }
+        const user = arrUsers.get(trade.account);
+        if (trade.type === "ITM") {
+          user.itm.volume = user.itm.volume + trade.amount;
+          user.itm.percentage = user.itm.volume / globalITM;
+          user.itm.rewards.op = user.itm.percentage * (period < 6 ? 11000 : 9000);
+          user.itm.rewards.thales = user.itm.percentage * (period < 6 ? 20000 : 15000);
+        }
+        if (trade.type === "OTM") {
+          user.otm.volume = user.otm.volume + trade.amount;
+          user.otm.percentage = user.otm.volume / globalOTM;
+          user.otm.rewards.op = user.otm.percentage * (period < 6 ? 11000 : 9000);
+          user.otm.rewards.thales = user.otm.percentage * (period < 6 ? 20000 : 15000);
+        }
+        if (trade.type === "DSC") {
+          user.discounted.volume = user.discounted.volume + trade.amount;
+          user.discounted.percentage = user.discounted.volume / globalDSC;
+          user.discounted.rewards.op = user.discounted.percentage * (period < 6 ? 6000 : 5000);
+          user.discounted.rewards.thales = user.discounted.percentage * 10000;
+        }
+        arrUsers.set(trade.account, user);
+      }
+    });
+
+    const finalArray = Array.from(arrUsers.values()).map((user) => {
+      user.totalRewards.op =
+        user.stackingRewards + user.itm.rewards.op + user.otm.rewards.op + user.discounted.rewards.op;
+      user.totalRewards.thales = user.itm.rewards.thales + user.otm.rewards.thales + user.discounted.rewards.thales;
+      return user;
+    });
+
+    periodMap.set(period, finalArray);
+  }
+
+  redisClient.set(KEYS.OP_REWARDS[network], JSON.stringify([...periodMap]), function () {});
+}
+
 function initUser(tx) {
   const user = {
     address: tx.account,
@@ -173,6 +276,16 @@ function initUser(tx) {
       rewards: { op: 0, thales: 0 },
     },
     discounted: {
+      volume: 0,
+      percentage: 0,
+      rewards: { op: 0, thales: 0 },
+    },
+    itm: {
+      volume: 0,
+      percentage: 0,
+      rewards: { op: 0, thales: 0 },
+    },
+    otm: {
       volume: 0,
       percentage: 0,
       rewards: { op: 0, thales: 0 },
@@ -202,6 +315,16 @@ function initUserAddress(address) {
       rewards: { op: 0, thales: 0 },
     },
     discounted: {
+      volume: 0,
+      percentage: 0,
+      rewards: { op: 0, thales: 0 },
+    },
+    itm: {
+      volume: 0,
+      percentage: 0,
+      rewards: { op: 0, thales: 0 },
+    },
+    otm: {
       volume: 0,
       percentage: 0,
       rewards: { op: 0, thales: 0 },
