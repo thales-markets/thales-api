@@ -385,3 +385,15 @@ app.get(ENDPOINTS.MEDIUM, (req, res) => {
     res.send(Buffer.from(body));
   });
 });
+
+app.get(ENDPOINTS.BANNER_IMAGE, (req, res) => {
+  const index = req.params.imageIndex;
+  var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${index}/image.jpg`;
+  request.get(url).pipe(res);
+});
+
+app.get(ENDPOINTS.BANNER_JSON, (req, res) => {
+  const index = req.params.jsonIndex;
+  var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${index}/json.json`;
+  request.get(url).pipe(res);
+});

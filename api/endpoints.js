@@ -30,6 +30,8 @@ const ENDPOINTS = {
   OVERTIME_REWARDS: "/overtime-rewards/:networkParam/:period",
   DISCOUNTS: "/discounts/:networkParam",
   OVERTIME_DISCOUNTS: "/overtimeDiscounts/:networkParam",
+  BANNER_IMAGE: "/banner-image/:imageIndex",
+  BANNER_JSON: "/banner-json/:jsonIndex",
 };
 
 module.exports = ENDPOINTS;
