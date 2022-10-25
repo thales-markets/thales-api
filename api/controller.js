@@ -80,7 +80,7 @@ app.get(ENDPOINTS.DISCOUNTS, (req, res) => {
 
 app.get(ENDPOINTS.OVERTIME_DISCOUNTS, (req, res) => {
   const network = req.params.networkParam;
-  if ([5, 10].includes(Number(network))) {
+  if ([5, 10, 420].includes(Number(network))) {
     redisClient.get(KEYS.OVERTIME_DISCOUNTS[network], function (err, obj) {
       const orders = new Map(JSON.parse(obj));
       res.send(Array.from(orders));
@@ -110,7 +110,7 @@ app.get(ENDPOINTS.OP_REWARDS, (req, res) => {
 app.get(ENDPOINTS.OVERTIME_REWARDS, (req, res) => {
   const network = req.params.networkParam;
   const period = req.params.period;
-  if ([10, 42].includes(Number(network)) && [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(Number(period))) {
+  if ([5, 10, 420].includes(Number(network)) && [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(Number(period))) {
     redisClient.get(KEYS.OVERTIME_REWARDS[network], function (err, obj) {
       const rewards = new Map(JSON.parse(obj));
       try {
