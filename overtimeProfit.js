@@ -120,15 +120,17 @@ async function processOrders(network) {
       usersMap.set(tx.account, user);
     });
 
+    const FEEPercentage = period < 2 ? 2 : 3;
+
     const finalArray = [];
     const finalTwap = twapArray[period];
 
-    const globalSafeboxFeesForPeriod = (globalVolume * 2) / 100;
+    const globalSafeboxFeesForPeriod = (globalVolume * FEEPercentage) / 100;
     const totalRebatesToPay = (9 / 10) * globalSafeboxFeesForPeriod;
 
     Array.from(usersMap.values()).map((user) => {
       user.percentage = Math.abs(user.volume / globalVolume) * 100;
-      user.safebox = (user.volume * 2) / 100;
+      user.safebox = (user.volume * FEEPercentage) / 100;
       user.rebates = (user.safebox * 9) / 10;
       if (finalTwap > totalRebatesToPay) {
         user.rewards.op = (((8000 * user.percentage) / 100) * totalRebatesToPay) / finalTwap;
