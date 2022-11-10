@@ -124,6 +124,18 @@ app.get(ENDPOINTS.OVERTIME_REWARDS, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.FIFA_REWARDS, (req, res) => {
+  const network = req.params.networkParam;
+  redisClient.get(KEYS.ZEBRO_CAMPAIGN[network], function (err, obj) {
+    const rewards = JSON.parse(obj);
+    try {
+      res.send(rewards);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
 app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
   const walletAddress = req.params.walletAddressParam;
   const network = req.params.networkParam;

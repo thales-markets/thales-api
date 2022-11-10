@@ -59,6 +59,7 @@ const KEYS = {
     137: "polygonOvertimeDiscounts",
     42161: "arbitrumOvertimeDiscounts",
   },
+  ZEBRO_CAMPAIGN: { 10: "zebroCampaignOp", 420: "zebroCampaignOpGoerli" },
 };
 
 module.exports = KEYS;

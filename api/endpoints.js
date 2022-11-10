@@ -32,6 +32,7 @@ const ENDPOINTS = {
   OVERTIME_DISCOUNTS: "/overtimeDiscounts/:networkParam",
   BANNER_IMAGE: "/banner-image/:imageIndex",
   BANNER_JSON: "/banner-json/:jsonIndex",
+  FIFA_REWARDS: "/fifa-rewards/:networkParam",
 };
 
 module.exports = ENDPOINTS;
