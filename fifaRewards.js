@@ -46,6 +46,7 @@ async function processOrders(network) {
   await Promise.all([
     ...allTx.map(async (zebroTx) => {
       const user = initUser(zebroTx);
+
       const singles = await thalesData.sportMarkets.marketTransactions({ network: network, account: zebroTx.owner });
       const parlays = await thalesData.sportMarkets.parlayMarkets({ network: network, account: zebroTx.owner });
 
@@ -126,7 +127,6 @@ async function processOrders(network) {
     return user;
   });
 
-  console.log(finalArray, globalVolume);
   const result = { globalVolume, leaderboard: finalArray };
   if (process.env.REDIS_URL) {
     redisClient.set(KEYS.ZEBRO_CAMPAIGN[network], JSON.stringify(result), function () {});
@@ -136,6 +136,7 @@ async function processOrders(network) {
 function initUser(tx) {
   const user = {
     address: tx.owner,
+    url: tx.url.replace(".json", ".png"),
     baseVolume: 0,
     bonusVolume: 0,
     volume: 0,
