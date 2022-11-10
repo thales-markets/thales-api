@@ -73,6 +73,9 @@ docker-compose pull overtime
 docker-compose stop overtime
 docker-compose up -d overtime
 
+docker-compose pull fifa
+docker-compose stop fifa
+docker-compose up -d fifa
 
 ### OPEN REDIS CLI ON SERVER ###
 - Access SERVER

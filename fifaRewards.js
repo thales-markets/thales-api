@@ -9,6 +9,9 @@ const KEYS = require("./redis/redis-keys");
 const { delay } = require("./services/utils");
 const ethers = require("ethers");
 
+const OP_REWARDS = 50000;
+const THALES_REWARDS = 30000;
+
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -117,8 +120,14 @@ async function processOrders(network) {
     }),
   ]);
 
-  console.log(leaderboard, globalVolume);
-  const result = { globalVolume, leaderboard };
+  const finalArray = leaderboard.map((user) => {
+    user.rewards.op = globalVolume > 0 ? (user.volume / globalVolume) * OP_REWARDS : 0;
+    user.rewards.thales = globalVolume > 0 ? (user.volume / globalVolume) * THALES_REWARDS : 0;
+    return user;
+  });
+
+  console.log(finalArray, globalVolume);
+  const result = { globalVolume, leaderboard: finalArray };
   if (process.env.REDIS_URL) {
     redisClient.set(KEYS.ZEBRO_CAMPAIGN[network], JSON.stringify(result), function () {});
   }
