@@ -224,20 +224,20 @@ async function processRewards(network) {
         if (trade.type === "ITM") {
           user.itm.volume = user.itm.volume + trade.amount;
           user.itm.percentage = user.itm.volume / globalITM;
-          user.itm.rewards.op = user.itm.percentage * (period < 6 ? 11000 : 9000);
-          user.itm.rewards.thales = user.itm.percentage * (period < 6 ? 20000 : 15000);
+          user.itm.rewards.op = user.itm.percentage * 5000;
+          user.itm.rewards.thales = user.itm.percentage * 7000;
         }
         if (trade.type === "OTM") {
           user.otm.volume = user.otm.volume + trade.amount;
           user.otm.percentage = user.otm.volume / globalOTM;
-          user.otm.rewards.op = user.otm.percentage * (period < 6 ? 11000 : 9000);
-          user.otm.rewards.thales = user.otm.percentage * (period < 6 ? 20000 : 15000);
+          user.otm.rewards.op = user.otm.percentage * 5000;
+          user.otm.rewards.thales = user.otm.percentage * 7000;
         }
         if (trade.type === "DSC") {
           user.discounted.volume = user.discounted.volume + trade.amount;
           user.discounted.percentage = user.discounted.volume / globalDSC;
-          user.discounted.rewards.op = user.discounted.percentage * (period < 6 ? 6000 : 5000);
-          user.discounted.rewards.thales = user.discounted.percentage * 10000;
+          user.discounted.rewards.op = user.discounted.percentage * 5000;
+          user.discounted.rewards.thales = user.discounted.percentage * 7000;
         }
         arrUsers.set(trade.account, user);
       }

@@ -16,12 +16,12 @@
     "deasync": "^0.1.21",
     "dotenv": "^8.2.0",
     "eth-sig-util": "^2.5.3",
-    "ethers": "5.7.1",
+    "ethers": "^5.7.2",
     "express": "^4.17.1",
     "express-prom-bundle": "^6.2.0",
     "node-fetch": "^2.6.1",
     "redis": "^3.0.2",
-    "thales-data": "1.1.19",
+    "thales-data": "^1.1.37",
     "twitter-api-v2": "^1.4.1",
     "web3": "^1.5.2"
   }

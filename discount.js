@@ -65,6 +65,7 @@ if (process.env.REDIS_URL) {
       try {
         console.log("process discounts on goerli-OVM");
         await processOrders(420);
+        await processOvertimeOrders(420);
       } catch (error) {
         console.log("orders on goerli-OVM error: ", error);
       }
@@ -137,7 +138,11 @@ async function processOvertimeOrders(network) {
   // Infura does not have a provider for Binance Smart Chain so we need to provide a public one instead
   const etherprovider = getProvider(network);
 
-  const ammContractInit = new ethers.Contract(sportsAmmContract.addresses[network], sportsAmmContract.abi, etherprovider);
+  const ammContractInit = new ethers.Contract(
+    sportsAmmContract.addresses[network],
+    sportsAmmContract.abi,
+    etherprovider,
+  );
 
   const now = Date.now();
 
