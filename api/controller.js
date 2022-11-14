@@ -80,7 +80,7 @@ app.get(ENDPOINTS.DISCOUNTS, (req, res) => {
 
 app.get(ENDPOINTS.OVERTIME_DISCOUNTS, (req, res) => {
   const network = req.params.networkParam;
-  if ([5, 10, 420].includes(Number(network))) {
+  if ([5, 10].includes(Number(network))) {
     redisClient.get(KEYS.OVERTIME_DISCOUNTS[network], function (err, obj) {
       const orders = new Map(JSON.parse(obj));
       res.send(Array.from(orders));
@@ -93,7 +93,7 @@ app.get(ENDPOINTS.OVERTIME_DISCOUNTS, (req, res) => {
 app.get(ENDPOINTS.OP_REWARDS, (req, res) => {
   const network = req.params.networkParam;
   const period = req.params.period;
-  if ([10, 69].includes(Number(network))) {
+  if ([10, 69].includes(Number(network)) && [0, 1, 2, 3, 4, 5, 6, 7].includes(Number(period))) {
     redisClient.get(KEYS.OP_REWARDS[network], function (err, obj) {
       const rewards = new Map(JSON.parse(obj));
       try {
@@ -110,7 +110,7 @@ app.get(ENDPOINTS.OP_REWARDS, (req, res) => {
 app.get(ENDPOINTS.OVERTIME_REWARDS, (req, res) => {
   const network = req.params.networkParam;
   const period = req.params.period;
-  if ([5, 10, 420].includes(Number(network)) && [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(Number(period))) {
+  if ([10, 42].includes(Number(network)) && [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(Number(period))) {
     redisClient.get(KEYS.OVERTIME_REWARDS[network], function (err, obj) {
       const rewards = new Map(JSON.parse(obj));
       try {
@@ -122,18 +122,6 @@ app.get(ENDPOINTS.OVERTIME_REWARDS, (req, res) => {
   } else {
     res.send("Bad Network or bad period");
   }
-});
-
-app.get(ENDPOINTS.FIFA_REWARDS, (req, res) => {
-  const network = req.params.networkParam;
-  redisClient.get(KEYS.ZEBRO_CAMPAIGN[network], function (err, obj) {
-    const rewards = JSON.parse(obj);
-    try {
-      res.send(rewards);
-    } catch (e) {
-      console.log(e);
-    }
-  });
 });
 
 app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
@@ -405,10 +393,10 @@ app.get(ENDPOINTS.BANNER_IMAGE_COUNT, (req, res) => {
     if (error || response.statusCode !== 200) {
       return res.status(500).json({ type: "error", message: error.message });
     }
-    const count = (body.match(/js-navigation-item/g) || []).length;
+    const count = (body.match(/thales-markets\/thales-sport-markets\/tree\/dev\/src\/assets\/images\/banner/g) || []).length;
     res.header("Access-Control-Allow-Origin", "*");
     res.set("Content-Type", "application/json");
-    res.send(JSON.stringify({count: count - 1}));
+    res.send(JSON.stringify({count: count}));
   });
 });
 
