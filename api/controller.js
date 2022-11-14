@@ -386,6 +386,20 @@ app.get(ENDPOINTS.MEDIUM, (req, res) => {
   });
 });
 
+app.get(ENDPOINTS.BANNER_IMAGE_COUNT, (req, res) => {
+  const index = req.params.imageIndex;
+  var url = `https://github.com/thales-markets/thales-sport-markets/file-list/dev/src/assets/images/banner`;
+  request({ url: url }, (error, response, body) => {
+    if (error || response.statusCode !== 200) {
+      return res.status(500).json({ type: "error", message: error.message });
+    }
+    const count = (body.match(/js-navigation-item/g) || []).length;
+    res.header("Access-Control-Allow-Origin", "*");
+    res.set("Content-Type", "application/json");
+    res.send(JSON.stringify({count: count - 1}));
+  });
+});
+
 app.get(ENDPOINTS.BANNER_IMAGE, (req, res) => {
   const index = req.params.imageIndex;
   var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${index}/image.jpg`;

@@ -31,6 +31,7 @@ const ENDPOINTS = {
   DISCOUNTS: "/discounts/:networkParam",
   OVERTIME_DISCOUNTS: "/overtimeDiscounts/:networkParam",
   BANNER_IMAGE: "/banner-image/:imageIndex",
+  BANNER_IMAGE_COUNT: "/banner-image-count",
   BANNER_JSON: "/banner-json/:jsonIndex",
 };
 
