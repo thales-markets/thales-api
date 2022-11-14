@@ -10,6 +10,8 @@ const { delay } = require("./services/utils");
 
 const util = require("util");
 
+const PARLAY_CONTRACT = "0x82b3634c0518507d5d817be6dab6233ebe4d68d9";
+
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -78,12 +80,6 @@ async function processOrders(network) {
 
     console.log("*** endDate: ", endDate, " ***");
 
-    const allTx = await thalesData.sportMarkets.marketTransactions({
-      network: network,
-      startPeriod: parseInt(startDate.getTime() / 1000),
-      endPeriod: parseInt(endDate.getTime() / 1000),
-    });
-
     let twapArray = [];
 
     redisClient.get = util.promisify(redisClient.get);
@@ -112,11 +108,33 @@ async function processOrders(network) {
 
     let globalVolume = 0;
 
+    const allTx = await thalesData.sportMarkets.marketTransactions({
+      network: network,
+      startPeriod: parseInt(startDate.getTime() / 1000),
+      endPeriod: parseInt(endDate.getTime() / 1000),
+    });
+
     allTx.map((tx) => {
+      if (tx.account.toLowerCase() !== PARLAY_CONTRACT) {
+        let user = usersMap.get(tx.account);
+        if (!user) user = initUser(tx);
+        user.volume = user.volume + tx.paid;
+        globalVolume = globalVolume + tx.paid;
+        usersMap.set(tx.account, user);
+      }
+    });
+
+    const parlays = await thalesData.sportMarkets.parlayMarkets({
+      network: network,
+      startPeriod: parseInt(startDate.getTime() / 1000),
+      endPeriod: parseInt(endDate.getTime() / 1000),
+    });
+
+    parlays.map((tx) => {
       let user = usersMap.get(tx.account);
       if (!user) user = initUser(tx);
-      user.volume = user.volume + tx.paid;
-      globalVolume = globalVolume + tx.paid;
+      user.volume = user.volume + tx.sUSDPaid;
+      globalVolume = globalVolume + tx.sUSDPaid;
       usersMap.set(tx.account, user);
     });
 
