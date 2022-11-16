@@ -11,6 +11,9 @@ const { delay } = require("./services/utils");
 const util = require("util");
 
 const PARLAY_CONTRACT = "0x82b3634c0518507d5d817be6dab6233ebe4d68d9";
+const VAULT_DISCOUNT = "0xc922f4cde42dd658a7d3ea852caf7eae47f6cecd";
+const VAULT_DEGEN = "0xbaac5464bf6e767c9af0e8d4677c01be2065fd5f";
+const VAULT_SAFU = "0x43d19841d818b2ccc63a8b44ce8c7def8616d98e";
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -115,7 +118,12 @@ async function processOrders(network) {
     });
 
     allTx.map((tx) => {
-      if (tx.account.toLowerCase() !== PARLAY_CONTRACT) {
+      if (
+        tx.account.toLowerCase() !== PARLAY_CONTRACT &&
+        tx.account.toLowerCase() !== VAULT_DEGEN &&
+        tx.account.toLowerCase() !== VAULT_DISCOUNT &&
+        tx.account.toLowerCase() !== VAULT_SAFU
+      ) {
         let user = usersMap.get(tx.account);
         if (!user) user = initUser(tx);
         user.volume = user.volume + tx.paid;
