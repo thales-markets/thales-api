@@ -6,6 +6,11 @@ const KEYS = require("./redis/redis-keys");
 fetch = require("node-fetch");
 const { delay } = require("./services/utils");
 
+const RANGED_AMM = "0x2d356b114cbca8deff2d8783eac2a5a5324fe1df";
+const VAULT_DISCOUNT = "0xb484027cb0c538538bad2be492714154f9196f93";
+const VAULT_DEGEN = "0x9d3abeaf22ddf68e72b865ca3b23ed880a3be41f";
+const VAULT_SAFU = "0x6c7fd4321183b542e81bcc7de4dfb88f9dbca29f";
+
 const periodMap = new Map();
 
 if (process.env.REDIS_URL) {
@@ -80,7 +85,12 @@ async function processOrders(network) {
     });
 
     trades.map((trade) => {
-      if (trade.account.toLowerCase() !== "0x2d356b114cbCA8DEFf2d8783EAc2a5A5324fE1dF".toLowerCase()) {
+      if (
+        trade.account.toLowerCase() !== RANGED_AMM &&
+        trade.account.toLowerCase() !== VAULT_DISCOUNT &&
+        trade.account.toLowerCase() !== VAULT_DEGEN &&
+        trade.account.toLowerCase() !== VAULT_SAFU
+      ) {
         if (trade.type === "buyUp") {
           globalVolumeUp = globalVolumeUp + trade.amount;
         }
@@ -101,7 +111,12 @@ async function processOrders(network) {
     // console.log("globalVolumeRanged: ", globalVolumeRanged);
 
     trades.map((trade) => {
-      if (trade.account.toLowerCase() !== "0x2d356b114cbCA8DEFf2d8783EAc2a5A5324fE1dF".toLowerCase()) {
+      if (
+        trade.account.toLowerCase() !== RANGED_AMM &&
+        trade.account.toLowerCase() !== VAULT_DISCOUNT &&
+        trade.account.toLowerCase() !== VAULT_DEGEN &&
+        trade.account.toLowerCase() !== VAULT_SAFU
+      ) {
         if (!arrUsers.get(trade.account)) {
           arrUsers.set(trade.account, initUserAddress(trade.account));
         }
@@ -198,7 +213,12 @@ async function processRewards(network) {
     });
 
     trades.map((trade) => {
-      if (trade.account.toLowerCase() !== "0x2d356b114cbCA8DEFf2d8783EAc2a5A5324fE1dF".toLowerCase()) {
+      if (
+        trade.account.toLowerCase() !== RANGED_AMM &&
+        trade.account.toLowerCase() !== VAULT_DISCOUNT &&
+        trade.account.toLowerCase() !== VAULT_DEGEN &&
+        trade.account.toLowerCase() !== VAULT_SAFU
+      ) {
         if (trade.type === "ITM") {
           globalITM = globalITM + trade.amount;
         }
@@ -216,7 +236,12 @@ async function processRewards(network) {
     // console.log("globalVolumeRanged: ", globalVolumeRanged);
 
     trades.map((trade) => {
-      if (trade.account.toLowerCase() !== "0x2d356b114cbCA8DEFf2d8783EAc2a5A5324fE1dF".toLowerCase()) {
+      if (
+        trade.account.toLowerCase() !== RANGED_AMM &&
+        trade.account.toLowerCase() !== VAULT_DISCOUNT &&
+        trade.account.toLowerCase() !== VAULT_DEGEN &&
+        trade.account.toLowerCase() !== VAULT_SAFU
+      ) {
         if (!arrUsers.get(trade.account)) {
           arrUsers.set(trade.account, initUserAddress(trade.account));
         }
