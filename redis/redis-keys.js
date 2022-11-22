@@ -51,6 +51,7 @@ const KEYS = {
     420: "opGoerliDiscounts",
     137: "polygonDiscounts",
     42161: "arbitrumDiscounts",
+    56: "bscDiscounts",
   },
   OVERTIME_DISCOUNTS: {
     5: "goerliOvertimeDiscounts",
