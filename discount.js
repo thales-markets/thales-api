@@ -44,7 +44,14 @@ if (process.env.REDIS_URL) {
         console.log("orders on polygon error: ", error);
       }
 
-      //   await delay(10 * 1000);
+      await delay(10 * 1000);
+
+      try {
+        console.log("process orders on BSC");
+        await processOrders(56);
+      } catch (error) {
+        console.log("orders on BSC error: ", error);
+      }
 
       //   try {
       //     console.log("process orders on mumbai");
@@ -53,7 +60,7 @@ if (process.env.REDIS_URL) {
       //     console.log("orders on mumbai error: ", error);
       //   }
 
-      //   await delay(10 * 1000);
+      await delay(10 * 1000);
 
       try {
         console.log("process overtime orders on goerli");
@@ -61,6 +68,8 @@ if (process.env.REDIS_URL) {
       } catch (error) {
         console.log("orders on goerli error: ", error);
       }
+
+      await delay(10 * 1000);
 
       try {
         console.log("process discounts on goerli-OVM");
