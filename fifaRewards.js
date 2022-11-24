@@ -121,11 +121,14 @@ async function processOrders(network) {
     }),
   ]);
 
-  const finalArray = leaderboard.map((user) => {
-    user.rewards.op = globalVolume > 0 ? (user.volume / globalVolume) * OP_REWARDS : 0;
-    user.rewards.thales = globalVolume > 0 ? (user.volume / globalVolume) * THALES_REWARDS : 0;
-    return user;
-  });
+  const finalArray = leaderboard
+    .sort((userA, userB) => userB.volume - userA.volume)
+    .map((user, index) => {
+      user.rank = index + 1;
+      user.rewards.op = globalVolume > 0 ? (user.volume / globalVolume) * OP_REWARDS : 0;
+      user.rewards.thales = globalVolume > 0 ? (user.volume / globalVolume) * THALES_REWARDS : 0;
+      return user;
+    });
 
   const result = { globalVolume, leaderboard: finalArray };
   if (process.env.REDIS_URL) {
