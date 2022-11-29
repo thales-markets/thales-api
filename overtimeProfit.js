@@ -111,11 +111,23 @@ async function processOrders(network) {
 
     let globalVolume = 0;
 
-    const allTx = await thalesData.sportMarkets.marketTransactions({
-      network: network,
-      startPeriod: parseInt(startDate.getTime() / 1000),
-      endPeriod: parseInt(endDate.getTime() / 1000),
-    });
+    const allTx = [];
+
+    for (let index = 0; index < 7; index++) {
+      const betweenDateStart = new Date(START_DATE.getTime());
+      betweenDateStart.setDate(START_DATE.getDate() + period * 14 + 2 * index);
+
+      const betweenDateEnd = new Date(START_DATE.getTime());
+      betweenDateEnd.setDate(START_DATE.getDate() + period * 14 + 2 * (index + 1));
+
+      const txs = await thalesData.sportMarkets.marketTransactions({
+        network: network,
+        startPeriod: parseInt(betweenDateStart.getTime() / 1000),
+        endPeriod: parseInt(betweenDateEnd.getTime() / 1000),
+      });
+
+      allTx.push(...txs);
+    }
 
     allTx.map((tx) => {
       if (
