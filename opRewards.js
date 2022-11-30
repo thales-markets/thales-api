@@ -174,6 +174,7 @@ async function processRewards(network) {
   const START_DATE = new Date(2022, 6, 13, 12, 23, 0);
 
   for (let period = 7; period < 14; period++) {
+    console.log("**** Period: ", period);
     const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 14);
     console.log("start date: ", startDate);
@@ -249,8 +250,8 @@ async function processRewards(network) {
         if (trade.type === "ITM") {
           user.itm.volume = user.itm.volume + trade.amount;
           user.itm.percentage = user.itm.volume / globalITM;
-          user.itm.rewards.op = user.itm.percentage * 5000;
-          user.itm.rewards.thales = user.itm.percentage * 7000;
+          user.itm.rewards.op = user.itm.percentage * (period < 10 ? 5000 : 2000);
+          user.itm.rewards.thales = user.itm.percentage * (period < 10 ? 7000 : 3000);
         }
         if (trade.type === "OTM") {
           user.otm.volume = user.otm.volume + trade.amount;
@@ -261,8 +262,8 @@ async function processRewards(network) {
         if (trade.type === "DSC") {
           user.discounted.volume = user.discounted.volume + trade.amount;
           user.discounted.percentage = user.discounted.volume / globalDSC;
-          user.discounted.rewards.op = user.discounted.percentage * 5000;
-          user.discounted.rewards.thales = user.discounted.percentage * 7000;
+          user.discounted.rewards.op = user.discounted.percentage * (period < 10 ? 5000 : 8000);
+          user.discounted.rewards.thales = user.discounted.percentage * (period < 10 ? 7000 : 10000);
         }
         arrUsers.set(trade.account, user);
       }
