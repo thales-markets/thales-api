@@ -25,7 +25,7 @@ const rangedAMMContract = {
     [NetworkId.OptimismKovan]: "0x0690F410FB54d76268e4fa97486CBD605e68dC62",
     [NetworkId.OptimismGoerli]: "0x618D7aeab71f1C5E2264982c0C35DCbE62600ad9",
     [NetworkId.Mumbai]: "TBD",
-    [NetworkId.Polygon]: "0xe8e022405505a9F2b0B7452C844F1e64423849fC",
+    [NetworkId.Polygon]: "0xd52B865584c25FEBfcB676B9A87F32683356A063",
     [NetworkId.BSC]: "0xda5Bd4aBAFbE249bdC5684eAD594B0ac379687fd",
     [NetworkId.Arbitrum]: "0x5cf3b1882357BB66Cf3cd2c85b81AbBc85553962",
   },
