@@ -25,7 +25,7 @@ const ammContract = {
     [NetworkId.OptimismKovan]: "0xfed727f37e921Faac22e36E0bbaA8504B45F6e3f",
     [NetworkId.OptimismGoerli]: "0xcE9c1aAb41b18b24355138776186484B260B9cf0",
     [NetworkId.Mumbai]: "0xdf0A5bf80E8009f2702E7d164A7bdeaa79013eba",
-    [NetworkId.Polygon]: "0x9b6d76B1C6140FbB0ABc9C4a348BFf4e4e8a1213",
+    [NetworkId.Polygon]: "0xd52B865584c25FEBfcB676B9A87F32683356A063",
     [NetworkId.BSC]: "0x465B66A3e33088F0666dB1836652fBcF037c7319",
     [NetworkId.Arbitrum]: "0x2b89275efb9509c33d9ad92a4586bdf8c4d21505",
   },
