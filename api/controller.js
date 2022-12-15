@@ -80,7 +80,7 @@ app.get(ENDPOINTS.DISCOUNTS, (req, res) => {
 
 app.get(ENDPOINTS.OVERTIME_DISCOUNTS, (req, res) => {
   const network = req.params.networkParam;
-  if ([5, 10].includes(Number(network))) {
+  if ([10, 420, 137, 42161, 56].includes(Number(network))) {
     redisClient.get(KEYS.OVERTIME_DISCOUNTS[network], function (err, obj) {
       const orders = new Map(JSON.parse(obj));
       res.send(Array.from(orders));
