@@ -131,7 +131,6 @@ async function processOrders(network) {
       });
 
       if (WASH_TRADERS[user.address]) {
-        console.log("here he is");
         user.volume = user.volume - WASH_TRADERS[user.address];
       }
 
