@@ -12,6 +12,24 @@ const ethers = require("ethers");
 const OP_REWARDS = 50000;
 const THALES_REWARDS = 30000;
 
+const WASH_TRADERS = {
+  "0xc9fd90d23798eae0bac47e1e58cc7feffd6610b2": 4000,
+  "0x4d89d373a7ec36cec559d81c3820fb22c460053f": 3000,
+  "0xcbb54eda2048b57d1b0afb19a73948e9d58b6973": 3000,
+  "0x0e732348f074699530df848c452d70eeaa735009": 3406,
+  "0xdff6ec1ef39e55fb181303766abfa9e2ebf22feb": 1072,
+  "0x30a75f5a1fa911812620eca6a8458fdf7bd984f6": 1054,
+  "0xbd0bcfcac0211274b45fe8b9fb2d4e66fa448caf": 3152,
+  "0x767a60f295aedd958932088f9cd6a4951d8739b6": 554,
+  "0x39afe2176de832be2a5164e5fc91e27d1355c88d": 800,
+  "0x9b09024e63bb18747d357f8fbb94c825a634bab8": 2000,
+  "0x0014ea9bbe130c8af7f00c8e61fc07368bdaaf7d": 1000,
+  "0x0d3015631c1e642e8eb35b5a0efcea24a7685603": 1000,
+  "0xe1aa441644ebb251ec57f63365be55d2668f5967": 200,
+  "0x1fba82814857ae752c7407bf748eecc6f9b99b49": 3200,
+  "0x12cc7fac305d1ec7a4ff118277be2394671232b0": 5600,
+};
+
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -24,9 +42,6 @@ if (process.env.REDIS_URL) {
       try {
         console.log("process orders on optimism");
         await processOrders(10);
-        await delay(5 * 1000);
-        console.log("process orders on optimism goerli");
-        await processOrders(420);
       } catch (error) {
         console.log("orders on optimism error: ", error);
       }
@@ -114,6 +129,11 @@ async function processOrders(network) {
             user.volume + parlayTx.sUSDPaid * (1 + bonusRewardCountry + bonusRewardParlay + bonusRewardsUnderdog);
         }
       });
+
+      if (WASH_TRADERS[user.address]) {
+        console.log("here he is");
+        user.volume = user.volume - WASH_TRADERS[user.address];
+      }
 
       globalVolume = globalVolume + user.volume;
 
