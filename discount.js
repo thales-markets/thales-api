@@ -162,6 +162,9 @@ async function processOvertimeOrders(network) {
           homePriceImpact: 0,
           awayPriceImpact: 0,
           drawPriceImpact: 0,
+          homeBonus: 0,
+          awayBonus: 0,
+          drawBonus: 0,
         };
 
         try {
@@ -174,6 +177,12 @@ async function processOvertimeOrders(network) {
           marketInfoObject.homePriceImpact = Number(ethers.utils.formatEther(homePriceImpact)) * 100;
           marketInfoObject.awayPriceImpact = Number(ethers.utils.formatEther(awayPriceImpact)) * 100;
           marketInfoObject.drawPriceImpact = Number(ethers.utils.formatEther(drawPriceImpact)) * 100;
+          marketInfoObject.homeBonus =
+            -(marketInfoObject.homePriceImpact / (100 + marketInfoObject.homePriceImpact)) * 100;
+          marketInfoObject.awayBonus =
+            -(marketInfoObject.awayPriceImpact / (100 + marketInfoObject.awayPriceImpact)) * 100;
+          marketInfoObject.drawBonus =
+            -(marketInfoObject.drawPriceImpact / (100 + marketInfoObject.drawPriceImpact)) * 100;
         } catch (e) {
           console.log(e);
         }
