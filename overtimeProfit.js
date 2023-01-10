@@ -6,14 +6,29 @@ require("dotenv").config();
 const redis = require("redis");
 const thalesData = require("thales-data");
 const KEYS = require("./redis/redis-keys");
-const { delay } = require("./services/utils");
+const {
+  delay,
+  addMonthsToUTCDate,
+  fixDuplicatedTeamName,
+  convertPositionNameToPosition,
+  convertFinalResultToResultType,
+  sortByTotalQuote,
+} = require("./services/utils");
 
 const util = require("util");
+const { subMilliseconds, differenceInCalendarMonths } = require("date-fns");
 
 const PARLAY_CONTRACT = "0x82b3634c0518507d5d817be6dab6233ebe4d68d9";
 const VAULT_DISCOUNT = "0xc922f4cde42dd658a7d3ea852caf7eae47f6cecd";
 const VAULT_DEGEN = "0xbaac5464bf6e767c9af0e8d4677c01be2065fd5f";
 const VAULT_SAFU = "0x43d19841d818b2ccc63a8b44ce8c7def8616d98e";
+
+const TODAYS_DATE = new Date();
+const PARLAY_LEADERBOARD_START_DATE = new Date(2022, 11, 1, 0, 0, 0);
+const PARLAY_LEADERBOARD_START_DATE_UTC = new Date(Date.UTC(2022, 11, 1, 0, 0, 0));
+const PARLAY_LEADERBOARD_MINIMUM_GAMES = 4;
+const MAXIMUM_QUOTE = 0.033;
+const MAXIMUM_QUOTE_PERIOD_ZERO = 0.05;
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -29,6 +44,22 @@ if (process.env.REDIS_URL) {
         await processOrders(10);
       } catch (error) {
         console.log("orders on optimism error: ", error);
+      }
+      await delay(60 * 1000);
+
+      try {
+        console.log("process parlay leaderboard on optimism");
+        await processParlayLeaderboard(10);
+      } catch (error) {
+        console.log("parlay leaderboard on optimism error: ", error);
+      }
+      await delay(60 * 1000);
+
+      try {
+        console.log("process parlay leaderboard on op goerli");
+        await processParlayLeaderboard(420);
+      } catch (error) {
+        console.log("parlay leaderboard on op goerli error: ", error);
       }
       await delay(60 * 1000);
     }
@@ -191,6 +222,116 @@ async function processOrders(network) {
   }
 
   redisClient.set(KEYS.OVERTIME_REWARDS[network], JSON.stringify([...periodMap]), function () {});
+}
+
+async function processParlayLeaderboard(network) {
+  const periodMap = new Map();
+  const latestPeriod = differenceInCalendarMonths(TODAYS_DATE, PARLAY_LEADERBOARD_START_DATE);
+
+  for (let period = 0; period <= latestPeriod; period++) {
+    const startPeriod = Math.trunc(addMonthsToUTCDate(PARLAY_LEADERBOARD_START_DATE_UTC, period).getTime() / 1000);
+    const endPeriod = Math.trunc(
+      subMilliseconds(addMonthsToUTCDate(PARLAY_LEADERBOARD_START_DATE_UTC, period + 1), 1).getTime() / 1000,
+    );
+
+    let parlayMarkets = await thalesData.sportMarkets.parlayMarkets({
+      network,
+      startPeriod,
+      endPeriod,
+    });
+
+    if (period === 1) {
+      const startPreviousPeriod = Math.trunc(PARLAY_LEADERBOARD_START_DATE_UTC.getTime() / 1000);
+      const endPreviousPeriod = Math.trunc(
+        subMilliseconds(addMonthsToUTCDate(PARLAY_LEADERBOARD_START_DATE_UTC, 1), 1).getTime() / 1000,
+      );
+
+      const parlayMarketsPreviosPeriod = await thalesData.sportMarkets.parlayMarkets({
+        network,
+        startPeriod: startPreviousPeriod,
+        endPeriod: endPreviousPeriod,
+      });
+
+      const parlayMarketsPreviosPeriodModified = parlayMarketsPreviosPeriod.filter(
+        (market) =>
+          market.totalQuote < MAXIMUM_QUOTE_PERIOD_ZERO ||
+          market.sportMarkets.length > PARLAY_LEADERBOARD_MINIMUM_GAMES,
+      );
+
+      parlayMarkets = [...parlayMarkets, ...parlayMarketsPreviosPeriodModified];
+    }
+
+    const parlayMarketsModified = parlayMarkets
+      .filter(
+        (market) =>
+          (period > 0 ||
+            (period === 0 &&
+              market.totalQuote >= MAXIMUM_QUOTE_PERIOD_ZERO &&
+              market.sportMarkets.length <= PARLAY_LEADERBOARD_MINIMUM_GAMES)) &&
+          market.positions.every(
+            (position) =>
+              convertPositionNameToPosition(position.side) ===
+                convertFinalResultToResultType(position.market.finalResult) || position.market.isCanceled,
+          ),
+      )
+      .map((parlayMarket) => {
+        let totalQuote = parlayMarket.totalQuote;
+        let totalAmount = parlayMarket.totalAmount;
+        let numberOfPositions = parlayMarket.sportMarkets.length;
+        const sportMarkets = parlayMarket.sportMarkets.map((market) => {
+          if (market.isCanceled) {
+            let realQuote = 1;
+            parlayMarket.marketQuotes.map((quote) => {
+              realQuote = realQuote * quote;
+            });
+
+            const marketIndex = parlayMarket.sportMarketsFromContract.findIndex(
+              (sportMarketFromContract) => sportMarketFromContract === market.address,
+            );
+            if (marketIndex > -1) {
+              realQuote = realQuote / parlayMarket.marketQuotes[marketIndex];
+              const maximumQuote = period === 0 ? MAXIMUM_QUOTE_PERIOD_ZERO : MAXIMUM_QUOTE;
+              totalQuote = realQuote < maximumQuote ? maximumQuote : realQuote;
+              numberOfPositions = numberOfPositions - 1;
+              totalAmount = totalAmount * parlayMarket.marketQuotes[marketIndex];
+            }
+          }
+
+          return {
+            ...market,
+            homeTeam: fixDuplicatedTeamName(market.homeTeam),
+            awayTeam: fixDuplicatedTeamName(market.awayTeam),
+          };
+        });
+
+        return {
+          ...parlayMarket,
+          totalQuote,
+          totalAmount,
+          numberOfPositions,
+          sportMarkets,
+        };
+      })
+      .sort((a, b) =>
+        a.numberOfPositions !== b.numberOfPositions
+          ? b.numberOfPositions - a.numberOfPositions
+          : a.totalQuote !== b.totalQuote
+          ? a.totalQuote - b.totalQuote
+          : a.sUSDPaid !== b.sUSDPaid
+          ? b.sUSDPaid - a.sUSDPaid
+          : sortByTotalQuote(a, b),
+      )
+      .map((parlayMarket, index) => {
+        return {
+          ...parlayMarket,
+          rank: index + 1,
+        };
+      });
+
+    periodMap.set(period, parlayMarketsModified);
+  }
+
+  redisClient.set(KEYS.PARLAY_LEADERBOARD[network], JSON.stringify([...periodMap]), function () {});
 }
 
 function initUser(tx) {

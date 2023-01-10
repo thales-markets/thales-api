@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node overtimeProfit.js",
+    "dev": "nodemon overtimeProfit.js"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +13,7 @@
   "dependencies": {
     "axios": "^0.21.0",
     "cors": "^2.8.5",
+    "date-fns": "^2.29.3",
     "deasync": "^0.1.21",
     "dotenv": "^8.2.0",
     "eth-sig-util": "^2.5.3",
@@ -21,7 +22,7 @@
     "express-prom-bundle": "^6.2.0",
     "node-fetch": "^2.6.1",
     "redis": "^3.0.2",
-    "thales-data": "^1.1.37",
+    "thales-data": "^1.1.56",
     "twitter-api-v2": "^1.4.1",
     "web3": "^1.5.2"
   }

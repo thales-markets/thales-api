@@ -127,6 +127,23 @@ app.get(ENDPOINTS.OVERTIME_REWARDS, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.PARLAY_LEADERBOARD, (req, res) => {
+  const network = req.params.networkParam;
+  const period = req.params.period;
+  if ([10, 420].includes(Number(network))) {
+    redisClient.get(KEYS.PARLAY_LEADERBOARD[network], function (err, obj) {
+      const rewards = new Map(JSON.parse(obj));
+      try {
+        res.send(rewards.get(Number(period)));
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  } else {
+    res.send("Bad Network ");
+  }
+});
+
 app.get(ENDPOINTS.FIFA_REWARDS, (req, res) => {
   const network = req.params.networkParam;
   redisClient.get(KEYS.ZEBRO_CAMPAIGN[network], function (err, obj) {

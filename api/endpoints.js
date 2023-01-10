@@ -28,6 +28,7 @@ const ENDPOINTS = {
   MEDIUM: "/medium",
   OP_REWARDS: "/rewards/:networkParam/:period",
   OVERTIME_REWARDS: "/overtime-rewards/:networkParam/:period",
+  PARLAY_LEADERBOARD: "/parlay-leaderboard/:networkParam/:period",
   DISCOUNTS: "/discounts/:networkParam",
   OVERTIME_DISCOUNTS: "/overtimeDiscounts/:networkParam",
   BANNER_IMAGE: "/banner-image/:imageIndex",

@@ -45,6 +45,10 @@ const KEYS = {
     10: "overtimeOpRewards",
     42: "overtimeOpKovanRewards",
   },
+  PARLAY_LEADERBOARD: {
+    10: "overtimeOpParlayLeaderboard",
+    420: "overtimeGoerliParlayLeaderboard",
+  },
   TWAP_FOR_PERIOD: "twapMap",
   DISCOUNTS: {
     10: "optimismDiscounts",
