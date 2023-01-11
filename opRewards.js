@@ -24,7 +24,6 @@ if (process.env.REDIS_URL) {
     while (true) {
       try {
         console.log("process orders on optimism");
-        await processOrders(10);
         await delay(5 * 1000);
         await processRewards(10);
       } catch (error) {
@@ -174,7 +173,7 @@ async function processOrders(network) {
 async function processRewards(network) {
   const START_DATE = new Date(2022, 6, 13, 12, 23, 0);
 
-  for (let period = 7; period < 16; period++) {
+  for (let period = 10; period < 16; period++) {
     console.log("**** Period: ", period);
     const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 14);
