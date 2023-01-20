@@ -62,14 +62,14 @@ if (process.env.REDIS_URL) {
 
       await delay(10 * 1000);
 
-      try {
-        console.log("process overtime orders on goerli");
-        await processOvertimeOrders(5);
-      } catch (error) {
-        console.log("orders on goerli error: ", error);
-      }
+      // try {
+      //   console.log("process overtime orders on goerli");
+      //   await processOvertimeOrders(5);
+      // } catch (error) {
+      //   console.log("orders on goerli error: ", error);
+      // }
 
-      await delay(10 * 1000);
+      // await delay(10 * 1000);
 
       try {
         console.log("process discounts on goerli-OVM");
@@ -86,7 +86,7 @@ if (process.env.REDIS_URL) {
       //     console.log("orders on BSC error: ", error);
       //   }
 
-      await delay(60 * 1000);
+      await delay(3 * 60 * 1000);
     }
   }, 3000);
 }
