@@ -444,3 +444,9 @@ app.get(ENDPOINTS.BANNER_JSON, (req, res) => {
   var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${index}/json.json`;
   request.get(url).pipe(res);
 });
+
+app.get(ENDPOINTS.LIVE_RESULT, (req, res) => {
+  const gameId = req.params.gameId;
+  var url = `https://therundown.io/api/v2/events/${gameId}?key=${process.env.RUNDOWN_API_KEY}`;
+  request.get(url).pipe(res);
+});

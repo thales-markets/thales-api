@@ -35,6 +35,7 @@ const ENDPOINTS = {
   BANNER_IMAGE_COUNT: "/banner-image-count",
   BANNER_JSON: "/banner-json/:jsonIndex",
   FIFA_REWARDS: "/fifa-rewards/:networkParam",
+  LIVE_RESULT: "/live-result/:gameId",
 };
 
 module.exports = ENDPOINTS;
