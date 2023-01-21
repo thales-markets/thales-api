@@ -140,6 +140,7 @@ async function processOvertimeOrders(network) {
   const markets = await thalesData.sportMarkets.markets({
     max: Infinity,
     network,
+    isOpen: true,
   });
 
   const optimismOptionsMap = new Map();
