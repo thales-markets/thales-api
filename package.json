@@ -22,7 +22,7 @@
     "express-prom-bundle": "^6.2.0",
     "node-fetch": "^2.6.1",
     "redis": "^3.0.2",
-    "thales-data": "^1.1.56",
+    "thales-data": "^1.1.59",
     "twitter-api-v2": "^1.4.1",
     "web3": "^1.5.2"
   }
