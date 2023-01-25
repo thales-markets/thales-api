@@ -21,7 +21,7 @@ const ammContract = {
     [NetworkId.Kovan]: "TBD",
     // added to resolve error with typings
     [NetworkId.Goerli]: "", // TODO: goerli network remove or implement
-    [NetworkId.Optimism]: "0x5ae7454827D83526261F3871C1029792644Ef1B1",
+    [NetworkId.Optimism]: "0x278B5A44397c9D8E52743fEdec263c4760dc1A1A",
     [NetworkId.OptimismKovan]: "0xfed727f37e921Faac22e36E0bbaA8504B45F6e3f",
     [NetworkId.OptimismGoerli]: "0xcE9c1aAb41b18b24355138776186484B260B9cf0",
     [NetworkId.Mumbai]: "0xdf0A5bf80E8009f2702E7d164A7bdeaa79013eba",
