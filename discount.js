@@ -94,6 +94,7 @@ if (process.env.REDIS_URL) {
 async function processOrders(network) {
   const markets = await thalesData.binaryOptions.markets({
     max: Infinity,
+    isOpen: true,
     network,
   });
 
