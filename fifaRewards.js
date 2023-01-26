@@ -45,6 +45,7 @@ if (process.env.REDIS_URL) {
       } catch (error) {
         console.log("orders on optimism error: ", error);
       }
+
       await delay(60 * 1000);
     }
   }, 3000);

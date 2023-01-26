@@ -29,6 +29,13 @@ if (process.env.REDIS_URL) {
       await delay(10 * 1000);
 
       try {
+        console.log("process orders on goerli-OVM");
+        await processOrders(420);
+      } catch (error) {
+        console.log("orders on goerli-OVM error: ", error);
+      }
+
+      try {
         console.log("process orders on polygon");
         await processOrders(137);
       } catch (error) {
@@ -36,22 +43,6 @@ if (process.env.REDIS_URL) {
       }
 
       await delay(10 * 1000);
-
-      try {
-        console.log("process orders on mumbai");
-        await processOrders(80001);
-      } catch (error) {
-        console.log("orders on mumbai error: ", error);
-      }
-
-      await delay(10 * 1000);
-
-      try {
-        console.log("process orders on goerli-OVM");
-        await processOrders(420);
-      } catch (error) {
-        console.log("orders on goerli-OVM error: ", error);
-      }
 
       try {
         console.log("process orders on BSC");
@@ -69,7 +60,7 @@ if (process.env.REDIS_URL) {
         console.log("orders on arbitrum error: ", error);
       }
 
-      await delay(5 * 60 * 1000);
+      await delay(3 * 60 * 1000);
     }
   }, 3000);
 }

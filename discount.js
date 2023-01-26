@@ -29,10 +29,11 @@ if (process.env.REDIS_URL) {
       await delay(10 * 1000);
 
       try {
-        console.log("process orders on arbitrum");
-        await processOrders(42161);
+        console.log("process discounts on goerli-OVM");
+        await processOrders(420);
+        await processOvertimeOrders(420);
       } catch (error) {
-        console.log("orders on arbitrum error: ", error);
+        console.log("orders on goerli-OVM error: ", error);
       }
 
       await delay(10 * 1000);
@@ -53,38 +54,14 @@ if (process.env.REDIS_URL) {
         console.log("orders on BSC error: ", error);
       }
 
-      //   try {
-      //     console.log("process orders on mumbai");
-      //     await processOrders(80001);
-      //   } catch (error) {
-      //     console.log("orders on mumbai error: ", error);
-      //   }
-
       await delay(10 * 1000);
 
-      // try {
-      //   console.log("process overtime orders on goerli");
-      //   await processOvertimeOrders(5);
-      // } catch (error) {
-      //   console.log("orders on goerli error: ", error);
-      // }
-
-      // await delay(10 * 1000);
-
       try {
-        console.log("process discounts on goerli-OVM");
-        await processOrders(420);
-        await processOvertimeOrders(420);
+        console.log("process orders on arbitrum");
+        await processOrders(42161);
       } catch (error) {
-        console.log("orders on goerli-OVM error: ", error);
+        console.log("orders on arbitrum error: ", error);
       }
-
-      //   try {
-      //     console.log("process orders on BSC");
-      //     await processOrders(56);
-      //   } catch (error) {
-      //     console.log("orders on BSC error: ", error);
-      //   }
 
       await delay(3 * 60 * 1000);
     }

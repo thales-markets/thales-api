@@ -24,20 +24,12 @@ if (process.env.REDIS_URL) {
     while (true) {
       try {
         console.log("process orders on optimism");
-        await delay(5 * 1000);
         await processRewards(10);
       } catch (error) {
         console.log("orders on optimism error: ", error);
       }
-      await delay(60 * 1000);
 
-      // try {
-      //   console.log("process orders on kovan optimism");
-      //   await processOrders(69);
-      // } catch (error) {
-      //   console.log("orders on optimism error: ", error);
-      // }
-      // await delay(5 * 1000);
+      await delay(60 * 1000);
     }
   }, 3000);
 }

@@ -45,6 +45,7 @@ if (process.env.REDIS_URL) {
       } catch (error) {
         console.log("orders on optimism error: ", error);
       }
+
       await delay(60 * 1000);
 
       try {
@@ -53,6 +54,7 @@ if (process.env.REDIS_URL) {
       } catch (error) {
         console.log("parlay leaderboard on optimism error: ", error);
       }
+
       await delay(60 * 1000);
 
       try {
@@ -61,7 +63,8 @@ if (process.env.REDIS_URL) {
       } catch (error) {
         console.log("parlay leaderboard on op goerli error: ", error);
       }
-      await delay(60 * 1000);
+
+      await delay(3 * 60 * 1000);
     }
   }, 3000);
 }
