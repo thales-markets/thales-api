@@ -29,7 +29,7 @@ if (process.env.REDIS_URL) {
       } catch (error) {
         console.log("orders on optimism error: ", error);
       }
-      await delay(5 * 60 * 1000);
+      await delay(60 * 1000);
 
       // try {
       //   console.log("process orders on kovan optimism");
