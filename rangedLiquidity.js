@@ -6,7 +6,7 @@ thalesData = require("thales-data");
 const KEYS = require("./redis/redis-keys");
 fetch = require("node-fetch");
 const { delay } = require("./services/utils");
-const ammContract = require("./contracts/rangedAMM");
+const positionalMarketDataContract = require("./contracts/positionalMarketData");
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -76,7 +76,11 @@ async function processOrders(network) {
   // Infura does not have a provider for Binance Smart Chain so we need to provide a public one instead
   const etherprovider = getProvider(network);
 
-  const ammContractInit = new ethers.Contract(ammContract.addresses[network], ammContract.abi, etherprovider);
+  const positionalMarketDataContractInit = new ethers.Contract(
+    positionalMarketDataContract.addresses[network],
+    positionalMarketDataContract.abi,
+    etherprovider,
+  );
 
   for (const market of markets) {
     if (market.maturityDate > Date.now()) {
@@ -89,30 +93,23 @@ async function processOrders(network) {
         };
 
         try {
-          const [availableIn, availableOut] = await Promise.all([
-            ammContractInit.availableToBuyFromAMM(market.address, 0),
-            ammContractInit.availableToBuyFromAMM(market.address, 1),
-          ]);
+          const pricesAndLiquidity = await positionalMarketDataContractInit.getRangedMarketPricesAndLiquidity(
+            market.address,
+          );
 
-          if (availableIn > 0) {
-            const inPrice = await ammContractInit.buyFromAmmQuote(market.address, 0, ethers.utils.parseEther("1"));
+          marketInfoObject.inPrice = stableCoinFormatter(pricesAndLiquidity.inPrice, network);
+          marketInfoObject.outPrice = stableCoinFormatter(pricesAndLiquidity.outPrice, network);
 
-            marketInfoObject.inPrice = stableCoinFormatter(inPrice, network);
-            if (marketInfoObject.inPrice === 0) {
-              marketInfoObject.availableIn = 0;
-            } else {
-              marketInfoObject.availableIn = ethers.utils.formatEther(availableIn);
-            }
+          if (marketInfoObject.inPrice === 0) {
+            marketInfoObject.availableIn = 0;
+          } else {
+            marketInfoObject.availableIn = ethers.utils.formatEther(pricesAndLiquidity.inLiquidity);
           }
-          if (availableOut > 0) {
-            const outPrice = await ammContractInit.buyFromAmmQuote(market.address, 1, ethers.utils.parseEther("1"));
 
-            marketInfoObject.outPrice = stableCoinFormatter(outPrice, network);
-            if (marketInfoObject.outPrice === 0) {
-              marketInfoObject.availableOut = 0;
-            } else {
-              marketInfoObject.availableOut = ethers.utils.formatEther(availableOut);
-            }
+          if (marketInfoObject.outPrice === 0) {
+            marketInfoObject.availableOut = 0;
+          } else {
+            marketInfoObject.availableOut = ethers.utils.formatEther(pricesAndLiquidity.outLiquidity);
           }
         } catch (e) {}
 
