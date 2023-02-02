@@ -60,7 +60,7 @@ if (process.env.REDIS_URL) {
         console.log("orders on Arbitrum error: ", error);
       }
 
-      await delay(60 * 1000);
+      await delay(3 * 60 * 1000);
     }
   }, 3000);
 }
