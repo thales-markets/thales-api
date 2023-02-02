@@ -20,6 +20,7 @@
     "ethers": "^5.7.2",
     "express": "^4.17.1",
     "express-prom-bundle": "^6.2.0",
+    "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
     "redis": "^3.0.2",
     "thales-data": "^1.1.59",

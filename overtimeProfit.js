@@ -17,6 +17,7 @@ const {
 
 const util = require("util");
 const { subMilliseconds, differenceInCalendarMonths } = require("date-fns");
+const { uniqBy } = require("lodash");
 
 const PARLAY_CONTRACT = "0x82b3634c0518507d5d817be6dab6233ebe4d68d9";
 const VAULT_DISCOUNT = "0xc922f4cde42dd658a7d3ea852caf7eae47f6cecd";
@@ -27,8 +28,6 @@ const TODAYS_DATE = new Date();
 const PARLAY_LEADERBOARD_START_DATE = new Date(2022, 11, 1, 0, 0, 0);
 const PARLAY_LEADERBOARD_START_DATE_UTC = new Date(Date.UTC(2022, 11, 1, 0, 0, 0));
 const PARLAY_LEADERBOARD_MINIMUM_GAMES = 4;
-const MAXIMUM_QUOTE = 0.033;
-const MAXIMUM_QUOTE_PERIOD_ZERO = 0.05;
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -227,6 +226,17 @@ async function processOrders(network) {
   redisClient.set(KEYS.OVERTIME_REWARDS[network], JSON.stringify([...periodMap]), function () {});
 }
 
+const getMaximumQuotePerPeriod = (period) => {
+  switch (period) {
+    case 0:
+      return 0.05;
+    case 1:
+      return 0.033;
+    default:
+      return 0.025;
+  }
+};
+
 async function processParlayLeaderboard(network) {
   const periodMap = new Map();
   const latestPeriod = differenceInCalendarMonths(TODAYS_DATE, PARLAY_LEADERBOARD_START_DATE);
@@ -257,19 +267,19 @@ async function processParlayLeaderboard(network) {
 
       const parlayMarketsPreviosPeriodModified = parlayMarketsPreviosPeriod.filter(
         (market) =>
-          market.totalQuote < MAXIMUM_QUOTE_PERIOD_ZERO ||
+          market.totalQuote < getMaximumQuotePerPeriod(0) ||
           market.sportMarkets.length > PARLAY_LEADERBOARD_MINIMUM_GAMES,
       );
 
       parlayMarkets = [...parlayMarkets, ...parlayMarketsPreviosPeriodModified];
     }
 
-    const parlayMarketsModified = parlayMarkets
+    let parlayMarketsModified = parlayMarkets
       .filter(
         (market) =>
           (period > 0 ||
             (period === 0 &&
-              market.totalQuote >= MAXIMUM_QUOTE_PERIOD_ZERO &&
+              market.totalQuote >= getMaximumQuotePerPeriod(0) &&
               market.sportMarkets.length <= PARLAY_LEADERBOARD_MINIMUM_GAMES)) &&
           market.positions.every(
             (position) =>
@@ -293,7 +303,7 @@ async function processParlayLeaderboard(network) {
             );
             if (marketIndex > -1) {
               realQuote = realQuote / parlayMarket.marketQuotes[marketIndex];
-              const maximumQuote = period === 0 ? MAXIMUM_QUOTE_PERIOD_ZERO : MAXIMUM_QUOTE;
+              const maximumQuote = getMaximumQuotePerPeriod(period);
               totalQuote = realQuote < maximumQuote ? maximumQuote : realQuote;
               numberOfPositions = numberOfPositions - 1;
               totalAmount = totalAmount * parlayMarket.marketQuotes[marketIndex];
@@ -323,13 +333,18 @@ async function processParlayLeaderboard(network) {
           : a.sUSDPaid !== b.sUSDPaid
           ? b.sUSDPaid - a.sUSDPaid
           : sortByTotalQuote(a, b),
-      )
-      .map((parlayMarket, index) => {
-        return {
-          ...parlayMarket,
-          rank: index + 1,
-        };
-      });
+      );
+
+    if (period >= 2) {
+      parlayMarketsModified = uniqBy(parlayMarketsModified, "account");
+    }
+
+    parlayMarketsModified = parlayMarketsModified.map((parlayMarket, index) => {
+      return {
+        ...parlayMarket,
+        rank: index + 1,
+      };
+    });
 
     periodMap.set(period, parlayMarketsModified);
   }
