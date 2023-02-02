@@ -66,9 +66,14 @@ if (process.env.REDIS_URL) {
 }
 
 async function processOrders(network) {
+  const today = new Date();
+  // thales-data takes timestamp argument in seconds - take markets where maturity date in the future
+  const priorDate = Math.round(new Date().getTime() / 1000);
+
   const markets = await thalesData.binaryOptions.rangedMarkets({
     max: Infinity,
     network,
+    minMaturity: priorDate,
   });
 
   const rangedAMMLiquidity = new Map();
