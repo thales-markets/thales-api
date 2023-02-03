@@ -8,7 +8,7 @@ const { delay } = require("./services/utils");
 
 const RANGED_AMM = "0x2d356b114cbca8deff2d8783eac2a5a5324fe1df";
 const VAULT_DISCOUNT = "0xb484027cb0c538538bad2be492714154f9196f93";
-const VAULT_DEGEN = "0x9d3abeaf22ddf68e72b865ca3b23ed880a3be41f";
+const VAULT_DEGEN = "0x43318de9e8f65b591598f17add87ae7247649c83";
 const VAULT_SAFU = "0x6c7fd4321183b542e81bcc7de4dfb88f9dbca29f";
 
 const periodMap = new Map();
