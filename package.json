@@ -23,7 +23,7 @@
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
     "redis": "^3.0.2",
-    "thales-data": "^1.1.59",
+    "thales-data": "^1.2.1-satsuma",
     "twitter-api-v2": "^1.4.1",
     "web3": "^1.5.2"
   }
