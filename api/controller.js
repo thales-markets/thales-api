@@ -95,7 +95,7 @@ app.get(ENDPOINTS.OP_REWARDS, (req, res) => {
   const period = req.params.period;
   if (
     [10, 69].includes(Number(network)) &&
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(Number(period))
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].includes(Number(period))
   ) {
     redisClient.get(KEYS.OP_REWARDS[network], function (err, obj) {
       const rewards = new Map(JSON.parse(obj));
