@@ -34,134 +34,6 @@ if (process.env.REDIS_URL) {
   }, 3000);
 }
 
-async function processOrders(network) {
-  const START_DATE = new Date(2022, 6, 13, 12, 23, 0);
-
-  for (let period = 0; period < 7; period++) {
-    const startDate = new Date(START_DATE.getTime());
-    startDate.setDate(START_DATE.getDate() + period * 14);
-
-    if (startDate > new Date()) {
-      break;
-    }
-    const endDate = new Date(START_DATE.getTime());
-    endDate.setDate(START_DATE.getDate() + (period + 1) * 14);
-
-    const arrUsers = new Map();
-    let globalVolumeUp = 0;
-    let globalVolumeDown = 0;
-    let globalVolumeRanged = 0;
-    let globalVolumeDiscounted = 0;
-
-    const transactions = await thalesData.binaryOptions.tokenTransactions({
-      network: network,
-      onlyWithProtocolReward: true,
-      minTimestamp: parseInt(startDate.getTime() / 1000),
-      maxTimestamp: parseInt(endDate.getTime() / 1000),
-    });
-
-    transactions.map((tx) => {
-      if (!arrUsers.get(tx.account)) {
-        arrUsers.set(tx.account, initUser(tx));
-      } else {
-        const user = arrUsers.get(tx.account);
-        user.stackingRewards = user.stackingRewards + tx.protocolRewards * 0.64;
-        arrUsers.set(tx.account, user);
-      }
-    });
-
-    const trades = await thalesData.binaryOptions.accountBuyVolumes({
-      network: network,
-      minTimestamp: parseInt(startDate.getTime() / 1000),
-      maxTimestamp: parseInt(endDate.getTime() / 1000),
-    });
-
-    trades.map((trade) => {
-      if (
-        trade.account.toLowerCase() !== RANGED_AMM &&
-        trade.account.toLowerCase() !== VAULT_DISCOUNT &&
-        trade.account.toLowerCase() !== VAULT_DEGEN &&
-        trade.account.toLowerCase() !== VAULT_SAFU
-      ) {
-        if (trade.type === "buyUp") {
-          globalVolumeUp = globalVolumeUp + trade.amount;
-        }
-        if (trade.type === "buyDown") {
-          globalVolumeDown = globalVolumeDown + trade.amount;
-        }
-        if (trade.type === "buyRanged") {
-          globalVolumeRanged = globalVolumeRanged + trade.amount;
-        }
-        if (trade.type === "buyDiscounted") {
-          globalVolumeDiscounted = globalVolumeDiscounted + trade.amount;
-        }
-      }
-    });
-
-    // console.log("globalVolumeUp: ", globalVolumeUp);
-    // console.log("globalVolumeDown: ", globalVolumeDown);
-    // console.log("globalVolumeRanged: ", globalVolumeRanged);
-
-    trades.map((trade) => {
-      if (
-        trade.account.toLowerCase() !== RANGED_AMM &&
-        trade.account.toLowerCase() !== VAULT_DISCOUNT &&
-        trade.account.toLowerCase() !== VAULT_DEGEN &&
-        trade.account.toLowerCase() !== VAULT_SAFU
-      ) {
-        if (!arrUsers.get(trade.account)) {
-          arrUsers.set(trade.account, initUserAddress(trade.account));
-        }
-        const user = arrUsers.get(trade.account);
-        if (trade.type === "buyUp") {
-          user.up.volume = user.up.volume + trade.amount;
-          user.up.percentage = user.up.volume / globalVolumeUp;
-          user.up.rewards.op = user.up.percentage * (period < 6 ? 11000 : 9000);
-          user.up.rewards.thales = user.up.percentage * (period < 6 ? 20000 : 15000);
-        }
-        if (trade.type === "buyDown") {
-          user.down.volume = user.down.volume + trade.amount;
-          user.down.percentage = user.down.volume / globalVolumeDown;
-          user.down.rewards.op = user.down.percentage * (period < 6 ? 11000 : 9000);
-          user.down.rewards.thales = user.down.percentage * (period < 6 ? 20000 : 15000);
-        }
-        if (trade.type === "buyRanged") {
-          user.ranged.volume = user.ranged.volume + trade.amount;
-          user.ranged.percentage = user.ranged.volume / globalVolumeRanged;
-          user.ranged.rewards.op = user.ranged.percentage * (period < 6 ? 6000 : 5000);
-          user.ranged.rewards.thales = user.ranged.percentage * 10000;
-        }
-        if (period >= 6) {
-          if (trade.type === "buyDiscounted") {
-            user.discounted.volume = user.discounted.volume + trade.amount;
-            user.discounted.percentage = user.discounted.volume / globalVolumeDiscounted;
-            user.discounted.rewards.op = user.discounted.percentage * 5000;
-            user.discounted.rewards.thales = user.discounted.percentage * 10000;
-          }
-        }
-
-        arrUsers.set(trade.account, user);
-      }
-    });
-
-    const finalArray = Array.from(arrUsers.values()).map((user) => {
-      user.totalRewards.op =
-        user.stackingRewards +
-        user.up.rewards.op +
-        user.down.rewards.op +
-        user.ranged.rewards.op +
-        user.discounted.rewards.op;
-      user.totalRewards.thales =
-        user.up.rewards.thales + user.down.rewards.thales + user.ranged.rewards.thales + user.discounted.rewards.thales;
-      return user;
-    });
-
-    periodMap.set(period, finalArray);
-  }
-
-  redisClient.set(KEYS.OP_REWARDS[network], JSON.stringify([...periodMap]), function () {});
-}
-
 async function processRewards(network) {
   const START_DATE = new Date(2022, 6, 13, 12, 23, 0);
 
@@ -174,6 +46,10 @@ async function processRewards(network) {
     if (startDate > new Date()) {
       break;
     }
+
+    const midDate = new Date(START_DATE.getTime());
+    midDate.setDate(START_DATE.getDate() + (period + 1) * 14 - 7);
+
     const endDate = new Date(START_DATE.getTime());
     endDate.setDate(START_DATE.getDate() + (period + 1) * 14);
     console.log("end date: ", endDate);
@@ -199,11 +75,19 @@ async function processRewards(network) {
       }
     });
 
-    const trades = await thalesData.binaryOptions.rewards({
+    const trades1 = await thalesData.binaryOptions.rewards({
       network: network,
       minTimestamp: parseInt(startDate.getTime() / 1000),
+      maxTimestamp: parseInt(midDate.getTime() / 1000),
+    });
+
+    const trades2 = await thalesData.binaryOptions.rewards({
+      network: network,
+      minTimestamp: parseInt(midDate.getTime() / 1000),
       maxTimestamp: parseInt(endDate.getTime() / 1000),
     });
+
+    const trades = [...trades1, ...trades2];
 
     trades.map((trade) => {
       if (
