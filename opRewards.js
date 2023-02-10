@@ -77,14 +77,14 @@ async function processRewards(network) {
 
     const trades1 = await thalesData.binaryOptions.rewards({
       network: network,
-      minTimestamp: parseInt(startDate.getTime() / 1000),
-      maxTimestamp: parseInt(midDate.getTime() / 1000),
+      periodStart: parseInt(startDate.getTime() / 1000),
+      periodEnd: parseInt(midDate.getTime() / 1000),
     });
 
     const trades2 = await thalesData.binaryOptions.rewards({
       network: network,
-      minTimestamp: parseInt(midDate.getTime() / 1000),
-      maxTimestamp: parseInt(endDate.getTime() / 1000),
+      periodStart: parseInt(midDate.getTime() / 1000),
+      periodEnd: parseInt(endDate.getTime() / 1000),
     });
 
     const trades = [...trades1, ...trades2];
