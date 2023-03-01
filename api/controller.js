@@ -130,7 +130,7 @@ app.get(ENDPOINTS.OVERTIME_REWARDS, (req, res) => {
 app.get(ENDPOINTS.PARLAY_LEADERBOARD, (req, res) => {
   const network = req.params.networkParam;
   const period = req.params.period;
-  if ([10, 420].includes(Number(network))) {
+  if ([10, 420, 42161].includes(Number(network))) {
     redisClient.get(KEYS.PARLAY_LEADERBOARD[network], function (err, obj) {
       const rewards = new Map(JSON.parse(obj));
       try {

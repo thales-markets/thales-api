@@ -16,7 +16,7 @@ const {
 } = require("./services/utils");
 
 const util = require("util");
-const { subMilliseconds, differenceInCalendarMonths } = require("date-fns");
+const { subMilliseconds, differenceInCalendarMonths, differenceInDays, addDays } = require("date-fns");
 const { uniqBy } = require("lodash");
 
 const PARLAY_CONTRACT = "0x82b3634c0518507d5d817be6dab6233ebe4d68d9";
@@ -25,9 +25,11 @@ const VAULT_DEGEN = "0xbaac5464bf6e767c9af0e8d4677c01be2065fd5f";
 const VAULT_SAFU = "0x43d19841d818b2ccc63a8b44ce8c7def8616d98e";
 
 const TODAYS_DATE = new Date();
-const PARLAY_LEADERBOARD_START_DATE = new Date(2022, 11, 1, 0, 0, 0);
-const PARLAY_LEADERBOARD_START_DATE_UTC = new Date(Date.UTC(2022, 11, 1, 0, 0, 0));
-const PARLAY_LEADERBOARD_MINIMUM_GAMES = 4;
+const PARLAY_LEADERBOARD_FEBRUARY_START_DATE_UTC = new Date(Date.UTC(2023, 1, 1, 0, 0, 0));
+const PARLAY_LEADERBOARD_FEBRUARY_END_DATE_UTC = new Date(Date.UTC(2023, 1, 28, 23, 59, 59));
+const PARLAY_LEADERBOARD_BIWEEKLY_START_DATE = new Date(2023, 2, 1, 0, 0, 0);
+const PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC = new Date(Date.UTC(2023, 2, 1, 0, 0, 0));
+const PARLAY_LEADERBOARD_MAXIMUM_QUOTE = 0.025;
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -38,14 +40,14 @@ if (process.env.REDIS_URL) {
   });
   setTimeout(async () => {
     while (true) {
-      try {
-        console.log("process orders on optimism");
-        await processOrders(10);
-      } catch (error) {
-        console.log("orders on optimism error: ", error);
-      }
+      // try {
+      //   console.log("process orders on optimism");
+      //   await processOrders(10);
+      // } catch (error) {
+      //   console.log("orders on optimism error: ", error);
+      // }
 
-      await delay(60 * 1000);
+      // await delay(60 * 1000);
 
       try {
         console.log("process parlay leaderboard on optimism");
@@ -54,16 +56,23 @@ if (process.env.REDIS_URL) {
         console.log("parlay leaderboard on optimism error: ", error);
       }
 
-      await delay(60 * 1000);
-
       try {
-        console.log("process parlay leaderboard on op goerli");
-        await processParlayLeaderboard(420);
+        console.log("process parlay leaderboard on arbitrum");
+        await processParlayLeaderboard(42161);
       } catch (error) {
-        console.log("parlay leaderboard on op goerli error: ", error);
+        console.log("parlay leaderboard on arbitrum error: ", error);
       }
 
-      await delay(3 * 60 * 1000);
+      await delay(60 * 1000);
+
+      // try {
+      //   console.log("process parlay leaderboard on op goerli");
+      //   await processParlayLeaderboard(420);
+      // } catch (error) {
+      //   console.log("parlay leaderboard on op goerli error: ", error);
+      // }
+
+      // await delay(3 * 60 * 1000);
     }
   }, 3000);
 }
@@ -226,127 +235,100 @@ async function processOrders(network) {
   redisClient.set(KEYS.OVERTIME_REWARDS[network], JSON.stringify([...periodMap]), function () {});
 }
 
-const getMaximumQuotePerPeriod = (period) => {
-  switch (period) {
-    case 0:
-      return 0.05;
-    case 1:
-      return 0.033;
-    default:
-      return 0.025;
-  }
+const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod) => {
+  let parlayMarkets = await thalesData.sportMarkets.parlayMarkets({
+    network,
+    startPeriod,
+    endPeriod,
+  });
+
+  let parlayMarketsModified = parlayMarkets
+    .filter((market) =>
+      market.positions.every(
+        (position) =>
+          convertPositionNameToPosition(position.side) ===
+            convertFinalResultToResultType(position.market.finalResult) || position.market.isCanceled,
+      ),
+    )
+    .map((parlayMarket) => {
+      let totalQuote = parlayMarket.totalQuote;
+      let totalAmount = parlayMarket.totalAmount;
+      let numberOfPositions = parlayMarket.sportMarkets.length;
+      const sportMarkets = parlayMarket.sportMarkets.map((market) => {
+        if (market.isCanceled) {
+          let realQuote = 1;
+          parlayMarket.marketQuotes.map((quote) => {
+            realQuote = realQuote * quote;
+          });
+
+          const marketIndex = parlayMarket.sportMarketsFromContract.findIndex(
+            (sportMarketFromContract) => sportMarketFromContract === market.address,
+          );
+          if (marketIndex > -1) {
+            realQuote = realQuote / parlayMarket.marketQuotes[marketIndex];
+            const maximumQuote = PARLAY_LEADERBOARD_MAXIMUM_QUOTE;
+            totalQuote = realQuote < maximumQuote ? maximumQuote : realQuote;
+            numberOfPositions = numberOfPositions - 1;
+            totalAmount = totalAmount * parlayMarket.marketQuotes[marketIndex];
+          }
+        }
+
+        return {
+          ...market,
+          homeTeam: fixDuplicatedTeamName(market.homeTeam),
+          awayTeam: fixDuplicatedTeamName(market.awayTeam),
+        };
+      });
+
+      return {
+        ...parlayMarket,
+        totalQuote,
+        totalAmount,
+        numberOfPositions,
+        sportMarkets,
+      };
+    })
+    .sort((a, b) =>
+      a.numberOfPositions !== b.numberOfPositions
+        ? b.numberOfPositions - a.numberOfPositions
+        : a.totalQuote !== b.totalQuote
+        ? a.totalQuote - b.totalQuote
+        : a.sUSDPaid !== b.sUSDPaid
+        ? b.sUSDPaid - a.sUSDPaid
+        : sortByTotalQuote(a, b),
+    );
+
+  parlayMarketsModified = uniqBy(parlayMarketsModified, "account").map((parlayMarket, index) => {
+    return {
+      ...parlayMarket,
+      rank: index + 1,
+    };
+  });
+
+  return parlayMarketsModified;
 };
 
 async function processParlayLeaderboard(network) {
   const periodMap = new Map();
-  const latestPeriod = differenceInCalendarMonths(TODAYS_DATE, PARLAY_LEADERBOARD_START_DATE);
 
-  for (let period = 0; period <= latestPeriod; period++) {
-    const startPeriod = Math.trunc(addMonthsToUTCDate(PARLAY_LEADERBOARD_START_DATE_UTC, period).getTime() / 1000);
+  if (network === 10) {
+    const startPeriod = Math.trunc(PARLAY_LEADERBOARD_FEBRUARY_START_DATE_UTC.getTime() / 1000);
+    const endPeriod = Math.trunc(PARLAY_LEADERBOARD_FEBRUARY_END_DATE_UTC.getTime() / 1000);
+
+    const parlayMarkets = await getParlayLeaderboardForPeriod(network, startPeriod, endPeriod);
+    periodMap.set(0, parlayMarkets);
+  }
+
+  const latestPeriodBiweekly = Math.trunc(differenceInDays(TODAYS_DATE, PARLAY_LEADERBOARD_BIWEEKLY_START_DATE) / 14);
+
+  for (let period = 0; period <= latestPeriodBiweekly; period++) {
+    const startPeriod = Math.trunc(addDays(PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC, period * 14).getTime() / 1000);
     const endPeriod = Math.trunc(
-      subMilliseconds(addMonthsToUTCDate(PARLAY_LEADERBOARD_START_DATE_UTC, period + 1), 1).getTime() / 1000,
+      subMilliseconds(addDays(PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC, (period + 1) * 14), 1).getTime() / 1000,
     );
 
-    let parlayMarkets = await thalesData.sportMarkets.parlayMarkets({
-      network,
-      startPeriod,
-      endPeriod,
-    });
-
-    if (period === 1) {
-      const startPreviousPeriod = Math.trunc(PARLAY_LEADERBOARD_START_DATE_UTC.getTime() / 1000);
-      const endPreviousPeriod = Math.trunc(
-        subMilliseconds(addMonthsToUTCDate(PARLAY_LEADERBOARD_START_DATE_UTC, 1), 1).getTime() / 1000,
-      );
-
-      const parlayMarketsPreviosPeriod = await thalesData.sportMarkets.parlayMarkets({
-        network,
-        startPeriod: startPreviousPeriod,
-        endPeriod: endPreviousPeriod,
-      });
-
-      const parlayMarketsPreviosPeriodModified = parlayMarketsPreviosPeriod.filter(
-        (market) =>
-          market.totalQuote < getMaximumQuotePerPeriod(0) ||
-          market.sportMarkets.length > PARLAY_LEADERBOARD_MINIMUM_GAMES,
-      );
-
-      parlayMarkets = [...parlayMarkets, ...parlayMarketsPreviosPeriodModified];
-    }
-
-    let parlayMarketsModified = parlayMarkets
-      .filter(
-        (market) =>
-          (period > 0 ||
-            (period === 0 &&
-              market.totalQuote >= getMaximumQuotePerPeriod(0) &&
-              market.sportMarkets.length <= PARLAY_LEADERBOARD_MINIMUM_GAMES)) &&
-          market.positions.every(
-            (position) =>
-              convertPositionNameToPosition(position.side) ===
-                convertFinalResultToResultType(position.market.finalResult) || position.market.isCanceled,
-          ),
-      )
-      .map((parlayMarket) => {
-        let totalQuote = parlayMarket.totalQuote;
-        let totalAmount = parlayMarket.totalAmount;
-        let numberOfPositions = parlayMarket.sportMarkets.length;
-        const sportMarkets = parlayMarket.sportMarkets.map((market) => {
-          if (market.isCanceled) {
-            let realQuote = 1;
-            parlayMarket.marketQuotes.map((quote) => {
-              realQuote = realQuote * quote;
-            });
-
-            const marketIndex = parlayMarket.sportMarketsFromContract.findIndex(
-              (sportMarketFromContract) => sportMarketFromContract === market.address,
-            );
-            if (marketIndex > -1) {
-              realQuote = realQuote / parlayMarket.marketQuotes[marketIndex];
-              const maximumQuote = getMaximumQuotePerPeriod(period);
-              totalQuote = realQuote < maximumQuote ? maximumQuote : realQuote;
-              numberOfPositions = numberOfPositions - 1;
-              totalAmount = totalAmount * parlayMarket.marketQuotes[marketIndex];
-            }
-          }
-
-          return {
-            ...market,
-            homeTeam: fixDuplicatedTeamName(market.homeTeam),
-            awayTeam: fixDuplicatedTeamName(market.awayTeam),
-          };
-        });
-
-        return {
-          ...parlayMarket,
-          totalQuote,
-          totalAmount,
-          numberOfPositions,
-          sportMarkets,
-        };
-      })
-      .sort((a, b) =>
-        a.numberOfPositions !== b.numberOfPositions
-          ? b.numberOfPositions - a.numberOfPositions
-          : a.totalQuote !== b.totalQuote
-          ? a.totalQuote - b.totalQuote
-          : a.sUSDPaid !== b.sUSDPaid
-          ? b.sUSDPaid - a.sUSDPaid
-          : sortByTotalQuote(a, b),
-      );
-
-    if (period >= 2) {
-      parlayMarketsModified = uniqBy(parlayMarketsModified, "account");
-    }
-
-    parlayMarketsModified = parlayMarketsModified.map((parlayMarket, index) => {
-      return {
-        ...parlayMarket,
-        rank: index + 1,
-      };
-    });
-
-    periodMap.set(period, parlayMarketsModified);
+    const parlayMarkets = await getParlayLeaderboardForPeriod(network, startPeriod, endPeriod);
+    periodMap.set(network === 10 ? period + 1 : period, parlayMarkets);
   }
 
   redisClient.set(KEYS.PARLAY_LEADERBOARD[network], JSON.stringify([...periodMap]), function () {});

@@ -48,6 +48,7 @@ const KEYS = {
   PARLAY_LEADERBOARD: {
     10: "overtimeOpParlayLeaderboard",
     420: "overtimeGoerliParlayLeaderboard",
+    42161: "overtimeArbitrumParlayLeaderboard",
   },
   TWAP_FOR_PERIOD: "twapMap",
   DISCOUNTS: {
