@@ -37,7 +37,7 @@ if (process.env.REDIS_URL) {
 async function processRewards(network) {
   const START_DATE = new Date(2022, 6, 13, 12, 23, 0);
 
-  for (let period = 10; period <= 16; period++) {
+  for (let period = 15; period <= 16; period++) {
     console.log("**** Period: ", period);
     const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 14);
@@ -47,12 +47,18 @@ async function processRewards(network) {
       break;
     }
 
-    const midDate = new Date(START_DATE.getTime());
-    midDate.setDate(START_DATE.getDate() + (period + 1) * 14 - 7);
-
+    const midDate1 = new Date(START_DATE.getTime());
+    midDate1.setDate(START_DATE.getDate() + (period + 1) * 14 - 11);
+    const midDate2 = new Date(START_DATE.getTime());
+    midDate2.setDate(START_DATE.getDate() + (period + 1) * 14 - 8);
+    const midDate3 = new Date(START_DATE.getTime());
+    midDate3.setDate(START_DATE.getDate() + (period + 1) * 14 - 5);
+    const midDate4 = new Date(START_DATE.getTime());
+    midDate4.setDate(START_DATE.getDate() + (period + 1) * 14 - 2);
     const endDate = new Date(START_DATE.getTime());
     endDate.setDate(START_DATE.getDate() + (period + 1) * 14);
     console.log("end date: ", endDate);
+
     const arrUsers = new Map();
     let globalITM = 0;
     let globalOTM = 0;
@@ -64,7 +70,6 @@ async function processRewards(network) {
       minTimestamp: parseInt(startDate.getTime() / 1000),
       maxTimestamp: parseInt(endDate.getTime() / 1000),
     });
-
     transactions.map((tx) => {
       if (!arrUsers.get(tx.account)) {
         arrUsers.set(tx.account, initUser(tx));
@@ -78,16 +83,34 @@ async function processRewards(network) {
     const trades1 = await thalesData.binaryOptions.rewards({
       network: network,
       periodStart: parseInt(startDate.getTime() / 1000),
-      periodEnd: parseInt(midDate.getTime() / 1000),
+      periodEnd: parseInt(midDate1.getTime() / 1000),
     });
 
     const trades2 = await thalesData.binaryOptions.rewards({
       network: network,
-      periodStart: parseInt(midDate.getTime() / 1000),
+      periodStart: parseInt(midDate1.getTime() / 1000),
+      periodEnd: parseInt(midDate2.getTime() / 1000),
+    });
+
+    const trades3 = await thalesData.binaryOptions.rewards({
+      network: network,
+      periodStart: parseInt(midDate2.getTime() / 1000),
+      periodEnd: parseInt(midDate3.getTime() / 1000),
+    });
+
+    const trades4 = await thalesData.binaryOptions.rewards({
+      network: network,
+      periodStart: parseInt(midDate3.getTime() / 1000),
+      periodEnd: parseInt(midDate4.getTime() / 1000),
+    });
+
+    const trades5 = await thalesData.binaryOptions.rewards({
+      network: network,
+      periodStart: parseInt(midDate4.getTime() / 1000),
       periodEnd: parseInt(endDate.getTime() / 1000),
     });
 
-    const trades = [...trades1, ...trades2];
+    const trades = [...trades1, ...trades2, ...trades3, ...trades4, ...trades5];
 
     trades.map((trade) => {
       if (
