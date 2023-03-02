@@ -40,14 +40,14 @@ if (process.env.REDIS_URL) {
   });
   setTimeout(async () => {
     while (true) {
-      // try {
-      //   console.log("process orders on optimism");
-      //   await processOrders(10);
-      // } catch (error) {
-      //   console.log("orders on optimism error: ", error);
-      // }
+      try {
+        console.log("process orders on optimism");
+        await processOrders(10);
+      } catch (error) {
+        console.log("orders on optimism error: ", error);
+      }
 
-      // await delay(60 * 1000);
+      await delay(60 * 1000);
 
       try {
         console.log("process parlay leaderboard on optimism");
@@ -55,6 +55,8 @@ if (process.env.REDIS_URL) {
       } catch (error) {
         console.log("parlay leaderboard on optimism error: ", error);
       }
+      
+      await delay(60 * 1000);
 
       try {
         console.log("process parlay leaderboard on arbitrum");
@@ -65,14 +67,14 @@ if (process.env.REDIS_URL) {
 
       await delay(60 * 1000);
 
-      // try {
-      //   console.log("process parlay leaderboard on op goerli");
-      //   await processParlayLeaderboard(420);
-      // } catch (error) {
-      //   console.log("parlay leaderboard on op goerli error: ", error);
-      // }
+      try {
+        console.log("process parlay leaderboard on op goerli");
+        await processParlayLeaderboard(420);
+      } catch (error) {
+        console.log("parlay leaderboard on op goerli error: ", error);
+      }
 
-      // await delay(3 * 60 * 1000);
+      await delay(3 * 60 * 1000);
     }
   }, 3000);
 }
