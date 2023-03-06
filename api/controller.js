@@ -450,3 +450,10 @@ app.get(ENDPOINTS.LIVE_RESULT, (req, res) => {
   var url = `https://therundown.io/api/v2/events/${gameId}?key=${process.env.RUNDOWN_API_KEY}`;
   request.get(url).pipe(res);
 });
+
+app.get(ENDPOINTS.ENETPULSE_RESULT, (req, res) => {
+  const sportId = req.params.sportId;
+  const date = req.params.date;
+  var url = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${sportId}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&date=${date}&includeEventProperties=yes`;
+  request.get(url).pipe(res);
+});

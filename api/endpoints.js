@@ -36,6 +36,7 @@ const ENDPOINTS = {
   BANNER_JSON: "/banner-json/:jsonIndex",
   FIFA_REWARDS: "/fifa-rewards/:networkParam",
   LIVE_RESULT: "/live-result/:gameId",
+  ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
 };
 
 module.exports = ENDPOINTS;
