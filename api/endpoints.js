@@ -39,6 +39,7 @@ const ENDPOINTS = {
   UPDATE_REFFERER_ID: "/update-refferer-id",
   GET_REFFERER_ID_ADDRESS: "/get-refferer-id-address/:reffererID",
   GET_ADDRESS_REFFERER_ID: "/get-address-refferer-id/:walletAddress",
+  ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
 };
 
 module.exports = ENDPOINTS;
