@@ -450,3 +450,42 @@ app.get(ENDPOINTS.LIVE_RESULT, (req, res) => {
   var url = `https://therundown.io/api/v2/events/${gameId}?key=${process.env.RUNDOWN_API_KEY}`;
   request.get(url).pipe(res);
 });
+
+app.post(ENDPOINTS.UPDATE_REFFERER_ID, (req, res) => {
+  const walletAddress = req.body.walletAddress;
+  const reffererID = req.body.reffererID;
+
+  const existingID = userReffererIDsMap.get(reffererID);
+
+  if (existingID) {
+      res.send(JSON.stringify({error: true}));
+      return;
+  }
+
+  if (walletAddress && reffererID) {
+    userReffererIDsMap.set(reffererID, walletAddress);
+  }
+
+  redisClient.set(KEYS.USER_REFFERER_IDS, JSON.stringify([...userReffererIDsMap]), function () {});
+  res.send(JSON.stringify({error: false}));
+});
+
+app.get(ENDPOINTS.GET_REFFERER_ID_ADDRESS, (req, res) => {
+  const reffererID = req.params.reffererID;
+  const IDAddress = userReffererIDsMap.get(reffererID);
+  if (reffererID && IDAddress) {
+    res.send(IDAddress);
+  } else {
+    res.send();
+  }
+});
+
+app.get(ENDPOINTS.GET_ADDRESS_REFFERER_ID, (req, res) => {
+  const walletAddress = req.params.walletAddress;
+  const reffererID = [...userReffererIDsMap].find(([key, val]) => val == walletAddress);
+  if (reffererID && walletAddress) {
+    res.send(reffererID[0]);
+  } else {
+    res.send();
+  }
+});

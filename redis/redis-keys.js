@@ -22,6 +22,7 @@ const KEYS = {
   ROYALE_USER_DATA: "royaleUserData",
   FAUCET_CONSUMERS: "faucetConsumers",
   GAME_FINISHERS: "gameFinishersMap",
+  USER_REFFERER_IDS: "userReffererIDsMap",
   LEADERBOARD: {
     10: "optimismLeaderboard",
     137: "polygonLeaderboard",

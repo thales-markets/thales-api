@@ -50,4 +50,12 @@ if (process.env.REDIS_URL) {
       gameFinishersMap = new Map(JSON.parse(gameFinishersMapRaw));
     }
   });
+
+  redisClient.get(KEYS.USER_REFFERER_IDS, function (err, obj) {
+    const userReffererIDsMapRaw = obj;
+    console.log("userReffererIDsMapRaw:" + userReffererIDsMapRaw);
+    if (userReffererIDsMapRaw) {
+      userReffererIDsMap = new Map(JSON.parse(userReffererIDsMapRaw));
+    }
+  });
 }
