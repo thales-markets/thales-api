@@ -6,8 +6,6 @@ const redis = require("redis");
 const KEYS = require("./redis/redis-keys");
 thalesData = require("thales-data");
 fetch = require("node-fetch");
-const Web3 = require("web3");
-const Web3Client = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 const { delay } = require("./services/utils");
 const tokenMap = new Map();
 
