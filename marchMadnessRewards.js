@@ -166,10 +166,7 @@ const calculateRewardPercentageBaseOnCorrectPredictions = (arrayOfPredicitionsPe
       Number(arrayOfPredicitionsPerRound[5]) * REWARDS.FINAL,
   );
 };
-
 function getProvider(network) {
-  const networkName = ethers.providers.getNetwork(network).name;
-
   switch (Number(network)) {
     case 56:
       const bscProvider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/", {
@@ -178,19 +175,18 @@ function getProvider(network) {
       });
       return bscProvider;
 
-    case 420:
-      const opGoerliProvider = new ethers.providers.JsonRpcProvider(
-        "https://optimism-goerli.infura.io/v3/" + process.env.INFURA_URL,
-        { name: "optimism-goerli", chainId: 420 },
-      );
-      return opGoerliProvider;
-
     default:
       // Infura does not have a provider for Binance Smart Chain so we need to provide a public one instead
-      const etherprovider = new ethers.providers.InfuraProvider(
-        { chainId: network, name: networkName },
-        process.env.INFURA_URL,
-      );
+      const etherprovider = new ethers.providers.JsonRpcProvider(MAP_PROVIDER[network] + process.env.INFURA_URL);
       return etherprovider;
   }
 }
+
+const MAP_PROVIDER = {
+  1: "https://mainnet.chainnodes.org/",
+  5: "https://goerli.chainnodes.org/",
+  10: "https://optimism-mainnet.chainnodes.org/",
+  137: "https://polygon-mainnet.chainnodes.org/",
+  420: "https://optimism-goerli.chainnodes.org/",
+  42161: "https://arbitrum-one.chainnodes.org/",
+};
