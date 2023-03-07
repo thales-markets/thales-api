@@ -10,7 +10,6 @@ app.use(express.json());
 const ENDPOINTS = require("./endpoints");
 const sigUtil = require("eth-sig-util");
 const KEYS = require("../redis/redis-keys");
-const fetch = require("node-fetch");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -170,7 +169,7 @@ app.get(ENDPOINTS.MARCH_MADNESS, (req, res) => {
         console.log(e);
       }
     });
-  } 
+  }
 
   if (leaderboardType == 1) {
     redisClient.get(KEYS.MARCH_MADNESS.BY_NUMBER_OF_CORRECT_PREDICTIONS[network], function (err, obj) {
@@ -182,7 +181,6 @@ app.get(ENDPOINTS.MARCH_MADNESS, (req, res) => {
       }
     });
   }
-  
 });
 
 app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
@@ -476,17 +474,14 @@ app.get(ENDPOINTS.BANNER_JSON, (req, res) => {
 
 app.get(ENDPOINTS.BANNERS, async (req, res) => {
   const network = req.params.networkParam;
-  const networkResponse = await fetch(
-    `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${network}.json`,
-  );
-  const networkResponseJson = await networkResponse.json();
-  const mappedNetworkResponse = networkResponseJson.map((bannerItem) => {
-    return {
-      url: bannerItem.url,
-      image: `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${bannerItem.image}`,
-    };
-  });
-  res.send(mappedNetworkResponse);
+  var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${network}.json`;
+  request.get(banners).pipe(res);
+});
+
+app.get(ENDPOINTS.BANNERS_IMAGE, (req, res) => {
+  const imageName = req.params.imageName;
+  var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${imageName}`;
+  request.get(url).pipe(res);
 });
 
 app.get(ENDPOINTS.LIVE_RESULT, (req, res) => {

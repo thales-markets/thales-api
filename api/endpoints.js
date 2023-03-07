@@ -35,13 +35,14 @@ const ENDPOINTS = {
   BANNER_IMAGE_COUNT: "/banner-image-count",
   BANNER_JSON: "/banner-json/:jsonIndex",
   BANNERS: "/banners/:networkParam",
+  BANNERS_IMAGE: "/banners/image/:imageName",
   FIFA_REWARDS: "/fifa-rewards/:networkParam",
   LIVE_RESULT: "/live-result/:gameId",
   UPDATE_REFFERER_ID: "/update-refferer-id",
   GET_REFFERER_ID_ADDRESS: "/get-refferer-id-address/:reffererID",
   GET_ADDRESS_REFFERER_ID: "/get-address-refferer-id/:walletAddress",
   ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
-  MARCH_MADNESS: "/march-madness/:leaderboardType/:networkId"
+  MARCH_MADNESS: "/march-madness/:leaderboardType/:networkId",
 };
 
 module.exports = ENDPOINTS;
