@@ -67,6 +67,18 @@ const KEYS = {
     42161: "arbitrumOvertimeDiscounts",
   },
   ZEBRO_CAMPAIGN: { 10: "zebroCampaignOp", 420: "zebroCampaignOpGoerli" },
+  MARCH_MADNESS: {
+    BY_VOLUME: {
+      10: "mmOPVolume",
+      420: "mmOPGoerliVolume",
+      42161: "mmArbVolume"
+    },
+    BY_NUMBER_OF_CORRECT_PREDICTIONS: {
+      10: "mmOPNOCP",
+      420: "mmOPGoerliNOCP",
+      42161: "mmArbNOCP"
+    }
+  },
 };
 
 module.exports = KEYS;

@@ -156,6 +156,34 @@ app.get(ENDPOINTS.FIFA_REWARDS, (req, res) => {
   });
 });
 
+app.get(ENDPOINTS.MARCH_MADNESS, (req, res) => {
+  const network = req.params.networkId;
+  const leaderboardType = req.params.leaderboardType;
+
+  if (leaderboardType == 0) {
+    redisClient.get(KEYS.MARCH_MADNESS.BY_VOLUME[network], function (err, obj) {
+      const rewards = JSON.parse(obj);
+      try {
+        res.send(rewards);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  } 
+
+  if (leaderboardType == 1) {
+    redisClient.get(KEYS.MARCH_MADNESS.BY_NUMBER_OF_CORRECT_PREDICTIONS[network], function (err, obj) {
+      const rewards = JSON.parse(obj);
+      try {
+        res.send(rewards);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
+  
+});
+
 app.get(ENDPOINTS.WATCHLIST_ADDRESS, (req, res) => {
   const walletAddress = req.params.walletAddressParam;
   const network = req.params.networkParam;

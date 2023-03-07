@@ -40,6 +40,7 @@ const ENDPOINTS = {
   GET_REFFERER_ID_ADDRESS: "/get-refferer-id-address/:reffererID",
   GET_ADDRESS_REFFERER_ID: "/get-address-refferer-id/:walletAddress",
   ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
+  MARCH_MADNESS: "/march-madness/:leaderboardType/:networkId"
 };
 
 module.exports = ENDPOINTS;
