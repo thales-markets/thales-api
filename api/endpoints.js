@@ -34,6 +34,7 @@ const ENDPOINTS = {
   BANNER_IMAGE: "/banner-image/:imageIndex",
   BANNER_IMAGE_COUNT: "/banner-image-count",
   BANNER_JSON: "/banner-json/:jsonIndex",
+  BANNERS: "/banners/:networkParam",
   FIFA_REWARDS: "/fifa-rewards/:networkParam",
   LIVE_RESULT: "/live-result/:gameId",
   UPDATE_REFFERER_ID: "/update-refferer-id",
