@@ -16,7 +16,7 @@ const NetworkId = {
 const marchMadness = {
   addresses: {
     [NetworkId.Optimism]: "TBD",
-    [NetworkId.OptimismGoerli]: "0x6F5caeeaB9f73D7639931A4a052B739EA9D3e48A",
+    [NetworkId.OptimismGoerli]: "0x81FB5DAb46Ba7fb5b85D7fcBbF019a400a2000FD",
     [NetworkId.Arbitrum]: "TBD",
   },
   abi: [

@@ -11,6 +11,8 @@ const OP_VOLUME_REWARDS = 20000;
 const THALES_REWARDS = 50000;
 const THALES_VOLUME_REWARDS = 10000;
 
+const ONE_MINUTE = 60 * 1000;
+
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -22,11 +24,27 @@ if (process.env.REDIS_URL) {
   setInterval(async () => {
     try {
       await processOrders(10);
+    } catch (e) {
+      console.log("Error ", e);
+    }
+
+    await delay(ONE_MINUTE);
+
+    try {
       await processOrders(420);
     } catch (e) {
       console.log("Error ", e);
     }
-  }, 60 * 1000);
+
+    await delay(ONE_MINUTE);
+
+    try {
+      await processOrders(42161);
+    } catch (e) {
+      console.log("Error ", e);
+    }
+    await delay(ONE_MINUTE);
+  }, 5 * ONE_MINUTE);
 }
 
 const REWARDS = {
