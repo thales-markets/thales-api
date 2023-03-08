@@ -532,6 +532,6 @@ app.get(ENDPOINTS.GET_ADDRESS_REFFERER_ID, (req, res) => {
 app.get(ENDPOINTS.ENETPULSE_RESULT, (req, res) => {
   const sportId = req.params.sportId;
   const date = req.params.date;
-  var url = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${sportId}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&date=${date}&includeEventProperties=yes`;
+  var url = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${sportId}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&date=${date}&includeEventProperties=no`;
   request.get(url).pipe(res);
 });
