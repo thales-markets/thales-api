@@ -22,30 +22,34 @@ if (process.env.REDIS_URL) {
     console.error(error);
   });
 
-  setInterval(async () => {
-    try {
-      await processOrders(10);
-    } catch (e) {
-      console.log("Error ", e);
+  setTimeout(async () => {
+    while (true) {
+      try {
+        await processOrders(42161);
+      } catch (e) {
+        console.log("Error ", e);
+      }
+
+      await delay(ONE_MINUTE);
+
+      try {
+        await processOrders(10);
+      } catch (e) {
+        console.log("Error ", e);
+      }
+
+      await delay(ONE_MINUTE);
+
+      try {
+        await processOrders(420);
+      } catch (e) {
+        console.log("Error ", e);
+      }
+      // 3 minute delay between iterations
+      await delay(3 * ONE_MINUTE);
     }
-
-    await delay(ONE_MINUTE);
-
-    try {
-      await processOrders(420);
-    } catch (e) {
-      console.log("Error ", e);
-    }
-
-    await delay(ONE_MINUTE);
-
-    try {
-      await processOrders(42161);
-    } catch (e) {
-      console.log("Error ", e);
-    }
-    await delay(ONE_MINUTE);
-  }, 15 * ONE_MINUTE);
+    // 3 seconds timeout to give time to connect to redis
+  }, 3000);
 }
 
 const REWARDS = {
@@ -82,8 +86,16 @@ async function processOrders(network) {
   for (let i = 0; i < marchMadnessTokens.length; i++) {
     const owner = marchMadnessTokens[i].minter;
 
-    const singles = await thalesData.sportMarkets.marketTransactions({ network: network, account: owner, minTimestamp: FROM_DATE });
-    const parlays = await thalesData.sportMarkets.parlayMarkets({ network: network, account: owner, minTimestamp: FROM_DATE });
+    const singles = await thalesData.sportMarkets.marketTransactions({
+      network: network,
+      account: owner,
+      minTimestamp: FROM_DATE,
+    });
+    const parlays = await thalesData.sportMarkets.parlayMarkets({
+      network: network,
+      account: owner,
+      minTimestamp: FROM_DATE,
+    });
 
     // Check for singles and parlays that are in right competition
     const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(TAG_ID));
@@ -184,7 +196,25 @@ const calculateRewardPercentageBaseOnCorrectPredictions = (arrayOfPredicitionsPe
       Number(arrayOfPredicitionsPerRound[5]) * REWARDS.FINAL,
   );
 };
+// function getProvider(network) {
+//   switch (Number(network)) {
+//     case 56:
+//       const bscProvider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/", {
+//         name: "binance",
+//         chainId: 56,
+//       });
+//       return bscProvider;
+
+//     default:
+//       // Infura does not have a provider for Binance Smart Chain so we need to provide a public one instead
+//       const etherprovider = new ethers.providers.JsonRpcProvider(MAP_PROVIDER[network] + process.env.INFURA_URL);
+//       return etherprovider;
+//   }
+// }
+
 function getProvider(network) {
+  const networkName = ethers.providers.getNetwork(network).name;
+
   switch (Number(network)) {
     case 56:
       const bscProvider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/", {
@@ -193,9 +223,19 @@ function getProvider(network) {
       });
       return bscProvider;
 
+    case 420:
+      const opGoerliProvider = new ethers.providers.JsonRpcProvider(
+        "https://optimism-goerli.infura.io/v3/" + process.env.INFURA_URL,
+        { name: "optimism-goerli", chainId: 420 },
+      );
+      return opGoerliProvider;
+
     default:
       // Infura does not have a provider for Binance Smart Chain so we need to provide a public one instead
-      const etherprovider = new ethers.providers.JsonRpcProvider(MAP_PROVIDER[network] + process.env.INFURA_URL);
+      const etherprovider = new ethers.providers.InfuraProvider(
+        { chainId: network, name: networkName },
+        process.env.INFURA_URL,
+      );
       return etherprovider;
   }
 }
