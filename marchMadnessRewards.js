@@ -45,7 +45,7 @@ if (process.env.REDIS_URL) {
       console.log("Error ", e);
     }
     await delay(ONE_MINUTE);
-  }, 5 * ONE_MINUTE);
+  }, 15 * ONE_MINUTE);
 }
 
 const REWARDS = {
@@ -59,8 +59,7 @@ const REWARDS = {
 
 async function processOrders(network) {
   const TAG_ID = "9005";
-  const FROM_DATE = new Date("").getTime() / 1000;
-  const TO_DATE = new Date("").getTime() / 1000;
+  const FROM_DATE = new Date("03-09-2023").getTime() / 1000;
 
   console.log("NetworkId -> ", network);
 
@@ -83,8 +82,8 @@ async function processOrders(network) {
   for (let i = 0; i < marchMadnessTokens.length; i++) {
     const owner = marchMadnessTokens[i].minter;
 
-    const singles = await thalesData.sportMarkets.marketTransactions({ network: network, account: owner });
-    const parlays = await thalesData.sportMarkets.parlayMarkets({ network: network, account: owner });
+    const singles = await thalesData.sportMarkets.marketTransactions({ network: network, account: owner, minTimestamp: FROM_DATE });
+    const parlays = await thalesData.sportMarkets.parlayMarkets({ network: network, account: owner, minTimestamp: FROM_DATE });
 
     // Check for singles and parlays that are in right competition
     const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(TAG_ID));
@@ -202,10 +201,14 @@ function getProvider(network) {
 }
 
 const MAP_PROVIDER = {
-  1: "https://mainnet.chainnodes.org/",
-  5: "https://goerli.chainnodes.org/",
-  10: "https://optimism-mainnet.chainnodes.org/",
-  137: "https://polygon-mainnet.chainnodes.org/",
-  420: "https://optimism-goerli.chainnodes.org/",
-  42161: "https://arbitrum-one.chainnodes.org/",
+  // 1: "https://mainnet.chainnodes.org/",
+  // 5: "https://goerli.chainnodes.org/",
+  // 10: "https://optimism-mainnet.chainnodes.org/",
+  // 137: "https://polygon-mainnet.chainnodes.org/",
+  // 420: "https://optimism-goerli.chainnodes.org/",
+  // 42161: "https://arbitrum-one.chainnodes.org/",
+  1: "https://mainnet.infura.io/v3/",
+  10: "https://optimism-mainnet.infura.io/v3/",
+  420: "https://optimism-goerli.infura.io/v3/",
+  42161: "ttps://arbitrum-mainnet.infura.io/v3/",
 };
