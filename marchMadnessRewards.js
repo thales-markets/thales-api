@@ -162,7 +162,7 @@ async function processOrders(network) {
     .sort((userA, userB) => userB.totalCorrectedPredictions - userA.totalCorrectedPredictions)
     .map((user, index) => {
       user.rank = index + 1;
-      user.rewards = `${Number(getRewardsForNetwork(network) / 10).toFixed(2)} ${getRewardsForNetwork(network)}`;
+      user.rewards = `${Number(getRewardsForNetwork(network) / 10).toFixed(2)} ${getRewardCoinForNetwork(network)}`;
       return user;
     });
 
