@@ -63,7 +63,7 @@ const REWARDS = {
 
 async function processOrders(network) {
   const TAG_ID = "9005";
-  const FROM_DATE = new Date("03-09-2023").getTime() / 1000;
+  const FROM_DATE = network == 420 ? new Date("03-09-2023").getTime() / 1000 : new Date("03-14-2023").getTime() / 1000;
 
   console.log("NetworkId -> ", network);
 
