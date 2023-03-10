@@ -97,8 +97,6 @@ async function processOrders(network) {
       minTimestamp: FROM_DATE,
     });
 
-    console.log('owner -> ', owner);
-
     // Check for singles and parlays that are in right competition
     const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(TAG_ID));
     const parlayFromLeague = parlays.filter(
@@ -110,10 +108,6 @@ async function processOrders(network) {
     const multiplier = (
       calculateRewardPercentageBaseOnCorrectPredictions(numberOfCorrectedPredictionsPerRound) / 100
     ).toFixed(2);
-
-    console.log('singleFromLeague -> ', singleFromLeague);
-    console.log('parlayFromLeague -> ', parlayFromLeague);
-    console.log('-------------------------------------------------------------------');
 
     if (!numberOfCorrectedPredictionsPerRound.length) continue;
 
@@ -153,7 +147,12 @@ async function processOrders(network) {
     .sort((userA, userB) => userB.volume - userA.volume)
     .map((user, index) => {
       user.rank = index + 1;
-      user.rewards = globalVolume > 0 ? `${Number((user.volume / globalVolume) * getVolumeRewardsForNetwork(network)).toFixed(2)} ${getRewardCoinForNetwork(network)}` : 0;
+      user.rewards =
+        globalVolume > 0
+          ? `${Number((user.volume / globalVolume) * getVolumeRewardsForNetwork(network)).toFixed(
+              2,
+            )} ${getRewardCoinForNetwork(network)}`
+          : 0;
       return user;
     });
 
@@ -191,10 +190,10 @@ const getRewardsForNetwork = (networkId) => {
 };
 
 const getRewardCoinForNetwork = (networkId) => {
-  if (networkId == 10) return 'OP';
-  if (networkId == 420) return 'OP';
-  return 'THALES';
-}
+  if (networkId == 10) return "OP";
+  if (networkId == 420) return "OP";
+  return "THALES";
+};
 
 const calculateRewardPercentageBaseOnCorrectPredictions = (arrayOfPredicitionsPerRound) => {
   if (arrayOfPredicitionsPerRound.length !== 6) return 0;
