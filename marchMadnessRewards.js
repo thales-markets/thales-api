@@ -7,9 +7,9 @@ const ethers = require("ethers");
 const marchMadness = require("./contracts/marchMadness");
 const { delay } = require("./services/utils");
 
-const OP_REWARDS = 5000;
-const OP_VOLUME_REWARDS = 20000;
-const THALES_REWARDS = 50000;
+const OP_REWARDS = 3000;
+const OP_VOLUME_REWARDS = 10000;
+const THALES_REWARDS = 30000;
 const THALES_VOLUME_REWARDS = 10000;
 
 const ONE_MINUTE = 60 * 1000;
@@ -97,10 +97,12 @@ async function processOrders(network) {
       minTimestamp: FROM_DATE,
     });
 
+    console.log('owner -> ', owner);
+
     // Check for singles and parlays that are in right competition
     const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(TAG_ID));
     const parlayFromLeague = parlays.filter(
-      (parlayTx) => parlayTx.sportMarkets.map((sportMarket) => sportMarket.tags.includes(TAG_ID)).length > 0,
+      (parlayTx) => parlayTx.sportMarkets.filter((sportMarket) => sportMarket.tags.includes(TAG_ID)).length > 0,
     );
 
     const numberOfCorrectedPredictionsPerRound = await marchMadnessContract.getCorrectPositionsByRound(owner);
@@ -108,6 +110,10 @@ async function processOrders(network) {
     const multiplier = (
       calculateRewardPercentageBaseOnCorrectPredictions(numberOfCorrectedPredictionsPerRound) / 100
     ).toFixed(2);
+
+    console.log('singleFromLeague -> ', singleFromLeague);
+    console.log('parlayFromLeague -> ', parlayFromLeague);
+    console.log('-------------------------------------------------------------------');
 
     if (!numberOfCorrectedPredictionsPerRound.length) continue;
 
@@ -147,7 +153,7 @@ async function processOrders(network) {
     .sort((userA, userB) => userB.volume - userA.volume)
     .map((user, index) => {
       user.rank = index + 1;
-      user.rewards = globalVolume > 0 ? (user.volume / globalVolume) * getVolumeRewardsForNetwork(network) : 0;
+      user.rewards = globalVolume > 0 ? `${Number((user.volume / globalVolume) * getVolumeRewardsForNetwork(network)).toFixed(2)} ${getRewardCoinForNetwork(network)}` : 0;
       return user;
     });
 
@@ -156,7 +162,7 @@ async function processOrders(network) {
     .sort((userA, userB) => userB.totalCorrectedPredictions - userA.totalCorrectedPredictions)
     .map((user, index) => {
       user.rank = index + 1;
-      user.rewards = getRewardsForNetwork(network) / 10;
+      user.rewards = `${Number(getRewardsForNetwork(network) / 10).toFixed(2)} ${getRewardsForNetwork(network)}`;
       return user;
     });
 
@@ -183,6 +189,12 @@ const getRewardsForNetwork = (networkId) => {
   if (networkId == 420) return OP_REWARDS;
   return THALES_REWARDS;
 };
+
+const getRewardCoinForNetwork = (networkId) => {
+  if (networkId == 10) return 'OP';
+  if (networkId == 420) return 'OP';
+  return 'THALES';
+}
 
 const calculateRewardPercentageBaseOnCorrectPredictions = (arrayOfPredicitionsPerRound) => {
   if (arrayOfPredicitionsPerRound.length !== 6) return 0;
