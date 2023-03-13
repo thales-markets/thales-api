@@ -493,6 +493,7 @@ app.get(ENDPOINTS.LIVE_RESULT, (req, res) => {
 app.post(ENDPOINTS.UPDATE_REFFERER_ID, (req, res) => {
   const walletAddress = req.body.walletAddress;
   const reffererID = req.body.reffererID;
+  const previousReffererID = req.body.previousReffererID;
 
   const existingID = userReffererIDsMap.get(reffererID);
 
@@ -501,7 +502,19 @@ app.post(ENDPOINTS.UPDATE_REFFERER_ID, (req, res) => {
     return;
   }
 
-  if (walletAddress && reffererID) {
+  const signature = req.body.signature;
+  const recovered = sigUtil.recoverPersonalSignature({
+    data: reffererID,
+    sig: signature,
+  });
+
+  if (walletAddress && reffererID && recovered.toLowerCase() === walletAddress.toLowerCase()) {
+    if (previousReffererID) {
+      const previousExistingID = userReffererIDsMap.get(previousReffererID);
+      if (walletAddress.toLowerCase() === previousExistingID.toLowerCase()) {
+        userReffererIDsMap.delete(previousReffererID);
+      }
+    }
     userReffererIDsMap.set(reffererID, walletAddress);
   }
 
