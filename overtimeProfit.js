@@ -55,7 +55,7 @@ if (process.env.REDIS_URL) {
       } catch (error) {
         console.log("parlay leaderboard on optimism error: ", error);
       }
-      
+
       await delay(60 * 1000);
 
       try {
@@ -153,7 +153,8 @@ async function processOrders(network) {
 
     const usersMap = new Map();
 
-    let globalVolume = 0;
+    let globalVolumeSingles = 0;
+    let globalVolumeParlays = 0;
 
     const allTx = [];
 
@@ -183,7 +184,8 @@ async function processOrders(network) {
         let user = usersMap.get(tx.account);
         if (!user) user = initUser(tx);
         user.volume = user.volume + tx.paid;
-        globalVolume = globalVolume + tx.paid;
+        user.singlesVolume = user.singlesVolume + tx.paid;
+        globalVolumeSingles = globalVolumeSingles + tx.paid;
         usersMap.set(tx.account, user);
       }
     });
@@ -198,21 +200,25 @@ async function processOrders(network) {
       let user = usersMap.get(tx.account);
       if (!user) user = initUser(tx);
       user.volume = user.volume + tx.sUSDPaid;
-      globalVolume = globalVolume + tx.sUSDPaid;
+      user.parlaysVolume = user.parlaysVolume + tx.sUSDPaid;
+      globalVolumeParlays = globalVolumeParlays + tx.sUSDPaid;
       usersMap.set(tx.account, user);
     });
 
-    const FEEPercentage = period < 2 ? 2 : 3;
+    const FEEPercentageSingles = period >= 12 ? 1 : 3;
+    const FEEPercentageParlays = period >= 12 ? 2 : 3;
 
     const finalArray = [];
     const finalTwap = twapArray[period];
 
-    const globalSafeboxFeesForPeriod = (globalVolume * FEEPercentage) / 100;
+    const globalSafeboxFeesForPeriod =
+      (globalVolumeSingles * FEEPercentageSingles) / 100 + (globalVolumeParlays * FEEPercentageParlays) / 100;
     const totalRebatesToPay = (9 / 10) * globalSafeboxFeesForPeriod;
 
     Array.from(usersMap.values()).map((user) => {
-      user.percentage = Math.abs(user.volume / globalVolume) * 100;
-      user.safebox = (user.volume * FEEPercentage) / 100;
+      user.percentage = Math.abs(user.volume / (globalVolumeSingles + globalVolumeParlays)) * 100;
+      user.safebox =
+        (user.singlesVolume * FEEPercentageSingles) / 100 + (user.parlaysVolume * FEEPercentageParlays) / 100;
       user.rebates = (user.safebox * 9) / 10;
       if (finalTwap > totalRebatesToPay) {
         user.rewards.op = (((8000 * user.percentage) / 100) * totalRebatesToPay) / finalTwap;
@@ -226,7 +232,7 @@ async function processOrders(network) {
       return user;
     });
     periodMap.set(period, {
-      globalVolume: globalVolume,
+      globalVolume: globalVolumeSingles + globalVolumeParlays,
       safeBooxFees: globalSafeboxFeesForPeriod,
       rebatesToPay: totalRebatesToPay,
       twapForPeriod: finalTwap,
@@ -339,6 +345,8 @@ async function processParlayLeaderboard(network) {
 function initUser(tx) {
   const user = {
     address: tx.account,
+    singlesVolume: 0,
+    parlaysVolume: 0,
     volume: 0,
     safebox: 0,
     rebates: 0,
