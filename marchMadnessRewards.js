@@ -211,7 +211,7 @@ async function processOrders(network) {
     .map((user, index) => {
       user.rank = index + 1;
       user.rewards =
-        globalVolume > 0 && user.bonusVolume > 0
+        globalVolume > 0
           ? `${Number((user.volume / globalVolume) * getVolumeRewardsForNetwork(network)).toFixed(
               2,
             )} ${getRewardCoinForNetwork(network)}`
