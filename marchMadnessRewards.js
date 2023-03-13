@@ -6,6 +6,7 @@ const KEYS = require("./redis/redis-keys");
 const ethers = require("ethers");
 const marchMadness = require("./contracts/marchMadness");
 const { delay } = require("./services/utils");
+const { _ } = require("lodash");
 
 const OP_REWARDS = 3000;
 const OP_VOLUME_REWARDS = 10000;
@@ -25,7 +26,7 @@ if (process.env.REDIS_URL) {
   setTimeout(async () => {
     while (true) {
       try {
-        await processOrders(42161);
+        await processOrders(420);
       } catch (e) {
         console.log("Error ", e);
       }
@@ -41,7 +42,7 @@ if (process.env.REDIS_URL) {
       await delay(ONE_MINUTE);
 
       try {
-        await processOrders(420);
+        await processOrders(42161);
       } catch (e) {
         console.log("Error ", e);
       }
@@ -61,10 +62,52 @@ const REWARDS = {
   FINAL: 20,
 };
 
-async function processOrders(network) {
-  const TAG_ID = "9005";
-  const FROM_DATE = network == 420 ? new Date("03-09-2023").getTime() / 1000 : new Date("03-14-2023").getTime() / 1000;
+const TOP_REWARDS = {
+  10: {
+    1: 750,
+    2: 600,
+    3: 450,
+    4: 350,
+    5: 250,
+    6: 200,
+    7: 150,
+    8: 100,
+    9: 90,
+    10: 60,
+  },
+  420: {
+    1: 750,
+    2: 600,
+    3: 450,
+    4: 350,
+    5: 250,
+    6: 200,
+    7: 150,
+    8: 100,
+    9: 90,
+    10: 60,
+  },
+  42161: {
+    1: 2500,
+    2: 2000,
+    3: 1500,
+    4: 1200,
+    5: 800,
+    6: 650,
+    7: 500,
+    8: 350,
+    9: 300,
+    10: 200,
+  },
+};
 
+const TAG_ID = "9005";
+
+async function processOrders(network) {
+  const FROM_DATE = network == 420 ? new Date("03-09-2023").getTime() / 1000 : new Date("03-13-2023").getTime() / 1000;
+  const TO_DATE = new Date("03-30-2023").getTime() / 1000;
+
+  console.log("----------------------------------------------------------------------------");
   console.log("NetworkId -> ", network);
 
   const provider = getProvider(network);
@@ -80,11 +123,23 @@ async function processOrders(network) {
     network: network,
   });
 
+  const marchMadnessTokenOwnersAddresses = marchMadnessTokens.map((token) => token.minter);
+
+  console.log("MarchMadnessNFTOwners -> ", marchMadnessTokens.length);
+
+  const uniqueAccountsFromTransactionsData = await getUniqueTradersFromTransactionsData(FROM_DATE, TO_DATE, network);
+
+  console.log("UniqueAccountFromTransactionsData -> ", uniqueAccountsFromTransactionsData.length);
+
+  const uniqueAddresses = _.uniq(marchMadnessTokenOwnersAddresses.concat(uniqueAccountsFromTransactionsData));
+
+  console.log("uniqueAddresses of merged data ", uniqueAddresses.length);
+
   const users = [];
   let globalVolume = 0;
 
-  for (let i = 0; i < marchMadnessTokens.length; i++) {
-    const owner = marchMadnessTokens[i].minter;
+  for (let i = 0; i < uniqueAddresses.length; i++) {
+    const owner = uniqueAddresses[i];
 
     const singles = await thalesData.sportMarkets.marketTransactions({
       network: network,
@@ -103,7 +158,15 @@ async function processOrders(network) {
       (parlayTx) => parlayTx.sportMarkets.filter((sportMarket) => sportMarket.tags.includes(TAG_ID)).length > 0,
     );
 
-    const numberOfCorrectedPredictionsPerRound = await marchMadnessContract.getCorrectPositionsByRound(owner);
+    let numberOfCorrectedPredictionsPerRound;
+
+    const isAddressMinterOfNFT = marchMadnessTokens.find((token) => token.minter.toLowerCase() == owner.toLowerCase());
+
+    if (isAddressMinterOfNFT !== undefined) {
+      numberOfCorrectedPredictionsPerRound = await marchMadnessContract.getCorrectPositionsByRound(owner);
+    }
+
+    if (numberOfCorrectedPredictionsPerRound == undefined) numberOfCorrectedPredictionsPerRound = [0, 0, 0, 0, 0, 0];
 
     const multiplier = (
       calculateRewardPercentageBaseOnCorrectPredictions(numberOfCorrectedPredictionsPerRound) / 100
@@ -148,7 +211,7 @@ async function processOrders(network) {
     .map((user, index) => {
       user.rank = index + 1;
       user.rewards =
-        globalVolume > 0
+        globalVolume > 0 && user.bonusVolume > 0
           ? `${Number((user.volume / globalVolume) * getVolumeRewardsForNetwork(network)).toFixed(
               2,
             )} ${getRewardCoinForNetwork(network)}`
@@ -157,11 +220,18 @@ async function processOrders(network) {
     });
 
   const finalArrayByNumberOfCorrectPredictions = clonedUsers
-    .filter((user) => user.baseVolume > 10)
+    .filter(
+      (user) =>
+        user.baseVolume > 10 &&
+        !!marchMadnessTokens.find((token) => token.minter.toLowerCase() == user.walletAddress.toLowerCase()),
+    )
     .sort((userA, userB) => userB.totalCorrectedPredictions - userA.totalCorrectedPredictions)
     .map((user, index) => {
       user.rank = index + 1;
-      user.rewards = `${Number(getRewardsForNetwork(network) / 10).toFixed(2)} ${getRewardCoinForNetwork(network)}`;
+      user.rewards =
+        user.totalCorrectedPredictions > 0
+          ? `${getRewardsBasedOnRank(network, index + 1)}`
+          : `0 ${getRewardCoinForNetwork(network)}`;
       return user;
     });
 
@@ -193,6 +263,42 @@ const getRewardCoinForNetwork = (networkId) => {
   if (networkId == 10) return "OP";
   if (networkId == 420) return "OP";
   return "THALES";
+};
+
+const getRewardsBasedOnRank = (networkId, rank) => {
+  if (![420, 10, 42161].includes(networkId)) networkId = 10;
+  if (rank > 10) return `0 ${getRewardCoinForNetwork(networkId)}`;
+
+  return `${TOP_REWARDS[networkId][rank]} ${getRewardCoinForNetwork(networkId)}`;
+};
+
+const getUniqueTradersFromTransactionsData = async (fromDate, toDate, network) => {
+  if (!fromDate) return [];
+
+  const singles = await thalesData.sportMarkets.marketTransactions({
+    network: network,
+    minTimestamp: fromDate,
+    maxTimestamp: toDate,
+  });
+  const parlays = await thalesData.sportMarkets.parlayMarkets({
+    network: network,
+    minTimestamp: fromDate,
+    maxTimestamp: toDate,
+  });
+
+  // Filter only from NCAA
+  const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(TAG_ID));
+  const parlayFromLeague = parlays.filter(
+    (parlayTx) => parlayTx.sportMarkets.filter((sportMarket) => sportMarket.tags.includes(TAG_ID)).length > 0,
+  );
+
+  const uniqueAccountsFromSingleTransactions = _.uniqBy(singleFromLeague, "account");
+  const uniqueAccountsFromParlayTransactions = _.uniqBy(parlayFromLeague, "account");
+
+  const uniqueAccountsFromSingle = uniqueAccountsFromSingleTransactions.map((single) => single.account);
+  const uniqueAccountsFromParlays = uniqueAccountsFromParlayTransactions.map((parlay) => parlay.account);
+
+  return uniqueAccountsFromSingle.concat(uniqueAccountsFromParlays);
 };
 
 const calculateRewardPercentageBaseOnCorrectPredictions = (arrayOfPredicitionsPerRound) => {
