@@ -15,6 +15,12 @@ const THALES_VOLUME_REWARDS = 10000;
 
 const ONE_MINUTE = 60 * 1000;
 
+const EXCLUDE_ADDRESSES = [
+  "0x82b3634c0518507d5d817be6dab6233ebe4d68d9",
+  "0x2bb7d689780e7a34dd365359bd7333ab24903268",
+  "0x0ec9d8dac2178b041f85f60e3cf13cfaa3d23e0e",
+];
+
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
@@ -105,7 +111,7 @@ const TAG_ID = "9005";
 
 async function processOrders(network) {
   const FROM_DATE = network == 420 ? new Date("03-09-2023").getTime() / 1000 : new Date("03-13-2023").getTime() / 1000;
-  const TO_DATE = new Date("03-30-2023").getTime() / 1000;
+  const TO_DATE = new Date("04-04-2023").getTime() / 1000;
 
   console.log("----------------------------------------------------------------------------");
   console.log("NetworkId -> ", network);
@@ -131,12 +137,14 @@ async function processOrders(network) {
 
   console.log("UniqueAccountFromTransactionsData -> ", uniqueAccountsFromTransactionsData.length);
 
-  const uniqueAddresses = _.uniq(marchMadnessTokenOwnersAddresses.concat(uniqueAccountsFromTransactionsData));
+  let uniqueAddresses = _.uniq(marchMadnessTokenOwnersAddresses.concat(uniqueAccountsFromTransactionsData));
 
   console.log("uniqueAddresses of merged data ", uniqueAddresses.length);
 
   const users = [];
   let globalVolume = 0;
+
+  uniqueAddresses = uniqueAddresses.filter((address) => !EXCLUDE_ADDRESSES.includes(address));
 
   for (let i = 0; i < uniqueAddresses.length; i++) {
     const owner = uniqueAddresses[i];
