@@ -548,3 +548,7 @@ app.get(ENDPOINTS.ENETPULSE_RESULT, (req, res) => {
   var url = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${sportId}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&date=${date}&includeEventProperties=no`;
   request.get(url).pipe(res);
 });
+
+app.get(ENDPOINTS.GET_REFFERER_MAP, (req, res) => {
+  res.send(Object.fromEntries(userReffererIDsMap));
+});
