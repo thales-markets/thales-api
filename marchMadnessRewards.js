@@ -230,7 +230,7 @@ async function processOrders(network) {
   const finalArrayByNumberOfCorrectPredictions = clonedUsers
     .filter(
       (user) =>
-        user.baseVolume > 10 &&
+        user.baseVolume >= 10 &&
         !!marchMadnessTokens.find((token) => token.minter.toLowerCase() == user.walletAddress.toLowerCase()),
     )
     .sort((userA, userB) => userB.totalCorrectedPredictions - userA.totalCorrectedPredictions)
