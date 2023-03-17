@@ -10,8 +10,8 @@ const { _ } = require("lodash");
 
 const OP_REWARDS = 3000;
 const OP_VOLUME_REWARDS = 10000;
-const THALES_REWARDS = 30000;
-const THALES_VOLUME_REWARDS = 10000;
+const THALES_REWARDS = 10000;
+const THALES_VOLUME_REWARDS = 30000;
 
 const ONE_MINUTE = 60 * 1000;
 
