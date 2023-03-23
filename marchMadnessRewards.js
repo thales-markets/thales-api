@@ -7,6 +7,7 @@ const ethers = require("ethers");
 const marchMadness = require("./contracts/marchMadness");
 const { delay } = require("./services/utils");
 const { _ } = require("lodash");
+const { differenceInDays, addDays, subMilliseconds } = require("date-fns");
 
 const OP_REWARDS = 3000;
 const OP_VOLUME_REWARDS = 10000;
@@ -14,6 +15,7 @@ const THALES_REWARDS = 10000;
 const THALES_VOLUME_REWARDS = 30000;
 
 const ONE_MINUTE = 60 * 1000;
+const NUMBER_OF_DAYS_IN_PERIOD = 4;
 
 const EXCLUDE_ADDRESSES = [
   "0x82b3634c0518507d5d817be6dab6233ebe4d68d9",
@@ -110,8 +112,8 @@ const TOP_REWARDS = {
 const TAG_ID = "9005";
 
 async function processOrders(network) {
-  const FROM_DATE = network == 420 ? new Date("03-09-2023").getTime() / 1000 : new Date("03-13-2023").getTime() / 1000;
-  const TO_DATE = new Date("04-04-2023").getTime() / 1000;
+  const FROM_DATE = network == 420 ? new Date("03-09-2023") : new Date("03-13-2023");
+  const TO_DATE = new Date("04-04-2023");
 
   console.log("----------------------------------------------------------------------------");
   console.log("NetworkId -> ", network);
@@ -152,12 +154,12 @@ async function processOrders(network) {
     const singles = await thalesData.sportMarkets.marketTransactions({
       network: network,
       account: owner,
-      minTimestamp: FROM_DATE,
+      minTimestamp: FROM_DATE.getTime() / 1000,
     });
     const parlays = await thalesData.sportMarkets.parlayMarkets({
       network: network,
       account: owner,
-      minTimestamp: FROM_DATE,
+      minTimestamp: FROM_DATE.getTime() / 1000,
     });
 
     // Check for singles and parlays that are in right competition
@@ -283,17 +285,32 @@ const getRewardsBasedOnRank = (networkId, rank) => {
 const getUniqueTradersFromTransactionsData = async (fromDate, toDate, network) => {
   if (!fromDate) return [];
 
-  const singles = await thalesData.sportMarkets.marketTransactions({
-    network: network,
-    minTimestamp: fromDate,
-    maxTimestamp: toDate,
-    leagueTag: 9005,
-  });
-  const parlays = await thalesData.sportMarkets.parlayMarkets({
-    network: network,
-    minTimestamp: fromDate,
-    maxTimestamp: toDate,
-  });
+  const numberOfPeriods = Math.trunc(differenceInDays(toDate, fromDate) / NUMBER_OF_DAYS_IN_PERIOD);
+
+  let singles = [];
+  let parlays = [];
+  for (let period = 0; period <= numberOfPeriods; period++) {
+    const startPeriod = Math.trunc(addDays(fromDate, period * NUMBER_OF_DAYS_IN_PERIOD).getTime() / 1000);
+    const endPeriod = Math.trunc(
+      subMilliseconds(addDays(fromDate, (period + 1) * NUMBER_OF_DAYS_IN_PERIOD), 1).getTime() / 1000,
+    );
+    console.log("Processing period: ", period, startPeriod, endPeriod);
+
+    const periodSingles = await thalesData.sportMarkets.marketTransactions({
+      network: network,
+      minTimestamp: startPeriod,
+      maxTimestamp: endPeriod,
+      leagueTag: 9005,
+    });
+    singles = [...singles, ...periodSingles];
+
+    const periodParlays = await thalesData.sportMarkets.parlayMarkets({
+      network: network,
+      minTimestamp: startPeriod,
+      maxTimestamp: endPeriod,
+    });
+    parlays = [...parlays, ...periodParlays];
+  }
 
   // Filter only from NCAA
   const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(TAG_ID));
