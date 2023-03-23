@@ -227,21 +227,21 @@ async function processOrders(network) {
       return user;
     });
 
-  const finalArrayByNumberOfCorrectPredictions = clonedUsers
+    const finalArrayByNumberOfCorrectPredictions = clonedUsers
     .filter(
       (user) =>
         user.baseVolume >= 10 &&
         !!marchMadnessTokens.find((token) => token.minter.toLowerCase() == user.walletAddress.toLowerCase()),
     )
-    .sort((userA, userB) => userB.totalCorrectedPredictions - userA.totalCorrectedPredictions)
+    .sort((userA, userB) => userB.totalCorrectedPredictions - userA.totalCorrectedPredictions || userB.volume - userA.volume)
     .map((user, index) => {
-      user.rank = index + 1;
-      user.rewards =
-        user.totalCorrectedPredictions > 0
-          ? `${getRewardsBasedOnRank(network, index + 1)}`
-          : `0 ${getRewardCoinForNetwork(network)}`;
-      return user;
-    });
+    user.rank = index + 1;
+    user.rewards =
+      user.totalCorrectedPredictions > 0
+        ? `${getRewardsBasedOnRank(network, index + 1)}`
+        : `0 ${getRewardCoinForNetwork(network)}`;
+    return user;
+  });
 
   const leaderboardData = { globalVolume, leaderboard: finalArray };
   if (process.env.REDIS_URL) {
@@ -287,6 +287,7 @@ const getUniqueTradersFromTransactionsData = async (fromDate, toDate, network) =
     network: network,
     minTimestamp: fromDate,
     maxTimestamp: toDate,
+    leagueTag: 9005,
   });
   const parlays = await thalesData.sportMarkets.parlayMarkets({
     network: network,
