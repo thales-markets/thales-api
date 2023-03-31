@@ -327,7 +327,7 @@ async function processParlayLeaderboard(network) {
     periodMap.set(0, parlayMarkets);
   }
 
-  const latestPeriodBiweekly = Math.trunc(differenceInDays(TODAYS_DATE, PARLAY_LEADERBOARD_BIWEEKLY_START_DATE) / 14);
+  const latestPeriodBiweekly = Math.ceil(differenceInDays(TODAYS_DATE, PARLAY_LEADERBOARD_BIWEEKLY_START_DATE) / 14);
 
   for (let period = 0; period <= latestPeriodBiweekly; period++) {
     const startPeriod = Math.trunc(addDays(PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC, period * 14).getTime() / 1000);
