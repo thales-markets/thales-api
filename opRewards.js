@@ -37,7 +37,7 @@ if (process.env.REDIS_URL) {
 async function processRewards(network) {
   const START_DATE = new Date(2022, 6, 13, 12, 23, 0);
 
-  for (let period = 15; period <= 16; period++) {
+  for (let period = 15; period <= 20; period++) {
     console.log("**** Period: ", period);
     const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 14);
