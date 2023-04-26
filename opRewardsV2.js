@@ -153,7 +153,7 @@ async function processRewards(network) {
       return user;
     });
 
-    periodMap.set(period, finalArray);
+    periodMap.set(period + 1, finalArray);
   }
 
   redisClient.set(KEYS.OP_REWARDS_V2[network], JSON.stringify([...periodMap]), function () {});
