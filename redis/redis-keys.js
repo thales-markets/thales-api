@@ -42,6 +42,9 @@ const KEYS = {
     10: "opRewards",
     69: "opKovanRewards",
   },
+  OP_REWARDS_V2: {
+    10: "opRewardsV2",
+  },
   OVERTIME_REWARDS: {
     10: "overtimeOpRewards",
     42: "overtimeOpKovanRewards",
@@ -71,13 +74,13 @@ const KEYS = {
     BY_VOLUME: {
       10: "mmOPVolume",
       420: "mmOPGoerliVolume",
-      42161: "mmArbVolume"
+      42161: "mmArbVolume",
     },
     BY_NUMBER_OF_CORRECT_PREDICTIONS: {
       10: "mmOPNOCP",
       420: "mmOPGoerliNOCP",
-      42161: "mmArbNOCP"
-    }
+      42161: "mmArbNOCP",
+    },
   },
 };
 
