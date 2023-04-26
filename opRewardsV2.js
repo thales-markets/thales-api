@@ -43,7 +43,7 @@ async function processRewards(network) {
   for (let period = 0; period <= 20; period++) {
     console.log("**** Period: ", period);
     const startDate = new Date(START_DATE.getTime());
-    startDate.setDate(START_DATE.getDate() + period * 14);
+    startDate.setDate(START_DATE.getDate() + period * 7);
     console.log("start date: ", startDate);
 
     if (startDate > new Date()) {
@@ -51,15 +51,11 @@ async function processRewards(network) {
     }
 
     const midDate1 = new Date(START_DATE.getTime());
-    midDate1.setDate(START_DATE.getDate() + (period + 1) * 14 - 11);
+    midDate1.setDate(START_DATE.getDate() + (period + 1) * 7 - 5);
     const midDate2 = new Date(START_DATE.getTime());
-    midDate2.setDate(START_DATE.getDate() + (period + 1) * 14 - 8);
-    const midDate3 = new Date(START_DATE.getTime());
-    midDate3.setDate(START_DATE.getDate() + (period + 1) * 14 - 5);
-    const midDate4 = new Date(START_DATE.getTime());
-    midDate4.setDate(START_DATE.getDate() + (period + 1) * 14 - 2);
+    midDate2.setDate(START_DATE.getDate() + (period + 1) * 7 - 2);
     const endDate = new Date(START_DATE.getTime());
-    endDate.setDate(START_DATE.getDate() + (period + 1) * 14);
+    endDate.setDate(START_DATE.getDate() + (period + 1) * 7);
     console.log("end date: ", endDate);
 
     const arrUsers = new Map();
@@ -97,22 +93,10 @@ async function processRewards(network) {
     const trades3 = await thalesData.binaryOptions.rewards({
       network: network,
       periodStart: parseInt(midDate2.getTime() / 1000),
-      periodEnd: parseInt(midDate3.getTime() / 1000),
-    });
-
-    const trades4 = await thalesData.binaryOptions.rewards({
-      network: network,
-      periodStart: parseInt(midDate3.getTime() / 1000),
-      periodEnd: parseInt(midDate4.getTime() / 1000),
-    });
-
-    const trades5 = await thalesData.binaryOptions.rewards({
-      network: network,
-      periodStart: parseInt(midDate4.getTime() / 1000),
       periodEnd: parseInt(endDate.getTime() / 1000),
     });
 
-    const trades = [...trades1, ...trades2, ...trades3, ...trades4, ...trades5];
+    const trades = [...trades1, ...trades2, ...trades3];
 
     trades.map((trade) => {
       if (
