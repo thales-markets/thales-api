@@ -62,22 +62,6 @@ async function processRewards(network) {
     let globalITM = 0;
     let globalOTM = 0;
 
-    const transactions = await thalesData.binaryOptions.tokenTransactions({
-      network: network,
-      onlyWithProtocolReward: true,
-      minTimestamp: parseInt(startDate.getTime() / 1000),
-      maxTimestamp: parseInt(endDate.getTime() / 1000),
-    });
-    transactions.map((tx) => {
-      if (!arrUsers.get(tx.account)) {
-        arrUsers.set(tx.account, initUser(tx));
-      } else {
-        const user = arrUsers.get(tx.account);
-        user.stackingRewards = user.stackingRewards + tx.protocolRewards * 0.64;
-        arrUsers.set(tx.account, user);
-      }
-    });
-
     const trades1 = await thalesData.binaryOptions.rewards({
       network: network,
       periodStart: parseInt(startDate.getTime() / 1000),
@@ -148,7 +132,7 @@ async function processRewards(network) {
     });
 
     const finalArray = Array.from(arrUsers.values()).map((user) => {
-      user.totalRewards.op = user.stackingRewards + user.itm.rewards.op + user.otm.rewards.op;
+      user.totalRewards.op = user.itm.rewards.op + user.otm.rewards.op;
       user.totalRewards.thales = user.itm.rewards.thales + user.otm.rewards.thales;
       return user;
     });
@@ -159,29 +143,9 @@ async function processRewards(network) {
   redisClient.set(KEYS.OP_REWARDS_V2[network], JSON.stringify([...periodMap]), function () {});
 }
 
-function initUser(tx) {
-  const user = {
-    address: tx.account,
-    stackingRewards: tx.protocolRewards * 0.64,
-    itm: {
-      volume: 0,
-      percentage: 0,
-      rewards: { op: 0, thales: 0 },
-    },
-    otm: {
-      volume: 0,
-      percentage: 0,
-      rewards: { op: 0, thales: 0 },
-    },
-    totalRewards: { op: 0, thales: 0 },
-  };
-  return user;
-}
-
 function initUserAddress(address) {
   const user = {
     address: address,
-    stackingRewards: 0,
     itm: {
       volume: 0,
       percentage: 0,
