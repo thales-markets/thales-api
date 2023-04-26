@@ -27,7 +27,7 @@ const ENDPOINTS = {
   GAME_FINISHERS: "/game-finishers",
   MEDIUM: "/medium",
   OP_REWARDS: "/rewards/:networkParam/:period",
-  OP_REWARDS_V2: "/rewards/:networkParam/:period",
+  OP_REWARDS_V2: "/rewardsv2/:networkParam/:period",
   OVERTIME_REWARDS: "/overtime-rewards/:networkParam/:period",
   PARLAY_LEADERBOARD: "/parlay-leaderboard/:networkParam/:period",
   DISCOUNTS: "/discounts/:networkParam",
