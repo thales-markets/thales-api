@@ -29,7 +29,7 @@ const PARLAY_LEADERBOARD_FEBRUARY_START_DATE_UTC = new Date(Date.UTC(2023, 1, 1,
 const PARLAY_LEADERBOARD_FEBRUARY_END_DATE_UTC = new Date(Date.UTC(2023, 1, 28, 23, 59, 59));
 const PARLAY_LEADERBOARD_BIWEEKLY_START_DATE = new Date(2023, 2, 1, 0, 0, 0);
 const PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC = new Date(Date.UTC(2023, 2, 1, 0, 0, 0));
-const PARLAY_LEADERBOARD_MAXIMUM_QUOTE = 0.025;
+const PARLAY_LEADERBOARD_MAXIMUM_QUOTE = 0.02;
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -262,13 +262,14 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod) =>
       let totalQuote = parlayMarket.totalQuote;
       let totalAmount = parlayMarket.totalAmount;
       let numberOfPositions = parlayMarket.sportMarkets.length;
+
+      let realQuote = 1;
+      parlayMarket.marketQuotes.map((quote) => {
+        realQuote = realQuote * quote;
+      });
+
       const sportMarkets = parlayMarket.sportMarkets.map((market) => {
         if (market.isCanceled) {
-          let realQuote = 1;
-          parlayMarket.marketQuotes.map((quote) => {
-            realQuote = realQuote * quote;
-          });
-
           const marketIndex = parlayMarket.sportMarketsFromContract.findIndex(
             (sportMarketFromContract) => sportMarketFromContract === market.address,
           );
