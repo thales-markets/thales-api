@@ -11,8 +11,14 @@ const VAULT_DISCOUNT = "0xb484027cb0c538538bad2be492714154f9196f93";
 const VAULT_DEGEN = "0x43318de9e8f65b591598f17add87ae7247649c83";
 const VAULT_SAFU = "0x6c7fd4321183b542e81bcc7de4dfb88f9dbca29f";
 
-const THALES_REWARDS = 2000;
-const OP_REWARDS = 2000;
+const THALES_REWARDS = [
+  2000, 2000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000,
+  4000,
+];
+const OP_REWARDS = [
+  2000, 2000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000, 4000,
+  4000,
+];
 
 const periodMap = new Map();
 
@@ -40,8 +46,8 @@ if (process.env.REDIS_URL) {
 async function processRewards(network) {
   const START_DATE = new Date(2023, 3, 26, 12, 23, 0);
 
-  for (let period = 0; period <= 20; period++) {
-    console.log("**** Period: ", period);
+  for (let period = 0; period < 20; period++) {
+    console.log("**** Period: ", period, " ****");
     const startDate = new Date(START_DATE.getTime());
     startDate.setDate(START_DATE.getDate() + period * 7);
     console.log("start date: ", startDate);
@@ -117,14 +123,14 @@ async function processRewards(network) {
         if (trade.type === "OTM") {
           user.otm.volume = user.otm.volume + trade.amount;
           user.otm.percentage = user.otm.volume / globalOTM;
-          user.otm.rewards.op = user.otm.percentage * OP_REWARDS;
-          user.otm.rewards.thales = user.otm.percentage * THALES_REWARDS;
+          user.otm.rewards.op = user.otm.percentage * OP_REWARDS[period];
+          user.otm.rewards.thales = user.otm.percentage * THALES_REWARDS[period];
         }
         if (trade.type === "ITM") {
           user.itm.volume = user.itm.volume + trade.amount;
           user.itm.percentage = user.itm.volume / globalITM;
-          user.itm.rewards.op = user.itm.percentage * OP_REWARDS;
-          user.itm.rewards.thales = user.itm.percentage * THALES_REWARDS;
+          user.itm.rewards.op = user.itm.percentage * OP_REWARDS[period];
+          user.itm.rewards.thales = user.itm.percentage * THALES_REWARDS[period];
         }
 
         arrUsers.set(trade.account, user);
