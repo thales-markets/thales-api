@@ -465,33 +465,6 @@ app.get(ENDPOINTS.MEDIUM, (req, res) => {
   });
 });
 
-app.get(ENDPOINTS.BANNER_IMAGE_COUNT, (req, res) => {
-  const index = req.params.imageIndex;
-  var url = `https://github.com/thales-markets/thales-sport-markets/file-list/dev/src/assets/images/banner`;
-  request({ url: url }, (error, response, body) => {
-    if (error || response.statusCode !== 200) {
-      return res.status(500).json({ type: "error", message: error.message });
-    }
-    const count = (body.match(/thales-markets\/thales-sport-markets\/tree\/dev\/src\/assets\/images\/banner/g) || [])
-      .length;
-    res.header("Access-Control-Allow-Origin", "*");
-    res.set("Content-Type", "application/json");
-    res.send(JSON.stringify({ count: count }));
-  });
-});
-
-app.get(ENDPOINTS.BANNER_IMAGE, (req, res) => {
-  const index = req.params.imageIndex;
-  var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${index}/image.jpg`;
-  request.get(url).pipe(res);
-});
-
-app.get(ENDPOINTS.BANNER_JSON, (req, res) => {
-  const index = req.params.jsonIndex;
-  var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${index}/json.json`;
-  request.get(url).pipe(res);
-});
-
 app.get(ENDPOINTS.BANNERS, async (req, res) => {
   const network = req.params.networkParam;
   var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${network}.json`;
@@ -501,6 +474,18 @@ app.get(ENDPOINTS.BANNERS, async (req, res) => {
 app.get(ENDPOINTS.BANNERS_IMAGE, (req, res) => {
   const imageName = req.params.imageName;
   var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${imageName}`;
+  request.get(url).pipe(res);
+});
+
+app.get(ENDPOINTS.THALES_BANNERS, async (req, res) => {
+  const network = req.params.networkParam;
+  var banners = `https://raw.githubusercontent.com/thales-markets/thales-dapp/dev/src/assets/images/banner/${network}.json`;
+  request.get(banners).pipe(res);
+});
+
+app.get(ENDPOINTS.THALES_BANNERS_IMAGE, (req, res) => {
+  const imageName = req.params.imageName;
+  var url = `https://raw.githubusercontent.com/thales-markets/thales-dapp/dev/src/assets/images/banner/${imageName}`;
   request.get(url).pipe(res);
 });
 
