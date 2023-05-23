@@ -16,7 +16,7 @@ const {
 } = require("./services/utils");
 
 const util = require("util");
-const { subMilliseconds, differenceInCalendarMonths, differenceInDays, addDays } = require("date-fns");
+const { subMilliseconds, differenceInDays, addDays } = require("date-fns");
 const { uniqBy } = require("lodash");
 
 const PARLAY_CONTRACT = "0x82b3634c0518507d5d817be6dab6233ebe4d68d9";
@@ -25,11 +25,11 @@ const VAULT_DEGEN = "0xbaac5464bf6e767c9af0e8d4677c01be2065fd5f";
 const VAULT_SAFU = "0x43d19841d818b2ccc63a8b44ce8c7def8616d98e";
 
 const TODAYS_DATE = new Date();
-const PARLAY_LEADERBOARD_FEBRUARY_START_DATE_UTC = new Date(Date.UTC(2023, 1, 1, 0, 0, 0));
-const PARLAY_LEADERBOARD_FEBRUARY_END_DATE_UTC = new Date(Date.UTC(2023, 1, 28, 23, 59, 59));
 const PARLAY_LEADERBOARD_BIWEEKLY_START_DATE = new Date(2023, 2, 1, 0, 0, 0);
 const PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC = new Date(Date.UTC(2023, 2, 1, 0, 0, 0));
 const PARLAY_LEADERBOARD_MAXIMUM_QUOTE = 0.02;
+const FIRST_PERIOD_SORT_BY_TOTAL_QUOTE = 5;
+const PARLAY_LEADERBOARD_MINIMUM_GAMES = 3;
 
 if (process.env.REDIS_URL) {
   redisClient = redis.createClient(process.env.REDIS_URL);
@@ -243,7 +243,7 @@ async function processOrders(network) {
   redisClient.set(KEYS.OVERTIME_REWARDS[network], JSON.stringify([...periodMap]), function () {});
 }
 
-const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod) => {
+const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod, period) => {
   let parlayMarkets = await thalesData.sportMarkets.parlayMarkets({
     network,
     startPeriod,
@@ -296,8 +296,10 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod) =>
         numberOfPositions,
         sportMarkets,
       };
-    })
-    .sort((a, b) =>
+    });
+
+  if (period < FIRST_PERIOD_SORT_BY_TOTAL_QUOTE) {
+    parlayMarketsModified = parlayMarketsModified.sort((a, b) =>
       a.numberOfPositions !== b.numberOfPositions
         ? b.numberOfPositions - a.numberOfPositions
         : a.totalQuote !== b.totalQuote
@@ -306,6 +308,19 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod) =>
         ? b.sUSDPaid - a.sUSDPaid
         : sortByTotalQuote(a, b),
     );
+  } else {
+    parlayMarketsModified = parlayMarketsModified
+      .filter((parlay) => parlay.numberOfPositions >= PARLAY_LEADERBOARD_MINIMUM_GAMES)
+      .sort((a, b) =>
+        a.totalQuote !== b.totalQuote
+          ? a.totalQuote - b.totalQuote
+          : a.numberOfPositions !== b.numberOfPositions
+          ? b.numberOfPositions - a.numberOfPositions
+          : a.sUSDPaid !== b.sUSDPaid
+          ? b.sUSDPaid - a.sUSDPaid
+          : sortByTotalQuote(a, b),
+      );
+  }
 
   parlayMarketsModified = uniqBy(parlayMarketsModified, "account").map((parlayMarket, index) => {
     return {
@@ -320,14 +335,6 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod) =>
 async function processParlayLeaderboard(network) {
   const periodMap = new Map();
 
-  if (network === 10) {
-    const startPeriod = Math.trunc(PARLAY_LEADERBOARD_FEBRUARY_START_DATE_UTC.getTime() / 1000);
-    const endPeriod = Math.trunc(PARLAY_LEADERBOARD_FEBRUARY_END_DATE_UTC.getTime() / 1000);
-
-    const parlayMarkets = await getParlayLeaderboardForPeriod(network, startPeriod, endPeriod);
-    periodMap.set(0, parlayMarkets);
-  }
-
   const latestPeriodBiweekly = Math.ceil(differenceInDays(TODAYS_DATE, PARLAY_LEADERBOARD_BIWEEKLY_START_DATE) / 14);
 
   for (let period = 0; period <= latestPeriodBiweekly; period++) {
@@ -336,8 +343,8 @@ async function processParlayLeaderboard(network) {
       subMilliseconds(addDays(PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC, (period + 1) * 14), 1).getTime() / 1000,
     );
 
-    const parlayMarkets = await getParlayLeaderboardForPeriod(network, startPeriod, endPeriod);
-    periodMap.set(network === 10 ? period + 1 : period, parlayMarkets);
+    const parlayMarkets = await getParlayLeaderboardForPeriod(network, startPeriod, endPeriod, period);
+    periodMap.set(period, parlayMarkets);
   }
 
   redisClient.set(KEYS.PARLAY_LEADERBOARD[network], JSON.stringify([...periodMap]), function () {});
