@@ -557,3 +557,10 @@ app.get(ENDPOINTS.ENETPULSE_RESULT, (req, res) => {
 app.get(ENDPOINTS.GET_REFFERER_MAP, (req, res) => {
   res.send(Object.fromEntries(userReffererIDsMap));
 });
+
+app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
+  const sportParameter = req.params.sportParameter;
+  var url = `https://jsonodds.com/api/odds/${sportParameter}`;
+
+  request.get(url, { headers: { "x-api-key": process.env.JSON_ODDS_KEY.toString() } }).pipe(res);
+});

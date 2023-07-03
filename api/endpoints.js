@@ -43,6 +43,7 @@ const ENDPOINTS = {
   GET_ADDRESS_REFFERER_ID: "/get-address-refferer-id/:walletAddress",
   GET_REFFERER_MAP: "/get-refferer-map",
   ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
+  JSON_ODDS_DATA: "/json-odds-data/:sportParameter",
   MARCH_MADNESS: "/march-madness/:leaderboardType/:networkId",
 };
 
