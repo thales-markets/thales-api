@@ -9,10 +9,10 @@ The API is available on [api.thales.market](https://api.thales.market).
 
 ## Tech stack
 
--   Node.js
--   Express
--   Redis
--   [thales-data](https://github.com/thales-markets/thales-data)
+- Node.js
+- Express
+- Redis
+- [thales-data](https://github.com/thales-markets/thales-data)
 
 ## Development
 
@@ -34,64 +34,107 @@ Runs the API in the development mode on [http://localhost:3002](http://localhost
 
 The following endpoints are available:
 
--   [GET /options/[networkId]/[marketId]](#get-optionsnetworkidmarketid)
--   [GET /watchlist/[networkId]/[wallet]](#get-watchlistnetworkidwallet)
--   [POST /watchlist](#post-watchlist)
+- [Thales API](#thales-api)
+  - [Tech stack](#tech-stack)
+  - [Development](#development)
+    - [Install dependencies](#install-dependencies)
+    - [Run](#run)
+  - [API endpoints](#api-endpoints)
+    - [GET /token/price](#get-tokenprice)
+    - [GET /token/circulatingsupply](#get-tokencirculatingsupply)
+    - [GET /token/marketcap](#get-tokenmarketcap)
+    - [GET /token/totalsupply](#get-tokentotalsupply)
+    - [GET /parlay-leaderboard/\[networkId\]/\[period\]](#get-parlay-leaderboardnetworkidperiod)
 
-### GET /options/[networkId]/[marketId]
+### GET /token/price
 
-Get the count of open orders on a market.
+Get current THALES price.
 
-Example: https://api.thales.market/options/1/0x983522030d52cfee5a6cf5a076f55b1890ec78c5
-
-Response body:
-
-```json
-15
-```
-
-### GET /watchlist/[networkId]/[wallet]
-
-Read the markets watchlist per user's wallet.
-
-Example: https://api.thales.market/watchlist/1/0x4284Cd22fE319Fd7ECd060480b240FcdCB075D11
+Example: https://api.thalesmarket.io/token/price
 
 Response body:
 
 ```json
-{
-    "data": [
-        "0x75bbbfe4b4f2a7e9d3b0e97c74d83c9998c387b5",
-        "0x84c58576ae251819073b04d52c8251b3ac97e6a0",
-        "0x47c4da7f94471f4490f805b061ba88310627bd25"
-    ]
-}
+0.52
 ```
 
-### POST /watchlist
+### GET /token/circulatingsupply
 
-Add the market to the user's watchlist.
+Get current THALES circulating supply.
 
-Example: https://api.thales.market/watchlist
-
-Request body:
-
-```json
-{
-    "networkId": 1,
-    "walletAddress": "0x4284Cd22fE319Fd7ECd060480b240FcdCB075D11",
-    "marketAddress": "0x47c4da7f94471f4490f805b061ba88310627bd25"
-}
-```
+Example: https://api.thalesmarket.io/token/circulatingsupply
 
 Response body:
 
 ```json
-{
-    "data": [
-        "0x75bbbfe4b4f2a7e9d3b0e97c74d83c9998c387b5",
-        "0x84c58576ae251819073b04d52c8251b3ac97e6a0",
-        "0x47c4da7f94471f4490f805b061ba88310627bd25"
-    ]
-}
+44589461
+```
+
+### GET /token/marketcap
+
+Get current THALES market cap.
+
+Example: https://api.thalesmarket.io/token/marketcap
+
+Response body:
+
+```json
+21287365
+```
+
+### GET /token/totalsupply
+
+Get current THALES total supply.
+
+Example: https://api.thalesmarket.io/token/totalsupply
+
+Response body:
+
+```json
+99091000
+```
+
+### GET /parlay-leaderboard/[networkId]/[period]
+
+Get parlay leaderboard for requested network and period.
+
+Example: https://api.thalesmarket.io/parlay-leaderboard/10/1
+
+Response :
+
+```json
+[
+   {
+      "id":"0x13a71c494d76c551934e3379929b8371634a8c26",
+      "txHash":"0x99a52d8d3c07e5ce58a861a7ed29f419352c130c158ea",
+      "sportMarkets":[
+         ...
+      ],
+      "sportMarketsFromContract":[
+         ...
+      ],
+      "positions":[
+         ...
+      ],
+      "positionsFromContract":[
+         ...
+      ],
+      "marketQuotes":[
+         ...
+      ],
+      "account":"0x04433729c268aa34abb4d2a9da924ee81717bdae",
+      "totalAmount":304,
+      "sUSDPaid":8,
+      "sUSDAfterFees":7.6,
+      "totalQuote":0.025,
+      "skewImpact":0.16,
+      "timestamp":1679857157000,
+      "lastGameStarts":1679871600000,
+      "blockNumber":"83890766",
+      "claimed":true,
+      "won":true,
+      "numberOfPositions":8,
+      "rank":1
+   }
+]
 ```
