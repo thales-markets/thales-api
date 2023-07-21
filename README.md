@@ -5,7 +5,7 @@
 
 The REST API to help with some dApp features.
 
-The API is available on [api.thales.market](https://api.thales.market).
+The API is available on [api.thalesmarket.io](https://api.thalesmarket.io).
 
 ## Tech stack
 
