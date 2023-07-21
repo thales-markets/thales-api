@@ -38,7 +38,7 @@ The following endpoints are available:
 - [GET /token/circulatingsupply](#get-tokencirculatingsupply)
 - [GET /token/marketcap](#get-tokenmarketcap)
 - [GET /token/totalsupply](#get-tokentotalsupply)
-- [GET /parlay-leaderboard/[networkId]/[period]](#get-parlayleaderboardnetworkIdperiod)
+- [GET /parlay-leaderboard/[networkId]/[period]](#get-parlay-leaderboardnetworkidperiod)
 
 ### GET /token/price
 
