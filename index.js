@@ -1,9 +1,5 @@
 redisClient = null;
 
-mainnetWatchlistMap = new Map();
-ropstenWatchlistMap = new Map();
-displayNameMap = new Map();
-royaleUsersDataMap = new Map();
 gameFinishersMap = new Map();
 userReffererIDsMap = new Map();
 

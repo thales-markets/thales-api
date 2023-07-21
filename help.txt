@@ -1,31 +1,15 @@
 ###### BUILD ALL IMAGES ######
 docker build -f Dockerfile.api -t thalesmarket/api .
-docker build -f Dockerfile.token -t thalesmarket/token  .
-docker build -f Dockerfile.twitter -t thalesmarket/twitter  .
-docker build -f Dockerfile.orders -t thalesmarket/orders  .
-docker build -f Dockerfile.leaderboard -t thalesmarket/leaderboard  .
-docker build -f Dockerfile.royale -t thalesmarket/royale  .
-docker build -f Dockerfile.liquidity -t thalesmarket/liquidity  .
+docker build -f Dockerfile.tokenAPI -t thalesmarket/token  .
 docker build -f Dockerfile.rewards -t thalesmarket/rewards  .
 docker build -f Dockerfile.overtimerewards -t thalesmarket/overtime  .
-docker build -f Dockerfile.discount -t thalesmarket/discount  .
-docker build -f Dockerfile.fifa -t thalesmarket/fifa  .
-docker build -f Dockerfile.marchmadness -t thalesmarket/marchmadness .
 docker build -f Dockerfile.rewardsV2 -t thalesmarket/rewardsv2  .
 
 ###### PUSH IMAGES TO GIT ######
 docker push thalesmarket/api
 docker push thalesmarket/token
-docker push thalesmarket/twitter
-docker push thalesmarket/orders
-docker push thalesmarket/leaderboard
-docker push thalesmarket/royale
-docker push thalesmarket/liquidity
 docker push thalesmarket/rewards
 docker push thalesmarket/overtime
-docker push thalesmarket/discount
-docker push thalesmarket/fifa
-docker push thalesmarket/marchmadness
 docker push thalesmarket/rewardsv2
 
 ###### RUN SERVER LOCALLY ######
@@ -37,37 +21,9 @@ docker-compose pull thales-api
 docker-compose stop thales-api
 docker-compose up -d thales-api
 
-docker-compose pull fifa
-docker-compose stop fifa
-docker-compose up -d fifa
-
-docker-compose pull discount
-docker-compose stop discount
-docker-compose up -d discount
-
-docker-compose pull twitter
-docker-compose stop twitter
-docker-compose up -d twitter
-
-docker-compose pull leaderboard
-docker-compose stop leaderboard
-docker-compose up -d leaderboard
-
-docker-compose pull orders
-docker-compose stop orders
-docker-compose up -d orders
-
 docker-compose pull token
 docker-compose stop token
 docker-compose up -d token
-
-docker-compose pull royale
-docker-compose stop royale
-docker-compose up -d royale
-
-docker-compose pull liquidity
-docker-compose stop liquidity
-docker-compose up -d liquidity
 
 docker-compose pull rewards
 docker-compose stop rewards
@@ -80,15 +36,6 @@ docker-compose up -d rewardsv2
 docker-compose pull overtime
 docker-compose stop overtime
 docker-compose up -d overtime
-
-docker-compose pull fifa
-docker-compose stop fifa
-docker-compose up -d fifa
-
-docker-compose pull madness
-docker-compose stop madness
-docker-compose up -d madness
-
 
 ### OPEN REDIS CLI ON SERVER ###
 - Access SERVER

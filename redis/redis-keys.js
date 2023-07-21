@@ -1,53 +1,15 @@
 const KEYS = {
-  MAINNET_ORDERS: "mainnetOrders",
-  MAINNET_WATCHLIST: "mainnetWatchlistMap",
-  DISPLAY_NAME: "displayNameMap",
-  MAINNET_LEADERBOARD: "mainnetLeaderboard",
-  MAINNET_COMPETITION: "mainnetCompetition",
-  MAINNET_PROFILES: "mainnetProfiles",
-  ROPSTEN_ORDERS: "ropstenOrders",
-  ROPSTEN_WATCHLIST: "ropstenWatchlistMap",
-  ROPSTEN_LEADERBOARD: "ropstenLeaderboard",
-  ROPSTEN_COMPETITION: "ropstenCompetition",
-  ROPSTEN_PROFILES: "ropstenProfiles",
-  OPTIMISM_ORDERS: "optimismOrders",
   TOKEN: "tokenMap",
-  VERIFIED_ACCOUNTS: "verifiedAccounts",
-  TWITTER_ACCOUNTS: "twitterAccounts",
-  TWITTER_IDS: "twitterIds",
-  DISCORD_IDS: "discordIds",
-  VERIFIED_ADDRESSES_DISCORD: "verifiedUsersDiscord",
-  DISCORD_USERS: "discordUsers",
-  ROYALE_USERS: "royaleUsers",
-  ROYALE_USER_DATA: "royaleUserData",
-  FAUCET_CONSUMERS: "faucetConsumers",
   GAME_FINISHERS: "gameFinishersMap",
   USER_REFFERER_IDS: "userReffererIDsMap",
-  LEADERBOARD: {
-    10: "optimismLeaderboard",
-    137: "polygonLeaderboard",
-    69: "kovanOpLeaderboard",
-    80001: "mumbaiLeaderboard",
-  },
-  RANGED_AMM_LIQUIDITY: {
-    10: "optimismRangedLiq",
-    137: "polygonRangedLiq",
-    69: "kovanOpRangedLiq",
-    420: "goerliRangedLiq",
-    80001: "mumbaiRangedLiq",
-    56: "BSCRangedLiq",
-    42161: "arbitrumRangedLiq",
-  },
   OP_REWARDS: {
     10: "opRewards",
-    69: "opKovanRewards",
   },
   OP_REWARDS_V2: {
     10: "opRewardsV2",
   },
   OVERTIME_REWARDS: {
     10: "overtimeOpRewards",
-    42: "overtimeOpKovanRewards",
   },
   PARLAY_LEADERBOARD: {
     10: "overtimeOpParlayLeaderboard",
@@ -55,33 +17,6 @@ const KEYS = {
     42161: "overtimeArbitrumParlayLeaderboard",
   },
   TWAP_FOR_PERIOD: "twapMap",
-  DISCOUNTS: {
-    10: "optimismDiscounts",
-    420: "opGoerliDiscounts",
-    137: "polygonDiscounts",
-    42161: "arbitrumDiscounts",
-    56: "bscDiscounts",
-  },
-  OVERTIME_DISCOUNTS: {
-    5: "goerliOvertimeDiscounts",
-    10: "optimismOvertimeDiscounts",
-    420: "opGoerliOvertimeDiscounts",
-    137: "polygonOvertimeDiscounts",
-    42161: "arbitrumOvertimeDiscounts",
-  },
-  ZEBRO_CAMPAIGN: { 10: "zebroCampaignOp", 420: "zebroCampaignOpGoerli" },
-  MARCH_MADNESS: {
-    BY_VOLUME: {
-      10: "mmOPVolume",
-      420: "mmOPGoerliVolume",
-      42161: "mmArbVolume",
-    },
-    BY_NUMBER_OF_CORRECT_PREDICTIONS: {
-      10: "mmOPNOCP",
-      420: "mmOPGoerliNOCP",
-      42161: "mmArbNOCP",
-    },
-  },
 };
 
 module.exports = KEYS;

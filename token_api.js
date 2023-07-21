@@ -7,7 +7,6 @@ const erc20Contract = require("./abi/erc20Contract.js");
 
 require("dotenv").config();
 const express = require("express");
-const sigUtil = require("eth-sig-util");
 const app = express();
 
 var cors = require("cors");
@@ -27,62 +26,12 @@ const fetch = require("node-fetch");
 let redisClient = null;
 
 let tokenMap = new Map();
-let stakingMigrationOptOutMap = new Map();
-let stakingMigrationOptOutTestnetMap = new Map();
 
 app.get("/token/price", (_, res) => res.send(tokenMap.get("price") + ""));
 app.get("/token/circulatingsupply", (_, res) => res.send(tokenMap.get("circulatingsupply") + ""));
 app.get("/token/marketcap", (_, res) => res.send(tokenMap.get("marketcap") + ""));
 app.get("/token/totalsupply", (_, res) => res.send(tokenMap.get("totalsupply") + ""));
 app.get("/token/ethburned", (_, res) => res.send(JSON.parse(tokenMap.get("ethburned"))));
-
-app.get("/token/staking-migration/opt-out/:networkId", (req, res) => {
-  const networkId = Number(req.params.networkId);
-  const optOutWallet = [];
-  const optOutMap = networkId === 1 ? stakingMigrationOptOutMap : stakingMigrationOptOutTestnetMap;
-  optOutMap.forEach((value, key) => {
-    if (value === true) {
-      optOutWallet.push(key);
-    }
-  });
-  res.send(optOutWallet);
-});
-
-app.get("/token/staking-migration/opt-out/:networkId/:walletAddress", (req, res) => {
-  const networkId = Number(req.params.networkId);
-  const walletAddress = req.params.walletAddress;
-  const optOutMap = networkId === 1 ? stakingMigrationOptOutMap : stakingMigrationOptOutTestnetMap;
-  res.send({
-    optOut: optOutMap.get(walletAddress.toLowerCase()),
-  });
-});
-
-app.post("/token/staking-migration/opt-out", (req, res) => {
-  const networkId = Number(req.body.networkId);
-  const walletAddress = req.body.walletAddress;
-  const optOut = req.body.optOut;
-  const signature = req.body.signature;
-
-  const signData = JSON.stringify({
-    optOut,
-    networkId,
-  });
-  const recovered = sigUtil.recoverPersonalSignature({
-    data: signData,
-    sig: signature,
-  });
-
-  if (recovered.toLowerCase() === walletAddress.toLowerCase()) {
-    const optOutMap = networkId === 1 ? stakingMigrationOptOutMap : stakingMigrationOptOutTestnetMap;
-    optOutMap.set(walletAddress.toLowerCase(), optOut);
-    redisClient.set(
-      networkId === 1 ? "stakingMigrationOptOutMap" : "stakingMigrationOptOutTestnetMap",
-      JSON.stringify([...optOutMap]),
-      function () {},
-    );
-    res.send({ optOut: optOutMap.get(walletAddress.toLowerCase()) });
-  }
-});
 
 app.get("/", (_, res) => {
   res.sendStatus(200);
@@ -93,24 +42,6 @@ if (process.env.REDIS_URL) {
   console.log("create client from index");
   redisClient.on("error", function (error) {
     console.error(error);
-  });
-
-  redisClient.get("stakingMigrationOptOutMap", function (err, obj) {
-    const stakingMigrationOptOutMapRaw = obj;
-    console.log("stakingMigrationOptOutMapRaw:" + stakingMigrationOptOutMapRaw);
-    if (stakingMigrationOptOutMapRaw) {
-      stakingMigrationOptOutMap = new Map(JSON.parse(stakingMigrationOptOutMapRaw));
-      console.log("stakingMigrationOptOutMap:" + stakingMigrationOptOutMap);
-    }
-  });
-
-  redisClient.get("stakingMigrationOptOutTestnetMap", function (err, obj) {
-    const stakingMigrationOptOutTestnetMapRaw = obj;
-    console.log("stakingMigrationOptOutTestnetMapRaw:" + stakingMigrationOptOutTestnetMapRaw);
-    if (stakingMigrationOptOutTestnetMapRaw) {
-      stakingMigrationOptOutTestnetMap = new Map(JSON.parse(stakingMigrationOptOutTestnetMapRaw));
-      console.log("stakingMigrationOptOutTestnetMap:" + stakingMigrationOptOutTestnetMap);
-    }
   });
 
   redisClient.get("tokenMap", function (err, obj) {

@@ -1,12 +1,16 @@
 const DAO_TREASURY_AMOUNT = 18000000;
+const THALES_L1_ADDRESS = "0x8947da500eb47f82df21143d0c01a29862a8c3c5";
+const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
+const MAX_SUPPLY = 100000000;
 const circulatingSupplyList = require("./assets/circulating-supply.json");
+const erc20Contract = require("./abi/erc20Contract.js");
 
 require("dotenv").config();
 const redis = require("redis");
+const fetch = require("node-fetch");
 const KEYS = require("./redis/redis-keys");
-thalesData = require("thales-data");
-fetch = require("node-fetch");
 const { delay } = require("./services/utils");
+
 const tokenMap = new Map();
 
 if (process.env.REDIS_URL) {
@@ -51,6 +55,13 @@ async function processToken() {
     tokenMap.set("circulatingsupply", undefined);
   }
 
+  try {
+    const totalsupply = await getTotalSupply();
+    tokenMap.set("totalsupply", totalsupply);
+  } catch (e) {
+    tokenMap.set("totalsupply", undefined);
+  }
+
   const price = tokenMap.get("price");
   const circulatingsupply = tokenMap.get("circulatingsupply");
 
@@ -88,6 +99,17 @@ function getCirculatingSupply() {
 
     const circulatingSupply = circulatingSupplyList[period] - DAO_TREASURY_AMOUNT;
     return circulatingSupply;
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+async function getTotalSupply() {
+  try {
+    const contract = new Web3Client.eth.Contract(erc20Contract, THALES_L1_ADDRESS);
+    const result = await contract.methods.balanceOf(BURN_ADDRESS).call();
+    const burnedAmount = Web3Client.utils.fromWei(result);
+    return MAX_SUPPLY - burnedAmount;
   } catch (e) {
     console.log(e);
   }
