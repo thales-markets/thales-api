@@ -34,17 +34,11 @@ Runs the API in the development mode on [http://localhost:3002](http://localhost
 
 The following endpoints are available:
 
-- [Thales API](#thales-api)
-  - [Tech stack](#tech-stack)
-  - [Development](#development)
-    - [Install dependencies](#install-dependencies)
-    - [Run](#run)
-  - [API endpoints](#api-endpoints)
-    - [GET /token/price](#get-tokenprice)
-    - [GET /token/circulatingsupply](#get-tokencirculatingsupply)
-    - [GET /token/marketcap](#get-tokenmarketcap)
-    - [GET /token/totalsupply](#get-tokentotalsupply)
-    - [GET /parlay-leaderboard/\[networkId\]/\[period\]](#get-parlay-leaderboardnetworkidperiod)
+- [GET /token/price](#get-tokenprice)
+- [GET /token/circulatingsupply](#get-tokencirculatingsupply)
+- [GET /token/marketcap](#get-tokenmarketcap)
+- [GET /token/totalsupply](#get-tokentotalsupply)
+- [GET /parlay-leaderboard/[networkId]/[period]](#get-parlayleaderboardnetworkIdperiod)
 
 ### GET /token/price
 
