@@ -11,14 +11,29 @@ const STABLE_DECIMALS = {
 };
 
 const BET_TYPE = {
-  Winner: 0,
+  Moneyline: 0,
   Spread: 10001,
   Total: 10002,
   DoubleChance: 10003,
+};
+
+const MARKET_TYPE = {
+  [BET_TYPE.Winner]: "moneyline",
+  [BET_TYPE.Spread]: "spread",
+  [BET_TYPE.Total]: "total",
+  [BET_TYPE.DoubleChance]: "doubleChance",
+};
+
+const ODDS_TYPE = {
+  American: "american-odds",
+  Decimal: "decimal-odds",
+  AMM: "normalized-implied-odds",
 };
 
 module.exports = {
   NETWORK,
   STABLE_DECIMALS,
   BET_TYPE,
+  MARKET_TYPE,
+  ODDS_TYPE,
 };

@@ -8,8 +8,15 @@ const { orderBy, groupBy } = require("lodash");
 const sportPositionalMarketDataContract = require("../contracts/sportPositionalMarketDataContract");
 const sportPositionalMarketManagerContract = require("../contracts/sportPositionalMarketManagerContract");
 const { ENETPULSE_SPORTS, SPORTS_MAP, SPORTS_TAGS_MAP, GOLF_TOURNAMENT_WINNER_TAG } = require("../constants/tags");
-const { BET_TYPE, STABLE_DECIMALS, NETWORK } = require("../constants/markets");
-const { delay, fixDuplicatedTeamName, bigNumberFormatter, convertPriceImpactToBonus } = require("../utils/markets");
+const { BET_TYPE, STABLE_DECIMALS, NETWORK, ODDS_TYPE, MARKET_TYPE } = require("../constants/markets");
+const {
+  delay,
+  fixDuplicatedTeamName,
+  bigNumberFormatter,
+  convertPriceImpactToBonus,
+  formatMarketOdds,
+  getLeagueNameById,
+} = require("../utils/markets");
 const KEYS = require("../../redis/redis-keys");
 
 let marketsMap = new Map();
@@ -137,11 +144,14 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
           (obj) => obj[0].toString().toLowerCase() === market.address.toLowerCase(),
         );
         if (priceImpactItem) {
-          market.homeBonus = convertPriceImpactToBonus(bigNumberFormatter(priceImpactItem.priceImpact[0]));
-          market.awayBonus = convertPriceImpactToBonus(bigNumberFormatter(priceImpactItem.priceImpact[1]));
-          market.drawBonus = priceImpactItem.priceImpact[2]
-            ? convertPriceImpactToBonus(bigNumberFormatter(priceImpactItem.priceImpact[2]))
+          market.homePriceImpact = bigNumberFormatter(priceImpactItem.priceImpact[0]);
+          market.awayPriceImpact = bigNumberFormatter(priceImpactItem.priceImpact[1]);
+          market.drawPriceImpact = priceImpactItem.priceImpact[2]
+            ? bigNumberFormatter(priceImpactItem.priceImpact[2])
             : undefined;
+          market.homeBonus = convertPriceImpactToBonus(market.homePriceImpact);
+          market.awayBonus = convertPriceImpactToBonus(market.awayPriceImpact);
+          market.drawBonus = market.drawPriceImpact ? convertPriceImpactToBonus(market.drawPriceImpact) : undefined;
         }
       }
 
@@ -158,7 +168,60 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
     }
   });
 
-  let finalMarkets = groupMarkets(mappedMarkets);
+  let packedMarkets = mappedMarkets.map((market) => {
+    return {
+      address: market.address,
+      gameId: market.gameId,
+      sport: market.sport,
+      leagueId: Number(market.tags[0]),
+      leagueName: getLeagueNameById(Number(market.tags[0])),
+      type: MARKET_TYPE[market.betType],
+      parentMarket: market.parentMarket,
+      maturityDate: market.maturityDate,
+      homeTeam: market.homeTeam,
+      awayTeam: market.awayTeam,
+      homeScore: market.homeScore,
+      awayScore: market.awayScore,
+      finalResult: market.finalResult,
+      isResolved: market.isResolved,
+      isOpen: market.isOpen,
+      isCanceled: market.isCanceled,
+      isPaused: market.isPaused,
+      isOneSideMarket: market.isOneSideMarket,
+      spread: Number(market.spread) / 100,
+      total: Number(market.total) / 100,
+      doubleChanceMarketType: market.doubleChanceMarketType,
+      odds: {
+        homeOdds: {
+          american: formatMarketOdds(market.homeOdds, ODDS_TYPE.American),
+          decimal: formatMarketOdds(market.homeOdds, ODDS_TYPE.Decimal),
+          normalizedImplied: formatMarketOdds(market.homeOdds, ODDS_TYPE.AMM),
+        },
+        awayOdds: {
+          american: formatMarketOdds(market.awayOdds, ODDS_TYPE.American),
+          decimal: formatMarketOdds(market.awayOdds, ODDS_TYPE.Decimal),
+          normalizedImplied: formatMarketOdds(market.awayOdds, ODDS_TYPE.AMM),
+        },
+        drawOdds: {
+          american: formatMarketOdds(market.drawOdds, ODDS_TYPE.American),
+          decimal: formatMarketOdds(market.drawOdds, ODDS_TYPE.Decimal),
+          normalizedImplied: formatMarketOdds(market.drawOdds, ODDS_TYPE.AMM),
+        },
+      },
+      priceImpact: {
+        homeBonus: market.homePriceImpact,
+        awayBonus: market.awayPriceImpact,
+        drawBonus: market.drawPriceImpact,
+      },
+      bonus: {
+        homeBonus: market.homeBonus,
+        awayBonus: market.awayBonus,
+        drawBonus: market.drawBonus,
+      },
+    };
+  });
+
+  let finalMarkets = groupMarkets(packedMarkets);
   // if (mapOnlyOpenedMarkets && mappedMarkets.length > 0) {
   //   try {
   //     const { sportPositionalMarketDataContract } = networkConnector;
