@@ -18,7 +18,7 @@ const BET_TYPE = {
 };
 
 const MARKET_TYPE = {
-  [BET_TYPE.Winner]: "moneyline",
+  [BET_TYPE.Moneyline]: "moneyline",
   [BET_TYPE.Spread]: "spread",
   [BET_TYPE.Total]: "total",
   [BET_TYPE.DoubleChance]: "doubleChance",

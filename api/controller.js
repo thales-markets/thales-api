@@ -6,10 +6,17 @@ const app = express();
 var cors = require("cors");
 app.use(cors());
 app.use(express.json());
+app.use(function (req, res, next) {
+  for (var key in req.query) {
+    req.query[key.toLowerCase()] = req.query[key];
+  }
+  next();
+});
 
 const ENDPOINTS = require("./endpoints");
 const sigUtil = require("eth-sig-util");
 const KEYS = require("../redis/redis-keys");
+const { uniqBy } = require("lodash");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -288,26 +295,68 @@ app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
 app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
   const network = req.params.networkParam;
   let status = req.query.status;
+  let type = req.query.type;
+  let sport = req.query.sport;
+  let leagueId = req.query.leagueid;
+
   if (!status) {
     status = "open";
   }
   status = status.toLowerCase();
 
   if (![10, 420, 42161].includes(Number(network))) {
-    res.send("Invalid network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli)");
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
     return;
   }
   if (!["open", "resolved", "canceled", "paused", "ongoing"].includes(status)) {
-    res.send("Invalid status. Supported statuses: 'open', 'resolved', 'canceled', 'paused', 'ongoing'");
+    res.send("Unsupported status. Supported statuses: open, resolved, canceled, paused, ongoing.");
+    return;
+  }
+  if (type && !["moneyline", "spread", "total", "doublechance"].includes(type.toLowerCase())) {
+    res.send("Unsupported type. Supported types: moneyline, spread', total, doubleChance.");
     return;
   }
 
-  redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
-    const markets = new Map(JSON.parse(obj));
-    try {
-      res.send(markets.get(status));
-    } catch (e) {
-      console.log(e);
+  redisClient.get(KEYS.OVERTIME_SPORTS[network], function (_, obj) {
+    const sports = JSON.parse(obj);
+    const allLeagueIds = sports.map((sport) => Number(sport.id));
+    const allSports = uniqBy(sports.map((sport) => sport.sport.toLowerCase()));
+
+    if (sport && !allSports.includes(sport.toLowerCase())) {
+      res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime/sports.`);
+      return;
     }
+    if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
+      res.send(
+        `Unsupported league id. Supported league ids: ${allLeagueIds.join(", ")}. See details on: /overtime/sports.`,
+      );
+      return;
+    }
+
+    redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
+      const markets = new Map(JSON.parse(obj));
+      try {
+        const marketsByStatus = markets.get(status);
+        let marketsByType = [];
+        if (type) {
+          marketsByStatus.forEach((market) => {
+            marketsByType.push(market);
+            marketsByType.push(...market.childMarkets);
+          });
+        } else {
+          marketsByType = marketsByStatus;
+        }
+
+        const filteredMarkets = marketsByType.filter(
+          (market) =>
+            (!sport || market.sport.toLowerCase() === sport.toLowerCase()) &&
+            (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
+            (!type || market.type.toLowerCase() === type.toLowerCase()),
+        );
+        res.send(filteredMarkets);
+      } catch (e) {
+        console.log(e);
+      }
+    });
   });
 });
