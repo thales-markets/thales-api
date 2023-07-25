@@ -23,6 +23,9 @@ const ENDPOINTS = {
   GET_REFFERER_MAP: "/get-refferer-map",
   ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
   JSON_ODDS_DATA: "/json-odds-data/:sportParameter",
+
+  OVERTIME_SPORTS: "/overtime/:networkParam/sports",
+  OVERTIME_MARKETS: "/overtime/:networkParam/markets",
 };
 
 module.exports = ENDPOINTS;

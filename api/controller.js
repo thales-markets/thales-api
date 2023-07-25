@@ -268,3 +268,35 @@ app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
 
   request.get(url, { headers: { "x-api-key": process.env.JSON_ODDS_KEY.toString() } }).pipe(res);
 });
+
+app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
+  const network = req.params.networkParam;
+  if ([10, 420, 42161].includes(Number(network))) {
+    redisClient.get(KEYS.OVERTIME_SPORTS[network], function (err, obj) {
+      const sports = JSON.parse(obj);
+      try {
+        res.send(sports);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  } else {
+    res.send("Bad Network");
+  }
+});
+
+app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
+  const network = req.params.networkParam;
+  if ([10, 420, 42161].includes(Number(network))) {
+    redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
+      const markets = new Map(JSON.parse(obj));
+      try {
+        res.send(Object.fromEntries(markets));
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  } else {
+    res.send("Bad Network");
+  }
+});

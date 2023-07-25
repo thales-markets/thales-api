@@ -17,6 +17,16 @@ const KEYS = {
     42161: "overtimeArbitrumParlayLeaderboard",
   },
   TWAP_FOR_PERIOD: "twapMap",
+  OVERTIME_SPORTS: {
+    10: "overtimeOpSports",
+    420: "overtimeOpGoerliSports",
+    42161: "overtimeArbSports",
+  },
+  OVERTIME_MARKETS: {
+    10: "overtimeOpMarkets",
+    420: "overtimeOpGoerliMarkets",
+    42161: "overtimeArbMarkets",
+  },
 };
 
 module.exports = KEYS;
