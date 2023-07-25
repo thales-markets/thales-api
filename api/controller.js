@@ -287,16 +287,27 @@ app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
 
 app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
   const network = req.params.networkParam;
-  if ([10, 420, 42161].includes(Number(network))) {
-    redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
-      const markets = new Map(JSON.parse(obj));
-      try {
-        res.send(Object.fromEntries(markets));
-      } catch (e) {
-        console.log(e);
-      }
-    });
-  } else {
-    res.send("Bad Network");
+  let status = req.query.status;
+  if (!status) {
+    status = "open";
   }
+  status = status.toLowerCase();
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Invalid network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli)");
+    return;
+  }
+  if (!["open", "resolved", "canceled", "paused", "ongoing"].includes(status)) {
+    res.send("Invalid status. Supported statuses: 'open', 'resolved', 'canceled', 'paused', 'ongoing'");
+    return;
+  }
+
+  redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
+    const markets = new Map(JSON.parse(obj));
+    try {
+      res.send(markets.get(status));
+    } catch (e) {
+      console.log(e);
+    }
+  });
 });
