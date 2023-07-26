@@ -16,7 +16,7 @@ app.use(function (req, res, next) {
 const ENDPOINTS = require("./endpoints");
 const sigUtil = require("eth-sig-util");
 const KEYS = require("../redis/redis-keys");
-const { uniqBy } = require("lodash");
+const { uniqBy, groupBy } = require("lodash");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -298,6 +298,7 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
   let type = req.query.type;
   let sport = req.query.sport;
   let leagueId = req.query.leagueid;
+  let ungroup = req.query.ungroup;
 
   if (!status) {
     status = "open";
@@ -316,6 +317,10 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
     res.send("Unsupported type. Supported types: moneyline, spread', total, doubleChance.");
     return;
   }
+  if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
+    res.send("Invalid value for ungroup. Possible values: true or false.");
+    return;
+  }
 
   redisClient.get(KEYS.OVERTIME_SPORTS[network], function (_, obj) {
     const sports = JSON.parse(obj);
@@ -328,7 +333,7 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
     }
     if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
       res.send(
-        `Unsupported league id. Supported league ids: ${allLeagueIds.join(", ")}. See details on: /overtime/sports.`,
+        `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime/sports.`,
       );
       return;
     }
@@ -337,14 +342,13 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
       const markets = new Map(JSON.parse(obj));
       try {
         const marketsByStatus = markets.get(status);
-        let marketsByType = [];
+        let marketsByType = marketsByStatus;
         if (type) {
+          marketsByType = [];
           marketsByStatus.forEach((market) => {
             marketsByType.push(market);
             marketsByType.push(...market.childMarkets);
           });
-        } else {
-          marketsByType = marketsByStatus;
         }
 
         const filteredMarkets = marketsByType.filter(
@@ -353,7 +357,18 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
             (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
             (!type || market.type.toLowerCase() === type.toLowerCase()),
         );
-        res.send(filteredMarkets);
+
+        if (ungroup && ungroup.toLowerCase() === "true") {
+          res.send(filteredMarkets);
+          return;
+        }
+
+        const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
+        Object.keys(groupMarkets).forEach((key) => {
+          groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
+        });
+
+        res.send(groupMarkets);
       } catch (e) {
         console.log(e);
       }

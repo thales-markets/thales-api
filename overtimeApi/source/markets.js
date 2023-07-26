@@ -18,6 +18,7 @@ const {
   getLeagueNameById,
 } = require("../utils/markets");
 const KEYS = require("../../redis/redis-keys");
+const { getProvider } = require("../utils/provider");
 
 let marketsMap = new Map();
 
@@ -83,7 +84,7 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
   let priceImpactFromContract;
   if (mapOnlyOpenedMarkets) {
     try {
-      const provivder = new ethers.providers.InfuraProvider(network, "0043cf4a54184e14a0704726b5e5d83a");
+      const provivder = getProvider(network);
       const sportPositionalMarketData = new ethers.Contract(
         sportPositionalMarketDataContract.addresses[network],
         sportPositionalMarketDataContract.abi,
