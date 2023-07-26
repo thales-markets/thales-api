@@ -24,8 +24,9 @@ const ENDPOINTS = {
   ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
   JSON_ODDS_DATA: "/json-odds-data/:sportParameter",
 
-  OVERTIME_SPORTS: "/overtime/:networkParam/sports",
-  OVERTIME_MARKETS: "/overtime/:networkParam/markets",
+  OVERTIME_SPORTS: "/overtime/networks/:networkParam/sports",
+  OVERTIME_MARKETS: "/overtime/networks/:networkParam/markets",
+  OVERTIME_MARKET: "/overtime/networks/:networkParam/markets/:marketAddress",
 };
 
 module.exports = ENDPOINTS;

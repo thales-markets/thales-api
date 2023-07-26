@@ -375,3 +375,33 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
     });
   });
 });
+
+app.get(ENDPOINTS.OVERTIME_MARKET, (req, res) => {
+  const network = req.params.networkParam;
+  const marketAddress = req.params.marketAddress;
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+
+  redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
+    const markets = new Map(JSON.parse(obj));
+    try {
+      let allMarkets = [];
+
+      markets.forEach((marketsByStatus) => {
+        marketsByStatus.forEach((market) => {
+          allMarkets.push(market);
+          allMarkets.push(...market.childMarkets);
+        });
+      });
+
+      const market = allMarkets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
+
+      return res.send(market || `Market with address ${marketAddress} not found.`);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
