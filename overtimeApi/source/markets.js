@@ -8,7 +8,7 @@ const { orderBy, groupBy } = require("lodash");
 const sportPositionalMarketDataContract = require("../contracts/sportPositionalMarketDataContract");
 const sportPositionalMarketManagerContract = require("../contracts/sportPositionalMarketManagerContract");
 const { ENETPULSE_SPORTS, SPORTS_MAP, SPORTS_TAGS_MAP, GOLF_TOURNAMENT_WINNER_TAG } = require("../constants/tags");
-const { BET_TYPE, STABLE_DECIMALS, NETWORK, ODDS_TYPE, MARKET_TYPE } = require("../constants/markets");
+const { BET_TYPE, STABLE_DECIMALS, NETWORK, ODDS_TYPE, MARKET_TYPE, NETWORK_NAME } = require("../constants/markets");
 const {
   delay,
   fixDuplicatedTeamName,
@@ -59,7 +59,7 @@ async function processMarkets() {
           console.log("markets on op goerli error: ", error);
         }
 
-        await delay(10 * 1000);
+        await delay(60 * 1000);
       }
     }, 3000);
   }
@@ -277,7 +277,7 @@ async function processMarketsPerNetwork(network) {
   const minMaturityDate = Math.round(new Date(new Date().setDate(today.getDate() - 7)).getTime() / 1000); // show history for 7 days in the past
   const todaysDate = Math.round(today.getTime() / 1000);
 
-  console.log("process open markets");
+  console.log(`${NETWORK_NAME[network]}: process open markets`);
   let markets = await thalesData.sportMarkets.markets({
     isOpen: true,
     isCanceled: false,
@@ -288,7 +288,7 @@ async function processMarketsPerNetwork(network) {
   let mappedMarkets = await mapMarkets(markets, true, network);
   marketsMap.set("open", mappedMarkets);
 
-  console.log("process resolved markets");
+  console.log(`${NETWORK_NAME[network]}: process resolved markets`);
   markets = await await thalesData.sportMarkets.markets({
     isOpen: false,
     isCanceled: false,
@@ -298,7 +298,7 @@ async function processMarketsPerNetwork(network) {
   mappedMarkets = await mapMarkets(markets, false, network);
   marketsMap.set("resolved", mappedMarkets);
 
-  console.log("process canceled markets");
+  console.log(`${NETWORK_NAME[network]}: process canceled markets`);
   markets = await thalesData.sportMarkets.markets({
     isOpen: false,
     isCanceled: true,
@@ -308,7 +308,7 @@ async function processMarketsPerNetwork(network) {
   mappedMarkets = await mapMarkets(markets, false, network);
   marketsMap.set("canceled", mappedMarkets);
 
-  console.log("process paused markets");
+  console.log(`${NETWORK_NAME[network]}: process paused markets`);
   markets = await await thalesData.sportMarkets.markets({
     isPaused: true,
     network,
@@ -317,7 +317,7 @@ async function processMarketsPerNetwork(network) {
   mappedMarkets = await mapMarkets(markets, false, network);
   marketsMap.set("paused", mappedMarkets);
 
-  console.log("process ongoing markets");
+  console.log(`${NETWORK_NAME[network]}: process ongoing markets`);
   markets = await thalesData.sportMarkets.markets({
     isOpen: true,
     isCanceled: false,

@@ -4,6 +4,12 @@ const NETWORK = {
   Arbitrum: 42161,
 };
 
+const NETWORK_NAME = {
+  [NETWORK.Optimism]: "optimisim",
+  [NETWORK.OptimismGoerli]: "optimisim goerli",
+  [NETWORK.Arbitrum]: "arbitrum",
+};
+
 const STABLE_DECIMALS = {
   [NETWORK.Optimism]: 18,
   [NETWORK.OptimismGoerli]: 18,
@@ -32,6 +38,7 @@ const ODDS_TYPE = {
 
 module.exports = {
   NETWORK,
+  NETWORK_NAME,
   STABLE_DECIMALS,
   BET_TYPE,
   MARKET_TYPE,

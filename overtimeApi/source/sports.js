@@ -41,7 +41,7 @@ async function processSports() {
           console.log("sports on op goerli error: ", error);
         }
 
-        await delay(10 * 1000);
+        await delay(60 * 60 * 1000);
       }
     }, 3000);
   }
