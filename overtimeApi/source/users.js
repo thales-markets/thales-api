@@ -1,16 +1,8 @@
 require("dotenv").config();
 
 const thalesData = require("thales-data");
-const {
-  bigNumberFormatter,
-  packMarket,
-  isMarketExpired,
-  isParlayOpen,
-  isParlayClaimable,
-  formatMarketOdds,
-  getPositionStatus,
-} = require("../utils/markets");
-const { PARLAY_MAXIMUM_QUOTE, ODDS_TYPE, POSITION_NAME_TYPE_MAP } = require("../constants/markets");
+const { bigNumberFormatter, packMarket, isMarketExpired, getPositionStatus, packParlay } = require("../utils/markets");
+const { POSITION_NAME_TYPE_MAP } = require("../constants/markets");
 
 async function processUserSinglePositions(network, walletAddress) {
   const positionBalances = await thalesData.sportMarkets.positionBalances({
@@ -55,73 +47,7 @@ async function processUserParlayPositions(network, walletAddress) {
     network,
   });
 
-  const mappedParlayMarkets = parlayMarkets.map((parlayMarket) => {
-    let totalQuote = parlayMarket.totalQuote;
-    let totalAmount = parlayMarket.totalAmount;
-
-    let realQuote = 1;
-    parlayMarket.marketQuotes.map((quote) => {
-      realQuote = realQuote * quote;
-    });
-
-    const mappedPositions = [];
-
-    parlayMarket.sportMarketsFromContract.forEach((address, index) => {
-      const market = parlayMarket.sportMarkets.find((market) => market.address === address);
-
-      if (market && market.isCanceled) {
-        realQuote = realQuote / parlayMarket.marketQuotes[index];
-        const maximumQuote = PARLAY_MAXIMUM_QUOTE;
-        totalQuote = realQuote < maximumQuote ? maximumQuote : realQuote;
-        totalAmount = totalAmount * parlayMarket.marketQuotes[index];
-      }
-
-      const position = parlayMarket.positions.find((position) => position.market.address == address);
-
-      const quote = market.isCanceled ? 1 : parlayMarket.marketQuotes[index];
-      const mappedPosition = {
-        id: position.id,
-        position: POSITION_NAME_TYPE_MAP[position.side],
-        isOpen: market.isOpen,
-        isClaimable: position.claimable,
-        isCanceled: market.isCanceled,
-        quote: {
-          american: formatMarketOdds(quote, ODDS_TYPE.American),
-          decimal: formatMarketOdds(quote, ODDS_TYPE.Decimal),
-          normalizedImplied: formatMarketOdds(quote, ODDS_TYPE.AMM),
-        },
-        market: packMarket(market),
-      };
-
-      mappedPositions.push(mappedPosition);
-    });
-
-    const mappedPositionsParlayMarket = {
-      ...parlayMarket,
-      payout: totalAmount,
-      totalQuote: totalQuote,
-      lastGameStarts: new Date(parlayMarket.lastGameStarts),
-      positions: mappedPositions,
-    };
-
-    return {
-      id: mappedPositionsParlayMarket.id,
-      account: mappedPositionsParlayMarket.account,
-      payout: mappedPositionsParlayMarket.payout,
-      sUSDPaid: mappedPositionsParlayMarket.sUSDPaid,
-      sUSDAfterFees: mappedPositionsParlayMarket.sUSDAfterFees,
-      totalQuote: {
-        american: formatMarketOdds(mappedPositionsParlayMarket.totalQuote, ODDS_TYPE.American),
-        decimal: formatMarketOdds(mappedPositionsParlayMarket.totalQuote, ODDS_TYPE.Decimal),
-        normalizedImplied: formatMarketOdds(mappedPositionsParlayMarket.totalQuote, ODDS_TYPE.AMM),
-      },
-      lastGameStarts: mappedPositionsParlayMarket.lastGameStarts,
-      isOpen: isParlayOpen(mappedPositionsParlayMarket),
-      isClaimable: isParlayClaimable(mappedPositionsParlayMarket),
-      isClaimed: mappedPositionsParlayMarket.claimed,
-      positions: mappedPositionsParlayMarket.positions,
-    };
-  });
+  const mappedParlayMarkets = parlayMarkets.map((parlayMarket) => packParlay(parlayMarket));
 
   const data = {
     open: [],
@@ -166,8 +92,20 @@ async function processUserSingleTransactions(network, walletAddress) {
   return mappedUserSingleTransactions;
 }
 
+async function processUserParlayTransactions(network, walletAddress) {
+  const parlayMarkets = await thalesData.sportMarkets.parlayMarkets({
+    account: walletAddress,
+    network,
+  });
+
+  const mappedParlayMarkets = parlayMarkets.map((parlayMarket) => packParlay(parlayMarket));
+
+  return mappedParlayMarkets;
+}
+
 module.exports = {
   processUserSinglePositions,
   processUserParlayPositions,
   processUserSingleTransactions,
+  processUserParlayTransactions,
 };

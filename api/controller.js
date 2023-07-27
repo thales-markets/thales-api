@@ -441,7 +441,7 @@ app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
 
   const [userSingleTransactions, userParlayTransactions] = await Promise.all([
     users.processUserSingleTransactions(network, userAddress.toLowerCase()),
-    [],
+    users.processUserParlayTransactions(network, userAddress.toLowerCase()),
   ]);
 
   const transactions = {
