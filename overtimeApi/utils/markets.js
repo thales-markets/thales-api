@@ -176,23 +176,19 @@ const isParlayLost = (parlayMarket) =>
       position.market.isResolved,
   );
 
-const getPositionStatus = (tx) => {
-  if (tx.type !== "buy") {
-    return "SOLD";
-  }
-  if (tx.market.isCanceled) {
-    return "CANCELED";
-  }
-  if (tx.market.isResolved) {
-    if (tx.position === FINAL_RESULT_TYPE_POSITION_TYPE_MAP[tx.market.finalResult]) {
-      return "WON";
-    } else {
-      return "LOSS";
-    }
-  } else {
-    return "OPEN";
-  }
-};
+const getPositionStatus = (position) =>
+  position.isCanceled ? "CANCELED" : position.isOpen ? "OPEN" : position.isClaimable ? "WON" : "LOSS";
+
+const getPositionTransactionStatus = (tx) =>
+  tx.type !== "buy"
+    ? "SOLD"
+    : tx.market.isCanceled
+    ? "CANCELED"
+    : tx.market.isOpen
+    ? "OPEN"
+    : tx.position === FINAL_RESULT_TYPE_POSITION_TYPE_MAP[tx.market.finalResult]
+    ? "WON"
+    : "LOSS";
 
 const getParlayStatus = (parlayMarket) =>
   isParlayWon(parlayMarket) ? "WON" : isParlayOpen(parlayMarket) ? "OPEN" : "LOSS";
@@ -252,8 +248,8 @@ const packParlay = (parlayMarket) => {
     timestamp: mappedPositionsParlayMarket.timestamp,
     account: mappedPositionsParlayMarket.account,
     payout: mappedPositionsParlayMarket.payout,
-    sUSDPaid: mappedPositionsParlayMarket.sUSDPaid,
-    sUSDAfterFees: mappedPositionsParlayMarket.sUSDAfterFees,
+    paid: mappedPositionsParlayMarket.sUSDPaid,
+    paidAfterFees: mappedPositionsParlayMarket.sUSDAfterFees,
     totalQuote: {
       american: formatMarketOdds(mappedPositionsParlayMarket.totalQuote, ODDS_TYPE.American),
       decimal: formatMarketOdds(mappedPositionsParlayMarket.totalQuote, ODDS_TYPE.Decimal),
@@ -282,5 +278,6 @@ module.exports = {
   isParlayOpen,
   isParlayClaimable,
   getPositionStatus,
+  getPositionTransactionStatus,
   packParlay,
 };

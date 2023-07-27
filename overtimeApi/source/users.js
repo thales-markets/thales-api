@@ -1,7 +1,14 @@
 require("dotenv").config();
 
 const thalesData = require("thales-data");
-const { bigNumberFormatter, packMarket, isMarketExpired, getPositionStatus, packParlay } = require("../utils/markets");
+const {
+  bigNumberFormatter,
+  packMarket,
+  isMarketExpired,
+  getPositionTransactionStatus,
+  packParlay,
+  getPositionStatus,
+} = require("../utils/markets");
 const { POSITION_NAME_TYPE_MAP } = require("../constants/markets");
 
 async function processUserSinglePositions(network, walletAddress) {
@@ -13,16 +20,23 @@ async function processUserSinglePositions(network, walletAddress) {
   const onlyNonZeroPositionBalances = positionBalances.filter((positionBalance) => positionBalance.amount > 0);
 
   const mappedPositions = onlyNonZeroPositionBalances.map((positionBalance) => {
-    return {
+    const market = packMarket(positionBalance.position.market);
+    const mappedPosition = {
       account: positionBalance.account,
-      amount: bigNumberFormatter(positionBalance.amount),
-      claimableAmount: 0,
-      // sUSDPaid: positionBalance.sUSDPaid,
+      payout: bigNumberFormatter(positionBalance.amount),
+      claimablePayout: 0,
+      paid: positionBalance.sUSDPaid,
       position: POSITION_NAME_TYPE_MAP[positionBalance.position.side],
       isOpen: positionBalance.position.market.isOpen,
       isClaimable: positionBalance.position.claimable,
+      isClaimed: positionBalance.claimed,
       isCanceled: positionBalance.position.market.isCanceled,
-      market: packMarket(positionBalance.position.market),
+    };
+
+    return {
+      ...mappedPosition,
+      status: getPositionStatus(mappedPosition),
+      market,
     };
   });
 
@@ -84,7 +98,7 @@ async function processUserSingleTransactions(network, walletAddress) {
       amount: mappedTransaction.amount,
       paid: mappedTransaction.paid,
       position: mappedTransaction.position,
-      status: getPositionStatus(mappedTransaction),
+      status: getPositionTransactionStatus(mappedTransaction),
       market: mappedTransaction.market,
     };
   });
