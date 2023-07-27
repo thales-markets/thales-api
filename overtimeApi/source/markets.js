@@ -7,16 +7,8 @@ const { orderBy, groupBy } = require("lodash");
 
 const sportPositionalMarketDataContract = require("../contracts/sportPositionalMarketDataContract");
 const sportPositionalMarketManagerContract = require("../contracts/sportPositionalMarketManagerContract");
-const { ENETPULSE_SPORTS, SPORTS_MAP, SPORTS_TAGS_MAP, GOLF_TOURNAMENT_WINNER_TAG } = require("../constants/tags");
-const { BET_TYPE, STABLE_DECIMALS, NETWORK, ODDS_TYPE, MARKET_TYPE, NETWORK_NAME } = require("../constants/markets");
-const {
-  delay,
-  fixDuplicatedTeamName,
-  bigNumberFormatter,
-  convertPriceImpactToBonus,
-  formatMarketOdds,
-  getLeagueNameById,
-} = require("../utils/markets");
+const { BET_TYPE, STABLE_DECIMALS, NETWORK, NETWORK_NAME } = require("../constants/markets");
+const { delay, bigNumberFormatter, convertPriceImpactToBonus, packMarket } = require("../utils/markets");
 const KEYS = require("../../redis/redis-keys");
 const { getProvider } = require("../utils/provider");
 
@@ -117,16 +109,6 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
   }
 
   allMarkets.forEach((market) => {
-    if (Number(market.tags[0]) === 0) return;
-    market.maturityDate = new Date(market.maturityDate);
-    const isEnetpulseSport = ENETPULSE_SPORTS.includes(Number(market.tags[0]));
-    market.homeTeam = fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport);
-    market.awayTeam = fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport);
-    market.sport = SPORTS_MAP[market.tags[0]];
-    market.isOneSideMarket =
-      SPORTS_TAGS_MAP["Motosport"].includes(Number(market.tags[0])) ||
-      Number(market.tags[0]) == GOLF_TOURNAMENT_WINNER_TAG;
-
     if (mapOnlyOpenedMarkets) {
       if (oddsFromContract) {
         const oddsItem = oddsFromContract.find(
@@ -169,58 +151,7 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
     }
   });
 
-  let packedMarkets = mappedMarkets.map((market) => {
-    return {
-      address: market.address,
-      gameId: market.gameId,
-      sport: market.sport,
-      leagueId: Number(market.tags[0]),
-      leagueName: getLeagueNameById(Number(market.tags[0])),
-      type: MARKET_TYPE[market.betType],
-      parentMarket: market.parentMarket,
-      maturityDate: market.maturityDate,
-      homeTeam: market.homeTeam,
-      awayTeam: market.awayTeam,
-      homeScore: market.homeScore,
-      awayScore: market.awayScore,
-      finalResult: market.finalResult,
-      isResolved: market.isResolved,
-      isOpen: market.isOpen,
-      isCanceled: market.isCanceled,
-      isPaused: market.isPaused,
-      isOneSideMarket: market.isOneSideMarket,
-      spread: Number(market.spread) / 100,
-      total: Number(market.total) / 100,
-      doubleChanceMarketType: market.doubleChanceMarketType,
-      odds: {
-        homeOdds: {
-          american: formatMarketOdds(market.homeOdds, ODDS_TYPE.American),
-          decimal: formatMarketOdds(market.homeOdds, ODDS_TYPE.Decimal),
-          normalizedImplied: formatMarketOdds(market.homeOdds, ODDS_TYPE.AMM),
-        },
-        awayOdds: {
-          american: formatMarketOdds(market.awayOdds, ODDS_TYPE.American),
-          decimal: formatMarketOdds(market.awayOdds, ODDS_TYPE.Decimal),
-          normalizedImplied: formatMarketOdds(market.awayOdds, ODDS_TYPE.AMM),
-        },
-        drawOdds: {
-          american: formatMarketOdds(market.drawOdds, ODDS_TYPE.American),
-          decimal: formatMarketOdds(market.drawOdds, ODDS_TYPE.Decimal),
-          normalizedImplied: formatMarketOdds(market.drawOdds, ODDS_TYPE.AMM),
-        },
-      },
-      priceImpact: {
-        homeBonus: market.homePriceImpact,
-        awayBonus: market.awayPriceImpact,
-        drawBonus: market.drawPriceImpact,
-      },
-      bonus: {
-        homeBonus: market.homeBonus,
-        awayBonus: market.awayBonus,
-        drawBonus: market.drawBonus,
-      },
-    };
-  });
+  let packedMarkets = mappedMarkets.map((market) => packMarket(market));
 
   let finalMarkets = groupMarkets(packedMarkets);
   // if (mapOnlyOpenedMarkets && mappedMarkets.length > 0) {
@@ -289,7 +220,7 @@ async function processMarketsPerNetwork(network) {
   marketsMap.set("open", mappedMarkets);
 
   console.log(`${NETWORK_NAME[network]}: process resolved markets`);
-  markets = await await thalesData.sportMarkets.markets({
+  markets = await thalesData.sportMarkets.markets({
     isOpen: false,
     isCanceled: false,
     network,

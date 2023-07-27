@@ -18,6 +18,8 @@ const sigUtil = require("eth-sig-util");
 const KEYS = require("../redis/redis-keys");
 const { uniqBy, groupBy } = require("lodash");
 
+const users = require("../overtimeApi/source/users");
+
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
 });
@@ -404,4 +406,26 @@ app.get(ENDPOINTS.OVERTIME_MARKET, (req, res) => {
       console.log(e);
     }
   });
+});
+
+app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
+  const network = req.params.networkParam;
+  const userAddress = req.params.userAddress;
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+
+  const [userSinglePositions, userParlayPositions] = await Promise.all([
+    users.processUserSinglePositions(network, userAddress.toLowerCase()),
+    users.processUserParlayPositions(network, userAddress.toLowerCase()),
+  ]);
+
+  const positions = {
+    singles: userSinglePositions,
+    parlays: userParlayPositions,
+  };
+
+  return res.send(positions || `User with address ${userAddress} not found.`);
 });

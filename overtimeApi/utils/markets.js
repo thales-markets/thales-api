@@ -1,6 +1,7 @@
 const { ethers } = require("ethers");
-const { ODDS_TYPE } = require("../constants/markets");
+const { ODDS_TYPE, MARKET_TYPE, POSITION_NAME, MARKET_DURATION_IN_DAYS } = require("../constants/markets");
 const overtimeSportsList = require("../assets/overtime-sports.json");
+const { SPORTS_TAGS_MAP, GOLF_TOURNAMENT_WINNER_TAG, SPORTS_MAP, ENETPULSE_SPORTS } = require("../constants/tags");
 
 function delay(time) {
   return new Promise(function (resolve) {
@@ -57,6 +58,117 @@ const getLeagueNameById = (id) => {
   return league ? league.name : undefined;
 };
 
+const getIsOneSideMarket = (tag) =>
+  SPORTS_TAGS_MAP["Motosport"].includes(Number(tag)) || Number(tag) == GOLF_TOURNAMENT_WINNER_TAG;
+
+const packMarket = (market) => {
+  const leagueId = Number(market.tags[0]);
+  const isEnetpulseSport = ENETPULSE_SPORTS.includes(leagueId);
+
+  return {
+    address: market.address,
+    gameId: market.gameId,
+    sport: SPORTS_MAP[market.tags[0]],
+    leagueId: leagueId,
+    leagueName: getLeagueNameById(leagueId),
+    type: MARKET_TYPE[market.betType],
+    parentMarket: market.parentMarket,
+    maturityDate: new Date(market.maturityDate),
+    homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
+    awayTeam: fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
+    homeScore: market.homeScore,
+    awayScore: market.awayScore,
+    finalResult: market.finalResult,
+    isResolved: market.isResolved,
+    isOpen: market.isOpen,
+    isCanceled: market.isCanceled,
+    isPaused: market.isPaused,
+    isOneSideMarket: getIsOneSideMarket(leagueId),
+    spread: Number(market.spread) / 100,
+    total: Number(market.total) / 100,
+    doubleChanceMarketType: market.doubleChanceMarketType,
+    odds: {
+      homeOdds: {
+        american: formatMarketOdds(market.homeOdds, ODDS_TYPE.American),
+        decimal: formatMarketOdds(market.homeOdds, ODDS_TYPE.Decimal),
+        normalizedImplied: formatMarketOdds(market.homeOdds, ODDS_TYPE.AMM),
+      },
+      awayOdds: {
+        american: formatMarketOdds(market.awayOdds, ODDS_TYPE.American),
+        decimal: formatMarketOdds(market.awayOdds, ODDS_TYPE.Decimal),
+        normalizedImplied: formatMarketOdds(market.awayOdds, ODDS_TYPE.AMM),
+      },
+      drawOdds: {
+        american: formatMarketOdds(market.drawOdds, ODDS_TYPE.American),
+        decimal: formatMarketOdds(market.drawOdds, ODDS_TYPE.Decimal),
+        normalizedImplied: formatMarketOdds(market.drawOdds, ODDS_TYPE.AMM),
+      },
+    },
+    priceImpact: {
+      homePriceImpact: market.homePriceImpact,
+      awayPriceImpact: market.awayPriceImpact,
+      drawPriceImpact: market.drawPriceImpact,
+    },
+    bonus: {
+      homeBonus: market.homeBonus,
+      awayBonus: market.awayBonus,
+      drawBonus: market.drawBonus,
+    },
+  };
+};
+
+const addDaysToEnteredTimestamp = (numberOfDays, timestamp) => {
+  return new Date().setTime(new Date(timestamp).getTime() + numberOfDays * 24 * 60 * 60 * 1000);
+};
+
+const isMarketExpired = (maturityDate) => {
+  const expiryDate = addDaysToEnteredTimestamp(MARKET_DURATION_IN_DAYS, maturityDate.getTime());
+  return expiryDate < new Date().getTime();
+};
+
+const getCanceledGameClaimableAmount = (position) => {
+  switch (position.side.toLowerCase()) {
+    case POSITION_NAME.Home:
+      return position.market.homeOdds * position.amount;
+    case POSITION_NAME.Away:
+      return position.market.awayOdds * position.amount;
+    case POSITION_NAME.Draw:
+      return position.market.drawOdds ? position.market.drawOdds * position.amount : 0;
+    default:
+      return 0;
+  }
+};
+
+const isParlayOpen = (parlayMarket) => {
+  const parlayHasOpenMarkets = parlayMarket.positions.some((position) => position.market.isOpen);
+  const resolvedMarketsCount = parlayMarket.positions.filter(
+    (position) => position.market.isResolved || position.market.isCanceled,
+  ).length;
+  const claimablePositionsCount = parlayMarket.positions.filter((position) => position.isClaimable).length;
+
+  const isParlayLost = resolvedMarketsCount > claimablePositionsCount;
+
+  return parlayHasOpenMarkets && !isParlayLost;
+};
+
+const isParlayClaimable = (parlayMarket) => {
+  const parlayHasOpenMarkets = parlayMarket.positions.some((position) => position.market.isOpen);
+  const resolvedMarketsCount = parlayMarket.positions.filter(
+    (position) => position.market.isResolved || position.market.isCanceled,
+  ).length;
+  const claimablePositionsCount = parlayMarket.positions.filter((position) => position.isClaimable).length;
+
+  const lastGameStartsExpiryDate = addDaysToEnteredTimestamp(
+    MARKET_DURATION_IN_DAYS,
+    parlayMarket.lastGameStarts.getTime(),
+  );
+  const isMarketExpired = lastGameStartsExpiryDate < new Date().getTime();
+
+  const isWinningParlay = claimablePositionsCount === resolvedMarketsCount && !parlayHasOpenMarkets;
+
+  return isWinningParlay && !isMarketExpired && !parlayMarket.claimed;
+};
+
 module.exports = {
   delay,
   fixDuplicatedTeamName,
@@ -64,4 +176,10 @@ module.exports = {
   convertPriceImpactToBonus,
   formatMarketOdds,
   getLeagueNameById,
+  getIsOneSideMarket,
+  packMarket,
+  isMarketExpired,
+  getCanceledGameClaimableAmount,
+  isParlayOpen,
+  isParlayClaimable,
 };

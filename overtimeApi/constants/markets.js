@@ -36,6 +36,27 @@ const ODDS_TYPE = {
   AMM: "normalized-implied-odds",
 };
 
+const POSITION_NAME = {
+  Home: "home",
+  Away: "away",
+  Draw: "draw",
+};
+
+const POSITION_TYPE = {
+  Home: 0,
+  Away: 1,
+  Draw: 2,
+};
+
+const POSITION_NAME_TYPE_MAP = {
+  [POSITION_NAME.Home]: POSITION_TYPE.Home,
+  [POSITION_NAME.Away]: POSITION_TYPE.Away,
+  [POSITION_NAME.Draw]: POSITION_TYPE.Draw,
+};
+
+const MARKET_DURATION_IN_DAYS = 90;
+const PARLAY_MAXIMUM_QUOTE = 0.01449275;
+
 module.exports = {
   NETWORK,
   NETWORK_NAME,
@@ -43,4 +64,9 @@ module.exports = {
   BET_TYPE,
   MARKET_TYPE,
   ODDS_TYPE,
+  MARKET_DURATION_IN_DAYS,
+  POSITION_NAME,
+  POSITION_TYPE,
+  POSITION_NAME_TYPE_MAP,
+  PARLAY_MAXIMUM_QUOTE,
 };
