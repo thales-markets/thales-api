@@ -427,5 +427,27 @@ app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
     parlays: userParlayPositions,
   };
 
-  return res.send(positions || `User with address ${userAddress} not found.`);
+  return res.send(positions);
+});
+
+app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
+  const network = req.params.networkParam;
+  const userAddress = req.params.userAddress;
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+
+  const [userSingleTransactions, userParlayTransactions] = await Promise.all([
+    users.processUserSingleTransactions(network, userAddress.toLowerCase()),
+    [],
+  ]);
+
+  const transactions = {
+    singles: userSingleTransactions,
+    parlays: userParlayTransactions,
+  };
+
+  return res.send(transactions);
 });

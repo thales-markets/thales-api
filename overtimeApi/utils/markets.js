@@ -1,5 +1,11 @@
 const { ethers } = require("ethers");
-const { ODDS_TYPE, MARKET_TYPE, POSITION_NAME, MARKET_DURATION_IN_DAYS } = require("../constants/markets");
+const {
+  ODDS_TYPE,
+  MARKET_TYPE,
+  MARKET_DURATION_IN_DAYS,
+  FINAL_RESULT_TYPE_POSITION_TYPE_MAP,
+  POSITION_TYPE,
+} = require("../constants/markets");
 const overtimeSportsList = require("../assets/overtime-sports.json");
 const { SPORTS_TAGS_MAP, GOLF_TOURNAMENT_WINNER_TAG, SPORTS_MAP, ENETPULSE_SPORTS } = require("../constants/tags");
 
@@ -127,12 +133,12 @@ const isMarketExpired = (maturityDate) => {
 };
 
 const getCanceledGameClaimableAmount = (position) => {
-  switch (position.side.toLowerCase()) {
-    case POSITION_NAME.Home:
+  switch (position.position) {
+    case POSITION_TYPE.Home:
       return position.market.homeOdds * position.amount;
-    case POSITION_NAME.Away:
+    case POSITION_TYPE.Away:
       return position.market.awayOdds * position.amount;
-    case POSITION_NAME.Draw:
+    case POSITION_TYPE.Draw:
       return position.market.drawOdds ? position.market.drawOdds * position.amount : 0;
     default:
       return 0;
@@ -169,6 +175,24 @@ const isParlayClaimable = (parlayMarket) => {
   return isWinningParlay && !isMarketExpired && !parlayMarket.claimed;
 };
 
+const getPositionStatus = (tx) => {
+  if (tx.type !== "buy") {
+    return "SOLD";
+  }
+  if (tx.market.isCanceled) {
+    return "CANCELED";
+  }
+  if (tx.market.isResolved) {
+    if (tx.position === FINAL_RESULT_TYPE_POSITION_TYPE_MAP[tx.market.finalResult]) {
+      return "WON";
+    } else {
+      return "LOSS";
+    }
+  } else {
+    return "OPEN";
+  }
+};
+
 module.exports = {
   delay,
   fixDuplicatedTeamName,
@@ -182,4 +206,5 @@ module.exports = {
   getCanceledGameClaimableAmount,
   isParlayOpen,
   isParlayClaimable,
+  getPositionStatus,
 };

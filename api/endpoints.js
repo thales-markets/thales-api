@@ -28,6 +28,7 @@ const ENDPOINTS = {
   OVERTIME_MARKETS: "/overtime/networks/:networkParam/markets",
   OVERTIME_MARKET: "/overtime/networks/:networkParam/markets/:marketAddress",
   OVERTIME_USER_POSITIONS: "/overtime/networks/:networkParam/users/:userAddress/positions",
+  OVERTIME_USER_TRANSACTIONS: "/overtime/networks/:networkParam/users/:userAddress/transactions",
 };
 
 module.exports = ENDPOINTS;

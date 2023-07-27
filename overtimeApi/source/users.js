@@ -8,8 +8,9 @@ const {
   isParlayOpen,
   isParlayClaimable,
   formatMarketOdds,
+  getPositionStatus,
 } = require("../utils/markets");
-const { PARLAY_MAXIMUM_QUOTE, ODDS_TYPE } = require("../constants/markets");
+const { PARLAY_MAXIMUM_QUOTE, ODDS_TYPE, POSITION_NAME_TYPE_MAP } = require("../constants/markets");
 
 async function processUserSinglePositions(network, walletAddress) {
   const positionBalances = await thalesData.sportMarkets.positionBalances({
@@ -24,8 +25,8 @@ async function processUserSinglePositions(network, walletAddress) {
       account: positionBalance.account,
       amount: bigNumberFormatter(positionBalance.amount),
       claimableAmount: 0,
-      sUSDPaid: positionBalance.sUSDPaid,
-      side: positionBalance.position.side,
+      // sUSDPaid: positionBalance.sUSDPaid,
+      position: POSITION_NAME_TYPE_MAP[positionBalance.position.side],
       isOpen: positionBalance.position.market.isOpen,
       isClaimable: positionBalance.position.claimable,
       isCanceled: positionBalance.position.market.isCanceled,
@@ -80,7 +81,7 @@ async function processUserParlayPositions(network, walletAddress) {
       const quote = market.isCanceled ? 1 : parlayMarket.marketQuotes[index];
       const mappedPosition = {
         id: position.id,
-        side: position.side,
+        position: POSITION_NAME_TYPE_MAP[position.side],
         isOpen: market.isOpen,
         isClaimable: position.claimable,
         isCanceled: market.isCanceled,
@@ -138,7 +139,35 @@ async function processUserParlayPositions(network, walletAddress) {
   return data;
 }
 
+async function processUserSingleTransactions(network, walletAddress) {
+  const userSingleTransactions = await thalesData.sportMarkets.marketTransactions({
+    account: walletAddress,
+    network: network,
+  });
+
+  const mappedUserSingleTransactions = userSingleTransactions.map((transaction) => {
+    const mappedTransaction = {
+      ...transaction,
+      market: packMarket(transaction.wholeMarket),
+    };
+
+    return {
+      hash: mappedTransaction.hash,
+      timestamp: mappedTransaction.timestamp,
+      account: mappedTransaction.account,
+      amount: mappedTransaction.amount,
+      paid: mappedTransaction.paid,
+      position: mappedTransaction.position,
+      status: getPositionStatus(mappedTransaction),
+      market: mappedTransaction.market,
+    };
+  });
+
+  return mappedUserSingleTransactions;
+}
+
 module.exports = {
   processUserSinglePositions,
   processUserParlayPositions,
+  processUserSingleTransactions,
 };
