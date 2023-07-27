@@ -7,8 +7,9 @@ const {
   isMarketExpired,
   isParlayOpen,
   isParlayClaimable,
+  formatMarketOdds,
 } = require("../utils/markets");
-const { PARLAY_MAXIMUM_QUOTE } = require("../constants/markets");
+const { PARLAY_MAXIMUM_QUOTE, ODDS_TYPE } = require("../constants/markets");
 
 async function processUserSinglePositions(network, walletAddress) {
   const positionBalances = await thalesData.sportMarkets.positionBalances({
@@ -76,14 +77,18 @@ async function processUserParlayPositions(network, walletAddress) {
 
       const position = parlayMarket.positions.find((position) => position.market.address == address);
 
+      const quote = market.isCanceled ? 1 : parlayMarket.marketQuotes[index];
       const mappedPosition = {
         id: position.id,
         side: position.side,
         isOpen: market.isOpen,
         isClaimable: position.claimable,
         isCanceled: market.isCanceled,
-        quote: parlayMarket.marketQuotes[index],
-        claimableQuote: market.isCanceled ? 1 : parlayMarket.marketQuotes[index],
+        quote: {
+          american: formatMarketOdds(quote, ODDS_TYPE.American),
+          decimal: formatMarketOdds(quote, ODDS_TYPE.Decimal),
+          normalizedImplied: formatMarketOdds(quote, ODDS_TYPE.AMM),
+        },
         market: packMarket(market),
       };
 
@@ -104,7 +109,11 @@ async function processUserParlayPositions(network, walletAddress) {
       payout: mappedPositionsParlayMarket.payout,
       sUSDPaid: mappedPositionsParlayMarket.sUSDPaid,
       sUSDAfterFees: mappedPositionsParlayMarket.sUSDAfterFees,
-      totalQuote: mappedPositionsParlayMarket.totalQuote,
+      totalQuote: {
+        american: formatMarketOdds(mappedPositionsParlayMarket.totalQuote, ODDS_TYPE.American),
+        decimal: formatMarketOdds(mappedPositionsParlayMarket.totalQuote, ODDS_TYPE.Decimal),
+        normalizedImplied: formatMarketOdds(mappedPositionsParlayMarket.totalQuote, ODDS_TYPE.AMM),
+      },
       lastGameStarts: mappedPositionsParlayMarket.lastGameStarts,
       isOpen: isParlayOpen(mappedPositionsParlayMarket),
       isClaimable: isParlayClaimable(mappedPositionsParlayMarket),
