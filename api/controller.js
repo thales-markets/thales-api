@@ -316,7 +316,7 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
     return;
   }
   if (type && !["moneyline", "spread", "total", "doublechance"].includes(type.toLowerCase())) {
-    res.send("Unsupported type. Supported types: moneyline, spread', total, doubleChance.");
+    res.send("Unsupported type. Supported types: moneyline, spread, total, doubleChance.");
     return;
   }
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
