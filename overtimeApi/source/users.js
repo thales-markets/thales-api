@@ -27,10 +27,10 @@ async function processUserSinglePositions(network, walletAddress) {
       claimablePayout: 0,
       paid: positionBalance.sUSDPaid,
       position: POSITION_NAME_TYPE_MAP[positionBalance.position.side],
-      isOpen: positionBalance.position.market.isOpen,
-      isClaimable: positionBalance.position.claimable,
+      isOpen: market.isOpen,
+      isClaimable: positionBalance.position.claimable && !isMarketExpired(market.maturityDate),
       isClaimed: positionBalance.claimed,
-      isCanceled: positionBalance.position.market.isCanceled,
+      isCanceled: market.isCanceled,
     };
 
     return {
@@ -43,13 +43,16 @@ async function processUserSinglePositions(network, walletAddress) {
   const data = {
     open: [],
     claimable: [],
+    closed: [],
   };
   mappedPositions.forEach((position) => {
     if (position.isOpen) {
       data.open.push(position);
-    } else if (position.isClaimable && !isMarketExpired(position.market.maturityDate)) {
+    } else if (position.isClaimable) {
       position.claimableAmount = position.isCanceled ? getCanceledGameClaimableAmount(position) : position.amount;
       data.claimable.push(position);
+    } else {
+      data.closed.push(position);
     }
   });
   return data;
@@ -66,6 +69,7 @@ async function processUserParlayPositions(network, walletAddress) {
   const data = {
     open: [],
     claimable: [],
+    closed: [],
   };
 
   mappedParlayMarkets.forEach((parlayMarket) => {
@@ -73,6 +77,8 @@ async function processUserParlayPositions(network, walletAddress) {
       data.open.push(parlayMarket);
     } else if (parlayMarket.isClaimable) {
       data.claimable.push(parlayMarket);
+    } else {
+      data.closed.push(parlayMarket);
     }
   });
 

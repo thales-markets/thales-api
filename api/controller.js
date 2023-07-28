@@ -411,9 +411,19 @@ app.get(ENDPOINTS.OVERTIME_MARKET, (req, res) => {
 app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
   const network = req.params.networkParam;
   const userAddress = req.params.userAddress;
+  const type = req.query.type;
+  const status = req.query.status;
 
   if (![10, 420, 42161].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+  if (type && !["singles", "parlays"].includes(type.toLowerCase())) {
+    res.send("Unsupported type. Supported types: singles or parlays.");
+    return;
+  }
+  if (status && !["open", "claimable", "closed"].includes(status.toLowerCase())) {
+    res.send("Unsupported status. Supported statuses: open, claimable, closed.");
     return;
   }
 
@@ -422,10 +432,25 @@ app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
     users.processUserParlayPositions(network, userAddress.toLowerCase()),
   ]);
 
-  const positions = {
-    singles: userSinglePositions,
-    parlays: userParlayPositions,
-  };
+  const positions = {};
+  if (!type || type.toLowerCase() === "singles") {
+    if (!status) {
+      positions.singles = userSinglePositions;
+    } else {
+      positions.singles = {
+        [status.toLowerCase()]: userSinglePositions[status.toLowerCase()],
+      };
+    }
+  }
+  if (!type || type.toLowerCase() === "parlays") {
+    if (!status) {
+      positions.parlays = userParlayPositions;
+    } else {
+      positions.parlays = {
+        [status.toLowerCase()]: userParlayPositions[status.toLowerCase()],
+      };
+    }
+  }
 
   return res.send(positions);
 });
@@ -433,9 +458,14 @@ app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
 app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
   const network = req.params.networkParam;
   const userAddress = req.params.userAddress;
+  const type = req.query.type;
 
   if (![10, 420, 42161].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+  if (type && !["singles", "parlays"].includes(type.toLowerCase())) {
+    res.send("Unsupported type. Supported types: singles or parlays.");
     return;
   }
 
@@ -444,10 +474,13 @@ app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
     users.processUserParlayTransactions(network, userAddress.toLowerCase()),
   ]);
 
-  const transactions = {
-    singles: userSingleTransactions,
-    parlays: userParlayTransactions,
-  };
+  const transactions = {};
+  if (!type || type.toLowerCase() === "singles") {
+    transactions.singles = userSingleTransactions;
+  }
+  if (!type || type.toLowerCase() === "parlays") {
+    transactions.parlays = userParlayTransactions;
+  }
 
   return res.send(transactions);
 });
