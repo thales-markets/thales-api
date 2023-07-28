@@ -418,8 +418,8 @@ app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
     return;
   }
-  if (type && !["singles", "parlays"].includes(type.toLowerCase())) {
-    res.send("Unsupported type. Supported types: singles or parlays.");
+  if (type && !["single", "parlay"].includes(type.toLowerCase())) {
+    res.send("Unsupported type. Supported types: single or parlay.");
     return;
   }
   if (status && !["open", "claimable", "closed"].includes(status.toLowerCase())) {
@@ -433,7 +433,7 @@ app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
   ]);
 
   const positions = {};
-  if (!type || type.toLowerCase() === "singles") {
+  if (!type || type.toLowerCase() === "single") {
     if (!status) {
       positions.singles = userSinglePositions;
     } else {
@@ -442,7 +442,7 @@ app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
       };
     }
   }
-  if (!type || type.toLowerCase() === "parlays") {
+  if (!type || type.toLowerCase() === "parlay") {
     if (!status) {
       positions.parlays = userParlayPositions;
     } else {
@@ -464,8 +464,8 @@ app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
     return;
   }
-  if (type && !["singles", "parlays"].includes(type.toLowerCase())) {
-    res.send("Unsupported type. Supported types: singles or parlays.");
+  if (type && !["single", "parlay"].includes(type.toLowerCase())) {
+    res.send("Unsupported type. Supported types: single or parlay.");
     return;
   }
 
@@ -475,10 +475,10 @@ app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
   ]);
 
   const transactions = {};
-  if (!type || type.toLowerCase() === "singles") {
+  if (!type || type.toLowerCase() === "single") {
     transactions.singles = userSingleTransactions;
   }
-  if (!type || type.toLowerCase() === "parlays") {
+  if (!type || type.toLowerCase() === "parlay") {
     transactions.parlays = userParlayTransactions;
   }
 
