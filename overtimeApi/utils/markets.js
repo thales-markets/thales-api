@@ -177,7 +177,13 @@ const isParlayLost = (parlayMarket) =>
   );
 
 const getPositionStatus = (position) =>
-  position.isCanceled ? "CANCELED" : position.isOpen ? "OPEN" : position.isClaimable ? "WON" : "LOSS";
+  position.isCanceled
+    ? "CANCELED"
+    : position.isOpen
+    ? "OPEN"
+    : position.isClaimable || position.isClaimed
+    ? "WON"
+    : "LOSS";
 
 const getPositionTransactionStatus = (tx) =>
   tx.type !== "buy"

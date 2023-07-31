@@ -17,9 +17,7 @@ async function processUserSinglePositions(network, walletAddress) {
     network: network,
   });
 
-  const onlyNonZeroPositionBalances = positionBalances.filter((positionBalance) => positionBalance.amount > 0);
-
-  const mappedPositions = onlyNonZeroPositionBalances.map((positionBalance) => {
+  const mappedPositions = positionBalances.map((positionBalance) => {
     const market = packMarket(positionBalance.position.market);
     const mappedPosition = {
       account: positionBalance.account,
@@ -28,7 +26,8 @@ async function processUserSinglePositions(network, walletAddress) {
       paid: positionBalance.sUSDPaid,
       position: POSITION_NAME_TYPE_MAP[positionBalance.position.side],
       isOpen: market.isOpen,
-      isClaimable: positionBalance.position.claimable && !isMarketExpired(market.maturityDate),
+      isClaimable:
+        positionBalance.position.claimable && !isMarketExpired(market.maturityDate) && !positionBalance.claimed,
       isClaimed: positionBalance.claimed,
       isCanceled: market.isCanceled,
     };
