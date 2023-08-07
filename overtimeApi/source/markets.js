@@ -7,7 +7,7 @@ const { orderBy, groupBy } = require("lodash");
 
 const sportPositionalMarketDataContract = require("../contracts/sportPositionalMarketDataContract");
 const sportPositionalMarketManagerContract = require("../contracts/sportPositionalMarketManagerContract");
-const { BET_TYPE, STABLE_DECIMALS, NETWORK, NETWORK_NAME } = require("../constants/markets");
+const { BET_TYPE, DEAFULT_DECIMALS, NETWORK, NETWORK_NAME } = require("../constants/markets");
 const { delay, bigNumberFormatter, convertPriceImpactToBonus, packMarket } = require("../utils/markets");
 const KEYS = require("../../redis/redis-keys");
 const { getProvider } = require("../utils/provider");
@@ -76,16 +76,16 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
   let priceImpactFromContract;
   if (mapOnlyOpenedMarkets) {
     try {
-      const provivder = getProvider(network);
+      const provider = getProvider(network);
       const sportPositionalMarketData = new ethers.Contract(
         sportPositionalMarketDataContract.addresses[network],
         sportPositionalMarketDataContract.abi,
-        provivder,
+        provider,
       );
       const sportPositionalMarketManager = new ethers.Contract(
         sportPositionalMarketManagerContract.addresses[network],
         sportPositionalMarketManagerContract.abi,
-        provivder,
+        provider,
       );
 
       const numberOfActiveMarkets = await sportPositionalMarketManager.numActiveMarkets();
@@ -115,10 +115,10 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
           (obj) => obj[0].toString().toLowerCase() === market.address.toLowerCase(),
         );
         if (oddsItem) {
-          market.homeOdds = bigNumberFormatter(oddsItem.odds[0], STABLE_DECIMALS[network]);
-          market.awayOdds = bigNumberFormatter(oddsItem.odds[1], STABLE_DECIMALS[network]);
+          market.homeOdds = bigNumberFormatter(oddsItem.odds[0], DEAFULT_DECIMALS[network]);
+          market.awayOdds = bigNumberFormatter(oddsItem.odds[1], DEAFULT_DECIMALS[network]);
           market.drawOdds = oddsItem.odds[2]
-            ? bigNumberFormatter(oddsItem.odds[2], STABLE_DECIMALS[network])
+            ? bigNumberFormatter(oddsItem.odds[2], DEAFULT_DECIMALS[network])
             : undefined;
         }
       }

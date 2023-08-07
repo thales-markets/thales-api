@@ -7,9 +7,19 @@ const {
   POSITION_TYPE,
   PARLAY_MAXIMUM_QUOTE,
   POSITION_NAME_TYPE_MAP,
+  DEFAULT_CURRENCY_DECIMALS,
+  SUPPORTED_COLLATERALS,
+  COLLATERAL_DECIMALS,
+  DEAFULT_DECIMALS,
 } = require("../constants/markets");
 const overtimeSportsList = require("../assets/overtime-sports.json");
-const { SPORTS_TAGS_MAP, GOLF_TOURNAMENT_WINNER_TAG, SPORTS_MAP, ENETPULSE_SPORTS } = require("../constants/tags");
+const {
+  SPORTS_TAGS_MAP,
+  GOLF_TOURNAMENT_WINNER_TAG,
+  SPORTS_MAP,
+  ENETPULSE_SPORTS,
+  TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS,
+} = require("../constants/tags");
 
 function delay(time) {
   return new Promise(function (resolve) {
@@ -38,6 +48,14 @@ const fixDuplicatedTeamName = (name, isEnetpulseSport) => {
 };
 
 const bigNumberFormatter = (value, decimals) => Number(ethers.utils.formatUnits(value, decimals ? decimals : 18));
+
+const floorNumberToDecimals = (value, decimals = DEFAULT_CURRENCY_DECIMALS) => {
+  return Math.floor(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+};
+
+const roundNumberToDecimals = (value, decimals = DEFAULT_CURRENCY_DECIMALS) => {
+  return +(Math.round(Number(value + "e+" + decimals)) + "e-" + decimals);
+};
 
 const convertPriceImpactToBonus = (priceImpact) => (priceImpact < 0 ? -((priceImpact / (1 + priceImpact)) * 100) : 0);
 
@@ -270,10 +288,35 @@ const packParlay = (parlayMarket) => {
   };
 };
 
+const getCollateralAddress = (network, collateral) =>
+  collateral ? SUPPORTED_COLLATERALS[network][collateral.toLowerCase()] : undefined;
+
+const getCollateralDecimals = (network, collateral) =>
+  collateral ? COLLATERAL_DECIMALS[collateral.toLowerCase()] : DEAFULT_DECIMALS[network];
+
+const getSportsAMMQuoteMethod = (sportsAMMContract, marketAddress, position, parsedAmount, collateralAddress) => {
+  return collateralAddress
+    ? sportsAMMContract.buyFromAmmQuoteWithDifferentCollateral(marketAddress, position, parsedAmount, collateralAddress)
+    : sportsAMMContract.buyFromAmmQuote(marketAddress, position, parsedAmount);
+};
+
+const getIsDrawAvailable = (market) =>
+  !(TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS.includes(market.leagueId) || market.type === "total" || market.type === "spread");
+
+const isNumeric = (str) => {
+  if (typeof str != "string") return false; // we only process strings!
+  return (
+    !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+    !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
+  );
+};
+
 module.exports = {
   delay,
   fixDuplicatedTeamName,
   bigNumberFormatter,
+  floorNumberToDecimals,
+  roundNumberToDecimals,
   convertPriceImpactToBonus,
   formatMarketOdds,
   getLeagueNameById,
@@ -286,4 +329,9 @@ module.exports = {
   getPositionStatus,
   getPositionTransactionStatus,
   packParlay,
+  getCollateralAddress,
+  getCollateralDecimals,
+  getSportsAMMQuoteMethod,
+  getIsDrawAvailable,
+  isNumeric,
 };

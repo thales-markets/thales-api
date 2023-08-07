@@ -19,6 +19,8 @@ const KEYS = require("../redis/redis-keys");
 const { uniqBy, groupBy } = require("lodash");
 
 const users = require("../overtimeApi/source/users");
+const quotes = require("../overtimeApi/source/quotes");
+const { isNumeric } = require("../overtimeApi/utils/markets");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -458,7 +460,6 @@ app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
 app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
   const network = req.params.networkParam;
   const userAddress = req.params.userAddress;
-  const type = req.query.type;
 
   if (![10, 420, 42161].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
@@ -483,4 +484,49 @@ app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
   }
 
   return res.send(transactions);
+});
+
+app.get(ENDPOINTS.OVERTIME_MARKET_QUOTE, async (req, res) => {
+  const network = req.params.networkParam;
+  const marketAddress = req.params.marketAddress;
+  const position = req.query.position;
+  const buyin = req.query.buyin;
+  const collateral = req.query.differentcollateral;
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+  if (!position) {
+    res.send("Market position is required.");
+    return;
+  }
+  if (!isNumeric(position)) {
+    res.send("Invalid value for market position. The market position must be a number.");
+    return;
+  }
+  if (!buyin) {
+    res.send("Buy-in amount is required.");
+    return;
+  }
+  if (!isNumeric(buyin) || Number(buyin) === 0) {
+    res.send("Invalid value for buy-in amount. The buy-in amount must be a number greater than 0.");
+    return;
+  }
+  if (collateral && Number(network) === 42161) {
+    res.send("Arbitrum does not support buy with different collateral.");
+    return;
+  }
+  if (
+    collateral &&
+    !["dai", "usdc", "usdt"].includes(collateral.toLowerCase()) &&
+    (Number(network) === 10 || Number(network) === 420)
+  ) {
+    res.send("Unsupported different collateral for optimism. Supported different collaterals: DAI, USDC, USDT.");
+    return;
+  }
+
+  const ammQuote = await quotes.getAmmQuote(network, marketAddress, Number(position), Number(buyin), collateral);
+
+  return res.send(ammQuote);
 });
