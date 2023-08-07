@@ -20,7 +20,7 @@ const { uniqBy, groupBy } = require("lodash");
 
 const users = require("../overtimeApi/source/users");
 const quotes = require("../overtimeApi/source/quotes");
-const { isNumeric } = require("../overtimeApi/utils/markets");
+const { isNumeric } = require("../overtimeApi/utils/general");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -460,6 +460,7 @@ app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
 app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
   const network = req.params.networkParam;
   const userAddress = req.params.userAddress;
+  const type = req.query.type;
 
   if (![10, 420, 42161].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");

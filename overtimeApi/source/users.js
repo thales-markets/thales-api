@@ -2,7 +2,6 @@ require("dotenv").config();
 
 const thalesData = require("thales-data");
 const {
-  bigNumberFormatter,
   packMarket,
   isMarketExpired,
   getPositionTransactionStatus,
@@ -10,6 +9,7 @@ const {
   getPositionStatus,
 } = require("../utils/markets");
 const { POSITION_NAME_TYPE_MAP } = require("../constants/markets");
+const { bigNumberFormatter } = require("../utils/formatters");
 
 async function processUserSinglePositions(network, walletAddress) {
   const positionBalances = await thalesData.sportMarkets.positionBalances({

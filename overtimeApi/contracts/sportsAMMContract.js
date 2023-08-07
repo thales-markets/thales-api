@@ -1,4 +1,4 @@
-const { NETWORK } = require("../constants/markets");
+const { NETWORK } = require("../constants/networks");
 
 const sportsAMMContract = {
   addresses: {

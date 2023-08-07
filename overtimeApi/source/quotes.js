@@ -1,26 +1,24 @@
 require("dotenv").config();
-const {
-  roundNumberToDecimals,
-  getCollateralAddress,
-  getSportsAMMQuoteMethod,
-  floorNumberToDecimals,
-  getCollateralDecimals,
-  bigNumberFormatter,
-  formatMarketOdds,
-  packMarket,
-  getIsDrawAvailable,
-} = require("../utils/markets");
+const { formatMarketOdds, packMarket, getIsDrawAvailable } = require("../utils/markets");
 const { getProvider } = require("../utils/provider");
 const sportPositionalMarketDataContract = require("../contracts/sportPositionalMarketDataContract");
 const sportsAMMContract = require("../contracts/sportsAMMContract");
 const sportsMarketContract = require("../contracts/sportsMarketContract");
 const { ethers } = require("ethers");
 const { fetchAmountOfTokensForXsUSDAmount } = require("../utils/skewCalculator");
-const { ODDS_TYPE, ZERO_ADDRESS, SUPPORTED_COLLATERALS } = require("../constants/markets");
+const { ODDS_TYPE, ZERO_ADDRESS } = require("../constants/markets");
 const thalesData = require("thales-data");
+const { getCollateralDecimals, getCollateralAddress } = require("../utils/collaterals");
+const {
+  bigNumberFormatter,
+  floorNumberToDecimals,
+  roundNumberToDecimals,
+  bigNumberParser,
+} = require("../utils/formatters");
+const { getSportsAMMQuoteMethod } = require("../utils/amm");
 
 async function fetchAmmQuote(sportsAMM, marketAddress, position, amountForQuote, collateralAddress) {
-  const parsedAmount = ethers.utils.parseEther(roundNumberToDecimals(amountForQuote).toString());
+  const parsedAmount = bigNumberParser(roundNumberToDecimals(amountForQuote).toString());
   const ammQuote = await getSportsAMMQuoteMethod(sportsAMM, marketAddress, position, parsedAmount, collateralAddress);
   return collateralAddress ? ammQuote[0] : ammQuote;
 }
@@ -65,7 +63,7 @@ async function getAmmQuote(network, marketAddress, position, usdAmount, collater
     const sportsAMM = new ethers.Contract(sportsAMMContract.addresses[network], sportsAMMContract.abi, provider);
     const marketContract = new ethers.Contract(marketAddress, sportsMarketContract.abi, provider);
 
-    const parsedBaseAmount = ethers.utils.parseEther("1");
+    const parsedBaseAmount = bigNumberParser("1");
     let positionDetails = await sportPositionalMarketData.getPositionDetails(
       marketAddress,
       position,
@@ -119,7 +117,7 @@ async function getAmmQuote(network, marketAddress, position, usdAmount, collater
         recalculatedTokenAmount > flooredAmountOfTokens ? flooredAmountOfTokens : recalculatedTokenAmount;
       payout = maxAvailableTokenAmount;
 
-      const parsedPayout = ethers.utils.parseEther(payout.toString());
+      const parsedPayout = bigNumberParser(payout.toString());
       positionDetails = await sportPositionalMarketData.getPositionDetails(
         marketAddress,
         position,

@@ -1,10 +1,10 @@
 require("dotenv").config();
 
 const redis = require("redis");
-const { delay } = require("../utils/markets");
 const overtimeSportsList = require("../assets/overtime-sports.json");
 const KEYS = require("../../redis/redis-keys");
-const { NETWORK } = require("../constants/markets");
+const { NETWORK } = require("../constants/networks");
+const { delay } = require("../utils/general");
 
 async function processSports() {
   if (process.env.REDIS_URL) {

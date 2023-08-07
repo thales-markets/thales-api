@@ -7,10 +7,14 @@ const { orderBy, groupBy } = require("lodash");
 
 const sportPositionalMarketDataContract = require("../contracts/sportPositionalMarketDataContract");
 const sportPositionalMarketManagerContract = require("../contracts/sportPositionalMarketManagerContract");
-const { BET_TYPE, DEAFULT_DECIMALS, NETWORK, NETWORK_NAME } = require("../constants/markets");
-const { delay, bigNumberFormatter, convertPriceImpactToBonus, packMarket } = require("../utils/markets");
+const { BET_TYPE } = require("../constants/markets");
+const { convertPriceImpactToBonus, packMarket } = require("../utils/markets");
 const KEYS = require("../../redis/redis-keys");
 const { getProvider } = require("../utils/provider");
+const { NETWORK_NAME, NETWORK } = require("../constants/networks");
+const { DEFAULT_NETWORK_DECIMALS } = require("../constants/collaterals");
+const { delay } = require("../utils/general");
+const { bigNumberFormatter } = require("../utils/formatters");
 
 let marketsMap = new Map();
 
@@ -115,10 +119,10 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
           (obj) => obj[0].toString().toLowerCase() === market.address.toLowerCase(),
         );
         if (oddsItem) {
-          market.homeOdds = bigNumberFormatter(oddsItem.odds[0], DEAFULT_DECIMALS[network]);
-          market.awayOdds = bigNumberFormatter(oddsItem.odds[1], DEAFULT_DECIMALS[network]);
+          market.homeOdds = bigNumberFormatter(oddsItem.odds[0], DEFAULT_NETWORK_DECIMALS[network]);
+          market.awayOdds = bigNumberFormatter(oddsItem.odds[1], DEFAULT_NETWORK_DECIMALS[network]);
           market.drawOdds = oddsItem.odds[2]
-            ? bigNumberFormatter(oddsItem.odds[2], DEAFULT_DECIMALS[network])
+            ? bigNumberFormatter(oddsItem.odds[2], DEFAULT_NETWORK_DECIMALS[network])
             : undefined;
         }
       }

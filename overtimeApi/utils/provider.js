@@ -1,5 +1,5 @@
 const { ethers } = require("ethers");
-const { NETWORK } = require("../constants/markets");
+const { NETWORK } = require("../constants/networks");
 
 const CHAINNODES_URL = {
   [NETWORK.Optimism]: "https://optimism-mainnet.chainnodes.org/",
