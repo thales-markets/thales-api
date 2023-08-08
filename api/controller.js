@@ -527,7 +527,69 @@ app.get(ENDPOINTS.OVERTIME_MARKET_QUOTE, async (req, res) => {
     return;
   }
 
-  const ammQuote = await quotes.getAmmQuote(network, marketAddress, Number(position), Number(buyin), collateral);
+  const ammQuote = await quotes.getAmmQuote(network, marketAddress.toLowerCase(), Number(position), Number(buyin), collateral);
 
   return res.send(ammQuote);
+});
+
+app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
+  const network = req.params.networkParam;
+  const markets = req.query.markets;
+  const positions = req.query.positions;
+  const buyin = req.query.buyin;
+  const collateral = req.query.differentcollateral;
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+
+  if (!markets) {
+    res.send("Market addresses are required.");
+    return;
+  }
+  const marketsArray = markets.split(",").map(market => market.toLowerCase());
+  if (!Array.isArray(marketsArray)) {
+    res.send("Invalid value for market addresses. The market addresses must be an array.");
+    return;
+  }
+  if (!positions) {
+    res.send("Market positions are required.");
+    return;
+  }
+  const positionsArray = positions.split(",").map(position => Number(position));
+  if (!Array.isArray(positionsArray)) {
+    res.send("Invalid value for market positions. The market positions must be an array.");
+    return;
+  }
+  if (!buyin) {
+    res.send("Buy-in amount is required.");
+    return;
+  }
+  if (!isNumeric(buyin) || Number(buyin) === 0) {
+    res.send("Invalid value for buy-in amount. The buy-in amount must be a number greater than 0.");
+    return;
+  }
+  if (collateral && Number(network) === 42161) {
+    res.send("Arbitrum does not support buy with different collateral.");
+    return;
+  }
+  if (
+    collateral &&
+    !["dai", "usdc", "usdt"].includes(collateral.toLowerCase()) &&
+    (Number(network) === 10 || Number(network) === 420)
+  ) {
+    res.send("Unsupported different collateral for optimism. Supported different collaterals: DAI, USDC, USDT.");
+    return;
+  }
+
+  const parlayAmmQuote = await quotes.getParlayAmmQuote(
+    network,
+    marketsArray,
+    positionsArray,
+    Number(buyin),
+    collateral,
+  );
+
+  return res.send(parlayAmmQuote);
 });

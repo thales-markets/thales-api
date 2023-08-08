@@ -54,6 +54,11 @@ const PARLAY_MAXIMUM_QUOTE = 0.01449275;
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
+const PARLAY_CONTRACT_ERROR_MESSAGE = {
+  RiskPerCombExceeded: "RiskPerComb exceeded",
+  SameTeamOnParlay: "SameTeamOnParlay",
+};
+
 module.exports = {
   BET_TYPE,
   MARKET_TYPE,
@@ -65,4 +70,5 @@ module.exports = {
   PARLAY_MAXIMUM_QUOTE,
   FINAL_RESULT_TYPE_POSITION_TYPE_MAP,
   ZERO_ADDRESS,
+  PARLAY_CONTRACT_ERROR_MESSAGE,
 };
