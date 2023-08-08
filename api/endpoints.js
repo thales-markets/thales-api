@@ -23,6 +23,13 @@ const ENDPOINTS = {
   GET_REFFERER_MAP: "/get-refferer-map",
   ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
   JSON_ODDS_DATA: "/json-odds-data/:sportParameter",
+
+  OVERTIME_SPORTS: "/overtime/networks/:networkParam/sports",
+  OVERTIME_MARKETS: "/overtime/networks/:networkParam/markets",
+  OVERTIME_MARKET: "/overtime/networks/:networkParam/markets/:marketAddress",
+  OVERTIME_USER_POSITIONS: "/overtime/networks/:networkParam/users/:userAddress/positions",
+  OVERTIME_USER_TRANSACTIONS: "/overtime/networks/:networkParam/users/:userAddress/transactions",
+  OVERTIME_MARKET_QUOTE: "/overtime/networks/:networkParam/markets/:marketAddress/quote",
 };
 
 module.exports = ENDPOINTS;

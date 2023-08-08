@@ -1,0 +1,82 @@
+const SPORTS_MAP = {
+  9001: "Football",
+  9002: "Football",
+  9003: "Baseball",
+  9004: "Basketball",
+  9005: "Basketball",
+  9006: "Hockey",
+  9007: "MMA",
+  9008: "Basketball",
+  9010: "Soccer",
+  9011: "Soccer",
+  9012: "Soccer",
+  9013: "Soccer",
+  9014: "Soccer",
+  9015: "Soccer",
+  9016: "Soccer",
+  9017: "Soccer",
+  9018: "Soccer",
+  9019: "Soccer",
+  9445: "Motosport",
+  9497: "Motosport",
+  9153: "Tennis",
+  9156: "Tennis",
+  18977: "eSports",
+  18983: "eSports",
+  19138: "eSports",
+  9020: "Cricket",
+  9399: "Basketball",
+  18196: "MMA",
+  9057: "Soccer",
+  9061: "Soccer",
+  9045: "Soccer",
+  9033: "Hockey",
+  9296: "Soccer",
+  9021: "Cricket",
+  9050: "Soccer",
+  109021: "Golf",
+  109121: "Golf",
+  18806: "Soccer",
+  18821: "Soccer",
+  9288: "Soccer",
+  9042: "Soccer",
+  19216: "Soccer",
+  9076: "Soccer",
+};
+
+const TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS = [
+  9001, 9002, 9003, 9004, 9005, 9006, 9008, 9007, 9445, 9497, 9153, 9156, 18977, 18983, 19138, 9020, 9399, 18196, 9021,
+  109021, 109121,
+];
+
+const SPORTS_TAGS_MAP = {
+  Football: [9001, 9002],
+  Baseball: [9003],
+  Basketball: [9004, 9005, 9008, 9399],
+  Hockey: [9006, 9033],
+  Soccer: [
+    9010, 9011, 9012, 9013, 9014, 9015, 9016, 9017, 9018, 9019, 9057, 9061, 9045, 9296, 9050, 18806, 18821, 9288, 9042,
+    19216, 9076,
+  ],
+  MMA: [9007, 18196],
+  Motosport: [9445, 9497],
+  Tennis: [9153, 9156],
+  eSports: [18977, 18983, 19138],
+  Cricket: [9020, 9021],
+  Golf: [109021, 109121],
+};
+
+const ENETPULSE_SPORTS = [
+  9153, 9156, 18977, 18983, 19138, 9399, 18196, 9057, 9061, 9045, 9445, 9033, 9296, 9050, 9497, 18806, 18821, 9288,
+  9042, 19216, 9076,
+];
+
+const GOLF_TOURNAMENT_WINNER_TAG = 109121;
+
+module.exports = {
+  ENETPULSE_SPORTS,
+  SPORTS_TAGS_MAP,
+  SPORTS_MAP,
+  TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS,
+  GOLF_TOURNAMENT_WINNER_TAG,
+};

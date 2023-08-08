@@ -17,14 +17,16 @@ services:
     environment:
       - "REDIS_URL=redis://redis:6379"
       - "INFURA_URL=https://mainnet.infura.io/v3/bca778c2b71d491cb704394855f80e9a"
+      - "CHAINNODES_ID=a8fd9538-2338-4e68-88d2-0922d02866e6"
     ports:
       - 3002:3002
-  overtime:
+  overtime-api:
     restart: always
-    image: thalesmarket/overtime
+    image: thalesmarket/overtime-api
     depends_on:
       - redis
     environment:
       - "REDIS_URL=redis://redis:6379"
+      - "CHAINNODES_ID=a8fd9538-2338-4e68-88d2-0922d02866e6"
 volumes:
   redis-data:

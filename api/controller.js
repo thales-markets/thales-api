@@ -6,10 +6,21 @@ const app = express();
 var cors = require("cors");
 app.use(cors());
 app.use(express.json());
+app.use(function (req, res, next) {
+  for (var key in req.query) {
+    req.query[key.toLowerCase()] = req.query[key];
+  }
+  next();
+});
 
 const ENDPOINTS = require("./endpoints");
 const sigUtil = require("eth-sig-util");
 const KEYS = require("../redis/redis-keys");
+const { uniqBy, groupBy } = require("lodash");
+
+const users = require("../overtimeApi/source/users");
+const quotes = require("../overtimeApi/source/quotes");
+const { isNumeric } = require("../overtimeApi/utils/general");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -267,4 +278,256 @@ app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
   var url = `https://jsonodds.com/api/odds/${sportParameter}`;
 
   request.get(url, { headers: { "x-api-key": process.env.JSON_ODDS_KEY.toString() } }).pipe(res);
+});
+
+app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
+  const network = req.params.networkParam;
+  if ([10, 420, 42161].includes(Number(network))) {
+    redisClient.get(KEYS.OVERTIME_SPORTS[network], function (err, obj) {
+      const sports = JSON.parse(obj);
+      try {
+        res.send(sports);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  } else {
+    res.send("Bad Network");
+  }
+});
+
+app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
+  const network = req.params.networkParam;
+  let status = req.query.status;
+  let type = req.query.type;
+  let sport = req.query.sport;
+  let leagueId = req.query.leagueid;
+  let ungroup = req.query.ungroup;
+
+  if (!status) {
+    status = "open";
+  }
+  status = status.toLowerCase();
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+  if (!["open", "resolved", "canceled", "paused", "ongoing"].includes(status)) {
+    res.send("Unsupported status. Supported statuses: open, resolved, canceled, paused, ongoing.");
+    return;
+  }
+  if (type && !["moneyline", "spread", "total", "doublechance"].includes(type.toLowerCase())) {
+    res.send("Unsupported type. Supported types: moneyline, spread, total, doubleChance.");
+    return;
+  }
+  if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
+    res.send("Invalid value for ungroup. Possible values: true or false.");
+    return;
+  }
+
+  redisClient.get(KEYS.OVERTIME_SPORTS[network], function (_, obj) {
+    const sports = JSON.parse(obj);
+    const allLeagueIds = sports.map((sport) => Number(sport.id));
+    const allSports = uniqBy(sports.map((sport) => sport.sport.toLowerCase()));
+
+    if (sport && !allSports.includes(sport.toLowerCase())) {
+      res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime/sports.`);
+      return;
+    }
+    if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
+      res.send(
+        `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime/sports.`,
+      );
+      return;
+    }
+
+    redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
+      const markets = new Map(JSON.parse(obj));
+      try {
+        const marketsByStatus = markets.get(status);
+        let marketsByType = marketsByStatus;
+        if (type) {
+          marketsByType = [];
+          marketsByStatus.forEach((market) => {
+            marketsByType.push(market);
+            marketsByType.push(...market.childMarkets);
+          });
+        }
+
+        const filteredMarkets = marketsByType.filter(
+          (market) =>
+            (!sport || market.sport.toLowerCase() === sport.toLowerCase()) &&
+            (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
+            (!type || market.type.toLowerCase() === type.toLowerCase()),
+        );
+
+        if (ungroup && ungroup.toLowerCase() === "true") {
+          res.send(filteredMarkets);
+          return;
+        }
+
+        const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
+        Object.keys(groupMarkets).forEach((key) => {
+          groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
+        });
+
+        res.send(groupMarkets);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  });
+});
+
+app.get(ENDPOINTS.OVERTIME_MARKET, (req, res) => {
+  const network = req.params.networkParam;
+  const marketAddress = req.params.marketAddress;
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+
+  redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
+    const markets = new Map(JSON.parse(obj));
+    try {
+      let allMarkets = [];
+
+      markets.forEach((marketsByStatus) => {
+        marketsByStatus.forEach((market) => {
+          allMarkets.push(market);
+          allMarkets.push(...market.childMarkets);
+        });
+      });
+
+      const market = allMarkets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
+
+      return res.send(market || `Market with address ${marketAddress} not found.`);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
+  const network = req.params.networkParam;
+  const userAddress = req.params.userAddress;
+  const type = req.query.type;
+  const status = req.query.status;
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+  if (type && !["single", "parlay"].includes(type.toLowerCase())) {
+    res.send("Unsupported type. Supported types: single or parlay.");
+    return;
+  }
+  if (status && !["open", "claimable", "closed"].includes(status.toLowerCase())) {
+    res.send("Unsupported status. Supported statuses: open, claimable, closed.");
+    return;
+  }
+
+  const [userSinglePositions, userParlayPositions] = await Promise.all([
+    users.processUserSinglePositions(network, userAddress.toLowerCase()),
+    users.processUserParlayPositions(network, userAddress.toLowerCase()),
+  ]);
+
+  const positions = {};
+  if (!type || type.toLowerCase() === "single") {
+    if (!status) {
+      positions.singles = userSinglePositions;
+    } else {
+      positions.singles = {
+        [status.toLowerCase()]: userSinglePositions[status.toLowerCase()],
+      };
+    }
+  }
+  if (!type || type.toLowerCase() === "parlay") {
+    if (!status) {
+      positions.parlays = userParlayPositions;
+    } else {
+      positions.parlays = {
+        [status.toLowerCase()]: userParlayPositions[status.toLowerCase()],
+      };
+    }
+  }
+
+  return res.send(positions);
+});
+
+app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
+  const network = req.params.networkParam;
+  const userAddress = req.params.userAddress;
+  const type = req.query.type;
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+  if (type && !["single", "parlay"].includes(type.toLowerCase())) {
+    res.send("Unsupported type. Supported types: single or parlay.");
+    return;
+  }
+
+  const [userSingleTransactions, userParlayTransactions] = await Promise.all([
+    users.processUserSingleTransactions(network, userAddress.toLowerCase()),
+    users.processUserParlayTransactions(network, userAddress.toLowerCase()),
+  ]);
+
+  const transactions = {};
+  if (!type || type.toLowerCase() === "single") {
+    transactions.singles = userSingleTransactions;
+  }
+  if (!type || type.toLowerCase() === "parlay") {
+    transactions.parlays = userParlayTransactions;
+  }
+
+  return res.send(transactions);
+});
+
+app.get(ENDPOINTS.OVERTIME_MARKET_QUOTE, async (req, res) => {
+  const network = req.params.networkParam;
+  const marketAddress = req.params.marketAddress;
+  const position = req.query.position;
+  const buyin = req.query.buyin;
+  const collateral = req.query.differentcollateral;
+
+  if (![10, 420, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+    return;
+  }
+  if (!position) {
+    res.send("Market position is required.");
+    return;
+  }
+  if (!isNumeric(position)) {
+    res.send("Invalid value for market position. The market position must be a number.");
+    return;
+  }
+  if (!buyin) {
+    res.send("Buy-in amount is required.");
+    return;
+  }
+  if (!isNumeric(buyin) || Number(buyin) === 0) {
+    res.send("Invalid value for buy-in amount. The buy-in amount must be a number greater than 0.");
+    return;
+  }
+  if (collateral && Number(network) === 42161) {
+    res.send("Arbitrum does not support buy with different collateral.");
+    return;
+  }
+  if (
+    collateral &&
+    !["dai", "usdc", "usdt"].includes(collateral.toLowerCase()) &&
+    (Number(network) === 10 || Number(network) === 420)
+  ) {
+    res.send("Unsupported different collateral for optimism. Supported different collaterals: DAI, USDC, USDT.");
+    return;
+  }
+
+  const ammQuote = await quotes.getAmmQuote(network, marketAddress, Number(position), Number(buyin), collateral);
+
+  return res.send(ammQuote);
 });

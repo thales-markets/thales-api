@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node overtimeProfit.js",
-    "dev": "nodemon overtimeProfit.js"
+    "start": "node overtimeApi/index.js",
+    "dev": "nodemon overtimeApi.js"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +23,7 @@
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
     "redis": "^3.0.2",
-    "thales-data": "^1.2.33",
+    "thales-data": "^1.2.58",
     "twitter-api-v2": "^1.4.1",
     "web3": "^1.5.2"
   }
