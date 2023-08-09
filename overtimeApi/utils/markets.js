@@ -171,7 +171,8 @@ const isParlayLost = (parlayMarket) =>
   parlayMarket.positions.some(
     (position) =>
       position.position !== FINAL_RESULT_TYPE_POSITION_TYPE_MAP[position.market.finalResult] &&
-      position.market.isResolved,
+      position.market.isResolved &&
+      !position.market.isCanceled,
   );
 
 const getPositionStatus = (position) =>
