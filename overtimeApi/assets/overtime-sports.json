@@ -54,6 +54,12 @@
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
+    "id": 9011,
+    "name": "EPL",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
+  },
+  {
     "id": 9012,
     "name": "France Ligue 1",
     "sport": "Soccer",
@@ -150,6 +156,12 @@
     "supportedTypes": ["moneyline", "doubleChance"]
   },
   {
+    "id": 9073,
+    "name": "UEFA Europa League Qualification",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
+  },
+  {
     "id": 9076,
     "name": "FIFA World Cup Women",
     "sport": "Soccer",
@@ -182,6 +194,12 @@
   {
     "id": 9399,
     "name": "Euroleague",
+    "sport": "Basketball",
+    "supportedTypes": ["moneyline", "spread", "total"]
+  },
+  {
+    "id": 9409,
+    "name": "FIBA World Cup",
     "sport": "Basketball",
     "supportedTypes": ["moneyline", "spread", "total"]
   },
