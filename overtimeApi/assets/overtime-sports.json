@@ -180,6 +180,12 @@
     "supportedTypes": ["moneyline", "spread", "total"]
   },
   {
+    "id": 9268,
+    "name": "Brazil Football League",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
+  },
+  {
     "id": 9288,
     "name": "UEFA EURO U21",
     "sport": "Soccer",
@@ -214,6 +220,12 @@
     "name": "Moto GP",
     "sport": "Motosport",
     "supportedTypes": ["moneyline"]
+  },
+  {
+    "id": 9536,
+    "name": "Saudi Arabia Football League",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
     "id": 18196,
