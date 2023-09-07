@@ -317,8 +317,15 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
     res.send("Unsupported status. Supported statuses: open, resolved, canceled, paused, ongoing.");
     return;
   }
-  if (type && !["moneyline", "spread", "total", "doublechance"].includes(type.toLowerCase())) {
-    res.send("Unsupported type. Supported types: moneyline, spread, total, doubleChance.");
+  if (
+    type &&
+    !["moneyline", "spread", "total", "doublechance", "passingyards", "rushingyards", "pasingtouchdowns"].includes(
+      type.toLowerCase(),
+    )
+  ) {
+    res.send(
+      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, passingYards, rushingYards, pasingTouchdowns.",
+    );
     return;
   }
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
@@ -527,7 +534,13 @@ app.get(ENDPOINTS.OVERTIME_MARKET_QUOTE, async (req, res) => {
     return;
   }
 
-  const ammQuote = await quotes.getAmmQuote(network, marketAddress.toLowerCase(), Number(position), Number(buyin), collateral);
+  const ammQuote = await quotes.getAmmQuote(
+    network,
+    marketAddress.toLowerCase(),
+    Number(position),
+    Number(buyin),
+    collateral,
+  );
 
   return res.send(ammQuote);
 });
@@ -548,7 +561,7 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
     res.send("Market addresses are required.");
     return;
   }
-  const marketsArray = markets.split(",").map(market => market.toLowerCase());
+  const marketsArray = markets.split(",").map((market) => market.toLowerCase());
   if (!Array.isArray(marketsArray)) {
     res.send("Invalid value for market addresses. The market addresses must be an array.");
     return;
@@ -557,7 +570,7 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
     res.send("Market positions are required.");
     return;
   }
-  const positionsArray = positions.split(",").map(position => Number(position));
+  const positionsArray = positions.split(",").map((position) => Number(position));
   if (!Array.isArray(positionsArray)) {
     res.send("Invalid value for market positions. The market positions must be an array.");
     return;

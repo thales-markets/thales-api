@@ -7,6 +7,7 @@ const {
   POSITION_TYPE,
   PARLAY_MAXIMUM_QUOTE,
   POSITION_NAME_TYPE_MAP,
+  PLAYER_PROPS_BET_TYPES,
 } = require("../constants/markets");
 const overtimeSportsList = require("../assets/overtime-sports.json");
 const {
@@ -16,6 +17,7 @@ const {
   ENETPULSE_SPORTS,
   TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS,
 } = require("../constants/tags");
+const { parseBytes32String } = require("ethers/lib/utils");
 
 const fixDuplicatedTeamName = (name, isEnetpulseSport) => {
   if (isEnetpulseSport) return name;
@@ -70,6 +72,8 @@ const getIsOneSideMarket = (tag) =>
 const packMarket = (market) => {
   const leagueId = Number(market.tags[0]);
   const isEnetpulseSport = ENETPULSE_SPORTS.includes(leagueId);
+  const isPlayerPropsMarket = getIsPlayerPropsMarket(market.betType);
+  const type = MARKET_TYPE[market.betType];
 
   return {
     address: market.address,
@@ -77,7 +81,7 @@ const packMarket = (market) => {
     sport: SPORTS_MAP[market.tags[0]],
     leagueId: leagueId,
     leagueName: getLeagueNameById(leagueId),
-    type: MARKET_TYPE[market.betType],
+    type: type,
     parentMarket: market.parentMarket,
     maturityDate: new Date(market.maturityDate),
     homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
@@ -93,6 +97,17 @@ const packMarket = (market) => {
     spread: Number(market.spread) / 100,
     total: Number(market.total) / 100,
     doubleChanceMarketType: market.doubleChanceMarketType,
+    isPlayerPropsMarket: isPlayerPropsMarket,
+    playerProps: isPlayerPropsMarket
+      ? {
+          playerId: Number(parseBytes32String(market.playerId)),
+          playerName: market.playerName,
+          line: market.playerPropsLine,
+          type: type,
+          outcome: market.playerPropsOutcome,
+          score: market.playerPropsScore,
+        }
+      : null,
     odds: {
       homeOdds: {
         american: formatMarketOdds(market.homeOdds, ODDS_TYPE.American),
@@ -271,6 +286,8 @@ const packParlay = (parlayMarket) => {
 
 const getIsDrawAvailable = (market) =>
   !(TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS.includes(market.leagueId) || market.type === "total" || market.type === "spread");
+
+const getIsPlayerPropsMarket = (betType) => PLAYER_PROPS_BET_TYPES.includes(betType);
 
 module.exports = {
   fixDuplicatedTeamName,

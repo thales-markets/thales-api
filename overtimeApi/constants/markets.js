@@ -3,6 +3,11 @@ const BET_TYPE = {
   Spread: 10001,
   Total: 10002,
   DoubleChance: 10003,
+  Homeruns: 11010,
+  Strikeouts: 11019,
+  PassingYards: 11051,
+  PasingTouchdowns: 11052,
+  RushingYards: 11053,
 };
 
 const MARKET_TYPE = {
@@ -10,7 +15,20 @@ const MARKET_TYPE = {
   [BET_TYPE.Spread]: "spread",
   [BET_TYPE.Total]: "total",
   [BET_TYPE.DoubleChance]: "doubleChance",
+  [BET_TYPE.Homeruns]: "homeruns",
+  [BET_TYPE.Strikeouts]: "strikeouts",
+  [BET_TYPE.PassingYards]: "passingYards",
+  [BET_TYPE.PasingTouchdowns]: "pasingTouchdowns",
+  [BET_TYPE.RushingYards]: "rushingYards",
 };
+
+const PLAYER_PROPS_BET_TYPES = [
+  BET_TYPE.Homeruns,
+  BET_TYPE.Strikeouts,
+  BET_TYPE.PassingYards,
+  BET_TYPE.PasingTouchdowns,
+  BET_TYPE.RushingYards,
+];
 
 const ODDS_TYPE = {
   American: "american-odds",
@@ -62,6 +80,7 @@ const PARLAY_CONTRACT_ERROR_MESSAGE = {
 module.exports = {
   BET_TYPE,
   MARKET_TYPE,
+  PLAYER_PROPS_BET_TYPES,
   ODDS_TYPE,
   MARKET_DURATION_IN_DAYS,
   POSITION_NAME,
