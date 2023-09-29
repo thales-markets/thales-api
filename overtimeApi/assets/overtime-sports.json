@@ -9,7 +9,17 @@
     "id": 9002,
     "name": "NFL",
     "sport": "Football",
-    "supportedTypes": ["moneyline", "spread", "total", "passingYards", "rushingYards", "pasingTouchdowns"]
+    "supportedTypes": [
+      "moneyline",
+      "spread",
+      "total",
+      "passingYards",
+      "rushingYards",
+      "pasingTouchdowns",
+      "receivingYards",
+      "scoringTouchdowns",
+      "fieldGoalsMade"
+    ]
   },
   {
     "id": 9003,

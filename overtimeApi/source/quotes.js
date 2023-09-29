@@ -137,6 +137,7 @@ async function getAmmQuote(network, marketAddress, position, usdAmount, collater
       quote = maxAvailableTokenAmount / realUsdAmount;
     }
   } catch (e) {
+    console.log("Error: could not get quote.", e);
     return "Error: could not get quote.";
   }
 

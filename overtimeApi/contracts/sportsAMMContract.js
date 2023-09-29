@@ -5,6 +5,7 @@ const sportsAMMContract = {
     [NETWORK.Optimism]: "0x170a5714112daEfF20E798B6e92e25B86Ea603C1",
     [NETWORK.OptimismGoerli]: "0x7465c5d60d3d095443CF9991Da03304A30D42Eae",
     [NETWORK.Arbitrum]: "0xae56177e405929c95E5d4b04C0C87E428cB6432B",
+    [NETWORK.Base]: "0xAFD339acf24813e8038bfdF19A8d87Eb94B4605d",
   },
   abi: [
     {

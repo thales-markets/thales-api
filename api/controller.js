@@ -90,7 +90,7 @@ app.get(ENDPOINTS.OVERTIME_REWARDS, (req, res) => {
 app.get(ENDPOINTS.PARLAY_LEADERBOARD, (req, res) => {
   const network = req.params.networkParam;
   const period = req.params.period;
-  if ([10, 420, 42161].includes(Number(network))) {
+  if ([10, 420, 8453, 42161].includes(Number(network))) {
     redisClient.get(KEYS.PARLAY_LEADERBOARD[network], function (err, obj) {
       const rewards = new Map(JSON.parse(obj));
       try {
@@ -282,7 +282,7 @@ app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
 
 app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
   const network = req.params.networkParam;
-  if ([10, 420, 42161].includes(Number(network))) {
+  if ([10, 420, 8453, 42161].includes(Number(network))) {
     redisClient.get(KEYS.OVERTIME_SPORTS[network], function (err, obj) {
       const sports = JSON.parse(obj);
       try {
@@ -292,7 +292,9 @@ app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
       }
     });
   } else {
-    res.send("Bad Network");
+    res.send(
+      "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 420 (optimism goerli).",
+    );
   }
 });
 
@@ -309,8 +311,10 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
   }
   status = status.toLowerCase();
 
-  if (![10, 420, 42161].includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+  if (![10, 420, 8453, 42161].includes(Number(network))) {
+    res.send(
+      "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 420 (optimism goerli).",
+    );
     return;
   }
   if (!["open", "resolved", "canceled", "paused", "ongoing"].includes(status)) {
@@ -319,12 +323,21 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
   }
   if (
     type &&
-    !["moneyline", "spread", "total", "doublechance", "passingyards", "rushingyards", "pasingtouchdowns"].includes(
-      type.toLowerCase(),
-    )
+    ![
+      "moneyline",
+      "spread",
+      "total",
+      "doublechance",
+      "passingyards",
+      "rushingyards",
+      "pasingtouchdowns",
+      "receivingyards",
+      "scoringtouchdowns",
+      "fieldgoalsmade",
+    ].includes(type.toLowerCase())
   ) {
     res.send(
-      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, passingYards, rushingYards, pasingTouchdowns.",
+      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, passingYards, rushingYards, pasingTouchdowns, receivingYards, scoringTouchdowns, fieldGoalsMade.",
     );
     return;
   }
@@ -391,8 +404,10 @@ app.get(ENDPOINTS.OVERTIME_MARKET, (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
 
-  if (![10, 420, 42161].includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+  if (![10, 420, 8453, 42161].includes(Number(network))) {
+    res.send(
+      "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 420 (optimism goerli).",
+    );
     return;
   }
 
@@ -423,8 +438,10 @@ app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
   const type = req.query.type;
   const status = req.query.status;
 
-  if (![10, 420, 42161].includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+  if (![10, 420, 8453, 42161].includes(Number(network))) {
+    res.send(
+      "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 420 (optimism goerli).",
+    );
     return;
   }
   if (type && !["single", "parlay"].includes(type.toLowerCase())) {
@@ -469,8 +486,10 @@ app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
   const userAddress = req.params.userAddress;
   const type = req.query.type;
 
-  if (![10, 420, 42161].includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+  if (![10, 420, 8453, 42161].includes(Number(network))) {
+    res.send(
+      "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 420 (optimism goerli).",
+    );
     return;
   }
   if (type && !["single", "parlay"].includes(type.toLowerCase())) {
@@ -501,8 +520,10 @@ app.get(ENDPOINTS.OVERTIME_MARKET_QUOTE, async (req, res) => {
   const buyin = req.query.buyin;
   const collateral = req.query.differentcollateral;
 
-  if (![10, 420, 42161].includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+  if (![10, 420, 8453, 42161].includes(Number(network))) {
+    res.send(
+      "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 420 (optimism goerli).",
+    );
     return;
   }
   if (!position) {
@@ -521,8 +542,8 @@ app.get(ENDPOINTS.OVERTIME_MARKET_QUOTE, async (req, res) => {
     res.send("Invalid value for buy-in amount. The buy-in amount must be a number greater than 0.");
     return;
   }
-  if (collateral && Number(network) === 42161) {
-    res.send("Arbitrum does not support buy with different collateral.");
+  if (collateral && (Number(network) === 42161 || Number(network) === 8453)) {
+    res.send("Arbitrum and Base do not support buying with different collateral.");
     return;
   }
   if (
@@ -535,7 +556,7 @@ app.get(ENDPOINTS.OVERTIME_MARKET_QUOTE, async (req, res) => {
   }
 
   const ammQuote = await quotes.getAmmQuote(
-    network,
+    Number(network),
     marketAddress.toLowerCase(),
     Number(position),
     Number(buyin),
@@ -552,8 +573,10 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
   const buyin = req.query.buyin;
   const collateral = req.query.differentcollateral;
 
-  if (![10, 420, 42161].includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 420 (optimism goerli).");
+  if (![10, 420, 8453, 42161].includes(Number(network))) {
+    res.send(
+      "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 420 (optimism goerli).",
+    );
     return;
   }
 
@@ -583,8 +606,8 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
     res.send("Invalid value for buy-in amount. The buy-in amount must be a number greater than 0.");
     return;
   }
-  if (collateral && Number(network) === 42161) {
-    res.send("Arbitrum does not support buy with different collateral.");
+  if (collateral && (Number(network) === 42161 || Number(network) === 8453)) {
+    res.send("Arbitrum and Base do not support buying with different collateral.");
     return;
   }
   if (
@@ -597,7 +620,7 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
   }
 
   const parlayAmmQuote = await quotes.getParlayAmmQuote(
-    network,
+    Number(network),
     marketsArray,
     positionsArray,
     Number(buyin),

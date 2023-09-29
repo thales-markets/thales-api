@@ -35,6 +35,15 @@ async function processSports() {
         await delay(10 * 1000);
 
         try {
+          console.log("process sports on base");
+          await processSportsPerNetwork(NETWORK.Base);
+        } catch (error) {
+          console.log("sports on base error: ", error);
+        }
+
+        await delay(10 * 1000);
+
+        try {
           console.log("process sports on op goerli");
           await processSportsPerNetwork(NETWORK.OptimismGoerli);
         } catch (error) {

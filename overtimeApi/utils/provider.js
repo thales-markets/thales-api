@@ -7,8 +7,13 @@ const CHAINNODES_URL = {
   [NETWORK.Arbitrum]: "https://arbitrum-one.chainnodes.org/",
 };
 
-const getProvider = (network) =>
-  new ethers.providers.JsonRpcProvider(`${CHAINNODES_URL[network]}${process.env.CHAINNODES_ID}`);
+const getProvider = (network) => {
+  return new ethers.providers.JsonRpcProvider(
+    Number(network) === NETWORK.Base
+      ? process.env.ANKR_BASE_URL
+      : `${CHAINNODES_URL[network]}${process.env.CHAINNODES_ID}`,
+  );
+};
 
 module.exports = {
   getProvider,

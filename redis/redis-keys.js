@@ -21,11 +21,13 @@ const KEYS = {
     10: "overtimeOpSports",
     420: "overtimeOpGoerliSports",
     42161: "overtimeArbSports",
+    8453: "overtimeBaseSports",
   },
   OVERTIME_MARKETS: {
     10: "overtimeOpMarkets",
     420: "overtimeOpGoerliMarkets",
     42161: "overtimeArbMarkets",
+    8453: "overtimeBaseMarkets",
   },
 };
 

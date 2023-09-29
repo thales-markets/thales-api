@@ -5,6 +5,7 @@ const parlayMarketsAMMContract = {
     [NETWORK.Optimism]: "0x82B3634C0518507D5d817bE6dAb6233ebE4D68D9",
     [NETWORK.OptimismGoerli]: "0x0ec9D8Dac2178b041f85f60E3cF13CfaA3d23e0e",
     [NETWORK.Arbitrum]: "0x2Bb7D689780e7a34dD365359bD7333ab24903268",
+    [NETWORK.Base]: "0x5625c3233b52206a5f23c5fC1Ce16F6A7e3874dd",
   },
   abi: [
     {

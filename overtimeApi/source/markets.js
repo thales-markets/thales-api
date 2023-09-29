@@ -49,6 +49,15 @@ async function processMarkets() {
         await delay(10 * 1000);
 
         try {
+          console.log("process markets on base");
+          await processMarketsPerNetwork(NETWORK.Base);
+        } catch (error) {
+          console.log("markets on base error: ", error);
+        }
+
+        await delay(10 * 1000);
+
+        try {
           console.log("process markets on op goerli");
           await processMarketsPerNetwork(NETWORK.OptimismGoerli);
         } catch (error) {

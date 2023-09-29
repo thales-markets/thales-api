@@ -8,6 +8,7 @@ const {
   PARLAY_MAXIMUM_QUOTE,
   POSITION_NAME_TYPE_MAP,
   PLAYER_PROPS_BET_TYPES,
+  ONE_SIDER_PLAYER_PROPS_BET_TYPES,
 } = require("../constants/markets");
 const overtimeSportsList = require("../assets/overtime-sports.json");
 const {
@@ -98,6 +99,7 @@ const packMarket = (market) => {
     total: Number(market.total) / 100,
     doubleChanceMarketType: market.doubleChanceMarketType,
     isPlayerPropsMarket: isPlayerPropsMarket,
+    isOneSidePlayerPropsMarket: getIsOneSidePlayerPropsMarket(market.betType),
     playerProps: isPlayerPropsMarket
       ? {
           playerId: Number(parseBytes32String(market.playerId)),
@@ -288,6 +290,8 @@ const getIsDrawAvailable = (market) =>
   !(TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS.includes(market.leagueId) || market.type === "total" || market.type === "spread");
 
 const getIsPlayerPropsMarket = (betType) => PLAYER_PROPS_BET_TYPES.includes(betType);
+
+const getIsOneSidePlayerPropsMarket = (betType) => ONE_SIDER_PLAYER_PROPS_BET_TYPES.includes(betType);
 
 module.exports = {
   fixDuplicatedTeamName,

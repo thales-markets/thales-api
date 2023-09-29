@@ -22,12 +22,16 @@ const SUPPORTED_COLLATERALS = {
   [NETWORK.Arbitrum]: {
     [COLLATERAL_KEY.USDC]: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
   },
+  [NETWORK.Base]: {
+    [COLLATERAL_KEY.USDC]: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+  },
 };
 
 const DEFAULT_NETWORK_DECIMALS = {
   [NETWORK.Optimism]: 18,
   [NETWORK.OptimismGoerli]: 18,
   [NETWORK.Arbitrum]: 6,
+  [NETWORK.Base]: 6,
 };
 
 const COLLATERAL_DECIMALS = {

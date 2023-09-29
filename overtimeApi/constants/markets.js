@@ -8,6 +8,9 @@ const BET_TYPE = {
   PassingYards: 11051,
   PasingTouchdowns: 11052,
   RushingYards: 11053,
+  ReceivingYards: 11057,
+  ScoringTouchdowns: 11055,
+  FieldGoalsMade: 11060,
 };
 
 const MARKET_TYPE = {
@@ -20,6 +23,9 @@ const MARKET_TYPE = {
   [BET_TYPE.PassingYards]: "passingYards",
   [BET_TYPE.PasingTouchdowns]: "pasingTouchdowns",
   [BET_TYPE.RushingYards]: "rushingYards",
+  [BET_TYPE.ReceivingYards]: "receivingYards",
+  [BET_TYPE.ScoringTouchdowns]: "scoringTouchdowns",
+  [BET_TYPE.FieldGoalsMade]: "fieldGoalsMade",
 };
 
 const PLAYER_PROPS_BET_TYPES = [
@@ -28,7 +34,12 @@ const PLAYER_PROPS_BET_TYPES = [
   BET_TYPE.PassingYards,
   BET_TYPE.PasingTouchdowns,
   BET_TYPE.RushingYards,
+  BET_TYPE.ReceivingYards,
+  BET_TYPE.ScoringTouchdowns,
+  BET_TYPE.FieldGoalsMade,
 ];
+
+const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [BET_TYPE.ScoringTouchdowns];
 
 const ODDS_TYPE = {
   American: "american-odds",
@@ -81,6 +92,7 @@ module.exports = {
   BET_TYPE,
   MARKET_TYPE,
   PLAYER_PROPS_BET_TYPES,
+  ONE_SIDER_PLAYER_PROPS_BET_TYPES,
   ODDS_TYPE,
   MARKET_DURATION_IN_DAYS,
   POSITION_NAME,
