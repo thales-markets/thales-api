@@ -132,6 +132,20 @@ const packMarket = (market) => {
       awayPriceImpact: market.awayPriceImpact,
       drawPriceImpact: market.drawPriceImpact,
     },
+    liquidity: {
+      homeLiquidity: {
+        positions: market.homeLiquidity,
+        usd: market.homeLiquidityUsd,
+      },
+      awayLiquidity: {
+        positions: market.awayLiquidity,
+        usd: market.awayLiquidityUsd,
+      },
+      drawLiquidity: {
+        positions: market.drawLiquidity,
+        usd: market.drawLiquidityUsd,
+      },
+    },
     bonus: {
       homeBonus: market.homeBonus,
       awayBonus: market.awayBonus,

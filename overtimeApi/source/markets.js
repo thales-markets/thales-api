@@ -19,6 +19,7 @@ const { bigNumberFormatter } = require("../utils/formatters");
 let marketsMap = new Map();
 
 const BATCH_SIZE = 100;
+const BASE_BATCH_SIZE = 50;
 
 async function processMarkets() {
   if (process.env.REDIS_URL) {
@@ -87,6 +88,7 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
 
   let oddsFromContract;
   let priceImpactFromContract;
+  let liquidityFromContract;
   if (mapOnlyOpenedMarkets) {
     try {
       const provider = getProvider(network);
@@ -101,21 +103,27 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
         provider,
       );
 
+      const batchSize = network === NETWORK.Base ? BASE_BATCH_SIZE : BATCH_SIZE;
+
       const numberOfActiveMarkets = await sportPositionalMarketManager.numActiveMarkets();
-      const numberOfBatches = Math.trunc(numberOfActiveMarkets / BATCH_SIZE) + 1;
+      const numberOfBatches = Math.trunc(numberOfActiveMarkets / batchSize) + 1;
 
       const promises = [];
       for (let i = 0; i < numberOfBatches; i++) {
-        promises.push(sportPositionalMarketData.getOddsForAllActiveMarketsInBatches(i, BATCH_SIZE));
+        promises.push(sportPositionalMarketData.getOddsForAllActiveMarketsInBatches(i, batchSize));
       }
       for (let i = 0; i < numberOfBatches; i++) {
-        promises.push(sportPositionalMarketData.getPriceImpactForAllActiveMarketsInBatches(i, BATCH_SIZE));
+        promises.push(sportPositionalMarketData.getPriceImpactForAllActiveMarketsInBatches(i, batchSize));
+      }
+      for (let i = 0; i < numberOfBatches; i++) {
+        promises.push(sportPositionalMarketData.getLiquidityForAllActiveMarketsInBatches(i, batchSize));
       }
 
       const promisesResult = await Promise.all(promises);
 
       oddsFromContract = promisesResult.slice(0, numberOfBatches).flat(1);
-      priceImpactFromContract = promisesResult.slice(numberOfBatches, numberOfBatches + numberOfBatches).flat(1);
+      priceImpactFromContract = promisesResult.slice(numberOfBatches, 2 * numberOfBatches).flat(1);
+      liquidityFromContract = promisesResult.slice(2 * numberOfBatches, 3 * numberOfBatches).flat(1);
     } catch (e) {
       console.log("Could not get oods from chain", e);
     }
@@ -148,6 +156,23 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
           market.homeBonus = convertPriceImpactToBonus(market.homePriceImpact);
           market.awayBonus = convertPriceImpactToBonus(market.awayPriceImpact);
           market.drawBonus = market.drawPriceImpact ? convertPriceImpactToBonus(market.drawPriceImpact) : undefined;
+        }
+      }
+      if (liquidityFromContract) {
+        const liquidityItem = liquidityFromContract.find(
+          (obj) => obj[0].toString().toLowerCase() === market.address.toLowerCase(),
+        );
+        if (liquidityItem) {
+          market.homeLiquidity = bigNumberFormatter(liquidityItem.liquidity[0]);
+          market.awayLiquidity = bigNumberFormatter(liquidityItem.liquidity[1]);
+          market.drawLiquidity = liquidityItem.liquidity[2]
+            ? bigNumberFormatter(liquidityItem.liquidity[2])
+            : undefined;
+          market.homeLiquidityUsd = bigNumberFormatter(liquidityItem.liquidityUsd[0]);
+          market.awayLiquidityUsd = bigNumberFormatter(liquidityItem.liquidityUsd[1]);
+          market.drawLiquidityUsd = liquidityItem.liquidity[2]
+            ? bigNumberFormatter(liquidityItem.liquidityUsd[2])
+            : undefined;
         }
       }
 
