@@ -377,7 +377,7 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
 
         const filteredMarkets = marketsByType.filter(
           (market) =>
-            (!sport || market.sport.toLowerCase() === sport.toLowerCase()) &&
+            (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
             (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
             (!type || market.type.toLowerCase() === type.toLowerCase()),
         );
