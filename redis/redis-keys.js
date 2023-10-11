@@ -15,6 +15,7 @@ const KEYS = {
     10: "overtimeOpParlayLeaderboard",
     420: "overtimeGoerliParlayLeaderboard",
     42161: "overtimeArbitrumParlayLeaderboard",
+    8453: "overtimeBaseParlayLeaderboard",
   },
   TWAP_FOR_PERIOD: "twapMap",
   OVERTIME_SPORTS: {
