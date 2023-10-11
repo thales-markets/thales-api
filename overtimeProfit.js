@@ -27,6 +27,11 @@ const VAULT_SAFU = "0x43d19841d818b2ccc63a8b44ce8c7def8616d98e";
 const TODAYS_DATE = new Date();
 const PARLAY_LEADERBOARD_BIWEEKLY_START_DATE = new Date(2023, 2, 1, 0, 0, 0);
 const PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC = new Date(Date.UTC(2023, 2, 1, 0, 0, 0));
+
+// Base leaderboard starts
+const PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_BASE = new Date(2023, 9, 11, 0, 0, 0);
+const PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC_BASE = new Date(Date.UTC(2023, 9, 11, 0, 0, 0));
+
 const PARLAY_LEADERBOARD_MAXIMUM_QUOTE = 0.01;
 const FIRST_PERIOD_SORT_BY_TOTAL_QUOTE = 6;
 const PARLAY_LEADERBOARD_MINIMUM_GAMES = 3;
@@ -72,6 +77,15 @@ if (process.env.REDIS_URL) {
         await processParlayLeaderboard(420);
       } catch (error) {
         console.log("parlay leaderboard on op goerli error: ", error);
+      }
+
+      await delay(60 * 1000);
+
+      try {
+        console.log("process parlay leaderboard on BASE Mainnet");
+        await processParlayLeaderboard(8453);
+      } catch (error) {
+        console.log("parlay leaderboard on BASE Mainnet error: ", error);
       }
 
       await delay(3 * 60 * 1000);
@@ -335,12 +349,12 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod, pe
 async function processParlayLeaderboard(network) {
   const periodMap = new Map();
 
-  const latestPeriodBiweekly = Math.ceil(differenceInDays(TODAYS_DATE, PARLAY_LEADERBOARD_BIWEEKLY_START_DATE) / 14);
+  const latestPeriodBiweekly = Math.ceil(differenceInDays(TODAYS_DATE, network == 8453 ? PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_BASE : PARLAY_LEADERBOARD_BIWEEKLY_START_DATE) / 14);
 
   for (let period = 0; period <= latestPeriodBiweekly; period++) {
-    const startPeriod = Math.trunc(addDays(PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC, period * 14).getTime() / 1000);
+    const startPeriod = Math.trunc(addDays(network == 8453 ? PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC_BASE : PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC, period * 14).getTime() / 1000);
     const endPeriod = Math.trunc(
-      subMilliseconds(addDays(PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC, (period + 1) * 14), 1).getTime() / 1000,
+      subMilliseconds(addDays(network == 8453 ? PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC_BASE : PARLAY_LEADERBOARD_BIWEEKLY_START_DATE_UTC, (period + 1) * 14), 1).getTime() / 1000,
     );
 
     const parlayMarkets = await getParlayLeaderboardForPeriod(network, startPeriod, endPeriod, period);
