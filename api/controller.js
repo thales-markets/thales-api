@@ -21,6 +21,7 @@ const { uniqBy, groupBy } = require("lodash");
 const users = require("../overtimeApi/source/users");
 const quotes = require("../overtimeApi/source/quotes");
 const { isNumeric } = require("../overtimeApi/utils/general");
+const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -283,14 +284,11 @@ app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
 app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
   const network = req.params.networkParam;
   if ([10, 420, 8453, 42161].includes(Number(network))) {
-    redisClient.get(KEYS.OVERTIME_SPORTS[network], function (err, obj) {
-      const sports = JSON.parse(obj);
-      try {
-        res.send(sports);
-      } catch (e) {
-        console.log(e);
-      }
-    });
+    try {
+      res.send(overtimeSportsList);
+    } catch (e) {
+      console.log(e);
+    }
   } else {
     res.send(
       "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 420 (optimism goerli).",
@@ -346,57 +344,55 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
     return;
   }
 
-  redisClient.get(KEYS.OVERTIME_SPORTS[network], function (_, obj) {
-    const sports = JSON.parse(obj);
-    const allLeagueIds = sports.map((sport) => Number(sport.id));
-    const allSports = uniqBy(sports.map((sport) => sport.sport.toLowerCase()));
+  const sports = overtimeSportsList;
+  const allLeagueIds = sports.map((sport) => Number(sport.id));
+  const allSports = uniqBy(sports.map((sport) => sport.sport.toLowerCase()));
 
-    if (sport && !allSports.includes(sport.toLowerCase())) {
-      res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime/sports.`);
-      return;
-    }
-    if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
-      res.send(
-        `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime/sports.`,
-      );
-      return;
-    }
+  if (sport && !allSports.includes(sport.toLowerCase())) {
+    res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime/sports.`);
+    return;
+  }
+  if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
+    res.send(
+      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime/sports.`,
+    );
+    return;
+  }
 
-    redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
-      const markets = new Map(JSON.parse(obj));
-      try {
-        const marketsByStatus = markets.get(status);
-        let marketsByType = marketsByStatus;
-        if (type) {
-          marketsByType = [];
-          marketsByStatus.forEach((market) => {
-            marketsByType.push(market);
-            marketsByType.push(...market.childMarkets);
-          });
-        }
-
-        const filteredMarkets = marketsByType.filter(
-          (market) =>
-            (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
-            (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
-            (!type || market.type.toLowerCase() === type.toLowerCase()),
-        );
-
-        if (ungroup && ungroup.toLowerCase() === "true") {
-          res.send(filteredMarkets);
-          return;
-        }
-
-        const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
-        Object.keys(groupMarkets).forEach((key) => {
-          groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
+  redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
+    const markets = new Map(JSON.parse(obj));
+    try {
+      const marketsByStatus = markets.get(status);
+      let marketsByType = marketsByStatus;
+      if (type) {
+        marketsByType = [];
+        marketsByStatus.forEach((market) => {
+          marketsByType.push(market);
+          marketsByType.push(...market.childMarkets);
         });
-
-        res.send(groupMarkets);
-      } catch (e) {
-        console.log(e);
       }
-    });
+
+      const filteredMarkets = marketsByType.filter(
+        (market) =>
+          (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
+          (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
+          (!type || market.type.toLowerCase() === type.toLowerCase()),
+      );
+
+      if (ungroup && ungroup.toLowerCase() === "true") {
+        res.send(filteredMarkets);
+        return;
+      }
+
+      const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
+      Object.keys(groupMarkets).forEach((key) => {
+        groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
+      });
+
+      res.send(groupMarkets);
+    } catch (e) {
+      console.log(e);
+    }
   });
 });
 

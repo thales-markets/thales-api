@@ -18,12 +18,6 @@ const KEYS = {
     8453: "overtimeBaseParlayLeaderboard",
   },
   TWAP_FOR_PERIOD: "twapMap",
-  OVERTIME_SPORTS: {
-    10: "overtimeOpSports",
-    420: "overtimeOpGoerliSports",
-    42161: "overtimeArbSports",
-    8453: "overtimeBaseSports",
-  },
   OVERTIME_MARKETS: {
     10: "overtimeOpMarkets",
     420: "overtimeOpGoerliMarkets",

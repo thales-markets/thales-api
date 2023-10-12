@@ -167,7 +167,7 @@
   },
   {
     "id": 9073,
-    "name": "UEFA Europa League Qualification",
+    "name": "UEFA Europa League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
@@ -275,7 +275,13 @@
   },
   {
     "id": 19216,
-    "name": "UEFA Conference League Qualification",
+    "name": "UEFA Conference League",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
+  },
+  {
+    "id": 19199,
+    "name": "CONMEBOL World Cup Qualifications",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
