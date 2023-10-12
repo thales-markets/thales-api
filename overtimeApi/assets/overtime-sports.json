@@ -25,7 +25,7 @@
     "id": 9003,
     "name": "MLB",
     "sport": "Baseball",
-    "supportedTypes": ["moneyline", "spread", "total"]
+    "supportedTypes": ["moneyline", "spread", "total", "homeruns", "strikeouts", "pitcherHitsAllowed"]
   },
   {
     "id": 9004,

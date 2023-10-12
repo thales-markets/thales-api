@@ -58,7 +58,7 @@ async function getAmmQuote(network, marketAddress, position, collateralAmount, c
   let skew = 0;
   const collateralAddress = getCollateralAddress(network, collateral);
   const collateralDecimals = getCollateralDecimals(network, collateral);
-  const defaultCollateral = getDefaultCollateral(network, collateral);
+  const defaultCollateral = getDefaultCollateral(network);
   const isDefaultCollateral = collateralAddress === defaultCollateral.address;
 
   try {
@@ -275,7 +275,7 @@ async function getParlayAmmQuote(network, markets, positions, collateralAmount, 
   let skew = 0;
   const collateralAddress = getCollateralAddress(network, collateral);
   const collateralDecimals = getCollateralDecimals(network, collateral);
-  const defaultCollateral = getDefaultCollateral(network, collateral);
+  const defaultCollateral = getDefaultCollateral(network);
   const isDefaultCollateral = collateralAddress === defaultCollateral.address;
 
   try {

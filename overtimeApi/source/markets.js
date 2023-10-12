@@ -136,7 +136,7 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
           (obj) => obj[0].toString().toLowerCase() === market.address.toLowerCase(),
         );
         if (oddsItem) {
-          const defaultCollateralDecimals = getDefaultCollateral(network, collateral).decimals;
+          const defaultCollateralDecimals = getDefaultCollateral(network).decimals;
           market.homeOdds = bigNumberFormatter(oddsItem.odds[0], defaultCollateralDecimals);
           market.awayOdds = bigNumberFormatter(oddsItem.odds[1], defaultCollateralDecimals);
           market.drawOdds = oddsItem.odds[2]

@@ -11,6 +11,7 @@ const BET_TYPE = {
   ReceivingYards: 11057,
   ScoringTouchdowns: 11055,
   FieldGoalsMade: 11060,
+  PitcherHitsAllowed: 11047,
 };
 
 const MARKET_TYPE = {
@@ -26,6 +27,7 @@ const MARKET_TYPE = {
   [BET_TYPE.ReceivingYards]: "receivingYards",
   [BET_TYPE.ScoringTouchdowns]: "scoringTouchdowns",
   [BET_TYPE.FieldGoalsMade]: "fieldGoalsMade",
+  [BET_TYPE.PitcherHitsAllowed]: "pitcherHitsAllowed",
 };
 
 const PLAYER_PROPS_BET_TYPES = [
@@ -37,6 +39,7 @@ const PLAYER_PROPS_BET_TYPES = [
   BET_TYPE.ReceivingYards,
   BET_TYPE.ScoringTouchdowns,
   BET_TYPE.FieldGoalsMade,
+  BET_TYPE.PitcherHitsAllowed,
 ];
 
 const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [BET_TYPE.ScoringTouchdowns];

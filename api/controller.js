@@ -23,6 +23,7 @@ const quotes = require("../overtimeApi/source/quotes");
 const { isNumeric } = require("../overtimeApi/utils/general");
 const { COLLATERALS } = require("../overtimeApi/constants/collaterals");
 const { getNonDefaultCollateralSymbols } = require("../overtimeApi/utils/collaterals");
+const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -342,16 +343,19 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
       "spread",
       "total",
       "doublechance",
+      "homeruns",
+      "strikeouts",
       "passingyards",
       "rushingyards",
       "pasingtouchdowns",
       "receivingyards",
       "scoringtouchdowns",
       "fieldgoalsmade",
+      "pitcherhitsallowed",
     ].includes(type.toLowerCase())
   ) {
     res.send(
-      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, passingYards, rushingYards, pasingTouchdowns, receivingYards, scoringTouchdowns, fieldGoalsMade.",
+      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, homeruns, strikeouts, passingYards, rushingYards, pasingTouchdowns, receivingYards, scoringTouchdowns, fieldGoalsMade, pitcherHitsAllowed.",
     );
     return;
   }
