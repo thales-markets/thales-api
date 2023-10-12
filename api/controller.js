@@ -558,8 +558,8 @@ app.get(ENDPOINTS.OVERTIME_MARKET_QUOTE, async (req, res) => {
     res.send("Optimism Goerli do not support buying with different collateral.");
     return;
   }
-  const supporetedCollaterals = getNonDefaultCollateralSymbols(Number(network));
 
+  const supporetedCollaterals = getNonDefaultCollateralSymbols(Number(network));
   if (
     collateral &&
     !supporetedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase()) &&
@@ -620,16 +620,18 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
     res.send("Invalid value for buy-in amount. The buy-in amount must be a number greater than 0.");
     return;
   }
-  if (collateral && (Number(network) === 42161 || Number(network) === 8453)) {
-    res.send("Arbitrum and Base do not support buying with different collateral.");
+  if (collateral && Number(network) === 420) {
+    res.send("Optimism Goerli do not support buying with different collateral.");
     return;
   }
+
+  const supporetedCollaterals = getNonDefaultCollateralSymbols(Number(network));
   if (
     collateral &&
-    !["dai", "usdc", "usdt"].includes(collateral.toLowerCase()) &&
-    (Number(network) === 10 || Number(network) === 420)
+    !supporetedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase()) &&
+    Number(network) !== 420
   ) {
-    res.send("Unsupported different collateral for optimism. Supported different collaterals: DAI, USDC, USDT.");
+    res.send(`Unsupported different collateral. Supported different collaterals: ${supporetedCollaterals.join(", ")}`);
     return;
   }
 

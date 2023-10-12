@@ -6,6 +6,7 @@ const sportsAMMContract = require("../contracts/sportsAMMContract");
 const sportsMarketContract = require("../contracts/sportsMarketContract");
 const parlayMarketDataContract = require("../contracts/parlayMarketDataContract");
 const parlayMarketsAMMContract = require("../contracts/parlayMarketsAMMContract");
+const multiCollateralOnOffRampContract = require("../contracts/multiCollateralOnOffRampContract");
 const { ethers } = require("ethers");
 const { fetchAmountOfTokensForXsUSDAmount } = require("../utils/skewCalculator");
 const { ODDS_TYPE, ZERO_ADDRESS, PARLAY_CONTRACT_ERROR_MESSAGE } = require("../constants/markets");
@@ -25,8 +26,9 @@ const {
   getPrecision,
 } = require("../utils/formatters");
 const { getSportsAMMQuoteMethod, getParlayMarketsAMMQuoteMethod } = require("../utils/amm");
-const { DEFAULT_NETWORK_DECIMALS } = require("../constants/collaterals");
+
 const MIN_TOKEN_AMOUNT = 1;
+const MIN_COLLATERAL_MULTIPLIER = 1.01;
 
 async function fetchAmmQuote(
   sportsAMM,
@@ -52,6 +54,7 @@ async function getAmmQuote(network, marketAddress, position, collateralAmount, c
   let payout = 0;
   let quote = 0;
   let realCollateralAmount = 0;
+  let realUsdAmount = 0;
   let skew = 0;
   const collateralAddress = getCollateralAddress(network, collateral);
   const collateralDecimals = getCollateralDecimals(network, collateral);
@@ -190,18 +193,64 @@ async function getAmmQuote(network, marketAddress, position, collateralAmount, c
   };
 }
 
-async function fetchParlayAmmQuote(network, parlayAMM, markets, positions, usdAmountForQuote, collateralAddress) {
+async function fetchMultiCollateralData(
+  multiCollateralOnOffRamp,
+  collateralAmount,
+  minUsdAmount,
+  collateralAddress,
+  collateralDecimals,
+  defaultCollateralDecimals,
+  isDefaultCollateral,
+) {
   try {
-    const parsedAmount = bigNumberParser(
-      roundNumberToDecimals(usdAmountForQuote).toString(),
-      DEFAULT_NETWORK_DECIMALS[network],
-    );
+    const [minimumReceivedForCollateralAmount, minimumNeededForMinUsdAmount] = await Promise.all([
+      isDefaultCollateral
+        ? 0
+        : multiCollateralOnOffRamp.getMinimumReceived(
+            collateralAddress,
+            bigNumberParser(collateralAmount.toString(), collateralDecimals),
+          ),
+      isDefaultCollateral
+        ? 0
+        : multiCollateralOnOffRamp.getMinimumNeeded(
+            collateralAddress,
+            bigNumberParser(minUsdAmount.toString(), defaultCollateralDecimals),
+          ),
+    ]);
+
+    const usdAmount = isDefaultCollateral
+      ? collateralAmount
+      : bigNumberFormatter(minimumReceivedForCollateralAmount, defaultCollateralDecimals);
+
+    const minCollateralAmount = isDefaultCollateral
+      ? minUsdAmount
+      : bigNumberFormatter(minimumNeededForMinUsdAmount, collateralDecimals) * MIN_COLLATERAL_MULTIPLIER;
+
+    return { usdAmount, minCollateralAmount };
+  } catch (e) {
+    console.log("Error: could not get multi collateral data.", e);
+    return "Error:  could not get multi collateral data.";
+  }
+}
+
+async function fetchParlayAmmQuote(
+  parlayAMM,
+  markets,
+  positions,
+  usdAmountForQuote,
+  collateralAddress,
+  defaultCollateralDecimals,
+  isDefaultCollateral,
+) {
+  try {
+    const parsedAmount = bigNumberParser(usdAmountForQuote.toString(), defaultCollateralDecimals);
     const parlayAmmQuote = await getParlayMarketsAMMQuoteMethod(
       parlayAMM,
       markets,
       positions,
       parsedAmount,
       collateralAddress,
+      isDefaultCollateral,
     );
     return parlayAmmQuote;
   } catch (e) {
@@ -218,13 +267,16 @@ async function fetchParlayAmmQuote(network, parlayAMM, markets, positions, usdAm
   }
 }
 
-async function getParlayAmmQuote(network, markets, positions, usdAmount, collateral) {
+async function getParlayAmmQuote(network, markets, positions, collateralAmount, collateral) {
   let payout = 0;
   let quote = 0;
+  let realCollateralAmount = 0;
   let realUsdAmount = 0;
   let skew = 0;
   const collateralAddress = getCollateralAddress(network, collateral);
   const collateralDecimals = getCollateralDecimals(network, collateral);
+  const defaultCollateral = getDefaultCollateral(network, collateral);
+  const isDefaultCollateral = collateralAddress === defaultCollateral.address;
 
   try {
     const today = new Date();
@@ -273,14 +325,29 @@ async function getParlayAmmQuote(network, markets, positions, usdAmount, collate
       parlayMarketsAMMContract.abi,
       provider,
     );
+    const multiCollateralOnOffRamp = new ethers.Contract(
+      multiCollateralOnOffRampContract.addresses[network],
+      multiCollateralOnOffRampContract.abi,
+      provider,
+    );
 
     const parlayAMMParameters = await parlayMarketData.getParlayAMMParameters();
-    const minUsdAmount = bigNumberFormatter(parlayAMMParameters.minUSDAmount, DEFAULT_NETWORK_DECIMALS[network]);
+    const minUsdAmount = bigNumberFormatter(parlayAMMParameters.minUSDAmount, defaultCollateral.decimals);
     const maxSupportedAmount = bigNumberFormatter(parlayAMMParameters.maxSupportedAmount);
     // const maxSupportedOdds = bigNumberFormatter(parlayAMMParameters.maxSupportedOdds);
     // const parlayAmmFee = bigNumberFormatter(parlayAMMParameters.parlayAmmFee);
     // const safeBoxImpact = bigNumberFormatter(parlayAMMParameters.safeBoxImpact);
     const parlaySize = Number(parlayAMMParameters.parlaySize);
+
+    const { usdAmount, minCollateralAmount } = await fetchMultiCollateralData(
+      multiCollateralOnOffRamp,
+      collateralAmount,
+      minUsdAmount,
+      collateralAddress,
+      collateralDecimals,
+      defaultCollateral.decimals,
+      isDefaultCollateral,
+    );
 
     if (markets.length !== positions.length) {
       return `Market addresses array and market positions array should be the same size.`;
@@ -288,17 +355,21 @@ async function getParlayAmmQuote(network, markets, positions, usdAmount, collate
     if (parlaySize < positions.length) {
       return `The maximum number of markets in parlay is ${parlaySize}.`;
     }
-    if (minUsdAmount > usdAmount) {
-      return `The minimum buy-in amount for parlay is ${minUsdAmount}.`;
+    const decimals = getPrecision(minCollateralAmount);
+    if (minCollateralAmount > collateralAmount) {
+      return `The minimum buy-in amount for parlay is ${ceilNumberToDecimals(minCollateralAmount, decimals)} ${
+        getCollateral(network, collateral).symbol
+      } ${isDefaultCollateral ? "" : ` ($ ${ceilNumberToDecimals(minUsdAmount * MIN_COLLATERAL_MULTIPLIER, 2)})`}.`;
     }
 
     const parlayAmmQuote = await fetchParlayAmmQuote(
-      network,
       parlayAMM,
       markets,
       positions,
       usdAmount,
       collateralAddress,
+      defaultCollateral.decimals,
+      isDefaultCollateral,
     );
 
     if (parlayAmmQuote.error) {
@@ -312,15 +383,17 @@ async function getParlayAmmQuote(network, markets, positions, usdAmount, collate
 
     quote = bigNumberFormatter(parlayAmmQuote["totalQuote"]);
     payout = bigNumberFormatter(parlayAmmQuote["totalBuyAmount"]);
-    realUsdAmount = collateralAddress
-      ? bigNumberFormatter(parlayAmmQuote["collateralQuote"], collateralDecimals)
-      : usdAmount;
+    realCollateralAmount = isDefaultCollateral
+      ? collateralAmount
+      : bigNumberFormatter(parlayAmmQuote["collateralQuote"], collateralDecimals);
+    realUsdAmount = usdAmount;
     skew = bigNumberFormatter(parlayAmmQuote["skewImpact"]);
 
     if (payout - realUsdAmount > maxSupportedAmount) {
       return `The maximum supported profit is ${maxSupportedAmount}.`;
     }
   } catch (e) {
+    console.log("Error: could not get quote.", e);
     return "Error: could not get quote.";
   }
 
@@ -335,7 +408,8 @@ async function getParlayAmmQuote(network, markets, positions, usdAmount, collate
       usd: payout - realUsdAmount,
       percentage: (payout - realUsdAmount) / realUsdAmount,
     },
-    actualBuyInAmount: realUsdAmount,
+    actualBuyInCollateralAmount: realCollateralAmount,
+    actualBuyInUsdAmount: realUsdAmount,
     skew,
   };
 }

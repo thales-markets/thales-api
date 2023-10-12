@@ -13,7 +13,11 @@ const getPrecision = (amount) => {
 
 const bigNumberFormatter = (value, decimals) => Number(ethers.utils.formatUnits(value, decimals ? decimals : 18));
 
-const bigNumberParser = (value, decimals) => ethers.utils.parseUnits(value, decimals ? decimals : 18);
+const bigNumberParser = (value, decimals) =>
+  ethers.utils.parseUnits(
+    floorNumberToDecimals(Number(value), decimals ? decimals : 18).toString(),
+    decimals ? decimals : 18,
+  );
 
 const ceilNumberToDecimals = (value, decimals = DEFAULT_DECIMALS) => {
   return Math.ceil(value * Math.pow(10, decimals)) / Math.pow(10, decimals);

@@ -12,9 +12,9 @@ const { convertPriceImpactToBonus, packMarket } = require("../utils/markets");
 const KEYS = require("../../redis/redis-keys");
 const { getProvider } = require("../utils/provider");
 const { NETWORK_NAME, NETWORK } = require("../constants/networks");
-const { DEFAULT_NETWORK_DECIMALS } = require("../constants/collaterals");
 const { delay } = require("../utils/general");
 const { bigNumberFormatter } = require("../utils/formatters");
+const { getDefaultCollateral } = require("../utils/collaterals");
 
 let marketsMap = new Map();
 
@@ -136,10 +136,11 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
           (obj) => obj[0].toString().toLowerCase() === market.address.toLowerCase(),
         );
         if (oddsItem) {
-          market.homeOdds = bigNumberFormatter(oddsItem.odds[0], DEFAULT_NETWORK_DECIMALS[network]);
-          market.awayOdds = bigNumberFormatter(oddsItem.odds[1], DEFAULT_NETWORK_DECIMALS[network]);
+          const defaultCollateralDecimals = getDefaultCollateral(network, collateral).decimals;
+          market.homeOdds = bigNumberFormatter(oddsItem.odds[0], defaultCollateralDecimals);
+          market.awayOdds = bigNumberFormatter(oddsItem.odds[1], defaultCollateralDecimals);
           market.drawOdds = oddsItem.odds[2]
-            ? bigNumberFormatter(oddsItem.odds[2], DEFAULT_NETWORK_DECIMALS[network])
+            ? bigNumberFormatter(oddsItem.odds[2], defaultCollateralDecimals)
             : undefined;
         }
       }

@@ -16,10 +16,22 @@ const getSportsAMMQuoteMethod = (
       );
 };
 
-const getParlayMarketsAMMQuoteMethod = (parlayMarketsAMMContract, markets, positions, usdPaid, collateralAddress) => {
-  return collateralAddress
-    ? parlayMarketsAMMContract.buyQuoteFromParlayWithDifferentCollateral(markets, positions, usdPaid, collateralAddress)
-    : parlayMarketsAMMContract.buyQuoteFromParlay(markets, positions, usdPaid);
+const getParlayMarketsAMMQuoteMethod = (
+  parlayMarketsAMMContract,
+  markets,
+  positions,
+  usdPaid,
+  collateralAddress,
+  isDefaultCollateral,
+) => {
+  return isDefaultCollateral
+    ? parlayMarketsAMMContract.buyQuoteFromParlay(markets, positions, usdPaid)
+    : parlayMarketsAMMContract.buyQuoteFromParlayWithDifferentCollateral(
+        markets,
+        positions,
+        usdPaid,
+        collateralAddress,
+      );
 };
 
 module.exports = {
