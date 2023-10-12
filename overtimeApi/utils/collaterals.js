@@ -1,12 +1,23 @@
-const { SUPPORTED_COLLATERALS, COLLATERAL_DECIMALS, DEFAULT_NETWORK_DECIMALS } = require("../constants/collaterals");
+const { COLLATERALS } = require("../constants/collaterals");
 
-const getCollateralAddress = (network, collateral) =>
-  collateral ? SUPPORTED_COLLATERALS[network][collateral.toLowerCase()] : undefined;
+const getDefaultCollateral = (network) => COLLATERALS[network].find((collateral) => collateral.default);
 
-const getCollateralDecimals = (network, collateral) =>
-  collateral ? COLLATERAL_DECIMALS[collateral.toLowerCase()] : DEFAULT_NETWORK_DECIMALS[network];
+const getNonDefaultCollateralSymbols = (network) =>
+  COLLATERALS[network].filter((collateral) => !collateral.default).map((collateral) => collateral.symbol);
+
+const getCollateral = (network, collateral) =>
+  collateral
+    ? COLLATERALS[network].find((c) => c.symbol.toLowerCase() === collateral.toLowerCase())
+    : getDefaultCollateral(network);
+
+const getCollateralAddress = (network, collateral) => getCollateral(network, collateral).address;
+
+const getCollateralDecimals = (network, collateral) => getCollateral(network, collateral).decimals;
 
 module.exports = {
+  getDefaultCollateral,
+  getNonDefaultCollateralSymbols,
+  getCollateral,
   getCollateralAddress,
   getCollateralDecimals,
 };

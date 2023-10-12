@@ -25,6 +25,7 @@ const ENDPOINTS = {
   JSON_ODDS_DATA: "/json-odds-data/:sportParameter",
 
   OVERTIME_SPORTS: "/overtime/networks/:networkParam/sports",
+  OVERTIME_COLLATERALS: "/overtime/networks/:networkParam/collaterals",
   OVERTIME_MARKETS: "/overtime/networks/:networkParam/markets",
   OVERTIME_MARKET: "/overtime/networks/:networkParam/markets/:marketAddress",
   OVERTIME_USER_POSITIONS: "/overtime/networks/:networkParam/users/:userAddress/positions",

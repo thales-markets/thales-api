@@ -1,6 +1,12 @@
+const collateralsOp = require("../assets/collaterals-op.json");
+const collateralsOpGoerli = require("../assets/collaterals-op-goerli.json");
+const collateralsArb = require("../assets/collaterals-arb.json");
+const collateralsBase = require("../assets/collaterals-base.json");
 const { NETWORK } = require("./networks");
 
 const DEFAULT_DECIMALS = 2;
+const SHORT_DECIMALS = 4;
+const LONG_DECIMALS = 8;
 
 const COLLATERAL_KEY = {
   sUSD: "susd",
@@ -9,22 +15,11 @@ const COLLATERAL_KEY = {
   USDT: "usdt",
 };
 
-const SUPPORTED_COLLATERALS = {
-  [NETWORK.Optimism]: {
-    [COLLATERAL_KEY.sUSD]: "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
-    [COLLATERAL_KEY.DAI]: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
-    [COLLATERAL_KEY.USDC]: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
-    [COLLATERAL_KEY.USDT]: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
-  },
-  [NETWORK.OptimismGoerli]: {
-    [COLLATERAL_KEY.sUSD]: "0xE1ceaa829525a08C1d39A5CEBe4b42aF58d77198",
-  },
-  [NETWORK.Arbitrum]: {
-    [COLLATERAL_KEY.USDC]: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
-  },
-  [NETWORK.Base]: {
-    [COLLATERAL_KEY.USDC]: "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
-  },
+const COLLATERALS = {
+  [NETWORK.Optimism]: collateralsOp,
+  [NETWORK.OptimismGoerli]: collateralsOpGoerli,
+  [NETWORK.Arbitrum]: collateralsArb,
+  [NETWORK.Base]: collateralsBase,
 };
 
 const DEFAULT_NETWORK_DECIMALS = {
@@ -43,7 +38,9 @@ const COLLATERAL_DECIMALS = {
 
 module.exports = {
   DEFAULT_DECIMALS,
+  SHORT_DECIMALS,
+  LONG_DECIMALS,
   DEFAULT_NETWORK_DECIMALS,
-  SUPPORTED_COLLATERALS,
+  COLLATERALS,
   COLLATERAL_DECIMALS,
 };

@@ -1,0 +1,9 @@
+[
+  {
+    "symbol": "eUSD",
+    "name": "Exotic USD Token",
+    "address": "0xE1ceaa829525a08C1d39A5CEBe4b42aF58d77198",
+    "decimals": 18,
+    "default": true
+  }
+]

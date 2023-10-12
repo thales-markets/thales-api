@@ -1,0 +1,51 @@
+[
+  {
+    "symbol": "sUSD",
+    "name": "Synth sUSD",
+    "address": "0x8c6f28f2f1a3c87f0f938b96d27520d9751ec8d9",
+    "decimals": 18,
+    "default": true
+  },
+  {
+    "symbol": "DAI",
+    "name": "Dai Stablecoin",
+    "address": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+    "decimals": 18,
+    "default": false
+  },
+  {
+    "symbol": "USDC",
+    "name": "USD Coin",
+    "address": "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+    "decimals": 6,
+    "default": false
+  },
+  {
+    "symbol": "USDT",
+    "name": "Tether USD",
+    "address": "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+    "decimals": 6,
+    "default": false
+  },
+  {
+    "symbol": "OP",
+    "name": "Optimism",
+    "address": "0x4200000000000000000000000000000000000042",
+    "decimals": 18,
+    "default": false
+  },
+  {
+    "symbol": "WETH",
+    "name": "Wrapped Ether",
+    "address": "0x4200000000000000000000000000000000000006",
+    "decimals": 18,
+    "default": false
+  },
+  {
+    "symbol": "ETH",
+    "name": "Ethereum",
+    "address": "0x4200000000000000000000000000000000000006",
+    "decimals": 18,
+    "default": false
+  }
+]

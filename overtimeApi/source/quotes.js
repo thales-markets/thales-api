@@ -10,30 +10,53 @@ const { ethers } = require("ethers");
 const { fetchAmountOfTokensForXsUSDAmount } = require("../utils/skewCalculator");
 const { ODDS_TYPE, ZERO_ADDRESS, PARLAY_CONTRACT_ERROR_MESSAGE } = require("../constants/markets");
 const thalesData = require("thales-data");
-const { getCollateralDecimals, getCollateralAddress } = require("../utils/collaterals");
+const {
+  getCollateralDecimals,
+  getCollateralAddress,
+  getCollateral,
+  getDefaultCollateral,
+} = require("../utils/collaterals");
 const {
   bigNumberFormatter,
   floorNumberToDecimals,
   roundNumberToDecimals,
+  ceilNumberToDecimals,
   bigNumberParser,
+  getPrecision,
 } = require("../utils/formatters");
 const { getSportsAMMQuoteMethod, getParlayMarketsAMMQuoteMethod } = require("../utils/amm");
 const { DEFAULT_NETWORK_DECIMALS } = require("../constants/collaterals");
-const { forEach } = require("lodash");
+const MIN_TOKEN_AMOUNT = 1;
 
-async function fetchAmmQuote(sportsAMM, marketAddress, position, amountForQuote, collateralAddress) {
+async function fetchAmmQuote(
+  sportsAMM,
+  marketAddress,
+  position,
+  amountForQuote,
+  collateralAddress,
+  isDefaultCollateral,
+) {
   const parsedAmount = bigNumberParser(roundNumberToDecimals(amountForQuote).toString());
-  const ammQuote = await getSportsAMMQuoteMethod(sportsAMM, marketAddress, position, parsedAmount, collateralAddress);
-  return collateralAddress ? ammQuote[0] : ammQuote;
+  const ammQuote = await getSportsAMMQuoteMethod(
+    sportsAMM,
+    marketAddress,
+    position,
+    parsedAmount,
+    collateralAddress,
+    isDefaultCollateral,
+  );
+  return isDefaultCollateral ? ammQuote : ammQuote[0];
 }
 
-async function getAmmQuote(network, marketAddress, position, usdAmount, collateral) {
+async function getAmmQuote(network, marketAddress, position, collateralAmount, collateral) {
   let payout = 0;
   let quote = 0;
-  let realUsdAmount = 0;
+  let realCollateralAmount = 0;
   let skew = 0;
   const collateralAddress = getCollateralAddress(network, collateral);
   const collateralDecimals = getCollateralDecimals(network, collateral);
+  const defaultCollateral = getDefaultCollateral(network, collateral);
+  const isDefaultCollateral = collateralAddress === defaultCollateral.address;
 
   try {
     const today = new Date();
@@ -67,37 +90,42 @@ async function getAmmQuote(network, marketAddress, position, usdAmount, collater
     const sportsAMM = new ethers.Contract(sportsAMMContract.addresses[network], sportsAMMContract.abi, provider);
     const marketContract = new ethers.Contract(marketAddress, sportsMarketContract.abi, provider);
 
-    const parsedBaseAmount = bigNumberParser("1");
+    const parsedMinAmount = bigNumberParser(MIN_TOKEN_AMOUNT.toString());
     let positionDetails = await sportPositionalMarketData.getPositionDetails(
       marketAddress,
       position,
-      parsedBaseAmount,
-      collateralAddress || ZERO_ADDRESS,
+      parsedMinAmount,
+      isDefaultCollateral ? ZERO_ADDRESS : collateralAddress,
     );
 
-    const baseOdds = bigNumberFormatter(
-      collateralAddress ? positionDetails.quoteDifferentCollateral : positionDetails.quote,
+    const collateralToSpendForMinAmount = bigNumberFormatter(
+      isDefaultCollateral ? positionDetails.quote : positionDetails.quoteDifferentCollateral,
       collateralDecimals,
     );
-    if (baseOdds > usdAmount) {
-      return `The minimum buy-in amount is ${baseOdds}.`;
+    const usdToSpendForMinAmount = bigNumberFormatter(positionDetails.quote, defaultCollateral.decimals);
+
+    const decimals = getPrecision(collateralToSpendForMinAmount);
+    if (collateralToSpendForMinAmount > collateralAmount) {
+      return `The minimum buy-in amount is ${ceilNumberToDecimals(collateralToSpendForMinAmount, decimals)} ${
+        getCollateral(network, collateral).symbol
+      } ${isDefaultCollateral ? "" : ` ($ ${ceilNumberToDecimals(usdToSpendForMinAmount, 2)})`}.`;
     }
     const liquidity = bigNumberFormatter(positionDetails.liquidity);
 
     const flooredMaxAmount = floorNumberToDecimals(liquidity);
     if (flooredMaxAmount) {
-      const [sUSDToSpendForMaxAmount, ammBalances] = await Promise.all([
-        fetchAmmQuote(sportsAMM, marketAddress, position, flooredMaxAmount, collateralAddress),
+      const [collateralToSpendForMaxAmountQuote, ammBalances] = await Promise.all([
+        fetchAmmQuote(sportsAMM, marketAddress, position, flooredMaxAmount, collateralAddress, isDefaultCollateral),
         marketContract.balancesOf(sportsAMM.address),
       ]);
 
-      const maxsUSDToSpend = bigNumberFormatter(sUSDToSpendForMaxAmount, collateralDecimals);
+      const collateralToSpendForMaxAmount = bigNumberFormatter(collateralToSpendForMaxAmountQuote, collateralDecimals);
       const ammBalanceForSelectedPosition = bigNumberFormatter(ammBalances[position], collateralDecimals);
       const amountOfTokens =
         fetchAmountOfTokensForXsUSDAmount(
-          usdAmount,
-          baseOdds,
-          maxsUSDToSpend,
+          collateralAmount,
+          collateralToSpendForMinAmount,
+          collateralToSpendForMaxAmount,
           liquidity,
           ammBalanceForSelectedPosition,
         ) || 0;
@@ -112,10 +140,13 @@ async function getAmmQuote(network, marketAddress, position, usdAmount, collater
         position,
         flooredAmountOfTokens,
         collateralAddress,
+        isDefaultCollateral,
       );
       const parsedRecalculatedQuote = bigNumberFormatter(recalculatedQuote, collateralDecimals);
 
-      const recalculatedTokenAmount = roundNumberToDecimals((amountOfTokens * usdAmount) / parsedRecalculatedQuote);
+      const recalculatedTokenAmount = roundNumberToDecimals(
+        (amountOfTokens * collateralAmount) / parsedRecalculatedQuote,
+      );
 
       const maxAvailableTokenAmount =
         recalculatedTokenAmount > flooredAmountOfTokens ? flooredAmountOfTokens : recalculatedTokenAmount;
@@ -126,15 +157,16 @@ async function getAmmQuote(network, marketAddress, position, usdAmount, collater
         marketAddress,
         position,
         parsedPayout,
-        collateralAddress || ZERO_ADDRESS,
+        isDefaultCollateral ? ZERO_ADDRESS : collateralAddress,
       );
 
-      realUsdAmount = bigNumberFormatter(
-        collateralAddress ? positionDetails.quoteDifferentCollateral : positionDetails.quote,
+      realCollateralAmount = bigNumberFormatter(
+        isDefaultCollateral ? positionDetails.quote : positionDetails.quoteDifferentCollateral,
         collateralDecimals,
       );
+      realUsdAmount = bigNumberFormatter(positionDetails.quote, defaultCollateral.decimals);
       skew = bigNumberFormatter(positionDetails.priceImpact);
-      quote = maxAvailableTokenAmount / realUsdAmount;
+      quote = payout / realUsdAmount;
     }
   } catch (e) {
     console.log("Error: could not get quote.", e);
@@ -152,7 +184,8 @@ async function getAmmQuote(network, marketAddress, position, usdAmount, collater
       usd: payout - realUsdAmount,
       percentage: (payout - realUsdAmount) / realUsdAmount,
     },
-    actualBuyInAmount: realUsdAmount,
+    actualBuyInCollateralAmount: realCollateralAmount,
+    actualBuyInUsdAmount: realUsdAmount,
     skew,
   };
 }

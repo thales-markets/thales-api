@@ -21,7 +21,8 @@ const { uniqBy, groupBy } = require("lodash");
 const users = require("../overtimeApi/source/users");
 const quotes = require("../overtimeApi/source/quotes");
 const { isNumeric } = require("../overtimeApi/utils/general");
-const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json");
+const { COLLATERALS } = require("../overtimeApi/constants/collaterals");
+const { getNonDefaultCollateralSymbols } = require("../overtimeApi/utils/collaterals");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -296,6 +297,21 @@ app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.OVERTIME_COLLATERALS, (req, res) => {
+  const network = req.params.networkParam;
+  if ([10, 420, 8453, 42161].includes(Number(network))) {
+    try {
+      res.send(COLLATERALS[Number(network)]);
+    } catch (e) {
+      console.log(e);
+    }
+  } else {
+    res.send(
+      "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 420 (optimism goerli).",
+    );
+  }
+});
+
 app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
   const network = req.params.networkParam;
   let status = req.query.status;
@@ -538,16 +554,18 @@ app.get(ENDPOINTS.OVERTIME_MARKET_QUOTE, async (req, res) => {
     res.send("Invalid value for buy-in amount. The buy-in amount must be a number greater than 0.");
     return;
   }
-  if (collateral && (Number(network) === 42161 || Number(network) === 8453)) {
-    res.send("Arbitrum and Base do not support buying with different collateral.");
+  if (collateral && Number(network) === 420) {
+    res.send("Optimism Goerli do not support buying with different collateral.");
     return;
   }
+  const supporetedCollaterals = getNonDefaultCollateralSymbols(Number(network));
+
   if (
     collateral &&
-    !["dai", "usdc", "usdt"].includes(collateral.toLowerCase()) &&
-    (Number(network) === 10 || Number(network) === 420)
+    !supporetedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase()) &&
+    Number(network) !== 420
   ) {
-    res.send("Unsupported different collateral for optimism. Supported different collaterals: DAI, USDC, USDT.");
+    res.send(`Unsupported different collateral. Supported different collaterals: ${supporetedCollaterals.join(", ")}`);
     return;
   }
 
