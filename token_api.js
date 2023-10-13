@@ -1,4 +1,3 @@
-const DAO_TREASURY_AMOUNT = 18000000;
 const THALES_L1_ADDRESS = "0x8947da500eb47f82df21143d0c01a29862a8c3c5";
 const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 const MAX_SUPPLY = 100000000;
@@ -121,8 +120,7 @@ function getCirculatingSupply() {
     var weeks = Math.round(dif / 604800000);
     const period = weeks + 1;
 
-    const circulatingSupply = circulatingSupplyList[period] - DAO_TREASURY_AMOUNT;
-    return circulatingSupply;
+    return circulatingSupplyList[period];
   } catch (e) {
     console.log(e);
   }
