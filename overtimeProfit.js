@@ -18,6 +18,7 @@ const {
 const util = require("util");
 const { subMilliseconds, differenceInDays, addDays } = require("date-fns");
 const { uniqBy } = require("lodash");
+const { NETWORK } = require("./overtimeApi/constants/networks");
 
 const PARLAY_CONTRACT = "0x82b3634c0518507d5d817be6dab6233ebe4d68d9";
 const VAULT_DISCOUNT = "0xc922f4cde42dd658a7d3ea852caf7eae47f6cecd";
@@ -312,7 +313,7 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod, pe
       };
     });
 
-  if (period < FIRST_PERIOD_SORT_BY_TOTAL_QUOTE) {
+  if (period < FIRST_PERIOD_SORT_BY_TOTAL_QUOTE && network !== NETWORK.Base) {
     parlayMarketsModified = parlayMarketsModified.sort((a, b) =>
       a.numberOfPositions !== b.numberOfPositions
         ? b.numberOfPositions - a.numberOfPositions
