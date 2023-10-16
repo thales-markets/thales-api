@@ -49,7 +49,7 @@ async function processUserSinglePositions(network, walletAddress) {
     if (position.isOpen) {
       data.open.push(position);
     } else if (position.isClaimable) {
-      position.claimableAmount = position.isCanceled ? getCanceledGameClaimableAmount(position) : position.amount;
+      position.claimablePayout = position.isCanceled ? getCanceledGameClaimableAmount(position) : position.payout;
       data.claimable.push(position);
     } else {
       data.closed.push(position);

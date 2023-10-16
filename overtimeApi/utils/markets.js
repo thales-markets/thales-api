@@ -166,11 +166,11 @@ const isMarketExpired = (maturityDate) => {
 const getCanceledGameClaimableAmount = (position) => {
   switch (position.position) {
     case POSITION_TYPE.Home:
-      return position.market.homeOdds * position.amount;
+      return position.market.odds.homeOdds.normalizedImplied * position.payout;
     case POSITION_TYPE.Away:
-      return position.market.awayOdds * position.amount;
+      return position.market.odds.awayOdds.normalizedImplied * position.payout;
     case POSITION_TYPE.Draw:
-      return position.market.drawOdds ? position.market.drawOdds * position.amount : 0;
+      return position.market.odds.drawOdds.normalizedImplied * position.payout;
     default:
       return 0;
   }
