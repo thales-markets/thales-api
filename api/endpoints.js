@@ -32,6 +32,7 @@ const ENDPOINTS = {
   OVERTIME_USER_TRANSACTIONS: "/overtime/networks/:networkParam/users/:userAddress/transactions",
   OVERTIME_MARKET_QUOTE: "/overtime/networks/:networkParam/markets/:marketAddress/quote",
   OVERTIME_PARLAY_QUOTE: "/overtime/networks/:networkParam/parlay/quote",
+  THALES_MARKETS: "/thales/networks/:networkParam/markets",
 };
 
 module.exports = ENDPOINTS;

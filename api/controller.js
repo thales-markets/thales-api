@@ -649,3 +649,16 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
 
   return res.send(parlayAmmQuote);
 });
+
+app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
+  const network = req.params.networkParam;
+
+  redisClient.get(KEYS.THALES_MARKETS[network], function (err, obj) {
+    const markets = JSON.parse(obj);
+    try {
+      res.send(markets);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});

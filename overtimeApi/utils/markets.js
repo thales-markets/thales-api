@@ -40,7 +40,7 @@ const fixDuplicatedTeamName = (name, isEnetpulseSport) => {
   return name;
 };
 
-const convertPriceImpactToBonus = (priceImpact) => (priceImpact < 0 ? -((priceImpact / (1 + priceImpact)) * 100) : 0);
+const convertPriceImpactToBonus = (priceImpact) => (priceImpact < 0 ? -(priceImpact / (1 + priceImpact)) : 0);
 
 const formatMarketOdds = (odds, oddsType) => {
   if (!odds || odds === null) {

@@ -5,6 +5,7 @@ docker build -f Dockerfile.rewards -t thalesmarket/rewards  .
 docker build -f Dockerfile.overtimerewards -t thalesmarket/overtime  .
 docker build -f Dockerfile.rewardsV2 -t thalesmarket/rewardsv2  .
 docker build -f Dockerfile.overtimeAPI -t thalesmarket/overtime-api  .
+docker build -f Dockerfile.thalesAPI -t thalesmarket/thales-api  .
 
 ###### PUSH IMAGES TO GIT ######
 docker push thalesmarket/api
@@ -13,6 +14,7 @@ docker push thalesmarket/rewards
 docker push thalesmarket/overtime
 docker push thalesmarket/rewardsv2
 docker push thalesmarket/overtime-api
+docker push thalesmarket/thales-api
 
 ###### RUN SERVER LOCALLY ######
 docker-compose -f docker-compose-dev.yml up
@@ -42,6 +44,10 @@ docker-compose up -d overtime
 docker-compose pull overtime-api
 docker-compose stop overtime-api
 docker-compose up -d overtime-api
+
+docker-compose pull thales-api
+docker-compose stop thales-api
+docker-compose up -d thales-api
 
 ### OPEN REDIS CLI ON SERVER ###
 - Access SERVER
