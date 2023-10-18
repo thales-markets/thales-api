@@ -60,8 +60,32 @@ const CRYPTO_CURRENCY = [
 // Order is important, used for sorting
 const COMMODITY = ["XAU", "XAG"];
 
+const POSITION_TYPE = {
+  Up: 0,
+  Down: 1,
+};
+
+const POSITION_NAME = {
+  Up: "UP",
+  Down: "DOWN",
+};
+
+const RANGED_POSITION_TYPE = {
+  In: 0,
+  Out: 1,
+};
+
+const RANGED_POSITION_NAME = {
+  In: "IN",
+  Out: "OUT",
+};
+
 module.exports = {
   ZERO_ADDRESS,
   CRYPTO_CURRENCY,
   COMMODITY,
+  POSITION_TYPE,
+  POSITION_NAME,
+  RANGED_POSITION_TYPE,
+  RANGED_POSITION_NAME,
 };
