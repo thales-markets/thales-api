@@ -652,11 +652,57 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
 
 app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
   const network = req.params.networkParam;
+  let asset = req.query.asset;
+  let maturityDate = req.query.maturitydate;
+  let position = req.query.position;
+  let withBonus = req.query.withbonus;
+  let ungroup = req.query.ungroup;
+
+  if (![10, 137, 8453, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
+    return;
+  }
+  if (position && !["up", "down", "in", "out"].includes(position)) {
+    res.send("Unsupported position. Supported positions: UP, DOWN, IN, OUT.");
+    return;
+  }
+  if (withBonus && !["true", "false"].includes(withBonus.toLowerCase())) {
+    res.send("Invalid value for withBonus. Possible values: true or false.");
+    return;
+  }
+  if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
+    res.send("Invalid value for ungroup. Possible values: true or false.");
+    return;
+  }
 
   redisClient.get(KEYS.THALES_MARKETS[network], function (err, obj) {
     const markets = JSON.parse(obj);
     try {
-      res.send(markets);
+      const filteredMarkets = markets.filter(
+        (market) =>
+          (!asset || market.asset.toLowerCase() === asset.toLowerCase()) &&
+          (!maturityDate || market.maturityDate.startsWith(maturityDate)) &&
+          (!position || market.position.toLowerCase() === position.toLowerCase()) &&
+          (!withBonus || (withBonus.toLowerCase() === "true" && market.bonus > 0)),
+      );
+
+      if (ungroup && ungroup.toLowerCase() === "true") {
+        res.send(filteredMarkets);
+        return;
+      }
+
+      const groupMarkets = groupBy(filteredMarkets, (market) => market.asset);
+      Object.keys(groupMarkets).forEach((assetKey) => {
+        groupMarkets[assetKey] = groupBy(groupMarkets[assetKey], (market) => market.maturityDate);
+        Object.keys(groupMarkets[assetKey]).forEach((maturityDateKey) => {
+          groupMarkets[assetKey][maturityDateKey] = groupBy(
+            groupMarkets[assetKey][maturityDateKey],
+            (market) => market.position,
+          );
+        });
+      });
+
+      res.send(groupMarkets);
     } catch (e) {
       console.log(e);
     }

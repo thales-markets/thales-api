@@ -163,7 +163,8 @@ async function processMarketsPerNetwork(network) {
       .map((data) => parseBytes32String(data))
       .sort((a, b) => getCurrencyPriority(a) - getCurrencyPriority(b));
 
-    const marketsMap = {};
+    const allMarkets = [];
+
     // getMaturityDates for each asset
     numberOfContractCalls += assets.length;
 
@@ -190,7 +191,6 @@ async function processMarketsPerNetwork(network) {
       numberOfContractCalls += 3 * filteredMaturityDates.length;
 
       console.log(`${NETWORK_NAME[network]}: Getting all markets info for ${assets[i]}...`);
-      const maturityDatesMap = {};
       const marketsAddressesPromises = [];
       const rangedMarketsPromises = [];
       for (let j = 0; j < filteredMaturityDates.length; j++) {
@@ -284,41 +284,22 @@ async function processMarketsPerNetwork(network) {
         const marketsInfoOut = marketsInfoOutPromisesResult.slice(startIndex, numberOfRangedMarketsBatches[j]).flat(1);
 
         const maturityDate = new Date(filteredMaturityDates[j] * 1000).toISOString();
-        maturityDatesMap[maturityDate] = {
-          [POSITION_NAME.Up]: mapMarketsInfo(marketsInfoUp, POSITION_TYPE.Up, false, assets[i], maturityDate, network),
-          [POSITION_NAME.Down]: mapMarketsInfo(
-            marketsInfoDown,
-            POSITION_TYPE.Down,
-            false,
-            assets[i],
-            maturityDate,
-            network,
-          ),
-          [RANGED_POSITION_NAME.In]: mapMarketsInfo(
-            marketsInfoIn,
-            RANGED_POSITION_TYPE.In,
-            true,
-            assets[i],
-            maturityDate,
-            network,
-          ),
-          [RANGED_POSITION_NAME.Out]: mapMarketsInfo(
-            marketsInfoOut,
-            RANGED_POSITION_TYPE.Out,
-            true,
-            assets[i],
-            maturityDate,
-            network,
-          ),
-        };
+        allMarkets.push(...mapMarketsInfo(marketsInfoUp, POSITION_TYPE.Up, false, assets[i], maturityDate, network));
+        allMarkets.push(
+          ...mapMarketsInfo(marketsInfoDown, POSITION_TYPE.Down, false, assets[i], maturityDate, network),
+        );
+        allMarkets.push(
+          ...mapMarketsInfo(marketsInfoIn, RANGED_POSITION_TYPE.In, true, assets[i], maturityDate, network),
+        );
+        allMarkets.push(
+          ...mapMarketsInfo(marketsInfoOut, RANGED_POSITION_TYPE.Out, true, assets[i], maturityDate, network),
+        );
       }
-
-      marketsMap[assets[i]] = maturityDatesMap;
     }
 
     console.log(`${NETWORK_NAME[network]}: Number of contract calls is ${numberOfContractCalls}.`);
 
-    redisClient.set(KEYS.THALES_MARKETS[network], JSON.stringify(marketsMap), function () {});
+    redisClient.set(KEYS.THALES_MARKETS[network], JSON.stringify(allMarkets), function () {});
   } catch (e) {
     console.log("Error: could not process markets.", e);
   }
