@@ -21,7 +21,8 @@ const { uniqBy, groupBy } = require("lodash");
 const users = require("../overtimeApi/source/users");
 const quotes = require("../overtimeApi/source/quotes");
 const { isNumeric } = require("../overtimeApi/utils/general");
-const { COLLATERALS } = require("../overtimeApi/constants/collaterals");
+const { COLLATERALS: OVERTIME_COLLATERALS } = require("../overtimeApi/constants/collaterals");
+const { COLLATERALS: THALES_COLLATERALS } = require("../thalesApi/constants/collaterals");
 const { getNonDefaultCollateralSymbols } = require("../overtimeApi/utils/collaterals");
 const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json");
 
@@ -302,7 +303,7 @@ app.get(ENDPOINTS.OVERTIME_COLLATERALS, (req, res) => {
   const network = req.params.networkParam;
   if ([10, 420, 8453, 42161].includes(Number(network))) {
     try {
-      res.send(COLLATERALS[Number(network)]);
+      res.send(OVERTIME_COLLATERALS[Number(network)]);
     } catch (e) {
       console.log(e);
     }
@@ -648,6 +649,19 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
   );
 
   return res.send(parlayAmmQuote);
+});
+
+app.get(ENDPOINTS.THALES_COLLATERALS, (req, res) => {
+  const network = req.params.networkParam;
+  if ([10, 137, 8453, 42161].includes(Number(network))) {
+    try {
+      res.send(THALES_COLLATERALS[Number(network)]);
+    } catch (e) {
+      console.log(e);
+    }
+  } else {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
+  }
 });
 
 app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {

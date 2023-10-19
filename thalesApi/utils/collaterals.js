@@ -1,10 +1,7 @@
-const { NETWORK } = require("../constants/networks");
+const { COLLATERALS } = require("../constants/collaterals");
 
-const getDefaultDecimalsForNetwork = (network) => {
-  if ([NETWORK.Arbitrum, NETWORK.Polygon, NETWORK.Base].includes(network)) return 6;
-  return 18;
-};
+const getDefaultCollateral = (network) => COLLATERALS[network].find((collateral) => collateral.default);
 
 module.exports = {
-  getDefaultDecimalsForNetwork,
+  getDefaultCollateral,
 };

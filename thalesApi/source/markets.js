@@ -19,7 +19,7 @@ const {
   POSITION_TYPE_NAME_MAP,
 } = require("../constants/markets");
 const { bigNumberFormatter } = require("../utils/formatters");
-const { getDefaultDecimalsForNetwork } = require("../utils/collaterals");
+const { getDefaultCollateral } = require("../utils/collaterals");
 const KEYS = require("../../redis/redis-keys");
 const { getCurrencyPriority, convertPriceImpactToBonus, calculatRoi } = require("../utils/markets");
 const thalesData = require("thales-data");
@@ -82,7 +82,7 @@ const mapMarketsInfo = (marketsInfo, positionType, isRanged, asset, maturityDate
   const mappedMarketsInfo = filteredMarketsInfo.map((marketInfo) => {
     const discount = bigNumberFormatter(marketInfo.priceImpact);
 
-    const price = bigNumberFormatter(marketInfo.price, getDefaultDecimalsForNetwork(network));
+    const price = bigNumberFormatter(marketInfo.price, getDefaultCollateral(network).decimals);
     const priceWithoutDiscount = (1 - discount) * price;
 
     const roi = calculatRoi(price);
