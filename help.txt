@@ -45,9 +45,9 @@ docker-compose pull overtime-api
 docker-compose stop overtime-api
 docker-compose up -d overtime-api
 
-docker-compose pull thales-api
-docker-compose stop thales-api
-docker-compose up -d thales-api
+docker-compose pull thales-markets-api
+docker-compose stop thales-markets-api
+docker-compose up -d thales-markets-api
 
 ### OPEN REDIS CLI ON SERVER ###
 - Access SERVER

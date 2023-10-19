@@ -15,6 +15,8 @@ const {
   POSITION_NAME,
   RANGED_POSITION_TYPE,
   RANGED_POSITION_NAME,
+  RANGED_POSITION_TYPE_NAME_MAP,
+  POSITION_TYPE_NAME_MAP,
 } = require("../constants/markets");
 const { bigNumberFormatter } = require("../utils/formatters");
 const { getDefaultDecimalsForNetwork } = require("../utils/collaterals");
@@ -66,13 +68,13 @@ async function processMarkets() {
           console.log("markets on base error: ", error);
         }
 
-        await delay(60 * 1000);
+        await delay(2 * 60 * 1000);
       }
     }, 3000);
   }
 }
 
-const mapMarketsInfo = (marketsInfo, positionType, isRanged, asset, network) => {
+const mapMarketsInfo = (marketsInfo, positionType, isRanged, asset, maturityDate, network) => {
   const filteredMarketsInfo = marketsInfo.filter(
     (marketInfo) => bigNumberFormatter(marketInfo.liquidity) !== 0 && bigNumberFormatter(marketInfo.price) !== 0,
   );
@@ -86,9 +88,22 @@ const mapMarketsInfo = (marketsInfo, positionType, isRanged, asset, network) => 
     const roi = calculatRoi(price);
     const roiWithoutDiscount = calculatRoi(priceWithoutDiscount);
 
-    const mappedMarketInfo = {
+    let mappedMarketInfo = {
       address: marketInfo.market,
       asset: asset,
+      maturityDate: maturityDate,
+      position: isRanged ? RANGED_POSITION_TYPE_NAME_MAP[positionType] : POSITION_TYPE_NAME_MAP[positionType],
+    };
+
+    if (isRanged) {
+      mappedMarketInfo.leftPrice = bigNumberFormatter(marketInfo.leftPrice);
+      mappedMarketInfo.rightPrice = bigNumberFormatter(marketInfo.rightPrice);
+    } else {
+      mappedMarketInfo.strikePrice = bigNumberFormatter(marketInfo.strikePrice);
+    }
+
+    mappedMarketInfo = {
+      ...mappedMarketInfo,
       price: price,
       bonus: convertPriceImpactToBonus(discount),
       roi: {
@@ -99,13 +114,6 @@ const mapMarketsInfo = (marketsInfo, positionType, isRanged, asset, network) => 
       liquidity: bigNumberFormatter(marketInfo.liquidity),
       skewImpact: discount,
     };
-
-    if (isRanged) {
-      mappedMarketInfo.leftPrice = bigNumberFormatter(marketInfo.leftPrice);
-      mappedMarketInfo.rightPrice = bigNumberFormatter(marketInfo.rightPrice);
-    } else {
-      mappedMarketInfo.strikePrice = bigNumberFormatter(marketInfo.strikePrice);
-    }
 
     return mappedMarketInfo;
   });
@@ -145,6 +153,7 @@ async function processMarketsPerNetwork(network) {
       provider,
     );
 
+    // 1 for getAvailableAssets
     let numberOfContractCalls = 1;
 
     console.log(`${NETWORK_NAME[network]}: Getting all available assets...`);
@@ -155,6 +164,7 @@ async function processMarketsPerNetwork(network) {
       .sort((a, b) => getCurrencyPriority(a) - getCurrencyPriority(b));
 
     const marketsMap = {};
+    // getMaturityDates for each asset
     numberOfContractCalls += assets.length;
 
     console.log(`${NETWORK_NAME[network]}: Getting all available maturity dates...`);
@@ -167,25 +177,31 @@ async function processMarketsPerNetwork(network) {
     for (let i = 0; i < assets.length; i++) {
       const maturityDates = maturityDatesPromisesResult[i];
 
+      // filter markets 24h before maturity
       const today = new Date();
       const tomorrow = Math.round(new Date(new Date().setDate(today.getDate() + 1)).getTime() / 1000);
       const filteredMaturityDates = uniq(
         maturityDates.map((date) => Number(date)).filter((date) => date > 0 && date > tomorrow),
       ).sort((a, b) => a - b);
 
-      const maturityDatesMap = {};
-      numberOfContractCalls += 5 * filteredMaturityDates.length;
+      // getMarketsForAssetAndStrikeDate for each maturity date
+      // getActiveMarketsInfoPerPosition UP for each maturity date
+      // getActiveMarketsInfoPerPosition DOWN for each maturity date
+      numberOfContractCalls += 3 * filteredMaturityDates.length;
 
       console.log(`${NETWORK_NAME[network]}: Getting all markets info for ${assets[i]}...`);
+      const maturityDatesMap = {};
       const marketsAddressesPromises = [];
       const rangedMarketsPromises = [];
       for (let j = 0; j < filteredMaturityDates.length; j++) {
+        // get marketes
         marketsAddressesPromises.push(
           positionalMarketData.getMarketsForAssetAndStrikeDate(
             formatBytes32String(assets[i]),
             filteredMaturityDates[j],
           ),
         );
+        // get ranged marketes
         rangedMarketsPromises.push(
           thalesData.binaryOptions.rangedMarkets({
             max: Infinity,
@@ -203,10 +219,10 @@ async function processMarketsPerNetwork(network) {
       const marketsInfoDownPromises = [];
       const marketsInfoInPromises = [];
       const marketsInfoOutPromises = [];
+      const numberOfRangedMarketsBatches = [];
       for (let j = 0; j < filteredMaturityDates.length; j++) {
         const marketsAddresses = marketsAddressesPromisesResult[j];
         const filteredMarketsAddresses = marketsAddresses.filter((value) => value !== ZERO_ADDRESS);
-        const rangedMarketsAddresses = rangedMarketsPromisesResult[j].map((market) => market.address);
 
         marketsInfoUpPromises.push(
           positionalMarketData.getActiveMarketsInfoPerPosition(filteredMarketsAddresses, POSITION_TYPE.Up),
@@ -214,13 +230,38 @@ async function processMarketsPerNetwork(network) {
         marketsInfoDownPromises.push(
           positionalMarketData.getActiveMarketsInfoPerPosition(filteredMarketsAddresses, POSITION_TYPE.Down),
         );
-        marketsInfoInPromises.push(
-          positionalMarketData.getRangedActiveMarketsInfoPerPosition(rangedMarketsAddresses, RANGED_POSITION_TYPE.In),
-        );
-        marketsInfoOutPromises.push(
-          positionalMarketData.getRangedActiveMarketsInfoPerPosition(rangedMarketsAddresses, RANGED_POSITION_TYPE.Out),
-        );
+
+        const rangedMarketsAddresses = rangedMarketsPromisesResult[j].map((market) => market.address);
+
+        // contract call fails for more than 50 markets on most RPCs (Ankr and Blast), create batches for ranged markets
+        const batchSize = process.env.BATCH_SIZE;
+        const numberOfBatches = Math.trunc(rangedMarketsAddresses.length / batchSize) + 1;
+        numberOfRangedMarketsBatches[j] = numberOfBatches;
+
+        // console.log(
+        //   `${NETWORK_NAME[network]}: numberOfMarketsAddresses ${filteredMarketsAddresses.length}, numberOfRangedMarketsAddresses ${rangedMarketsAddresses.length}, batchSize: ${batchSize}, numberOfBatches: ${numberOfBatches}.`,
+        // );
+
+        for (let i = 0; i < numberOfBatches; i++) {
+          marketsInfoInPromises.push(
+            positionalMarketData.getRangedActiveMarketsInfoPerPosition(
+              rangedMarketsAddresses.slice(i * batchSize, batchSize),
+              RANGED_POSITION_TYPE.In,
+            ),
+          );
+          marketsInfoOutPromises.push(
+            positionalMarketData.getRangedActiveMarketsInfoPerPosition(
+              rangedMarketsAddresses.slice(i * batchSize, batchSize),
+              RANGED_POSITION_TYPE.Out,
+            ),
+          );
+        }
       }
+
+      // getRangedActiveMarketsInfoPerPosition IN for each maturity date
+      numberOfContractCalls += marketsInfoInPromises.length;
+      // getRangedActiveMarketsInfoPerPosition OUT for each maturity date
+      numberOfContractCalls += marketsInfoOutPromises.length;
 
       const marketsInfoUpPromisesResult = await Promise.all(marketsInfoUpPromises);
       const marketsInfoDownPromisesResult = await Promise.all(marketsInfoDownPromises);
@@ -230,19 +271,43 @@ async function processMarketsPerNetwork(network) {
       for (let j = 0; j < filteredMaturityDates.length; j++) {
         const marketsInfoUp = marketsInfoUpPromisesResult[j];
         const marketsInfoDown = marketsInfoDownPromisesResult[j];
-        const marketsInfoIn = marketsInfoInPromisesResult[j];
-        const marketsInfoOut = marketsInfoOutPromisesResult[j];
+
+        // get startIndex in promises result for maturity date based on number of batches
+        let startIndex = 0;
+        for (let k = 0; k < j; k++) {
+          startIndex += numberOfRangedMarketsBatches[k];
+        }
+        // console.log(`${NETWORK_NAME[network]}: startIndex ${startIndex} for j: ${j}.`);
+
+        // get marketsInfo from promises result and flat (merge) arrays
+        const marketsInfoIn = marketsInfoInPromisesResult.slice(startIndex, numberOfRangedMarketsBatches[j]).flat(1);
+        const marketsInfoOut = marketsInfoOutPromisesResult.slice(startIndex, numberOfRangedMarketsBatches[j]).flat(1);
 
         const maturityDate = new Date(filteredMaturityDates[j] * 1000).toISOString();
         maturityDatesMap[maturityDate] = {
-          [POSITION_NAME.Up]: mapMarketsInfo(marketsInfoUp, POSITION_TYPE.Up, false, assets[i], network),
-          [POSITION_NAME.Down]: mapMarketsInfo(marketsInfoDown, POSITION_TYPE.Down, false, assets[i], network),
-          [RANGED_POSITION_NAME.In]: mapMarketsInfo(marketsInfoIn, RANGED_POSITION_TYPE.In, true, assets[i], network),
+          [POSITION_NAME.Up]: mapMarketsInfo(marketsInfoUp, POSITION_TYPE.Up, false, assets[i], maturityDate, network),
+          [POSITION_NAME.Down]: mapMarketsInfo(
+            marketsInfoDown,
+            POSITION_TYPE.Down,
+            false,
+            assets[i],
+            maturityDate,
+            network,
+          ),
+          [RANGED_POSITION_NAME.In]: mapMarketsInfo(
+            marketsInfoIn,
+            RANGED_POSITION_TYPE.In,
+            true,
+            assets[i],
+            maturityDate,
+            network,
+          ),
           [RANGED_POSITION_NAME.Out]: mapMarketsInfo(
             marketsInfoOut,
             RANGED_POSITION_TYPE.Out,
             true,
             assets[i],
+            maturityDate,
             network,
           ),
         };
