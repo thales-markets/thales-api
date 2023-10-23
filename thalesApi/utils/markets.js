@@ -1,4 +1,4 @@
-const { CRYPTO_CURRENCY, COMMODITY } = require("../constants/markets");
+const { CRYPTO_CURRENCY, COMMODITY, RANGED_POSITION_NAME } = require("../constants/markets");
 
 const getCurrencyPriority = (currency) => {
   const currencyPriority = CRYPTO_CURRENCY.indexOf(currency);
@@ -10,8 +10,11 @@ const convertPriceImpactToBonus = (priceImpact) => (priceImpact < 0 ? -(priceImp
 
 const calculatRoi = (price) => (1 - price) / price;
 
+const isRangedPosition = (position) => [RANGED_POSITION_NAME.In, RANGED_POSITION_NAME.Out].includes(position);
+
 module.exports = {
   getCurrencyPriority,
   convertPriceImpactToBonus,
   calculatRoi,
+  isRangedPosition,
 };

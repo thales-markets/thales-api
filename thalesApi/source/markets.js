@@ -74,7 +74,7 @@ async function processMarkets() {
   }
 }
 
-const mapMarketsInfo = (marketsInfo, positionType, isRanged, asset, maturityDate, network) => {
+const mapMarketsInfo = (marketsInfo, positionType, isRangedMarket, asset, maturityDate, network) => {
   const filteredMarketsInfo = marketsInfo.filter(
     (marketInfo) => bigNumberFormatter(marketInfo.liquidity) !== 0 && bigNumberFormatter(marketInfo.price) !== 0,
   );
@@ -92,10 +92,10 @@ const mapMarketsInfo = (marketsInfo, positionType, isRanged, asset, maturityDate
       address: marketInfo.market,
       asset: asset,
       maturityDate: maturityDate,
-      position: isRanged ? RANGED_POSITION_TYPE_NAME_MAP[positionType] : POSITION_TYPE_NAME_MAP[positionType],
+      position: isRangedMarket ? RANGED_POSITION_TYPE_NAME_MAP[positionType] : POSITION_TYPE_NAME_MAP[positionType],
     };
 
-    if (isRanged) {
+    if (isRangedMarket) {
       mappedMarketInfo.leftPrice = bigNumberFormatter(marketInfo.leftPrice);
       mappedMarketInfo.rightPrice = bigNumberFormatter(marketInfo.rightPrice);
     } else {
@@ -120,7 +120,7 @@ const mapMarketsInfo = (marketsInfo, positionType, isRanged, asset, maturityDate
 
   let finalData = mappedMarketsInfo;
 
-  if (isRanged) {
+  if (isRangedMarket) {
     finalData = finalData.sort((a, b) => b.leftPrice - a.leftPrice);
   } else {
     const dataToFilter = mappedMarketsInfo.sort((a, b) =>

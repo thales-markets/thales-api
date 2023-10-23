@@ -18,7 +18,7 @@ const getAmmQuoteAndPriceImpactMethods = (
     promises.push(
       isBuy
         ? ammContract.buyPriceImpact(marketAddress, position, parsedAmount)
-        : ammContract.getPriceImpact(marketAddress, position, parsedAmount),
+        : ammContract.sellPriceImpact(marketAddress, position, parsedAmount),
     );
   } else {
     promises.push(

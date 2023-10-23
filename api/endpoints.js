@@ -34,6 +34,9 @@ const ENDPOINTS = {
   OVERTIME_PARLAY_QUOTE: "/overtime/networks/:networkParam/parlay/quote",
   THALES_COLLATERALS: "/thales/networks/:networkParam/collaterals",
   THALES_MARKETS: "/thales/networks/:networkParam/markets",
+  THALES_MARKET: "/thales/networks/:networkParam/markets/:marketAddress",
+  THALES_MARKET_BUY_QUOTE: "/thales/networks/:networkParam/markets/:marketAddress/buy-quote",
+  THALES_MARKET_SELL_QUOTE: "/thales/networks/:networkParam/markets/:marketAddress/sell-quote",
 };
 
 module.exports = ENDPOINTS;

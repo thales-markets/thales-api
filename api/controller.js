@@ -19,12 +19,19 @@ const KEYS = require("../redis/redis-keys");
 const { uniqBy, groupBy } = require("lodash");
 
 const users = require("../overtimeApi/source/users");
-const quotes = require("../overtimeApi/source/quotes");
-const { isNumeric } = require("../overtimeApi/utils/general");
+const overtimeQuotes = require("../overtimeApi/source/quotes");
+const thalesQuotes = require("../thalesApi/source/quotes");
 const { COLLATERALS: OVERTIME_COLLATERALS } = require("../overtimeApi/constants/collaterals");
 const { COLLATERALS: THALES_COLLATERALS } = require("../thalesApi/constants/collaterals");
-const { getNonDefaultCollateralSymbols } = require("../overtimeApi/utils/collaterals");
+const {
+  getNonDefaultCollateralSymbols: getNonDefaultCollateralSymbolsOvertime,
+} = require("../overtimeApi/utils/collaterals");
+const {
+  getNonDefaultCollateralSymbols: getNonDefaultCollateralSymbolsThales,
+} = require("../thalesApi/utils/collaterals");
 const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json");
+const { isRangedPosition } = require("../thalesApi/utils/markets");
+const { isNumeric } = require("../services/utils");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -564,17 +571,17 @@ app.get(ENDPOINTS.OVERTIME_MARKET_QUOTE, async (req, res) => {
     return;
   }
 
-  const supporetedCollaterals = getNonDefaultCollateralSymbols(Number(network));
+  const supportedCollaterals = getNonDefaultCollateralSymbolsOvertime(Number(network));
   if (
     collateral &&
-    !supporetedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase()) &&
+    !supportedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase()) &&
     Number(network) !== 420
   ) {
-    res.send(`Unsupported different collateral. Supported different collaterals: ${supporetedCollaterals.join(", ")}`);
+    res.send(`Unsupported different collateral. Supported different collaterals: ${supportedCollaterals.join(", ")}`);
     return;
   }
 
-  const ammQuote = await quotes.getAmmQuote(
+  const ammQuote = await overtimeQuotes.getAmmQuote(
     Number(network),
     marketAddress.toLowerCase(),
     Number(position),
@@ -630,17 +637,17 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
     return;
   }
 
-  const supporetedCollaterals = getNonDefaultCollateralSymbols(Number(network));
+  const supportedCollaterals = getNonDefaultCollateralSymbolsThales(Number(network));
   if (
     collateral &&
-    !supporetedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase()) &&
+    !supportedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase()) &&
     Number(network) !== 420
   ) {
-    res.send(`Unsupported different collateral. Supported different collaterals: ${supporetedCollaterals.join(", ")}`);
+    res.send(`Unsupported different collateral. Supported different collaterals: ${supportedCollaterals.join(", ")}`);
     return;
   }
 
-  const parlayAmmQuote = await quotes.getParlayAmmQuote(
+  const parlayAmmQuote = await overtimeQuotes.getParlayAmmQuote(
     Number(network),
     marketsArray,
     positionsArray,
@@ -717,6 +724,176 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
       });
 
       res.send(groupMarkets);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.THALES_MARKET, (req, res) => {
+  const network = req.params.networkParam;
+  const marketAddress = req.params.marketAddress;
+
+  if (![10, 137, 8453, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
+    return;
+  }
+
+  redisClient.get(KEYS.THALES_MARKETS[network], function (err, obj) {
+    const markets = JSON.parse(obj);
+    try {
+      const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
+      return res.send(market || `Market with address ${marketAddress} not found or not open.`);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.THALES_MARKET_BUY_QUOTE, async (req, res) => {
+  const network = req.params.networkParam;
+  const marketAddress = req.params.marketAddress;
+  const position = req.query.position;
+  const buyin = req.query.buyin;
+  const collateral = req.query.differentcollateral;
+
+  if (![10, 137, 8453, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
+    return;
+  }
+  if (!position) {
+    res.send("Market position is required.");
+    return;
+  }
+  if (!isNumeric(position)) {
+    res.send("Invalid value for market position. The market position must be a number.");
+    return;
+  }
+  if (!buyin) {
+    res.send("Buy-in amount is required.");
+    return;
+  }
+  if (!isNumeric(buyin) || Number(buyin) === 0) {
+    res.send("Invalid value for buy-in amount. The buy-in amount must be a number greater than 0.");
+    return;
+  }
+  if (collateral && Number(network) !== 10) {
+    res.send("Polygon, Arbitrum and Base do not support buying with different collateral.");
+    return;
+  }
+
+  const supportedCollaterals = getNonDefaultCollateralSymbolsThales(Number(network));
+  if (
+    collateral &&
+    !supportedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase()) &&
+    Number(network) === 10
+  ) {
+    res.send(`Unsupported different collateral. Supported different collaterals: ${supportedCollaterals.join(", ")}`);
+    return;
+  }
+
+  redisClient.get(KEYS.THALES_MARKETS[network], async function (err, obj) {
+    const markets = JSON.parse(obj);
+    try {
+      const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
+
+      if (!market) {
+        res.send(`Market with address ${marketAddress} not found or not open.`);
+        return;
+      }
+
+      const isRangedMarket = isRangedPosition(market.position);
+
+      if (![0, 1].includes(Number(position))) {
+        res.send(
+          `Unsupported position for market with address ${marketAddress}. Supported positions: 0 (${
+            isRangedMarket ? "IN" : "UP"
+          }) or 1 (${isRangedMarket ? "OUT" : "DOWN"}).`,
+        );
+        return;
+      }
+
+      const ammQuote = await thalesQuotes.getAmmQuote(
+        Number(network),
+        marketAddress.toLowerCase(),
+        Number(position),
+        Number(buyin),
+        collateral,
+        isRangedMarket,
+        true,
+      );
+
+      return res.send(ammQuote);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.THALES_MARKET_SELL_QUOTE, async (req, res) => {
+  const network = req.params.networkParam;
+  const marketAddress = req.params.marketAddress;
+  const position = req.query.position;
+  const sellAmount = req.query.sellamount;
+  const collateral = req.query.differentcollateral;
+
+  if (![10, 137, 8453, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
+    return;
+  }
+  if (!position) {
+    res.send("Market position is required.");
+    return;
+  }
+  if (!isNumeric(position)) {
+    res.send("Invalid value for market position. The market position must be a number.");
+    return;
+  }
+  if (!sellAmount) {
+    res.send("Sell amount is required.");
+    return;
+  }
+  if (!isNumeric(sellAmount) || Number(sellAmount) === 0) {
+    res.send("Invalid value for sell amount. The sell amount must be a number greater than 0.");
+    return;
+  }
+  if (collateral) {
+    res.send("Sell in different collateral is not supported.");
+    return;
+  }
+
+  redisClient.get(KEYS.THALES_MARKETS[network], async function (err, obj) {
+    const markets = JSON.parse(obj);
+    try {
+      const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
+
+      if (!market) {
+        res.send(`Market with address ${marketAddress} not found or not open.`);
+        return;
+      }
+
+      const isRangedMarket = isRangedPosition(market.position);
+
+      if (![0, 1].includes(Number(position))) {
+        res.send(
+          `Unsupported position for market with address ${marketAddress}. Supported positions: 0 (${
+            isRangedMarket ? "IN" : "UP"
+          }) or 1 (${isRangedMarket ? "OUT" : "DOWN"}).`,
+        );
+        return;
+      }
+
+      const ammQuote = await thalesQuotes.getAmmQuote(
+        Number(network),
+        marketAddress.toLowerCase(),
+        Number(position),
+        Number(sellAmount),
+        undefined,
+        isRangedMarket,
+        false,
+      );
+
+      return res.send(ammQuote);
     } catch (e) {
       console.log(e);
     }
