@@ -194,14 +194,14 @@ async function processMarketsPerNetwork(network) {
       const marketsAddressesPromises = [];
       const rangedMarketsPromises = [];
       for (let j = 0; j < filteredMaturityDates.length; j++) {
-        // get marketes
+        // get markets
         marketsAddressesPromises.push(
           positionalMarketData.getMarketsForAssetAndStrikeDate(
             formatBytes32String(assets[i]),
             filteredMaturityDates[j],
           ),
         );
-        // get ranged marketes
+        // get ranged markets
         rangedMarketsPromises.push(
           thalesData.binaryOptions.rangedMarkets({
             max: Infinity,
@@ -245,13 +245,13 @@ async function processMarketsPerNetwork(network) {
         for (let i = 0; i < numberOfBatches; i++) {
           marketsInfoInPromises.push(
             positionalMarketData.getRangedActiveMarketsInfoPerPosition(
-              rangedMarketsAddresses.slice(i * batchSize, batchSize),
+              rangedMarketsAddresses.slice(i * batchSize, (i + 1) * batchSize),
               RANGED_POSITION_TYPE.In,
             ),
           );
           marketsInfoOutPromises.push(
             positionalMarketData.getRangedActiveMarketsInfoPerPosition(
-              rangedMarketsAddresses.slice(i * batchSize, batchSize),
+              rangedMarketsAddresses.slice(i * batchSize, (i + 1) * batchSize),
               RANGED_POSITION_TYPE.Out,
             ),
           );
@@ -280,8 +280,12 @@ async function processMarketsPerNetwork(network) {
         // console.log(`${NETWORK_NAME[network]}: startIndex ${startIndex} for j: ${j}.`);
 
         // get marketsInfo from promises result and flat (merge) arrays
-        const marketsInfoIn = marketsInfoInPromisesResult.slice(startIndex, numberOfRangedMarketsBatches[j]).flat(1);
-        const marketsInfoOut = marketsInfoOutPromisesResult.slice(startIndex, numberOfRangedMarketsBatches[j]).flat(1);
+        const marketsInfoIn = marketsInfoInPromisesResult
+          .slice(startIndex, startIndex + numberOfRangedMarketsBatches[j])
+          .flat(1);
+        const marketsInfoOut = marketsInfoOutPromisesResult
+          .slice(startIndex, startIndex + numberOfRangedMarketsBatches[j])
+          .flat(1);
 
         const maturityDate = new Date(filteredMaturityDates[j] * 1000).toISOString();
         allMarkets.push(...mapMarketsInfo(marketsInfoUp, POSITION_TYPE.Up, false, assets[i], maturityDate, network));

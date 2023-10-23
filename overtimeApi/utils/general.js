@@ -5,5 +5,4 @@ const delay = (time) =>
 
 module.exports = {
   delay,
-  isNumeric,
 };

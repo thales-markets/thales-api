@@ -85,30 +85,30 @@ async function getAmmMarketData(
         : 0,
     ]);
 
-    ammMaxLimits.in.buyPrice = bigNumberFormatter(rangedAmmMarketData.inBuyPrice, defaultCollateralDecimals);
-    ammMaxLimits.out.buyPrice = bigNumberFormatter(rangedAmmMarketData.outBuyPrice, defaultCollateralDecimals);
-    ammMaxLimits.in.maxBuyPrice = bigNumberFormatter(maxBuyInPrice, defaultCollateralDecimals);
-    ammMaxLimits.out.maxBuyPrice = bigNumberFormatter(maxBuyOutPrice, defaultCollateralDecimals);
-    ammMaxLimits.in.sellPrice = bigNumberFormatter(rangedAmmMarketData.inSellPrice, defaultCollateralDecimals);
-    ammMaxLimits.out.sellPrice = bigNumberFormatter(rangedAmmMarketData.outSellPrice, defaultCollateralDecimals);
-    ammMaxLimits.in.maxBuy =
-      ammMaxLimits.in.buyPrice !== 0
+    rangedAmmMaxLimits.in.buyPrice = bigNumberFormatter(rangedAmmMarketData.inBuyPrice, defaultCollateralDecimals);
+    rangedAmmMaxLimits.out.buyPrice = bigNumberFormatter(rangedAmmMarketData.outBuyPrice, defaultCollateralDecimals);
+    rangedAmmMaxLimits.in.maxBuyPrice = bigNumberFormatter(maxBuyInPrice, defaultCollateralDecimals);
+    rangedAmmMaxLimits.out.maxBuyPrice = bigNumberFormatter(maxBuyOutPrice, defaultCollateralDecimals);
+    rangedAmmMaxLimits.in.sellPrice = bigNumberFormatter(rangedAmmMarketData.inSellPrice, defaultCollateralDecimals);
+    rangedAmmMaxLimits.out.sellPrice = bigNumberFormatter(rangedAmmMarketData.outSellPrice, defaultCollateralDecimals);
+    rangedAmmMaxLimits.in.maxBuy =
+      rangedAmmMaxLimits.in.buyPrice !== 0
         ? bigNumberFormatter(rangedAmmMarketData.inBuyLiquidity) * AMM_MAX_BUFFER_PERCENTAGE
         : 0;
-    ammMaxLimits.in.maxSell =
-      ammMaxLimits.in.sellPrice !== 0
+    rangedAmmMaxLimits.in.maxSell =
+      rangedAmmMaxLimits.in.sellPrice !== 0
         ? bigNumberFormatter(rangedAmmMarketData.inSellLiquidity) * AMM_MAX_BUFFER_PERCENTAGE
         : 0;
-    ammMaxLimits.out.maxBuy =
-      ammMaxLimits.out.buyPrice !== 0
+    rangedAmmMaxLimits.out.maxBuy =
+      rangedAmmMaxLimits.out.buyPrice !== 0
         ? bigNumberFormatter(rangedAmmMarketData.outBuyLiquidity) * AMM_MAX_BUFFER_PERCENTAGE
         : 0;
-    ammMaxLimits.out.maxSell =
-      ammMaxLimits.out.sellPrice !== 0
+    rangedAmmMaxLimits.out.maxSell =
+      rangedAmmMaxLimits.out.sellPrice !== 0
         ? bigNumberFormatter(rangedAmmMarketData.outSellLiquidity) * AMM_MAX_BUFFER_PERCENTAGE
         : 0;
-    ammMaxLimits.in.priceImpact = bigNumberFormatter(rangedAmmMarketData.inPriceImpact);
-    ammMaxLimits.out.priceImpact = bigNumberFormatter(rangedAmmMarketData.outPriceImpact);
+    rangedAmmMaxLimits.in.priceImpact = bigNumberFormatter(rangedAmmMarketData.inPriceImpact);
+    rangedAmmMaxLimits.out.priceImpact = bigNumberFormatter(rangedAmmMarketData.outPriceImpact);
 
     if (position === RANGED_POSITION_TYPE.In) {
       liquidity = isBuy ? rangedAmmMaxLimits.in.maxBuy : rangedAmmMaxLimits.in.maxSell;
