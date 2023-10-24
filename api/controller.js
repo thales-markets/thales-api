@@ -675,20 +675,36 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
   const network = req.params.networkParam;
   let asset = req.query.asset;
   let maturityDate = req.query.maturitydate;
-  let position = req.query.position;
-  let withBonus = req.query.withbonus;
+  let positions = req.query.positions;
+  let onlyWithBonus = req.query.onlywithbonus;
   let ungroup = req.query.ungroup;
 
   if (![10, 137, 8453, 42161].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
     return;
   }
-  if (position && !["up", "down", "in", "out"].includes(position)) {
-    res.send("Unsupported position. Supported positions: UP, DOWN, IN, OUT.");
-    return;
+  let positionsArray = [];
+  if (positions) {
+    positionsArray = positions.split(",").map((position) => position.toLowerCase());
+    if (!Array.isArray(positionsArray)) {
+      res.send("Invalid value for market positions. The market positions must be an array.");
+      return;
+    }
+    let isUnsupportedPosition = false;
+    positionsArray.every((position) => {
+      if (position && !["up", "down", "in", "out"].includes(position)) {
+        isUnsupportedPosition = true;
+        return false;
+      }
+      return true;
+    });
+    if (isUnsupportedPosition) {
+      res.send("Unsupported position. Supported positions: UP, DOWN, IN, OUT.");
+      return;
+    }
   }
-  if (withBonus && !["true", "false"].includes(withBonus.toLowerCase())) {
-    res.send("Invalid value for withBonus. Possible values: true or false.");
+  if (onlyWithBonus && !["true", "false"].includes(onlyWithBonus.toLowerCase())) {
+    res.send("Invalid value for onlyWithBonus. Possible values: true or false.");
     return;
   }
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
@@ -703,8 +719,8 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
         (market) =>
           (!asset || market.asset.toLowerCase() === asset.toLowerCase()) &&
           (!maturityDate || market.maturityDate.startsWith(maturityDate)) &&
-          (!position || market.position.toLowerCase() === position.toLowerCase()) &&
-          (!withBonus || (withBonus.toLowerCase() === "true" && market.bonus > 0)),
+          (!positions || positionsArray.includes(market.position.toLowerCase())) &&
+          (!onlyWithBonus || (onlyWithBonus.toLowerCase() === "true" && market.bonus > 0)),
       );
 
       if (ungroup && ungroup.toLowerCase() === "true") {
