@@ -18,7 +18,8 @@ const sigUtil = require("eth-sig-util");
 const KEYS = require("../redis/redis-keys");
 const { uniqBy, groupBy } = require("lodash");
 
-const users = require("../overtimeApi/source/users");
+const overtimeUsers = require("../overtimeApi/source/users");
+const thalesUsers = require("../thalesApi/source/users");
 const overtimeQuotes = require("../overtimeApi/source/quotes");
 const thalesQuotes = require("../thalesApi/source/quotes");
 const { COLLATERALS: OVERTIME_COLLATERALS } = require("../overtimeApi/constants/collaterals");
@@ -478,8 +479,8 @@ app.get(ENDPOINTS.OVERTIME_USER_POSITIONS, async (req, res) => {
   }
 
   const [userSinglePositions, userParlayPositions] = await Promise.all([
-    users.processUserSinglePositions(network, userAddress.toLowerCase()),
-    users.processUserParlayPositions(network, userAddress.toLowerCase()),
+    overtimeUsers.processUserSinglePositions(network, userAddress.toLowerCase()),
+    overtimeUsers.processUserParlayPositions(network, userAddress.toLowerCase()),
   ]);
 
   const positions = {};
@@ -522,8 +523,8 @@ app.get(ENDPOINTS.OVERTIME_USER_TRANSACTIONS, async (req, res) => {
   }
 
   const [userSingleTransactions, userParlayTransactions] = await Promise.all([
-    users.processUserSingleTransactions(network, userAddress.toLowerCase()),
-    users.processUserParlayTransactions(network, userAddress.toLowerCase()),
+    overtimeUsers.processUserSingleTransactions(network, userAddress.toLowerCase()),
+    overtimeUsers.processUserParlayTransactions(network, userAddress.toLowerCase()),
   ]);
 
   const transactions = {};
@@ -914,4 +915,18 @@ app.get(ENDPOINTS.THALES_MARKET_SELL_QUOTE, async (req, res) => {
       console.log(e);
     }
   });
+});
+
+app.get(ENDPOINTS.THALES_USER_TRANSACTIONS, async (req, res) => {
+  const network = req.params.networkParam;
+  const userAddress = req.params.userAddress;
+
+  if (![10, 137, 8453, 42161].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
+    return;
+  }
+
+  const userTransactions = await thalesUsers.processUserTransactions(network, userAddress.toLowerCase());
+
+  return res.send(userTransactions);
 });
