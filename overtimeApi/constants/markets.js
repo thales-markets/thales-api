@@ -12,6 +12,12 @@ const BET_TYPE = {
   ScoringTouchdowns: 11055,
   FieldGoalsMade: 11060,
   PitcherHitsAllowed: 11047,
+  Points: 11029,
+  Shots: 11037,
+  Goals: 11086,
+  HitsRecorded: 11012,
+  Rebounds: 11035,
+  Assists: 11039,
 };
 
 const MARKET_TYPE = {
@@ -28,6 +34,12 @@ const MARKET_TYPE = {
   [BET_TYPE.ScoringTouchdowns]: "scoringTouchdowns",
   [BET_TYPE.FieldGoalsMade]: "fieldGoalsMade",
   [BET_TYPE.PitcherHitsAllowed]: "pitcherHitsAllowed",
+  [BET_TYPE.Points]: "points",
+  [BET_TYPE.Shots]: "shots",
+  [BET_TYPE.Goals]: "goals",
+  [BET_TYPE.HitsRecorded]: "hitsRecorded",
+  [BET_TYPE.Rebounds]: "rebounds",
+  [BET_TYPE.Assists]: "assists",
 };
 
 const PLAYER_PROPS_BET_TYPES = [
@@ -40,9 +52,15 @@ const PLAYER_PROPS_BET_TYPES = [
   BET_TYPE.ScoringTouchdowns,
   BET_TYPE.FieldGoalsMade,
   BET_TYPE.PitcherHitsAllowed,
+  BET_TYPE.Points,
+  BET_TYPE.Shots,
+  BET_TYPE.Goals,
+  BET_TYPE.HitsRecorded,
+  BET_TYPE.Rebounds,
+  BET_TYPE.Assists,
 ];
 
-const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [BET_TYPE.ScoringTouchdowns];
+const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [BET_TYPE.ScoringTouchdowns, BET_TYPE.Goals];
 
 const ODDS_TYPE = {
   American: "american-odds",

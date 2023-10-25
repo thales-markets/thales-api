@@ -18,20 +18,23 @@
       "pasingTouchdowns",
       "receivingYards",
       "scoringTouchdowns",
-      "fieldGoalsMade"
+      "fieldGoalsMade",
+      "points",
+      "shots",
+      "goals"
     ]
   },
   {
     "id": 9003,
     "name": "MLB",
     "sport": "Baseball",
-    "supportedTypes": ["moneyline", "spread", "total", "homeruns", "strikeouts", "pitcherHitsAllowed"]
+    "supportedTypes": ["moneyline", "spread", "total", "homeruns", "strikeouts", "pitcherHitsAllowed", "hitsRecorded"]
   },
   {
     "id": 9004,
     "name": "NBA",
     "sport": "Basketball",
-    "supportedTypes": ["moneyline", "spread", "total"]
+    "supportedTypes": ["moneyline", "spread", "total", "points", "rebounds", "assists"]
   },
   {
     "id": 9005,
