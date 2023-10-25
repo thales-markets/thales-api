@@ -37,6 +37,7 @@ const ENDPOINTS = {
   THALES_MARKET: "/thales/networks/:networkParam/markets/:marketAddress",
   THALES_MARKET_BUY_QUOTE: "/thales/networks/:networkParam/markets/:marketAddress/buy-quote",
   THALES_MARKET_SELL_QUOTE: "/thales/networks/:networkParam/markets/:marketAddress/sell-quote",
+  THALES_USER_POSITIONS: "/thales/networks/:networkParam/users/:userAddress/positions",
   THALES_USER_TRANSACTIONS: "/thales/networks/:networkParam/users/:userAddress/transactions",
 };
 

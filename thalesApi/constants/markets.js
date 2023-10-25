@@ -102,6 +102,15 @@ const TRANSACTION_POSITION_MAP = {
   out: RANGED_POSITION_NAME.Out,
 };
 
+const POSITION_BALANCE_THRESHOLD = 0.01;
+
+const MARKET_DURATION_IN_DAYS = 90;
+const TODAY = new Date();
+const MIN_MATURITY = Math.round(
+  new Date(new Date().setDate(TODAY.getDate() - MARKET_DURATION_IN_DAYS)).getTime() / 1000,
+); // show history for 90 days in the past
+const MAX_MATURITY = Math.round(Number(TODAY.getTime() / 1000)); // show history until today
+
 module.exports = {
   ZERO_ADDRESS,
   CRYPTO_CURRENCY,
@@ -114,4 +123,7 @@ module.exports = {
   RANGED_POSITION_TYPE_NAME_MAP,
   ACTION_TYPE,
   TRANSACTION_POSITION_MAP,
+  POSITION_BALANCE_THRESHOLD,
+  MIN_MATURITY,
+  MAX_MATURITY,
 };

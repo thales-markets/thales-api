@@ -1,10 +1,15 @@
+const { parseBytes32String } = require("ethers/lib/utils");
 const {
   CRYPTO_CURRENCY,
   COMMODITY,
   RANGED_POSITION_NAME,
   ACTION_TYPE,
   TRANSACTION_POSITION_MAP,
+  RANGED_POSITION_TYPE_NAME_MAP,
+  POSITION_TYPE_NAME_MAP,
 } = require("../constants/markets");
+const { getDefaultCollateral } = require("./collaterals");
+const { bigNumberFormatter } = require("./formatters");
 
 const getCurrencyPriority = (currency) => {
   const currencyPriority = CRYPTO_CURRENCY.indexOf(currency);
@@ -23,14 +28,39 @@ const isMarketResolved = (result) => result !== null;
 
 const isMarketExpired = (expiryDate) => expiryDate < new Date().getTime();
 
+const getPositionStatus = (position) =>
+  position.isOpen ? "OPEN" : position.isClaimable || position.isClaimed ? "WON" : "LOSS";
+
 const getTradeStatus = (trade, isBuy) =>
   isBuy
     ? isMarketResolved(trade.marketItem.result)
       ? trade.marketItem.result === trade.optionSide
         ? "WON"
-        : "LOST"
+        : "LOSS"
       : "OPEN"
     : "SOLD";
+
+const packPosition = (position, network) => {
+  const isRangedMarket = isRangedPosition(position.position.side);
+  const defaultCollateralDecimals = getDefaultCollateral(network).decimals;
+  const packedMarket = packPositionMarket(position.position.market, isRangedMarket);
+
+  let packedPosition = {
+    account: position.account,
+    amount: bigNumberFormatter(position.amount),
+    paid: bigNumberFormatter(position.paid, defaultCollateralDecimals),
+    position: TRANSACTION_POSITION_MAP[position.position.side],
+  };
+
+  packedPosition.isOpen = packedMarket.isOpen;
+  packedPosition.isClaimable =
+    packedMarket.isResolved && position.position === packedMarket.result && !position.isClaimed;
+  packedPosition.isClaimed = !!position.isClaimed;
+  packedPosition.status = getPositionStatus(packedPosition);
+  packedPosition.market = packedMarket;
+
+  return packedPosition;
+};
 
 const packTrade = (trade) => {
   const isBuy = trade.orderSide == ACTION_TYPE.Buy.toLowerCase();
@@ -54,13 +84,44 @@ const packTrade = (trade) => {
     ...packedTrade,
     position: TRANSACTION_POSITION_MAP[trade.optionSide],
     status: getTradeStatus(trade, isBuy),
-    market: packMarket(trade.marketItem, isRangedMarket),
+    market: packTradeMarket(trade.marketItem, isRangedMarket),
   };
 
   return packedTrade;
 };
 
-const packMarket = (market, isRangedMarket) => {
+const packPositionMarket = (market, isRangedMarket) => {
+  let packedMarket = {
+    address: market.id,
+    asset: parseBytes32String(market.currencyKey),
+    maturityDate: new Date(Number(market.maturityDate) * 1000).toISOString(),
+    expiryDate: new Date(Number(market.expiryDate) * 1000).toISOString(),
+  };
+
+  if (isRangedMarket) {
+    packedMarket.leftPrice = bigNumberFormatter(market.leftPrice);
+    packedMarket.rightPrice = bigNumberFormatter(market.rightPrice);
+  } else {
+    packedMarket.strikePrice = bigNumberFormatter(market.strikePrice);
+  }
+
+  packedMarket = {
+    ...packedMarket,
+    isOpen: !isMarketResolved(market.result),
+    isResolved: isMarketResolved(market.result),
+    isExpired: isMarketExpired(Number(market.expiryDate) * 1000),
+    result: isMarketResolved(market.result)
+      ? isRangedMarket
+        ? RANGED_POSITION_TYPE_NAME_MAP[market.result]
+        : POSITION_TYPE_NAME_MAP[market.result]
+      : null,
+    finalPrice: isMarketResolved(market.result) ? bigNumberFormatter(market.finalPrice) : 0,
+  };
+
+  return packedMarket;
+};
+
+const packTradeMarket = (market, isRangedMarket) => {
   let packedMarket = {
     address: market.address,
     asset: market.currencyKey,
@@ -92,6 +153,7 @@ module.exports = {
   convertPriceImpactToBonus,
   calculatRoi,
   isRangedPosition,
+  isMarketExpired,
+  packPosition,
   packTrade,
-  packMarket,
 };
