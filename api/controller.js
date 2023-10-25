@@ -920,15 +920,29 @@ app.get(ENDPOINTS.THALES_MARKET_SELL_QUOTE, async (req, res) => {
 app.get(ENDPOINTS.THALES_USER_POSITIONS, async (req, res) => {
   const network = req.params.networkParam;
   const userAddress = req.params.userAddress;
+  const status = req.query.status;
 
   if (![10, 137, 8453, 42161].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
     return;
   }
+  if (status && !["open", "claimable", "closed"].includes(status.toLowerCase())) {
+    res.send("Unsupported status. Supported statuses: open, claimable, closed.");
+    return;
+  }
 
   const userPositions = await thalesUsers.processUserPositions(network, userAddress.toLowerCase());
 
-  return res.send(userPositions);
+  let positions = {};
+  if (!status) {
+    positions = userPositions;
+  } else {
+    positions = {
+      [status.toLowerCase()]: userPositions[status.toLowerCase()],
+    };
+  }
+
+  return res.send(positions);
 });
 
 app.get(ENDPOINTS.THALES_USER_TRANSACTIONS, async (req, res) => {

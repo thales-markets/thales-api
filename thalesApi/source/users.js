@@ -10,7 +10,7 @@ const {
 const { keyBy } = require("lodash");
 const { packTrade, packPosition, isMarketExpired, isRangedPosition } = require("../utils/markets");
 const { bigNumberParser, bigNumberFormatter } = require("../utils/formatters");
-const { formatBytes32String } = require("ethers/lib/utils");
+const { formatBytes32String, parseEther } = require("ethers/lib/utils");
 
 async function processUserPositions(network, walletAddress) {
   const [positionBalances, rangedPositionBalances, userMarketTransactions] = await Promise.all([
@@ -76,11 +76,11 @@ async function processUserPositions(network, walletAddress) {
             currencyKey: formatBytes32String(market.currencyKey),
             maturityDate: market.maturityDate / 1000,
             expiryDate: market.expiryDate / 1000,
-            strikePrice: isRangedMarket ? 0 : bigNumberParser(market.strikePrice),
-            leftPrice: isRangedMarket ? bigNumberParser(market.leftPrice) : 0,
-            rightPrice: isRangedMarket ? bigNumberParser(market.rightPrice) : 0,
+            strikePrice: isRangedMarket ? 0 : parseEther(Number(market.strikePrice).toFixed(18)),
+            leftPrice: isRangedMarket ? parseEther(Number(market.leftPrice).toFixed(18)) : 0,
+            rightPrice: isRangedMarket ? parseEther(Number(market.rightPrice).toFixed(18)) : 0,
             result: market.result,
-            finalPrice: market.result !== null ? bigNumberParser(market.finalPrice) : null,
+            finalPrice: market.result !== null ? parseEther(Number(market.finalPrice).toFixed(18)) : null,
           },
         },
       };
