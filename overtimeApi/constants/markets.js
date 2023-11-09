@@ -18,6 +18,8 @@ const BET_TYPE = {
   HitsRecorded: 11012,
   Rebounds: 11035,
   Assists: 11039,
+  DoubleDouble: 11087,
+  TripleDouble: 11088,
 };
 
 const MARKET_TYPE = {
@@ -40,6 +42,8 @@ const MARKET_TYPE = {
   [BET_TYPE.HitsRecorded]: "hitsRecorded",
   [BET_TYPE.Rebounds]: "rebounds",
   [BET_TYPE.Assists]: "assists",
+  [BET_TYPE.DoubleDouble]: "doubleDouble",
+  [BET_TYPE.TripleDouble]: "tripleDouble",
 };
 
 const PLAYER_PROPS_BET_TYPES = [
@@ -58,6 +62,8 @@ const PLAYER_PROPS_BET_TYPES = [
   BET_TYPE.HitsRecorded,
   BET_TYPE.Rebounds,
   BET_TYPE.Assists,
+  BET_TYPE.DoubleDouble,
+  BET_TYPE.TripleDouble,
 ];
 
 const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [BET_TYPE.ScoringTouchdowns, BET_TYPE.Goals];

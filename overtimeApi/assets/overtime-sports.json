@@ -34,7 +34,7 @@
     "id": 9004,
     "name": "NBA",
     "sport": "Basketball",
-    "supportedTypes": ["moneyline", "spread", "total", "points", "rebounds", "assists"]
+    "supportedTypes": ["moneyline", "spread", "total", "points", "rebounds", "assists", "doubleDouble", "tripleDouble"]
   },
   {
     "id": 9005,
@@ -52,7 +52,7 @@
     "id": 9007,
     "name": "UFC",
     "sport": "MMA",
-    "supportedTypes": ["moneyline"]
+    "supportedTypes": ["moneyline", "total"]
   },
   {
     "id": 9008,
@@ -244,7 +244,7 @@
     "id": 18196,
     "name": "Boxing",
     "sport": "MMA",
-    "supportedTypes": ["moneyline"]
+    "supportedTypes": ["moneyline", "total"]
   },
   {
     "id": 18806,
