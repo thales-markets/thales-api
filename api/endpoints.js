@@ -39,6 +39,8 @@ const ENDPOINTS = {
   THALES_MARKET_SELL_QUOTE: "/thales/networks/:networkParam/markets/:marketAddress/sell-quote",
   THALES_USER_POSITIONS: "/thales/networks/:networkParam/users/:userAddress/positions",
   THALES_USER_TRANSACTIONS: "/thales/networks/:networkParam/users/:userAddress/transactions",
+  THALES_IO_VOLUME_DATA: "/thales/thales-io/volume-data",
+  THALES_IO_USERS_DATA: "/thales/thales-io/users-data",
 };
 
 module.exports = ENDPOINTS;

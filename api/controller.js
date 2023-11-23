@@ -22,6 +22,7 @@ const overtimeUsers = require("../overtimeApi/source/users");
 const thalesUsers = require("../thalesApi/source/users");
 const overtimeQuotes = require("../overtimeApi/source/quotes");
 const thalesQuotes = require("../thalesApi/source/quotes");
+const thalesIo = require("../thalesApi/source/thales-io");
 const { COLLATERALS: OVERTIME_COLLATERALS } = require("../overtimeApi/constants/collaterals");
 const { COLLATERALS: THALES_COLLATERALS } = require("../thalesApi/constants/collaterals");
 const {
@@ -965,4 +966,16 @@ app.get(ENDPOINTS.THALES_USER_TRANSACTIONS, async (req, res) => {
   const userTransactions = await thalesUsers.processUserTransactions(network, userAddress.toLowerCase());
 
   return res.send(userTransactions);
+});
+
+app.get(ENDPOINTS.THALES_IO_USERS_DATA, async (req, res) => {
+  const usersData = await thalesIo.getUsersData();
+
+  return res.send(usersData);
+});
+
+app.get(ENDPOINTS.THALES_IO_VOLUME_DATA, async (req, res) => {
+  const volumeData = await thalesIo.getVolumeData();
+
+  return res.send(volumeData);
 });
