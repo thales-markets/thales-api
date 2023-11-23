@@ -13,7 +13,7 @@ const BET_TYPE = {
   FieldGoalsMade: 11060,
   PitcherHitsAllowed: 11047,
   Points: 11029,
-  Shots: 11037,
+  Shots: 11097,
   Goals: 11086,
   HitsRecorded: 11012,
   Rebounds: 11035,
