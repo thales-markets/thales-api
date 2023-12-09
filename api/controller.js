@@ -259,6 +259,7 @@ app.get(ENDPOINTS.GET_REFFERER_ID_ADDRESS, (req, res) => {
   const reffererID = req.params.reffererID;
   const IDAddress = userReffererIDsMap.get(reffererID);
   if (reffererID && IDAddress) {
+    res.setHeader('content-type', 'application/json');
     res.send(IDAddress);
   } else {
     res.send();
@@ -269,6 +270,7 @@ app.get(ENDPOINTS.GET_ADDRESS_REFFERER_ID, (req, res) => {
   const walletAddress = req.params.walletAddress;
   const reffererID = [...userReffererIDsMap].find(([key, val]) => val == walletAddress);
   if (reffererID && walletAddress) {
+    res.setHeader('content-type', 'application/json');
     res.send(reffererID[0]);
   } else {
     res.send();
