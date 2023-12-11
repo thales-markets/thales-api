@@ -22,7 +22,6 @@ const overtimeUsers = require("../overtimeApi/source/users");
 const thalesUsers = require("../thalesApi/source/users");
 const overtimeQuotes = require("../overtimeApi/source/quotes");
 const thalesQuotes = require("../thalesApi/source/quotes");
-const thalesIo = require("../thalesApi/source/thales-io");
 const { COLLATERALS: OVERTIME_COLLATERALS } = require("../overtimeApi/constants/collaterals");
 const { COLLATERALS: THALES_COLLATERALS } = require("../thalesApi/constants/collaterals");
 const {
@@ -259,7 +258,7 @@ app.get(ENDPOINTS.GET_REFFERER_ID_ADDRESS, (req, res) => {
   const reffererID = req.params.reffererID;
   const IDAddress = userReffererIDsMap.get(reffererID);
   if (reffererID && IDAddress) {
-    res.setHeader('content-type', 'application/json');
+    res.setHeader("content-type", "application/json");
     res.send(IDAddress);
   } else {
     res.send();
@@ -270,7 +269,7 @@ app.get(ENDPOINTS.GET_ADDRESS_REFFERER_ID, (req, res) => {
   const walletAddress = req.params.walletAddress;
   const reffererID = [...userReffererIDsMap].find(([key, val]) => val == walletAddress);
   if (reffererID && walletAddress) {
-    res.setHeader('content-type', 'application/json');
+    res.setHeader("content-type", "application/json");
     res.send(reffererID[0]);
   } else {
     res.send();
@@ -971,13 +970,11 @@ app.get(ENDPOINTS.THALES_USER_TRANSACTIONS, async (req, res) => {
 });
 
 app.get(ENDPOINTS.THALES_IO_USERS_DATA, async (req, res) => {
-  const usersData = await thalesIo.getUsersData();
-
-  return res.send(usersData);
+  const url = `https://raw.githubusercontent.com/thales-markets/thales-io-dapp/dev/src/assets/json/users-data.json`;
+  request.get(url).pipe(res);
 });
 
 app.get(ENDPOINTS.THALES_IO_VOLUME_DATA, async (req, res) => {
-  const volumeData = await thalesIo.getVolumeData();
-
-  return res.send(volumeData);
+  const url = `https://raw.githubusercontent.com/thales-markets/thales-io-dapp/dev/src/assets/json/volume-data.json`;
+  request.get(url).pipe(res);
 });
