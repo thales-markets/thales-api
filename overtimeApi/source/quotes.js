@@ -169,7 +169,7 @@ async function getAmmQuote(network, marketAddress, position, collateralAmount, c
       );
       realUsdAmount = bigNumberFormatter(positionDetails.quote, defaultCollateral.decimals);
       skew = bigNumberFormatter(positionDetails.priceImpact);
-      quote = payout / realUsdAmount;
+      quote = payout ? realUsdAmount / payout : 0;
     }
   } catch (e) {
     console.log("Error: could not get quote.", e);
