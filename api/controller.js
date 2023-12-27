@@ -648,7 +648,7 @@ app.get(ENDPOINTS.OVERTIME_PARLAY_QUOTE, async (req, res) => {
     return;
   }
 
-  const supportedCollaterals = getNonDefaultCollateralSymbolsThales(Number(network));
+  const supportedCollaterals = getNonDefaultCollateralSymbolsOvertime(Number(network));
   if (
     collateral &&
     !supportedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase()) &&
