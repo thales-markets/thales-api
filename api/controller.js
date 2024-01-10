@@ -978,3 +978,14 @@ app.get(ENDPOINTS.THALES_IO_VOLUME_DATA, async (req, res) => {
   const url = `https://raw.githubusercontent.com/thales-markets/thales-io-dapp/dev/src/assets/json/volume-data.json`;
   request.get(url).pipe(res);
 });
+
+app.get(ENDPOINTS.THALES_IO_STATS, async (req, res) => {
+  redisClient.get(KEYS.THALES_IO_STATS, function (err, obj) {
+    const stats = new Map(JSON.parse(obj));
+    try {
+      res.send(Object.fromEntries(stats));
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});

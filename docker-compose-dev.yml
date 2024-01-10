@@ -28,5 +28,13 @@ services:
     environment:
       - "REDIS_URL=redis://redis:6379"
       - "CHAINNODES_ID="
+  thales-io:
+    restart: always
+    image: thalesmarket/thales-io
+    depends_on:
+      - redis
+    environment:
+      - "REDIS_URL=redis://redis:6379"
+      - "DUNE_API_KEY="
 volumes:
   redis-data:

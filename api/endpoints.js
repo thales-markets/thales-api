@@ -41,6 +41,7 @@ const ENDPOINTS = {
   THALES_USER_TRANSACTIONS: "/thales/networks/:networkParam/users/:userAddress/transactions",
   THALES_IO_VOLUME_DATA: "/thales/thales-io/volume-data",
   THALES_IO_USERS_DATA: "/thales/thales-io/users-data",
+  THALES_IO_STATS: "/thales/thales-io/stats",
 };
 
 module.exports = ENDPOINTS;
