@@ -22,6 +22,7 @@
     "express-prom-bundle": "^6.2.0",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
+    "node-pushnotifications": "^2.1.1",
     "redis": "^3.0.2",
     "thales-data": "^1.2.68",
     "twitter-api-v2": "^1.4.1",
