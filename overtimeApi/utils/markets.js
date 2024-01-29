@@ -322,4 +322,6 @@ module.exports = {
   getPositionTransactionStatus,
   packParlay,
   getIsDrawAvailable,
+  getIsPlayerPropsMarket,
+  getIsOneSidePlayerPropsMarket,
 };
