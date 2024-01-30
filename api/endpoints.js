@@ -42,6 +42,8 @@ const ENDPOINTS = {
   THALES_IO_VOLUME_DATA: "/thales/thales-io/volume-data",
   THALES_IO_USERS_DATA: "/thales/thales-io/users-data",
   THALES_IO_STATS: "/thales/thales-io/stats",
+  THALES_IO_ECOSYSTEM_APPS: "/thales/thales-io/ecosystem-apps",
+  THALES_IO_TIMELINE: "/thales/thales-io/timeline",
 };
 
 module.exports = ENDPOINTS;
