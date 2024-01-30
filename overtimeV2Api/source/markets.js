@@ -88,10 +88,11 @@ const packMarket = (market) => {
         }
       : null,
     odds: market.odds.map((odd) => {
+      const formattedOdds = Number(odd) > 0 ? bigNumberFormatter(odd) : 0;
       return {
-        american: formatMarketOdds(bigNumberFormatter(odd), ODDS_TYPE.American),
-        decimal: formatMarketOdds(bigNumberFormatter(odd), ODDS_TYPE.Decimal),
-        normalizedImplied: formatMarketOdds(bigNumberFormatter(odd), ODDS_TYPE.AMM),
+        american: formattedOdds ? formatMarketOdds(formattedOdds, ODDS_TYPE.American) : 0,
+        decimal: formattedOdds ? formatMarketOdds(formattedOdds, ODDS_TYPE.Decimal) : 0,
+        normalizedImplied: formattedOdds ? formatMarketOdds(formattedOdds, ODDS_TYPE.AMM) : 0,
       };
     }),
     proof: market.proof,
