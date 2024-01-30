@@ -20,6 +20,7 @@ const BET_TYPE = {
   Assists: 11039,
   DoubleDouble: 11087,
   TripleDouble: 11088,
+  Receptions: 11058,
 };
 
 const MARKET_TYPE = {
@@ -44,6 +45,7 @@ const MARKET_TYPE = {
   [BET_TYPE.Assists]: "assists",
   [BET_TYPE.DoubleDouble]: "doubleDouble",
   [BET_TYPE.TripleDouble]: "tripleDouble",
+  [BET_TYPE.Receptions]: "receptions",
 };
 
 const PLAYER_PROPS_BET_TYPES = [
@@ -64,6 +66,7 @@ const PLAYER_PROPS_BET_TYPES = [
   BET_TYPE.Assists,
   BET_TYPE.DoubleDouble,
   BET_TYPE.TripleDouble,
+  BET_TYPE.Receptions,
 ];
 
 const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [BET_TYPE.ScoringTouchdowns, BET_TYPE.Goals];
