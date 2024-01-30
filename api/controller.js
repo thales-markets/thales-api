@@ -1000,3 +1000,132 @@ app.get(ENDPOINTS.THALES_IO_STATS, async (req, res) => {
     }
   });
 });
+
+app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
+  let status = req.query.status;
+  let type = req.query.type;
+  let sport = req.query.sport;
+  let leagueId = req.query.leagueid;
+  let ungroup = req.query.ungroup;
+
+  if (!status) {
+    status = "open";
+  }
+  status = status.toLowerCase();
+
+  if (!["open", "resolved", "canceled", "paused", "ongoing"].includes(status)) {
+    res.send("Unsupported status. Supported statuses: open, resolved, canceled, paused, ongoing.");
+    return;
+  }
+  if (
+    type &&
+    ![
+      "moneyline",
+      "spread",
+      "total",
+      "doublechance",
+      "homeruns",
+      "strikeouts",
+      "passingyards",
+      "rushingyards",
+      "pasingtouchdowns",
+      "receivingyards",
+      "scoringtouchdowns",
+      "fieldgoalsmade",
+      "pitcherhitsallowed",
+      "points",
+      "shots",
+      "goals",
+      "hitsrecorded",
+      "rebounds",
+      "assists",
+      "doubledouble",
+      "tripledouble",
+      "receptions",
+    ].includes(type.toLowerCase())
+  ) {
+    res.send(
+      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, homeruns, strikeouts, passingYards, rushingYards, pasingTouchdowns, receivingYards, scoringTouchdowns, fieldGoalsMade, pitcherHitsAllowed, points, shots, goals, hitsRecorded, rebounds, assists, doubleDouble, tripleDouble, receptions.",
+    );
+    return;
+  }
+  if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
+    res.send("Invalid value for ungroup. Possible values: true or false.");
+    return;
+  }
+
+  const sports = overtimeSportsList;
+  const allLeagueIds = sports.map((sport) => Number(sport.id));
+  const allSports = uniqBy(sports.map((sport) => sport.sport.toLowerCase()));
+
+  if (sport && !allSports.includes(sport.toLowerCase())) {
+    res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime/sports.`);
+    return;
+  }
+  if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
+    res.send(
+      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime/sports.`,
+    );
+    return;
+  }
+
+  redisClient.get(KEYS.OVERTIME_V2_MARKETS, function (err, obj) {
+    const markets = new Map(JSON.parse(obj));
+    try {
+      const marketsByStatus = markets.get(status);
+      let marketsByType = marketsByStatus;
+      if (type) {
+        marketsByType = [];
+        marketsByStatus.forEach((market) => {
+          marketsByType.push(market);
+          marketsByType.push(...market.childMarkets);
+        });
+      }
+
+      const filteredMarkets = marketsByType.filter(
+        (market) =>
+          (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
+          (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
+          (!type || market.type.toLowerCase() === type.toLowerCase()),
+      );
+
+      if (ungroup && ungroup.toLowerCase() === "true") {
+        res.send(filteredMarkets);
+        return;
+      }
+
+      const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
+      Object.keys(groupMarkets).forEach((key) => {
+        groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
+      });
+
+      res.send(groupMarkets);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
+  const marketAddress = req.params.marketAddress;
+
+  redisClient.get(KEYS.OVERTIME_V2_MARKETS, function (err, obj) {
+    const markets = new Map(JSON.parse(obj));
+    try {
+      let allMarkets = [];
+
+      markets.forEach((marketsByStatus) => {
+        marketsByStatus.forEach((market) => {
+          allMarkets.push(market);
+          allMarkets.push(...market.childMarkets);
+        });
+      });
+
+      const market = allMarkets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
+
+      return res.send(market || `Market with address ${marketAddress} not found.`);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});

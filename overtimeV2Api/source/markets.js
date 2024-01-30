@@ -15,6 +15,7 @@ const {
 } = require("../../overtimeApi/utils/markets");
 const { SPORTS_MAP, ENETPULSE_SPORTS } = require("../../overtimeApi/constants/tags");
 const { MARKET_TYPE, ODDS_TYPE } = require("../../overtimeApi/constants/markets");
+const KEYS = require("../../redis/redis-keys");
 
 let marketsMap = new Map();
 
@@ -28,38 +29,11 @@ async function processMarkets() {
     });
     setTimeout(async () => {
       while (true) {
-        // try {
-        //   console.log("process markets on optimism");
-        //   await processMarketsPerNetwork(NETWORK.Optimism);
-        // } catch (error) {
-        //   console.log("markets on optimism error: ", error);
-        // }
-
-        // await delay(10 * 1000);
-
-        // try {
-        //   console.log("process markets on arbitrum");
-        //   await processMarketsPerNetwork(NETWORK.Arbitrum);
-        // } catch (error) {
-        //   console.log("markets on arbitrum error: ", error);
-        // }
-
-        // await delay(10 * 1000);
-
-        // try {
-        //   console.log("process markets on base");
-        //   await processMarketsPerNetwork(NETWORK.Base);
-        // } catch (error) {
-        //   console.log("markets on base error: ", error);
-        // }
-
-        // await delay(10 * 1000);
-
         try {
-          console.log("process markets on op goerli");
-          await processMarketsPerNetwork(NETWORK.OptimismGoerli);
+          console.log("process markets");
+          await processAllMarkets();
         } catch (error) {
-          console.log("markets on op goerli error: ", error);
+          console.log("markets error: ", error);
         }
 
         await delay(60 * 1000);
@@ -67,18 +41,6 @@ async function processMarkets() {
     }, 3000);
   }
 }
-
-// const childrenOf = (parentMarket, groupedMarkets) => {
-//   return (groupedMarkets[parentMarket] || []).map((market) => ({
-//     ...market,
-//     childMarkets: orderBy(childrenOf(market.address, groupedMarkets), ["betType"], ["asc"]),
-//   }));
-// };
-
-// const groupMarkets = (allMarkets) => {
-//   const groupedMarkets = groupBy(allMarkets, (market) => market.parentMarket);
-//   return childrenOf("null", groupedMarkets);
-// };
 
 const packMarket = (market) => {
   const leagueId = market.sportId;
@@ -133,47 +95,6 @@ const packMarket = (market) => {
       };
     }),
     proof: market.proof,
-    // {
-    //   homeOdds: {
-    //     american: formatMarketOdds(market.homeOdds, ODDS_TYPE.American),
-    //     decimal: formatMarketOdds(market.homeOdds, ODDS_TYPE.Decimal),
-    //     normalizedImplied: formatMarketOdds(market.homeOdds, ODDS_TYPE.AMM),
-    //   },
-    //   awayOdds: {
-    //     american: formatMarketOdds(market.awayOdds, ODDS_TYPE.American),
-    //     decimal: formatMarketOdds(market.awayOdds, ODDS_TYPE.Decimal),
-    //     normalizedImplied: formatMarketOdds(market.awayOdds, ODDS_TYPE.AMM),
-    //   },
-    //   drawOdds: {
-    //     american: formatMarketOdds(market.drawOdds, ODDS_TYPE.American),
-    //     decimal: formatMarketOdds(market.drawOdds, ODDS_TYPE.Decimal),
-    //     normalizedImplied: formatMarketOdds(market.drawOdds, ODDS_TYPE.AMM),
-    //   },
-    // },
-    // priceImpact: {
-    //   homePriceImpact: market.homePriceImpact,
-    //   awayPriceImpact: market.awayPriceImpact,
-    //   drawPriceImpact: market.drawPriceImpact,
-    // },
-    // liquidity: {
-    //   homeLiquidity: {
-    //     positions: market.homeLiquidity,
-    //     usd: market.homeLiquidityUsd,
-    //   },
-    //   awayLiquidity: {
-    //     positions: market.awayLiquidity,
-    //     usd: market.awayLiquidityUsd,
-    //   },
-    //   drawLiquidity: {
-    //     positions: market.drawLiquidity,
-    //     usd: market.drawLiquidityUsd,
-    //   },
-    // },
-    // bonus: {
-    //   homeBonus: market.homeBonus,
-    //   awayBonus: market.awayBonus,
-    //   drawBonus: market.drawBonus,
-    // },
   };
 };
 
@@ -191,79 +112,17 @@ const mapMarkets = () => {
     mappedMarkets.push(packedMarket);
   });
 
-  // let packedMarkets = mappedMarkets.map((market) => packMarket(market));
-
-  // let finalMarkets = groupMarkets(packedMarkets);
-
-  // return finalMarkets;
-
   return mappedMarkets;
 };
 
-function processMarketsPerNetwork(network) {
-  // thales-data takes timestamp argument in seconds
-  // const minMaturityDate = Math.round(new Date(new Date().setDate(today.getDate() - 7)).getTime() / 1000); // show history for 7 days in the past
-  // const todaysDate = Math.round(today.getTime() / 1000);
-
-  console.log(`${NETWORK_NAME[network]}: process open markets`);
-  // let markets = await thalesData.sportMarkets.markets({
-  //   isOpen: true,
-  //   isCanceled: false,
-  //   isPaused: false,
-  //   network,
-  //   minMaturityDate: todaysDate,
-  // });
+function processAllMarkets() {
+  console.log(`process open markets`);
   let mappedMarkets = mapMarkets();
   marketsMap.set("open", mappedMarkets);
 
-  // console.log(`${NETWORK_NAME[network]}: process resolved markets`);
-  // markets = await thalesData.sportMarkets.markets({
-  //   isOpen: false,
-  //   isCanceled: false,
-  //   network,
-  //   minMaturityDate,
-  // });
-  // mappedMarkets = await mapMarkets(markets, false, network);
-  // marketsMap.set("resolved", mappedMarkets);
-
-  // console.log(`${NETWORK_NAME[network]}: process canceled markets`);
-  // markets = await thalesData.sportMarkets.markets({
-  //   isOpen: false,
-  //   isCanceled: true,
-  //   network,
-  //   minMaturityDate,
-  // });
-  // mappedMarkets = await mapMarkets(markets, false, network);
-  // marketsMap.set("canceled", mappedMarkets);
-
-  // console.log(`${NETWORK_NAME[network]}: process paused markets`);
-  // markets = await await thalesData.sportMarkets.markets({
-  //   isPaused: true,
-  //   network,
-  //   minMaturityDate,
-  // });
-  // mappedMarkets = await mapMarkets(markets, false, network);
-  // marketsMap.set("paused", mappedMarkets);
-
-  // console.log(`${NETWORK_NAME[network]}: process ongoing markets`);
-  // markets = await thalesData.sportMarkets.markets({
-  //   isOpen: true,
-  //   isCanceled: false,
-  //   minMaturityDate,
-  //   maxMaturityDate: todaysDate,
-  //   network,
-  // });
-  // mappedMarkets = await mapMarkets(markets, false, network);
-  // marketsMap.set("ongoing", mappedMarkets);
-
-  // console.log(marketsMap);
-
-  console.log(marketsMap);
-
-  // redisClient.set(KEYS.OVERTIME_MARKETS[network], JSON.stringify([...marketsMap]), function () {});
+  redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...marketsMap]), function () {});
 }
 
 module.exports = {
   processMarkets,
-  processMarketsPerNetwork,
 };

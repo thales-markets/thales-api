@@ -44,6 +44,8 @@ const ENDPOINTS = {
   THALES_IO_STATS: "/thales/thales-io/stats",
   THALES_IO_ECOSYSTEM_APPS: "/thales/thales-io/ecosystem-apps",
   THALES_IO_TIMELINE: "/thales/thales-io/timeline",
+  OVERTIME_V2_MARKETS: "/overtime-v2/markets",
+  OVERTIME_V2_MARKET: "/overtime-v2/markets/:marketAddress",
 };
 
 module.exports = ENDPOINTS;

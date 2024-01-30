@@ -31,6 +31,7 @@ const KEYS = {
     42161: "thalesArbMarkets",
     8453: "thalesBaseMarkets",
   },
+  OVERTIME_V2_MARKETS: "overtimeV2Markets",
 };
 
 module.exports = KEYS;
