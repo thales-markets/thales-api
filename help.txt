@@ -1,3 +1,6 @@
+###### NPM INSTALL ######
+Please ensure to have the latest dependencies installed by running `npm i` before building images
+
 ###### BUILD ALL IMAGES ######
 docker build -f Dockerfile.api -t thalesmarket/api .
 docker build -f Dockerfile.tokenAPI -t thalesmarket/tokenapi  .
