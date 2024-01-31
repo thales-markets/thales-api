@@ -1,7 +1,13 @@
+console.log("jes");
+require("dotenv").config();
+const PushNotifications = require("node-pushnotifications");
+let subscribers = new Set();
+const redis = require("redis");
+const KEYS = require("../redis/redis-keys");
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
-const PushNotifications = require("node-pushnotifications");
 
 const app = express();
 
@@ -27,34 +33,37 @@ app.use(function (req, res, next) {
   next();
 });
 
-const publicVapidKey = process.env.PUBLIC_VAPID_KEY; // REPLACE_WITH_YOUR_KEY
-const privateVapidKey = process.env.PRIVATE_VAPID_KEY; //REPLACE_WITH_YOUR_KEY
+console.log(process.env.PUBLIC_VAPID_KEY);
+
+const SETTINGS = {
+  web: {
+    vapidDetails: {
+      subject: "mailto: <gorstak@thalesmarket.io>",
+      publicKey: "BCafw6fkkZll8BEesV3KjFjqpj7CtCgNDLpkUmPKmHxqPIt1GrYW5g6Xgr_BiGgkk5WlXDG-uUH31lhdqd4hJ1c",
+      privateKey: "NOClDkYXMH8Q6LsTj9sw2SNrIWhH4FQ1R68iOUW4yxs",
+    },
+    gcmAPIKey: "gcmkey",
+    TTL: 2419200,
+    contentEncoding: "aes128gcm",
+    headers: {},
+  },
+  isAlwaysUseFCM: false,
+};
 
 app.post("/subscribe", (req, res) => {
   // Get pushSubscription object
   const subscription = req.body;
   console.log(subscription);
-  const settings = {
-    web: {
-      vapidDetails: {
-        subject: "mailto: " + process.env.EMAIL_PUSH,
-        publicKey: publicVapidKey,
-        privateKey: privateVapidKey,
-      },
-      gcmAPIKey: "gcmkey",
-      TTL: 2419200,
-      contentEncoding: "aes128gcm",
-      headers: {},
-    },
-    isAlwaysUseFCM: false,
-  };
+  subscribers.add(subscription);
+  // redisClient.set(KEYS.PUSH_SUBSCRIPTIONS, JSON.stringify(Array.from(subscribers)), function () {});
+});
 
+app.post("/push-notification", (req, res) => {
   // Send 201 - resource created
-  const push = new PushNotifications(settings);
-
+  const push = new PushNotifications(SETTINGS);
   // Create payload
   const payload = { title: "New NFL games added" };
-  push.send(subscription, payload, (err, result) => {
+  push.send(Array.from(subscribers), payload, (err, result) => {
     if (err) {
       console.log(err);
     } else {
@@ -64,5 +73,20 @@ app.post("/subscribe", (req, res) => {
 });
 
 const port = 3002;
-
 app.listen(port, () => console.log(`Server started on port ${port}`));
+
+if (process.env.REDIS_URL) {
+  redisClient = redis.createClient(process.env.REDIS_URL);
+  console.log("create client from index");
+
+  redisClient.get(KEYS.PUSH_SUBSCRIPTIONS, function (err, obj) {
+    const subscribers_obj = obj;
+    if (subscribers_obj) {
+      subscribers = new Set(JSON.parse(subscribers_obj));
+    }
+  });
+
+  redisClient.on("error", function (error) {
+    console.error(error);
+  });
+}

@@ -31,6 +31,7 @@ const KEYS = {
     42161: "thalesArbMarkets",
     8453: "thalesBaseMarkets",
   },
+  PUSH_SUBSCRIPTIONS: "pushSubscriptions",
 };
 
 module.exports = KEYS;

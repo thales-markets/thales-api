@@ -32,18 +32,23 @@ const ENDPOINTS = {
   OVERTIME_USER_TRANSACTIONS: "/overtime/networks/:networkParam/users/:userAddress/transactions",
   OVERTIME_MARKET_QUOTE: "/overtime/networks/:networkParam/markets/:marketAddress/quote",
   OVERTIME_PARLAY_QUOTE: "/overtime/networks/:networkParam/parlay/quote",
+
   THALES_COLLATERALS: "/thales/networks/:networkParam/collaterals",
   THALES_MARKETS: "/thales/networks/:networkParam/markets",
   THALES_MARKET: "/thales/networks/:networkParam/markets/:marketAddress",
   THALES_MARKET_BUY_QUOTE: "/thales/networks/:networkParam/markets/:marketAddress/buy-quote",
   THALES_MARKET_SELL_QUOTE: "/thales/networks/:networkParam/markets/:marketAddress/sell-quote",
+
   THALES_USER_POSITIONS: "/thales/networks/:networkParam/users/:userAddress/positions",
   THALES_USER_TRANSACTIONS: "/thales/networks/:networkParam/users/:userAddress/transactions",
+
   THALES_IO_VOLUME_DATA: "/thales/thales-io/volume-data",
   THALES_IO_USERS_DATA: "/thales/thales-io/users-data",
   THALES_IO_STATS: "/thales/thales-io/stats",
   THALES_IO_ECOSYSTEM_APPS: "/thales/thales-io/ecosystem-apps",
   THALES_IO_TIMELINE: "/thales/thales-io/timeline",
+
+  PUSH_SUBSCRIBE: "/subscribe",
 };
 
 module.exports = ENDPOINTS;
