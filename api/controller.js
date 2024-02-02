@@ -990,8 +990,19 @@ app.get(ENDPOINTS.THALES_IO_ECOSYSTEM_APPS, async (req, res) => {
   request.get(url).pipe(res);
 });
 
-app.get(ENDPOINTS.THALES_IO_STATS, async (req, res) => {
-  redisClient.get(KEYS.THALES_IO_STATS, function (err, obj) {
+app.get(ENDPOINTS.THALES_IO_DAILY_STATS, async (req, res) => {
+  redisClient.get(KEYS.THALES_IO_DAILY_STATS, function (err, obj) {
+    const stats = new Map(JSON.parse(obj));
+    try {
+      res.send(Object.fromEntries(stats));
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.THALES_IO_WEEKLY_STATS, async (req, res) => {
+  redisClient.get(KEYS.THALES_IO_WEEKLY_STATS, function (err, obj) {
     const stats = new Map(JSON.parse(obj));
     try {
       res.send(Object.fromEntries(stats));
