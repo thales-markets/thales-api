@@ -9,7 +9,7 @@ let thalesIODuneDataMap = new Map();
 let thalesIOWeeklyDuneDataMap = new Map();
 
 let dailyStatsDisableFirstRunExecution = true;
-let weeklyStatsDisableFirstRunExecution = false;
+let weeklyStatsDisableFirstRunExecution = true;
 
 if (process.env.REDIS_URL && process.env.DUNE_API_KEY) {
   redisClient = redis.createClient(process.env.REDIS_URL);
