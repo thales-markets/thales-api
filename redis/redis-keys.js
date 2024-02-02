@@ -2,7 +2,8 @@ const KEYS = {
   TOKEN: "tokenMap",
   GAME_FINISHERS: "gameFinishersMap",
   USER_REFFERER_IDS: "userReffererIDsMap",
-  THALES_IO_STATS: "thalesIOStats",
+  THALES_IO_DAILY_STATS: "thalesIOStats",
+  THALES_IO_WEEKLY_STATS: "thalesIOWeeklyStats",
   OP_REWARDS: {
     10: "opRewards",
   },
