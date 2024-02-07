@@ -372,8 +372,8 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
       "doubledouble",
       "tripledouble",
       "receptions",
-      "firstTouchdown",
-      "lastTouchdown",
+      "firsttouchdown",
+      "lasttouchdown",
     ].includes(type.toLowerCase())
   ) {
     res.send(
