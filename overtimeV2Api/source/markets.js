@@ -120,6 +120,10 @@ function processAllMarkets() {
   console.log(`process open markets`);
   let mappedMarkets = mapMarkets();
   marketsMap.set("open", mappedMarkets);
+  marketsMap.set("resolved", []);
+  marketsMap.set("canceled", []);
+  marketsMap.set("paused", []);
+  marketsMap.set("ongoing", []);
 
   redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...marketsMap]), function () {});
 }
