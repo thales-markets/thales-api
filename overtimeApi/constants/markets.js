@@ -21,6 +21,8 @@ const BET_TYPE = {
   DoubleDouble: 11087,
   TripleDouble: 11088,
   Receptions: 11058,
+  FirstTouchdown: 11049,
+  LastTouchdown: 11056,
 };
 
 const MARKET_TYPE = {
@@ -46,6 +48,8 @@ const MARKET_TYPE = {
   [BET_TYPE.DoubleDouble]: "doubleDouble",
   [BET_TYPE.TripleDouble]: "tripleDouble",
   [BET_TYPE.Receptions]: "receptions",
+  [BET_TYPE.FirstTouchdown]: "firstTouchdown",
+  [BET_TYPE.LastTouchdown]: "lastTouchdown",
 };
 
 const PLAYER_PROPS_BET_TYPES = [
@@ -67,9 +71,16 @@ const PLAYER_PROPS_BET_TYPES = [
   BET_TYPE.DoubleDouble,
   BET_TYPE.TripleDouble,
   BET_TYPE.Receptions,
+  BET_TYPE.FirstTouchdown,
+  BET_TYPE.LastTouchdown,
 ];
 
-const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [BET_TYPE.ScoringTouchdowns, BET_TYPE.Goals];
+const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [
+  BET_TYPE.ScoringTouchdowns,
+  BET_TYPE.Goals,
+  BET_TYPE.FirstTouchdown,
+  BET_TYPE.LastTouchdown,
+];
 
 const ODDS_TYPE = {
   American: "american-odds",
