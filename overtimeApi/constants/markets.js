@@ -3,6 +3,7 @@ const BET_TYPE = {
   Spread: 10001,
   Total: 10002,
   DoubleChance: 10003,
+  CombinedPositions: 10004,
   Homeruns: 11010,
   Strikeouts: 11019,
   PassingYards: 11051,
@@ -30,6 +31,7 @@ const MARKET_TYPE = {
   [BET_TYPE.Spread]: "spread",
   [BET_TYPE.Total]: "total",
   [BET_TYPE.DoubleChance]: "doubleChance",
+  [BET_TYPE.CombinedPositions]: "combinedPositions",
   [BET_TYPE.Homeruns]: "homeruns",
   [BET_TYPE.Strikeouts]: "strikeouts",
   [BET_TYPE.PassingYards]: "passingYards",
@@ -81,6 +83,7 @@ const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [
   BET_TYPE.FirstTouchdown,
   BET_TYPE.LastTouchdown,
 ];
+const SPECIAL_YES_NO_BET_TYPES = [BET_TYPE.DoubleDouble, BET_TYPE.TripleDouble];
 
 const ODDS_TYPE = {
   American: "american-odds",
@@ -143,4 +146,5 @@ module.exports = {
   FINAL_RESULT_TYPE_POSITION_TYPE_MAP,
   ZERO_ADDRESS,
   PARLAY_CONTRACT_ERROR_MESSAGE,
+  SPECIAL_YES_NO_BET_TYPES,
 };

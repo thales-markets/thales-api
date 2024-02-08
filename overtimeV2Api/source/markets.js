@@ -8,10 +8,10 @@ const markets = require("./treeMarketsAndHashes.json");
 const {
   fixDuplicatedTeamName,
   getLeagueNameById,
-  getIsPlayerPropsMarket,
   getIsOneSideMarket,
   getIsOneSidePlayerPropsMarket,
   formatMarketOdds,
+  getIsSpecialYesNoPropsMarket,
 } = require("../../overtimeApi/utils/markets");
 const { SPORTS_MAP, ENETPULSE_SPORTS } = require("../../overtimeApi/constants/tags");
 const { MARKET_TYPE, ODDS_TYPE } = require("../../overtimeApi/constants/markets");
@@ -45,22 +45,30 @@ async function processMarkets() {
 const packMarket = (market) => {
   const leagueId = market.sportId;
   const isEnetpulseSport = ENETPULSE_SPORTS.includes(leagueId);
-  // const isPlayerPropsMarket = getIsPlayerPropsMarket(market.betType);
-  // const isPlayerPropsMarket = market.childId === 10010;
-  const isPlayerPropsMarket = getIsPlayerPropsMarket(market.playerPropsId);
-  // const isOneSidePlayerPropsMarket = getIsOneSidePlayerPropsMarket(market.betType)
+  const isPlayerPropsMarket = market.childId === 10010;
   const isOneSidePlayerPropsMarket = getIsOneSidePlayerPropsMarket(market.playerPropsId);
-  const type = MARKET_TYPE[isPlayerPropsMarket ? market.playerPropsId : market.childId];
+  const isSpecialYesNoPropsMarket = getIsSpecialYesNoPropsMarket(market.playerPropsId);
+  const typeId = isPlayerPropsMarket ? market.playerPropsId : market.childId;
+  const type = MARKET_TYPE[typeId];
+  const line =
+    market.childId === 10001
+      ? market.spread
+      : market.childId === 10002
+      ? market.total
+      : market.childId === 10010
+      ? market.playerProps.line
+      : 0;
 
   return {
-    // address: market.address,
     gameId: market.gameId,
     sport: SPORTS_MAP[leagueId],
     leagueId: leagueId,
     leagueName: getLeagueNameById(leagueId),
+    childId: market.childId,
+    playerPropsId: market.playerPropsId,
+    typeId: typeId,
     type: type,
-    // parentMarket: market.parentMarket,
-    maturityDate: new Date(market.maturity * 1000),
+    maturityDate: market.maturity * 1000,
     homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
     awayTeam: fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
     homeScore: market.homeScore,
@@ -74,19 +82,18 @@ const packMarket = (market) => {
     isOneSideMarket: getIsOneSideMarket(leagueId),
     spread: Number(market.spread) / 100,
     total: Number(market.total) / 100,
-    // doubleChanceMarketType: market.doubleChanceMarketType,
+    line: line,
     isPlayerPropsMarket: isPlayerPropsMarket,
     isOneSidePlayerPropsMarket: isOneSidePlayerPropsMarket,
-    playerProps: isPlayerPropsMarket
-      ? {
-          playerId: market.playerProps.playerId,
-          playerName: market.playerProps.playerName,
-          line: market.playerProps.line,
-          type: type,
-          outcome: market.playerProps.outcome,
-          score: market.playerProps.score,
-        }
-      : null,
+    isSpecialYesNoPropsMarket: isSpecialYesNoPropsMarket,
+    playerProps: {
+      playerId: market.playerProps.playerId,
+      playerName: market.playerProps.playerName,
+      line: Number(market.playerProps.line) / 100,
+      outcome: market.playerProps.outcome,
+      score: market.playerProps.score,
+    },
+    combinedPositions: market.combinedPositions || [],
     odds: market.odds.map((odd) => {
       const formattedOdds = Number(odd) > 0 ? bigNumberFormatter(odd) : 0;
       return {
