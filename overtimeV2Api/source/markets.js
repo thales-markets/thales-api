@@ -82,7 +82,7 @@ const packMarket = (market) => {
     isOneSideMarket: getIsOneSideMarket(leagueId),
     spread: Number(market.spread) / 100,
     total: Number(market.total) / 100,
-    line: line,
+    line: line / 100,
     isPlayerPropsMarket: isPlayerPropsMarket,
     isOneSidePlayerPropsMarket: isOneSidePlayerPropsMarket,
     isSpecialYesNoPropsMarket: isSpecialYesNoPropsMarket,
@@ -97,13 +97,13 @@ const packMarket = (market) => {
       ? market.combinedPositions.map((position) => {
           return {
             position1: {
-              ...position.position1,
               typeId: position.position1.childId,
+              position: position.position1.position,
               line: position.position1.line / 100,
             },
             position2: {
-              ...position.position2,
               typeId: position.position2.childId,
+              position: position.position2.position,
               line: position.position2.line / 100,
             },
           };
