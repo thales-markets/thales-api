@@ -87,41 +87,49 @@
           {
             "position1": {
               "childId": 0,
-              "position": 0
+              "position": 0,
+              "line": 0
             },
             "position2": {
               "childId": 10002,
-              "position": 0
+              "position": 0,
+              "line": 250
             }
           },
           {
             "position1": {
               "childId": 0,
-              "position": 0
+              "position": 0,
+              "line": 0
             },
             "position2": {
               "childId": 10002,
-              "position": 1
+              "position": 1,
+              "line": 250
             }
           },
           {
             "position1": {
               "childId": 0,
-              "position": 1
+              "position": 1,
+              "line": 0
             },
             "position2": {
               "childId": 10002,
-              "position": 0
+              "position": 0,
+              "line": 250
             }
           },
           {
             "position1": {
               "childId": 0,
-              "position": 1
+              "position": 1,
+              "line": 0
             },
             "position2": {
               "childId": 10002,
-              "position": 1
+              "position": 1,
+              "line": 250
             }
           }
         ]

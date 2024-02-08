@@ -93,7 +93,22 @@ const packMarket = (market) => {
       outcome: market.playerProps.outcome,
       score: market.playerProps.score,
     },
-    combinedPositions: market.combinedPositions || [],
+    combinedPositions: market.combinedPositions
+      ? market.combinedPositions.map((position) => {
+          return {
+            position1: {
+              ...position.position1,
+              typeId: position.position1.childId,
+              line: position.position1.line / 100,
+            },
+            position2: {
+              ...position.position2,
+              typeId: position.position2.childId,
+              line: position.position2.line / 100,
+            },
+          };
+        })
+      : [],
     odds: market.odds.map((odd) => {
       const formattedOdds = Number(odd) > 0 ? bigNumberFormatter(odd) : 0;
       return {

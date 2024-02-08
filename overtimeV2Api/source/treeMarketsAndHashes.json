@@ -1098,10 +1098,54 @@
         "playerProps": { "playerId": 0, "playerName": "", "line": 0, "outcome": 0, "score": 0 },
         "odds": ["680000000000000000", "250000000000000000", "68300000000000000", "68300000000000000"],
         "combinedPositions": [
-          { "position1": { "childId": 0, "position": 0 }, "position2": { "childId": 10002, "position": 0 } },
-          { "position1": { "childId": 0, "position": 0 }, "position2": { "childId": 10002, "position": 1 } },
-          { "position1": { "childId": 0, "position": 1 }, "position2": { "childId": 10002, "position": 0 } },
-          { "position1": { "childId": 0, "position": 1 }, "position2": { "childId": 10002, "position": 1 } }
+          {
+            "position1": {
+              "childId": 0,
+              "position": 0,
+              "line": 0
+            },
+            "position2": {
+              "childId": 10002,
+              "position": 0,
+              "line": 250
+            }
+          },
+          {
+            "position1": {
+              "childId": 0,
+              "position": 0,
+              "line": 0
+            },
+            "position2": {
+              "childId": 10002,
+              "position": 1,
+              "line": 250
+            }
+          },
+          {
+            "position1": {
+              "childId": 0,
+              "position": 1,
+              "line": 0
+            },
+            "position2": {
+              "childId": 10002,
+              "position": 0,
+              "line": 250
+            }
+          },
+          {
+            "position1": {
+              "childId": 0,
+              "position": 1,
+              "line": 0
+            },
+            "position2": {
+              "childId": 10002,
+              "position": 1,
+              "line": 250
+            }
+          }
         ],
         "proof": [
           "0xdf49b2dfa2c0829dd4708ccf37005cfa4b198b6575ed2cb8953fcd57c81216a9",
