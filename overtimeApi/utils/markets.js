@@ -309,7 +309,7 @@ const getIsPlayerPropsMarket = (betType) => PLAYER_PROPS_BET_TYPES.includes(betT
 
 const getIsOneSidePlayerPropsMarket = (betType) => ONE_SIDER_PLAYER_PROPS_BET_TYPES.includes(betType);
 
-const getIsSpecialYesNoPropsMarket = (betType) => SPECIAL_YES_NO_BET_TYPES.includes(betType);
+const getIsYesNoPlayerPropsMarket = (betType) => SPECIAL_YES_NO_BET_TYPES.includes(betType);
 
 module.exports = {
   fixDuplicatedTeamName,
@@ -328,5 +328,5 @@ module.exports = {
   getIsDrawAvailable,
   getIsPlayerPropsMarket,
   getIsOneSidePlayerPropsMarket,
-  getIsSpecialYesNoPropsMarket,
+  getIsYesNoPlayerPropsMarket,
 };

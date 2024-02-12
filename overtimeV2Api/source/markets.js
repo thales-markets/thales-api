@@ -11,7 +11,7 @@ const {
   getIsOneSideMarket,
   getIsOneSidePlayerPropsMarket,
   formatMarketOdds,
-  getIsSpecialYesNoPropsMarket,
+  getIsYesNoPlayerPropsMarket,
 } = require("../../overtimeApi/utils/markets");
 const { SPORTS_MAP, ENETPULSE_SPORTS } = require("../../overtimeApi/constants/tags");
 const { MARKET_TYPE, ODDS_TYPE } = require("../../overtimeApi/constants/markets");
@@ -47,7 +47,7 @@ const packMarket = (market) => {
   const isEnetpulseSport = ENETPULSE_SPORTS.includes(leagueId);
   const isPlayerPropsMarket = market.childId === 10010;
   const isOneSidePlayerPropsMarket = getIsOneSidePlayerPropsMarket(market.playerPropsId);
-  const isSpecialYesNoPropsMarket = getIsSpecialYesNoPropsMarket(market.playerPropsId);
+  const isYesNoPlayerPropsMarket = getIsYesNoPlayerPropsMarket(market.playerPropsId);
   const typeId = isPlayerPropsMarket ? market.playerPropsId : market.childId;
   const type = MARKET_TYPE[typeId];
   const line =
@@ -85,7 +85,7 @@ const packMarket = (market) => {
     line: line / 100,
     isPlayerPropsMarket: isPlayerPropsMarket,
     isOneSidePlayerPropsMarket: isOneSidePlayerPropsMarket,
-    isSpecialYesNoPropsMarket: isSpecialYesNoPropsMarket,
+    isYesNoPlayerPropsMarket: isYesNoPlayerPropsMarket,
     playerProps: {
       playerId: market.playerProps.playerId,
       playerName: market.playerProps.playerName,
