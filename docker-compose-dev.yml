@@ -16,25 +16,31 @@ services:
       - redis
     environment:
       - "REDIS_URL=redis://redis:6379"
-      - "INFURA_URL="
-      - "CHAINNODES_ID="
+      - "RUNDOWN_API_KEY=fb84207a07153aef80b82f47041cefdab983c9c2"
+      - "ENETPULSE_USERNAME=thalesapiusr"
+      - "ENETPULSE_TOKEN=3a23fda191fa2f6079e6aa22051ad3f3"
+      - "JSON_ODDS_KEY=eaef6cbb-3712-4e16-954c-ff4565535bc9"
+      - "CHAINNODES_ID=114832a4-cf63-4168-b251-808d06c32cc8"
+      - "ANKR_ID=16d2d25cb7ee6c8e77f26f5c016d07b540ccb12bade4fea83a6f1e993fdac972"
+      - "BLAST_ID=4466d6ab-16e6-4637-81d2-a0fe46adcbe2"
+      - "ANKR_BASE_URL=https://rpc.ankr.com/base/16d2d25cb7ee6c8e77f26f5c016d07b540ccb12bade4fea83a6f1e993fdac972"
+      - "RPC_PROVIDER=blast"
+      - "BATCH_SIZE=50"
     ports:
       - 3002:3002
-  overtime-api:
+  overtime-v2-api:
     restart: always
-    image: thalesmarket/overtime-api
+    image: thalesmarket/overtime-v2-api
     depends_on:
       - redis
     environment:
       - "REDIS_URL=redis://redis:6379"
-      - "CHAINNODES_ID="
-  thales-io:
-    restart: always
-    image: thalesmarket/thales-io
-    depends_on:
-      - redis
-    environment:
-      - "REDIS_URL=redis://redis:6379"
-      - "DUNE_API_KEY="
+      - "CHAINNODES_ID=114832a4-cf63-4168-b251-808d06c32cc8"
+      - "ANKR_ID=16d2d25cb7ee6c8e77f26f5c016d07b540ccb12bade4fea83a6f1e993fdac972"
+      - "BLAST_ID=4466d6ab-16e6-4637-81d2-a0fe46adcbe2"
+      - "RPC_PROVIDER=blast"
+      - "BATCH_SIZE=50"
+      - "ANKR_BASE_URL=https://rpc.ankr.com/base/16d2d25cb7ee6c8e77f26f5c016d07b540ccb12bade4fea83a6f1e993fdac972"
+
 volumes:
   redis-data:

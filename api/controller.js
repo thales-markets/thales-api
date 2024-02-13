@@ -1134,9 +1134,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
         });
       });
 
-      const market = allMarkets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
+      const market = allMarkets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
 
-      return res.send(market || `Market with address ${marketAddress} not found.`);
+      return res.send(market || `Market with gameId ${marketAddress} not found.`);
     } catch (e) {
       console.log(e);
     }

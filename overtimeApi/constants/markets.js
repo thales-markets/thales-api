@@ -132,6 +132,22 @@ const PARLAY_CONTRACT_ERROR_MESSAGE = {
   SameTeamOnParlay: "SameTeamOnParlay",
 };
 
+const CHILD_ID = {
+  Moneyline: 0,
+  Spread: 10001,
+  Total: 10002,
+  DoubleChance: 10003,
+  CombinedPositions: 10004,
+  PlayerProps: 10010,
+};
+
+const STATUS = {
+  Open: 0,
+  Resolved: 1,
+  Canceled: 2,
+  Paused: 3,
+};
+
 module.exports = {
   BET_TYPE,
   MARKET_TYPE,
@@ -147,4 +163,6 @@ module.exports = {
   ZERO_ADDRESS,
   PARLAY_CONTRACT_ERROR_MESSAGE,
   SPECIAL_YES_NO_BET_TYPES,
+  CHILD_ID,
+  STATUS,
 };

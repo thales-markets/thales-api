@@ -1,7 +1,6 @@
 require("dotenv").config();
 
 const redis = require("redis");
-const { NETWORK_NAME, NETWORK } = require("../../overtimeApi/constants/networks");
 const { delay } = require("../../overtimeApi/utils/general");
 const { bigNumberFormatter } = require("../../overtimeApi/utils/formatters");
 const markets = require("./treeMarketsAndHashes.json");
@@ -14,7 +13,7 @@ const {
   getIsYesNoPlayerPropsMarket,
 } = require("../../overtimeApi/utils/markets");
 const { SPORTS_MAP, ENETPULSE_SPORTS } = require("../../overtimeApi/constants/tags");
-const { MARKET_TYPE, ODDS_TYPE } = require("../../overtimeApi/constants/markets");
+const { MARKET_TYPE, ODDS_TYPE, BET_TYPE, CHILD_ID, STATUS } = require("../../overtimeApi/constants/markets");
 const KEYS = require("../../redis/redis-keys");
 
 let marketsMap = new Map();
@@ -31,7 +30,7 @@ async function processMarkets() {
       while (true) {
         try {
           console.log("process markets");
-          await processAllMarkets();
+          processAllMarkets();
         } catch (error) {
           console.log("markets error: ", error);
         }
@@ -45,17 +44,15 @@ async function processMarkets() {
 const packMarket = (market) => {
   const leagueId = market.sportId;
   const isEnetpulseSport = ENETPULSE_SPORTS.includes(leagueId);
-  const isPlayerPropsMarket = market.childId === 10010;
-  const isOneSidePlayerPropsMarket = getIsOneSidePlayerPropsMarket(market.playerPropsId);
-  const isYesNoPlayerPropsMarket = getIsYesNoPlayerPropsMarket(market.playerPropsId);
+  const isPlayerPropsMarket = market.childId === CHILD_ID.PlayerProps;
   const typeId = isPlayerPropsMarket ? market.playerPropsId : market.childId;
   const type = MARKET_TYPE[typeId];
   const line =
-    market.childId === 10001
+    market.childId === CHILD_ID.Spread
       ? market.spread
-      : market.childId === 10002
+      : market.childId === CHILD_ID.Total
       ? market.total
-      : market.childId === 10010
+      : market.childId === CHILD_ID.PlayerProps
       ? market.playerProps.line
       : 0;
 
@@ -68,24 +65,25 @@ const packMarket = (market) => {
     playerPropsId: market.playerPropsId,
     typeId: typeId,
     type: type,
-    maturityDate: market.maturity * 1000,
+    maturity: market.maturity,
+    maturityDate: new Date(market.maturity * 1000),
     homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
     awayTeam: fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
     homeScore: market.homeScore,
     awayScore: market.awayScore,
     finalResult: market.finalResult,
     status: market.status,
-    isResolved: market.status === 1,
-    isOpen: market.status === 0,
-    isCanceled: market.status === 2,
-    isPaused: market.status === 3,
+    isOpen: market.status === STATUS.Open,
+    isResolved: market.status === STATUS.Resolved,
+    isCanceled: market.status === STATUS.Canceled,
+    isPaused: market.status === STATUS.Paused,
     isOneSideMarket: getIsOneSideMarket(leagueId),
     spread: Number(market.spread) / 100,
     total: Number(market.total) / 100,
-    line: line / 100,
+    line: Number(line) / 100,
     isPlayerPropsMarket: isPlayerPropsMarket,
-    isOneSidePlayerPropsMarket: isOneSidePlayerPropsMarket,
-    isYesNoPlayerPropsMarket: isYesNoPlayerPropsMarket,
+    isOneSidePlayerPropsMarket: getIsOneSidePlayerPropsMarket(market.playerPropsId),
+    isYesNoPlayerPropsMarket: getIsYesNoPlayerPropsMarket(market.playerPropsId),
     playerProps: {
       playerId: market.playerProps.playerId,
       playerName: market.playerProps.playerName,
@@ -122,7 +120,11 @@ const packMarket = (market) => {
 };
 
 const mapMarkets = () => {
-  const mappedMarkets = [];
+  const mappedOpenMarkets = [];
+  const mappedOngoingMarkets = [];
+  const mappedResolvedMarkets = [];
+  const mappedCanceledMarkets = [];
+  const mappedPausedMarkets = [];
 
   markets.forEach((market) => {
     let packedMarket = packMarket(market);
@@ -132,21 +134,35 @@ const mapMarkets = () => {
       packedMarket.childMarkets.push(packedChildMarket);
     });
 
-    mappedMarkets.push(packedMarket);
+    const isStarted = packedMarket.maturityDate < new Date();
+
+    if (packedMarket.isOpen && !isStarted) {
+      mappedOpenMarkets.push(packedMarket);
+    }
+    if ((packedMarket.isOpen || packedMarket.isPaused) && isStarted) {
+      mappedOngoingMarkets.push(packedMarket);
+    }
+    if (packedMarket.isResolved) {
+      mappedResolvedMarkets.push(packedMarket);
+    }
+    if (packedMarket.isCanceled) {
+      mappedCanceledMarkets.push(packedMarket);
+    }
+    if (packedMarket.isPaused) {
+      mappedPausedMarkets.push(packedMarket);
+    }
   });
 
-  return mappedMarkets;
+  return { mappedOpenMarkets, mappedOngoingMarkets, mappedResolvedMarkets, mappedCanceledMarkets, mappedPausedMarkets };
 };
 
 function processAllMarkets() {
-  console.log(`process open markets`);
-  let mappedMarkets = mapMarkets();
-  marketsMap.set("open", mappedMarkets);
-  marketsMap.set("resolved", []);
-  marketsMap.set("canceled", []);
-  marketsMap.set("paused", []);
-  marketsMap.set("ongoing", []);
-
+  const mappedMarkets = mapMarkets();
+  marketsMap.set("open", mappedMarkets.mappedOpenMarkets);
+  marketsMap.set("ongoing", mappedMarkets.mappedOngoingMarkets);
+  marketsMap.set("resolved", mappedMarkets.mappedResolvedMarkets);
+  marketsMap.set("canceled", mappedMarkets.mappedCanceledMarkets);
+  marketsMap.set("paused", mappedMarkets.mappedPausedMarkets);
   redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...marketsMap]), function () {});
 }
 
