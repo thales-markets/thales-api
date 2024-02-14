@@ -34,6 +34,11 @@ const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json")
 const { isRangedPosition } = require("../thalesApi/utils/markets");
 const { isNumeric } = require("../services/utils");
 
+const thalesSpeedConst = require("../thalesSpeedApi/constants/markets");
+const thalesSpeedUtilsMarkets = require("../thalesSpeedApi/utils/markets");
+const thalesSpeedUtilsNetworks = require("../thalesSpeedApi/utils/networks");
+const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
+
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
 });
@@ -971,6 +976,37 @@ app.get(ENDPOINTS.THALES_USER_TRANSACTIONS, async (req, res) => {
 
   return res.send(userTransactions);
 });
+
+// THALES SPEED MARKETS
+
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
+  const network = Number(req.params.networkParam);
+  const asset = req.query.asset;
+  const deltaTimeSec = req.query.deltaTimeSec;
+  const strikeTimeSec = req.query.strikeTimeSec;
+  const direction = req.query.direction;
+  const collateral = req.query.collateral;
+  const buyin = req.query.buyin;
+  const referral = req.query.referral;
+
+  if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
+    res.send("Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks());
+    return;
+  }
+  if (!thalesSpeedUtilsMarkets.getIsAssetSupported(asset)) {
+    res.send("Unsupported asset. Supported assets: " + thalesSpeedConst.SUPPORTED_ASSETS.join(", "));
+    return;
+  }
+  const speedLimits = await thalesSpeedLimits.getSpeedMarketsLimits(network);
+
+  return res.send(speedLimits);
+});
+
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_USER_CLAIMABLE, async (req, res) => {});
+
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_CLAIM_PARAMS, async (req, res) => {});
+
+// THALES IO
 
 app.get(ENDPOINTS.THALES_IO_USERS_DATA, async (req, res) => {
   const url = `https://raw.githubusercontent.com/thales-markets/thales-io-dapp/dev/src/assets/json/users-data.json`;
