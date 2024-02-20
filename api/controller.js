@@ -1099,8 +1099,23 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
     responseError +=
       (responseError ? "\n" : "") + "Unsupported buyin. Minimal buyin: " + minBuyin + ", maximal buyin: " + maxBuyin;
   }
-  // TODO: Liquidity validation
-  // TODO: Liquidity per assset and direction validation
+  // Liquidity per assset and direction validation
+  const riskPerAssetAndDirectionData = speedLimits.risksPerAssetAndDirection.filter(
+    (data) => data.currency == asset && data.position == direction,
+  )[0];
+  const liquidityPerDirection = riskPerAssetAndDirectionData.max - riskPerAssetAndDirectionData.current;
+  if (stableBuyin > liquidityPerDirection) {
+    responseError +=
+      (responseError ? "\n" : "") +
+      "Out of liquidity for asset and direction. Current liquidity: " +
+      liquidityPerDirection;
+  }
+  // Liquidity validation
+  const riskPerAssetData = speedLimits.risksPerAsset.filter((data) => data.currency == asset)[0];
+  const liquidity = riskPerAssetData.max - riskPerAssetData.current;
+  if (stableBuyin > liquidity) {
+    responseError += (responseError ? "\n" : "") + "Out of liquidity for asset. Current liquidity: " + liquidity;
+  }
 
   let pythPriceData = { priceUpdateData: [], updateFee: 0 };
   if (!responseError) {

@@ -11,6 +11,7 @@ const getSpeedMarketsLimits = async (network) => {
     maxBuyinAmount: 0,
     minimalTimeToMaturity: 0,
     maximalTimeToMaturity: 0,
+    risksPerAsset: [],
     risksPerAssetAndDirection: [],
     timeThresholdsForFees: [],
     lpFees: [],
@@ -27,17 +28,33 @@ const getSpeedMarketsLimits = async (network) => {
       provider,
     );
 
-    const [speedMarketsAMMParameters, directionalRiskForETH, directionalRiskForBTC] = await Promise.all([
-      speedMarketsData.getSpeedMarketsAMMParameters(ZERO_ADDRESS),
-      speedMarketsData.getDirectionalRiskPerAsset(ethers.utils.formatBytes32String(CRYPTO_CURRENCY_MAP.ETH)),
-      speedMarketsData.getDirectionalRiskPerAsset(ethers.utils.formatBytes32String(CRYPTO_CURRENCY_MAP.BTC)),
-    ]);
+    const [speedMarketsAMMParameters, riskForETH, riskForBTC, directionalRiskForETH, directionalRiskForBTC] =
+      await Promise.all([
+        speedMarketsData.getSpeedMarketsAMMParameters(ZERO_ADDRESS),
+        speedMarketsData.getRiskPerAsset(ethers.utils.formatBytes32String(CRYPTO_CURRENCY_MAP.ETH)),
+        speedMarketsData.getRiskPerAsset(ethers.utils.formatBytes32String(CRYPTO_CURRENCY_MAP.BTC)),
+        speedMarketsData.getDirectionalRiskPerAsset(ethers.utils.formatBytes32String(CRYPTO_CURRENCY_MAP.ETH)),
+        speedMarketsData.getDirectionalRiskPerAsset(ethers.utils.formatBytes32String(CRYPTO_CURRENCY_MAP.BTC)),
+      ]);
 
     ammSpeedMarketsLimits.minBuyinAmount = Math.ceil(coinFormatter(speedMarketsAMMParameters.minBuyinAmount, network));
     ammSpeedMarketsLimits.maxBuyinAmount =
       coinFormatter(speedMarketsAMMParameters.maxBuyinAmount, network) - MAX_BUYIN_COLLATERAL_CONVERSION_BUFFER;
     ammSpeedMarketsLimits.minimalTimeToMaturity = Number(speedMarketsAMMParameters.minimalTimeToMaturity);
     ammSpeedMarketsLimits.maximalTimeToMaturity = Number(speedMarketsAMMParameters.maximalTimeToMaturity);
+
+    ammSpeedMarketsLimits.risksPerAsset = [
+      {
+        currency: CRYPTO_CURRENCY_MAP.ETH,
+        current: coinFormatter(riskForETH.current, network),
+        max: coinFormatter(riskForETH.max, network),
+      },
+      {
+        currency: CRYPTO_CURRENCY_MAP.BTC,
+        current: coinFormatter(riskForBTC.current, network),
+        max: coinFormatter(riskForBTC.max, network),
+      },
+    ];
 
     directionalRiskForETH.map((risk) => {
       ammSpeedMarketsLimits.risksPerAssetAndDirection.push({
