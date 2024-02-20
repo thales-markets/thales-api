@@ -34,10 +34,12 @@ const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json")
 const { isRangedPosition } = require("../thalesApi/utils/markets");
 const { isNumeric } = require("../services/utils");
 
+const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
+const thalesPythPrice = require("../thalesSpeedApi/source/pythPrice");
 const thalesSpeedConst = require("../thalesSpeedApi/constants/markets");
 const thalesSpeedUtilsMarkets = require("../thalesSpeedApi/utils/markets");
 const thalesSpeedUtilsNetworks = require("../thalesSpeedApi/utils/networks");
-const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
+const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -982,24 +984,159 @@ app.get(ENDPOINTS.THALES_USER_TRANSACTIONS, async (req, res) => {
 app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
   const network = Number(req.params.networkParam);
   const asset = req.query.asset;
-  const deltaTimeSec = req.query.deltaTimeSec;
-  const strikeTimeSec = req.query.strikeTimeSec;
+  const deltaTimeSec = Number(req.query.deltaTimeSec || 0);
+  const strikeTimeSec = Number(req.query.strikeTimeSec || 0);
   const direction = req.query.direction;
   const collateral = req.query.collateral;
-  const buyin = req.query.buyin;
-  const referral = req.query.referral;
+  const buyin = Number(req.query.buyin || 0);
 
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  let responseError = "";
   if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
-    res.send("Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks());
-    return;
+    responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
   }
   if (!thalesSpeedUtilsMarkets.getIsAssetSupported(asset)) {
-    res.send("Unsupported asset. Supported assets: " + thalesSpeedConst.SUPPORTED_ASSETS.join(", "));
-    return;
+    responseError +=
+      (responseError ? "\n" : "") +
+      "Unsupported asset. Supported assets: " +
+      thalesSpeedConst.SUPPORTED_ASSETS.join(", ");
   }
   const speedLimits = await thalesSpeedLimits.getSpeedMarketsLimits(network);
+  if (deltaTimeSec) {
+    if (deltaTimeSec < speedLimits.minimalTimeToMaturity || deltaTimeSec > speedLimits.maximalTimeToMaturity) {
+      responseError +=
+        (responseError ? "\n" : "") +
+        "Unsupported delta time. Minimal delta: " +
+        speedLimits.minimalTimeToMaturity +
+        ", maximal delta: " +
+        speedLimits.maximalTimeToMaturity;
+    }
+  } else if (strikeTimeSec) {
+    if (strikeTimeSec.toString().length != 10) {
+      responseError += (responseError ? "\n" : "") + "Unsupported strike time. Strike time has to be in seconds!";
+    }
+    if (
+      strikeTimeSec < nowSec + speedLimits.minimalTimeToMaturity ||
+      strikeTimeSec > nowSec + speedLimits.maximalTimeToMaturity
+    ) {
+      responseError +=
+        (responseError ? "\n" : "") +
+        "Unsupported strike time. Minimal strike time: " +
+        speedLimits.minimalTimeToMaturity +
+        " seconds from now" +
+        ", maximal strike time: " +
+        speedLimits.maximalTimeToMaturity +
+        " seconds from now";
+    }
+  } else {
+    responseError += (responseError ? "\n" : "") + "Missing delta time or strike time!";
+  }
+  if (!["UP", "DOWN"].includes(direction)) {
+    responseError += (responseError ? "\n" : "") + "Unsupported direction. Supported directions: UP, DOWN";
+  }
+  if (collateral && !thalesSpeedConst.SUPPORTED_COLLATERALS[network].includes(collateral)) {
+    responseError +=
+      (responseError ? "\n" : "") +
+      "Unsupported collateral for network. Supported collaterals: " +
+      thalesSpeedConst.SUPPORTED_COLLATERALS[network].join(", ");
+  }
+  // Buy-in calculation and validation
+  const isDefaultCollateral = !collateral || thalesSpeedUtilsMarkets.getIsDefaultCollateral(network, collateral);
+  let stableBuyin = buyin;
+  let buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
+    thalesSpeedUtilsFormmaters.truncToDecimals(buyin),
+    network,
+    collateral,
+  );
+  const skewImpact = thalesSpeedUtilsMarkets.getSkewImpact(speedLimits, asset);
+  if (!isDefaultCollateral) {
+    const lpFee = thalesSpeedUtilsMarkets.getFeeByTimeThreshold(
+      deltaTimeSec ? deltaTimeSec : strikeTimeSec - nowSec,
+      speedLimits.timeThresholdsForFees,
+      speedLimits.lpFees,
+      speedLimits.defaultLPFee,
+    );
+    const skew = skewImpact[direction];
+    const oppositeDirection = direction == "UP" ? "DOWN" : "UP";
+    const discount = skewImpact[oppositeDirection] / 2;
+    const totalFee = lpFee + skew - discount + speedLimits.safeBoxImpact;
 
-  return res.send(speedLimits);
+    if (thalesSpeedUtilsMarkets.getIsStableCollateral(collateral)) {
+      stableBuyin = buyin;
+      const buyinWithFees = buyin * (1 + totalFee + thalesSpeedConst.STABLECOIN_CONVERSION_BUFFER_PERCENTAGE);
+      buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
+        thalesSpeedUtilsFormmaters.truncToDecimals(buyinWithFees),
+        network,
+        collateral,
+      );
+    } else {
+      stableBuyin = await thalesSpeedUtilsMarkets.getConvertedToStable(buyin, collateral, network);
+      const buyinWithFees = buyin * (1 + totalFee);
+      buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
+        thalesSpeedUtilsFormmaters.truncToDecimals(
+          buyinWithFees,
+          thalesSpeedUtilsMarkets.getCollateralDecimals(collateral),
+        ),
+        network,
+        collateral,
+      );
+    }
+  }
+  if (stableBuyin < speedLimits.minBuyinAmount || stableBuyin > speedLimits.maxBuyinAmount) {
+    const minBuyin = await thalesSpeedUtilsMarkets.getConvertedFromStable(
+      speedLimits.minBuyinAmount,
+      collateral,
+      true,
+      network,
+    );
+    const maxBuyin = await thalesSpeedUtilsMarkets.getConvertedFromStable(
+      speedLimits.maxBuyinAmount,
+      collateral,
+      false,
+      network,
+    );
+    responseError +=
+      (responseError ? "\n" : "") + "Unsupported buyin. Minimal buyin: " + minBuyin + ", maximal buyin: " + maxBuyin;
+  }
+  // TODO: Liquidity validation
+  // TODO: Liquidity per assset and direction validation
+
+  let pythPriceData = { priceUpdateData: [], updateFee: 0, currentPrice: 0 };
+  if (!responseError) {
+    pythPriceData = await thalesPythPrice.getPythPriceData(network, asset);
+  }
+
+  let response = {
+    methodName: isDefaultCollateral ? "createNewMarket" : "createNewMarketWithDifferentCollateral",
+    asset: thalesSpeedUtilsFormmaters.assetFormatter(asset),
+    strikeTime: deltaTimeSec ? 0 : strikeTimeSec,
+    delta: deltaTimeSec ? deltaTimeSec : 0,
+    direction: direction == "UP" ? 0 : 1,
+    priceUpdateData: pythPriceData.priceUpdateData,
+    referrer: thalesSpeedConst.ZERO_ADDRESS,
+    skewImpact: thalesSpeedUtilsFormmaters.skewParser(skewImpact[direction]),
+  };
+
+  const isEth = thalesSpeedUtilsMarkets.getIsEth(collateral);
+  response = isDefaultCollateral
+    ? {
+        ...response,
+        buyinAmount,
+      }
+    : {
+        ...response,
+        collateral: thalesSpeedUtilsMarkets.getCollateralAddress(network, collateral),
+        collateralAmount: buyinAmount,
+        isEth,
+      };
+  response = { ...response, value: isEth ? buyinAmount.add(pythPriceData.updateFee) : pythPriceData.updateFee };
+
+  if (responseError) {
+    return res.status(400).send(responseError);
+  } else {
+    return res.send(response);
+  }
 });
 
 app.get(ENDPOINTS.THALES_SPEED_MARKETS_USER_CLAIMABLE, async (req, res) => {});
