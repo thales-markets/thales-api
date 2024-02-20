@@ -41,8 +41,8 @@ const packMarket = (market) => {
 };
 
 const getMarkets = async () => {
-  const response = await axios.get(`https://api.thalesmarket.io/overtime/networks/42161/markets?leagueId=9011`);
-  const markets = response.data["Soccer"][9011];
+  const response = await axios.get(`https://api.thalesmarket.io/overtime/networks/42161/markets`);
+  const markets = response.data["Hockey"][9006];
 
   const mappedMarkets = [];
 
@@ -65,7 +65,7 @@ const getMarkets = async () => {
 async function writeDummyMarkets() {
   const dummyMarkets = await getMarkets();
 
-  fs.writeFileSync(`overtimeV2Api/utils/dummy/dummyMarketsEpl.json`, JSON.stringify(dummyMarkets), function (err) {
+  fs.writeFileSync(`overtimeV2Api/utils/dummy/dummyMarketsNhl.json`, JSON.stringify(dummyMarkets), function (err) {
     if (err) return console.log(err);
   });
 }
