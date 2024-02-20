@@ -1117,7 +1117,7 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
     responseError += (responseError ? "\n" : "") + "Out of liquidity for asset. Current liquidity: " + liquidity;
   }
 
-  let pythPriceData = { priceUpdateData: [], updateFee: 0 };
+  let pythPriceData = { priceUpdateData: [], updateFee: 0, pythPrice: 0 };
   if (!responseError) {
     pythPriceData = await thalesPythPrice.getPythPriceData(network, asset);
   }
@@ -1129,6 +1129,7 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
     delta: deltaTimeSec ? deltaTimeSec : 0,
     direction: direction == "UP" ? 0 : 1,
     priceUpdateData: pythPriceData.priceUpdateData,
+    pythPrice: pythPriceData.pythPrice,
     referrer: thalesSpeedConst.ZERO_ADDRESS,
     skewImpact: thalesSpeedUtilsFormmaters.skewParser(skewImpact[direction]),
   };
