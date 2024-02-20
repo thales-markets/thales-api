@@ -1102,7 +1102,7 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
   // TODO: Liquidity validation
   // TODO: Liquidity per assset and direction validation
 
-  let pythPriceData = { priceUpdateData: [], updateFee: 0, currentPrice: 0 };
+  let pythPriceData = { priceUpdateData: [], updateFee: 0 };
   if (!responseError) {
     pythPriceData = await thalesPythPrice.getPythPriceData(network, asset);
   }

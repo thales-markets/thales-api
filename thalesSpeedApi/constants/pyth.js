@@ -7,13 +7,7 @@ const PRICE_ID = {
 
 const LATEST_VAAS_URL = "https://hermes.pyth.network/api/latest_vaas?ids[]=";
 
-const LATEST_PRICE_FEEDS_URL = "https://hermes.pyth.network/api/latest_price_feeds?ids[]=";
-
-const PYTH_CURRENCY_DECIMALS = 8;
-
 module.exports = {
   PRICE_ID,
   LATEST_VAAS_URL,
-  LATEST_PRICE_FEEDS_URL,
-  PYTH_CURRENCY_DECIMALS,
 };
