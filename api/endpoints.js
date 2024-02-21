@@ -14,6 +14,7 @@ const ENDPOINTS = {
   PARLAY_LEADERBOARD: "/parlay-leaderboard/:networkParam/:period",
   BANNERS: "/banners/:networkParam",
   BANNERS_IMAGE: "/banners/image/:imageName",
+  PROMOTIONS: '/promotions',
   THALES_BANNERS: "/thales-banners/:networkParam",
   THALES_BANNERS_IMAGE: "/thales-banners/image/:imageName",
   LIVE_RESULT: "/live-result/:gameId",

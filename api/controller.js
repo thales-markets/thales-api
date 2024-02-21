@@ -216,6 +216,12 @@ app.get(ENDPOINTS.THALES_BANNERS_IMAGE, (req, res) => {
   request.get(url).pipe(res);
 });
 
+app.get(ENDPOINTS.PROMOTIONS, async (req, res) => {
+  const branchName = req.query['branch-name'];
+  var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/${branchName ? branchName : 'main'}/src/assets/promotions/index.json`;
+  request.get(banners).pipe(res);
+});
+
 app.get(ENDPOINTS.LIVE_RESULT, (req, res) => {
   const gameId = req.params.gameId;
   var url = `https://therundown.io/api/v2/events/${gameId}?key=${process.env.RUNDOWN_API_KEY}`;
