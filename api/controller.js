@@ -35,6 +35,8 @@ const { isRangedPosition } = require("../thalesApi/utils/markets");
 const { isNumeric } = require("../services/utils");
 
 const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
+const thalesSpeedAmmMarkets = require("../thalesSpeedApi/source/ammMarkets");
+const thalesSpeedMarketsData = require("../thalesSpeedApi/source/marketsData");
 const thalesPythPrice = require("../thalesSpeedApi/source/pythPrice");
 const thalesSpeedConst = require("../thalesSpeedApi/constants/markets");
 const thalesSpeedUtilsMarkets = require("../thalesSpeedApi/utils/markets");
@@ -1119,7 +1121,7 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
 
   let pythPriceData = { priceUpdateData: [], updateFee: 0, pythPrice: 0 };
   if (!responseError) {
-    pythPriceData = await thalesPythPrice.getPythPriceData(network, asset);
+    pythPriceData = await thalesPythPrice.getPythLatestPriceData(network, asset);
   }
 
   let response = {
@@ -1155,9 +1157,39 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.THALES_SPEED_MARKETS_USER_CLAIMABLE, async (req, res) => {});
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_USER_CLAIMABLE, async (req, res) => {
+  const network = Number(req.params.networkParam);
+  const user = req.params.userAddress;
 
-app.get(ENDPOINTS.THALES_SPEED_MARKETS_CLAIM_PARAMS, async (req, res) => {});
+  let responseError = "";
+  if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
+    responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
+  }
+
+  const markets = await thalesSpeedAmmMarkets.getUserActiveMarkets(network, user);
+  const marketsData = await thalesSpeedMarketsData.getSpeedMarketsData(network, markets);
+  const maturedMarketsData = marketsData.filter((marketData) => marketData.strikeTime * 1000 < Date.now());
+  const assetsAndTimes = maturedMarketsData.map((marketData) => ({
+    asset: marketData.asset,
+    time: marketData.strikeTime,
+  }));
+  const pythDataArray = await thalesPythPrice.getPythHistoricalPricesData(network, assetsAndTimes);
+  const response = maturedMarketsData
+    .filter(
+      (marketData, i) =>
+        pythDataArray[i].pythPrice > 0 &&
+        thalesSpeedUtilsMarkets.getIsUserWon(marketData.direction, marketData.strikePrice, pythDataArray[i].pythPrice),
+    )
+    .map((marketData) => marketData.address);
+
+  if (responseError) {
+    return res.status(400).send(responseError);
+  } else {
+    return res.send(response);
+  }
+});
+
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_RESOLVE_PARAMS, async (req, res) => {});
 
 // THALES IO
 

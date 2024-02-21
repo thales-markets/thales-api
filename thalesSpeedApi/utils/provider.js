@@ -6,7 +6,7 @@ const PROVIDER_URL = {
   [NETWORK.OptimismGoerli]: "https://optimism-goerli.chainnodes.org/",
   [NETWORK.Arbitrum]: "https://arbitrum-one.chainnodes.org/",
   [NETWORK.Base]: "https://base-mainnet.chainnodes.org/",
-  [NETWORK.Polygon]: "https://polygon-mainnet.chainnodes.org/", // TODO: check if it works or use Infura
+  [NETWORK.Polygon]: "https://polygon-mainnet.chainnodes.org/",
   [NETWORK.ZkSync]: "https://mainnet.era.zksync.io",
   [NETWORK.ZkSyncSepolia]: "https://sepolia.era.zksync.dev",
   [NETWORK.BlastSepolia]: "https://sepolia.blast.io",

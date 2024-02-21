@@ -83,6 +83,9 @@ const getConvertedToStable = async (value, collateral, network) => {
   return value * rate * (1 - ALTCOIN_CONVERSION_BUFFER_PERCENTAGE);
 };
 
+const getIsUserWon = (direction, strikePrice, finalPrice) =>
+  (direction == "UP" && finalPrice > strikePrice) || (direction == "DOWN" && finalPrice < strikePrice);
+
 module.exports = {
   getIsNetworkSupported,
   getIsAssetSupported,
@@ -95,4 +98,5 @@ module.exports = {
   getSkewImpact,
   getConvertedFromStable,
   getConvertedToStable,
+  getIsUserWon,
 };
