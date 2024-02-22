@@ -34,6 +34,7 @@ const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json")
 const { isRangedPosition } = require("../thalesApi/utils/markets");
 const { isNumeric } = require("../services/utils");
 
+const { BigNumber } = require("ethers");
 const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
 const thalesSpeedAmmMarkets = require("../thalesSpeedApi/source/ammMarkets");
 const thalesSpeedMarketsData = require("../thalesSpeedApi/source/marketsData");
@@ -1174,13 +1175,19 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_USER_CLAIMABLE, async (req, res) => {
     time: marketData.strikeTime,
   }));
   const pythDataArray = await thalesPythPrice.getPythHistoricalPricesData(network, assetsAndTimes);
-  const response = maturedMarketsData
+
+  const claimable = maturedMarketsData
     .filter(
       (marketData, i) =>
         pythDataArray[i].pythPrice > 0 &&
         thalesSpeedUtilsMarkets.getIsUserWon(marketData.direction, marketData.strikePrice, pythDataArray[i].pythPrice),
     )
     .map((marketData) => marketData.address);
+  const priceUnknown = maturedMarketsData
+    .filter((_, i) => pythDataArray[i].pythPrice == 0)
+    .map((marketData) => marketData.address);
+
+  const response = { claimable, priceUnknown };
 
   if (responseError) {
     return res.status(400).send(responseError);
@@ -1189,7 +1196,54 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_USER_CLAIMABLE, async (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.THALES_SPEED_MARKETS_RESOLVE_PARAMS, async (req, res) => {});
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_RESOLVE_PARAMS, async (req, res) => {
+  const network = Number(req.params.networkParam);
+  const markets = req.query.markets;
+
+  let responseError = "";
+  if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
+    responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
+  }
+
+  const marketsData = await thalesSpeedMarketsData.getSpeedMarketsData(network, markets);
+  const maturedMarketsData = marketsData.filter((marketData) => marketData.strikeTime * 1000 < Date.now());
+  const assetsAndTimes = maturedMarketsData.map((marketData) => ({
+    asset: marketData.asset,
+    time: marketData.strikeTime,
+  }));
+  const pythDataArray = await thalesPythPrice.getPythHistoricalPricesData(network, assetsAndTimes);
+
+  const marketsToResolve = maturedMarketsData
+    .filter((_, i) => pythDataArray[i].pythPrice > 0)
+    .map((marketData) => marketData.address);
+
+  const priceUpdateDataToResolve = pythDataArray
+    .map((pythData) => (pythData.pythPrice > 0 ? pythData.priceUpdateData[0] : undefined))
+    .filter((p) => p != undefined);
+
+  const totalUpdateFee = pythDataArray.reduce(
+    (acc, pythData) => acc.add(pythData.pythPrice > 0 ? pythData.updateFee : BigNumber.from(0)),
+    BigNumber.from(0),
+  );
+
+  const priceUnknown = maturedMarketsData
+    .filter((_, i) => pythDataArray[i].pythPrice == 0)
+    .map((marketData) => marketData.address);
+
+  const response = {
+    methodName: "resolveMarketsBatch",
+    markets: marketsToResolve,
+    priceUpdateData: priceUpdateDataToResolve,
+    value: totalUpdateFee,
+    priceUnknown,
+  };
+
+  if (responseError) {
+    return res.status(400).send(responseError);
+  } else {
+    return res.send(response);
+  }
+});
 
 // THALES IO
 
