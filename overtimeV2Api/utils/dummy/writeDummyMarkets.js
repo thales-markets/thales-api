@@ -42,7 +42,7 @@ const packMarket = (market) => {
 
 const getMarkets = async () => {
   const response = await axios.get(`https://api.thalesmarket.io/overtime/networks/42161/markets`);
-  const markets = response.data["Hockey"][9006];
+  const markets = response.data["Soccer"][9016];
 
   const mappedMarkets = [];
 
@@ -63,11 +63,43 @@ const getMarkets = async () => {
 };
 
 async function writeDummyMarkets() {
-  const dummyMarkets = await getMarkets();
+  const repoOwner = "thales-markets";
+  const repoName = "overtime-v2-merkles";
+  const filePath = `merkle-trees/`;
+  const listFilePath = `merkle-trees/alltrees.txt`;
+  const token = `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`;
+  const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
 
-  fs.writeFileSync(`overtimeV2Api/utils/dummy/dummyMarketsNhl.json`, JSON.stringify(dummyMarkets), function (err) {
-    if (err) return console.log(err);
+  const response = await axios.get(`${apiUrl}${listFilePath}`, {
+    headers: {
+      Authorization: `token ${token}`,
+      Accept: "application/vnd.github.v3+json",
+    },
   });
+  const listContent = Buffer.from(response.data.content, "base64").toString("utf8");
+
+  const files = listContent ? listContent.split(",").map((f) => f.trim()) : [];
+
+  let markets = [];
+  for (let index = 0; index < files.length; index++) {
+    const file = files[index];
+    const marketsResponse = await axios.get(`${apiUrl}${filePath}${file}`, {
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+
+    const marketsContent = Buffer.from(marketsResponse.data.content, "base64").toString("utf8");
+    markets = [...markets, ...JSON.parse(marketsContent).treeMarketsAndHashes];
+  }
+
+  console.log(markets);
+  // const dummyMarkets = await getMarkets();
+
+  // fs.writeFileSync(`overtimeV2Api/utils/dummy/dummyMarketsUcl.json`, JSON.stringify(dummyMarkets), function (err) {
+  //   if (err) return console.log(err);
+  // });
 }
 
 writeDummyMarkets()
