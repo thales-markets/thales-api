@@ -44,6 +44,8 @@ const ENDPOINTS = {
   THALES_SPEED_MARKETS_BUY_PARAMS: "/thales/networks/:networkParam/speed-markets/buy",
   THALES_SPEED_MARKETS_USER_CLAIMABLE: "/thales/networks/:networkParam/users/:userAddress/speed-markets",
   THALES_SPEED_MARKETS_RESOLVE_PARAMS: "/thales/networks/:networkParam/speed-markets/resolve",
+  THALES_SPEED_MARKETS_RESOLVE_OFFRAMP_PARAMS:
+    "/thales/networks/:networkParam/speed-markets/:marketAddress/resolve-offramp",
 
   THALES_IO_VOLUME_DATA: "/thales/thales-io/volume-data",
   THALES_IO_USERS_DATA: "/thales/thales-io/users-data",
