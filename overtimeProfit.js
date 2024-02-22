@@ -99,7 +99,7 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod, pe
         };
       });
 
-      const buyInPow = Math.pow(parlayMarket.sUSDPaid, 1 / 3);
+      const buyInPow = Math.pow(parlayMarket.sUSDPaid, 1 / (period === 0 ? 3 : 2));
       const points = (totalAmount / parlayMarket.sUSDPaid) * (1 + 0.1 * numberOfPositions) * buyInPow;
 
       return {
