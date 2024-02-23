@@ -1079,6 +1079,9 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
       );
     } else {
       stableBuyin = await thalesSpeedUtilsMarkets.getConvertedToStable(buyin, collateral, network);
+      if (stableBuyin == 0) {
+        responseError += (responseError ? "\n" : "") + "Conversion to stable collateral failed! Please try again...";
+      }
       const buyinWithFees = buyin * (1 + totalFee);
       buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
         thalesSpeedUtilsFormmaters.truncToDecimals(
@@ -1090,7 +1093,7 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
       );
     }
   }
-  if (stableBuyin < speedLimits.minBuyinAmount || stableBuyin > speedLimits.maxBuyinAmount) {
+  if (stableBuyin && (stableBuyin < speedLimits.minBuyinAmount || stableBuyin > speedLimits.maxBuyinAmount)) {
     const minBuyin = await thalesSpeedUtilsMarkets.getConvertedFromStable(
       speedLimits.minBuyinAmount,
       collateral,
