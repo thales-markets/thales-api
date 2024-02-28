@@ -227,8 +227,10 @@ app.get(ENDPOINTS.THALES_BANNERS_IMAGE, (req, res) => {
 });
 
 app.get(ENDPOINTS.PROMOTIONS, async (req, res) => {
-  const branchName = req.query['branch-name'];
-  var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/${branchName ? branchName : 'main'}/src/assets/promotions/index.json`;
+  const branchName = req.query["branch-name"];
+  var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/${
+    branchName ? branchName : "main"
+  }/src/assets/promotions/index.json`;
   request.get(banners).pipe(res);
 });
 
@@ -308,6 +310,33 @@ app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
   var url = `https://jsonodds.com/api/odds/${sportParameter}`;
 
   request.get(url, { headers: { "x-api-key": process.env.JSON_ODDS_KEY.toString() } }).pipe(res);
+});
+
+app.get(ENDPOINTS.MARCH_MADNESS, (req, res) => {
+  const network = req.params.networkId;
+  const leaderboardType = req.params.leaderboardType;
+
+  if (leaderboardType == 0) {
+    redisClient.get(KEYS.MARCH_MADNESS.BY_VOLUME[network], function (err, obj) {
+      const rewards = JSON.parse(obj);
+      try {
+        res.send(rewards);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
+
+  if (leaderboardType == 1) {
+    redisClient.get(KEYS.MARCH_MADNESS.BY_NUMBER_OF_CORRECT_PREDICTIONS[network], function (err, obj) {
+      const rewards = JSON.parse(obj);
+      try {
+        res.send(rewards);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
 });
 
 app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
