@@ -3,13 +3,14 @@ const BET_TYPE = {
   Spread: 10001,
   Total: 10002,
   DoubleChance: 10003,
+  CombinedPositions: 10004,
   Homeruns: 11010,
   Strikeouts: 11019,
   PassingYards: 11051,
-  PasingTouchdowns: 11052,
+  PassingTouchdowns: 11052,
   RushingYards: 11053,
   ReceivingYards: 11057,
-  ScoringTouchdowns: 11055,
+  Touchdowns: 11055,
   FieldGoalsMade: 11060,
   PitcherHitsAllowed: 11047,
   Points: 11029,
@@ -30,13 +31,14 @@ const MARKET_TYPE = {
   [BET_TYPE.Spread]: "spread",
   [BET_TYPE.Total]: "total",
   [BET_TYPE.DoubleChance]: "doubleChance",
+  [BET_TYPE.CombinedPositions]: "combinedPositions",
   [BET_TYPE.Homeruns]: "homeruns",
   [BET_TYPE.Strikeouts]: "strikeouts",
   [BET_TYPE.PassingYards]: "passingYards",
-  [BET_TYPE.PasingTouchdowns]: "pasingTouchdowns",
+  [BET_TYPE.PassingTouchdowns]: "passingTouchdowns",
   [BET_TYPE.RushingYards]: "rushingYards",
   [BET_TYPE.ReceivingYards]: "receivingYards",
-  [BET_TYPE.ScoringTouchdowns]: "scoringTouchdowns",
+  [BET_TYPE.Touchdowns]: "touchdowns",
   [BET_TYPE.FieldGoalsMade]: "fieldGoalsMade",
   [BET_TYPE.PitcherHitsAllowed]: "pitcherHitsAllowed",
   [BET_TYPE.Points]: "points",
@@ -56,10 +58,10 @@ const PLAYER_PROPS_BET_TYPES = [
   BET_TYPE.Homeruns,
   BET_TYPE.Strikeouts,
   BET_TYPE.PassingYards,
-  BET_TYPE.PasingTouchdowns,
+  BET_TYPE.PassingTouchdowns,
   BET_TYPE.RushingYards,
   BET_TYPE.ReceivingYards,
-  BET_TYPE.ScoringTouchdowns,
+  BET_TYPE.Touchdowns,
   BET_TYPE.FieldGoalsMade,
   BET_TYPE.PitcherHitsAllowed,
   BET_TYPE.Points,
@@ -76,11 +78,12 @@ const PLAYER_PROPS_BET_TYPES = [
 ];
 
 const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [
-  BET_TYPE.ScoringTouchdowns,
+  BET_TYPE.Touchdowns,
   BET_TYPE.Goals,
   BET_TYPE.FirstTouchdown,
   BET_TYPE.LastTouchdown,
 ];
+const SPECIAL_YES_NO_BET_TYPES = [BET_TYPE.DoubleDouble, BET_TYPE.TripleDouble];
 
 const ODDS_TYPE = {
   American: "american-odds",
@@ -129,6 +132,22 @@ const PARLAY_CONTRACT_ERROR_MESSAGE = {
   SameTeamOnParlay: "SameTeamOnParlay",
 };
 
+const CHILD_ID = {
+  Moneyline: 0,
+  Spread: 10001,
+  Total: 10002,
+  DoubleChance: 10003,
+  CombinedPositions: 10004,
+  PlayerProps: 10010,
+};
+
+const STATUS = {
+  Open: 0,
+  Resolved: 1,
+  Canceled: 2,
+  Paused: 3,
+};
+
 module.exports = {
   BET_TYPE,
   MARKET_TYPE,
@@ -143,4 +162,7 @@ module.exports = {
   FINAL_RESULT_TYPE_POSITION_TYPE_MAP,
   ZERO_ADDRESS,
   PARLAY_CONTRACT_ERROR_MESSAGE,
+  SPECIAL_YES_NO_BET_TYPES,
+  CHILD_ID,
+  STATUS,
 };

@@ -1,0 +1,1060 @@
+[
+  {
+    "gameId": "0x3439366465343533303764313865623831393738373537623563363535643162",
+    "sportId": 9016,
+    "childId": 0,
+    "playerPropsId": 0,
+    "maturity": 1708545600,
+    "homeTeam": "FC Porto",
+    "awayTeam": "Arsenal",
+    "homeScore": 0,
+    "awayScore": 0,
+    "finalResult": 0,
+    "status": 0,
+    "spread": 0,
+    "total": 0,
+    "playerProps": {
+      "playerId": 0,
+      "playerName": "",
+      "line": 0,
+      "outcome": 0,
+      "score": 0
+    },
+    "odds": ["181154000000000000", "602884000000000000", "266595000000000000"],
+    "childMarkets": [
+      {
+        "gameId": "0x3439366465343533303764313865623831393738373537623563363535643162",
+        "sportId": 9016,
+        "childId": 10001,
+        "playerPropsId": 0,
+        "maturity": 1708545600,
+        "homeTeam": "FC Porto",
+        "awayTeam": "Arsenal",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 150,
+        "total": 0,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["723239000000000000", "347766000000000000"],
+        "proof": [
+          "0xf6bd14af0348f376e2ef7dd90446254220a3fee6ec8f63a64d47002a6d1243fe",
+          "0x3c39110dc7a3c8cd1fa08d13cb352800fadb746e3176032445d95090c207a517"
+        ]
+      },
+      {
+        "gameId": "0x3439366465343533303764313865623831393738373537623563363535643162",
+        "sportId": 9016,
+        "childId": 10002,
+        "playerPropsId": 0,
+        "maturity": 1708545600,
+        "homeTeam": "FC Porto",
+        "awayTeam": "Arsenal",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 250,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["511240000000000000", "559632000000000000"],
+        "proof": [
+          "0x961079c3f136327fc5075a6100100221f5df54ef65b25acb23005898fe63fbb6",
+          "0x74f815058c4ee2c1e631c778f174bfa18fa1f8bd524ff5008a1001beff6f0d42",
+          "0x0df73849ae8d07b43584375c694e7e66bc6dcba2afc75445307eb9f7c8010f4b",
+          "0x9c972c6f7b9353583b63c3f3bcce4efbbbf321e3f6265da05587530e21050bf5",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      }
+    ],
+    "proof": [
+      "0x77f2e8a3cb303304bbf8c3faa0f745a22bc43804fff58aed3ad7ed3462737c11",
+      "0xc892b3de54b0fd0ca4fdc36f46445f3996abe4e086b154ad6f22435409b47a47",
+      "0x9e8960f22c59288e509d8b39e842af252ffb23dc1a441078ad6666b24d7b6e64",
+      "0x2ee7d7efeeda1fbdf548e9dc9b609a779de69d208e5f4c02a374a26e4429ac5b",
+      "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+      "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+    ]
+  },
+  {
+    "gameId": "0x6131623934613665373662343434623533373234303334396234313139336234",
+    "sportId": 9016,
+    "childId": 0,
+    "playerPropsId": 0,
+    "maturity": 1708545600,
+    "homeTeam": "Napoli",
+    "awayTeam": "Barcelona",
+    "homeScore": 0,
+    "awayScore": 0,
+    "finalResult": 0,
+    "status": 0,
+    "spread": 0,
+    "total": 0,
+    "playerProps": {
+      "playerId": 0,
+      "playerName": "",
+      "line": 0,
+      "outcome": 0,
+      "score": 0
+    },
+    "odds": ["339148000000000000", "424925000000000000", "285414000000000000"],
+    "childMarkets": [
+      {
+        "gameId": "0x6131623934613665373662343434623533373234303334396234313139336234",
+        "sportId": 9016,
+        "childId": 10002,
+        "playerPropsId": 0,
+        "maturity": 1708545600,
+        "homeTeam": "Napoli",
+        "awayTeam": "Barcelona",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 250,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["573274000000000000", "497717000000000000"],
+        "proof": [
+          "0xd492b0e0ca9fe244503b83e0301c4fad137aebc65c41086ac5ca469188fac2e1",
+          "0x099abb2e0f6b9a997c24828ffcc2040a056c23967ba48aa13fe99779ecb57c4a",
+          "0x5e9700d172abadfaace26be5cf20b752a27215fab7a5b78b4f4fd8d66f1609ed",
+          "0xd9941c59f6d45e974b66fd93cf2c6391a0f1ffb2f1bfda9d6169f664e599be86",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x6131623934613665373662343434623533373234303334396234313139336234",
+        "sportId": 9016,
+        "childId": 10001,
+        "playerPropsId": 0,
+        "maturity": 1708545600,
+        "homeTeam": "Napoli",
+        "awayTeam": "Barcelona",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 100,
+        "total": 0,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["800379000000000000", "270627000000000000"],
+        "proof": [
+          "0xb0c0e5811e092b9707afb7aa8acfb72f0015c4e62548bbecd38dbdc7d41c956a",
+          "0xd0494d675c95316ef3692c40b95306f3fb52482816d8bf44612d80199c6ad1b8",
+          "0xa3493024a68dcd6fbc53d82d93d99e77fad75babd8d68e4cb32e1bee167b3819",
+          "0x9c972c6f7b9353583b63c3f3bcce4efbbbf321e3f6265da05587530e21050bf5",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      }
+    ],
+    "proof": [
+      "0xe71d6bc030f0912b7d56a88bb703270c33196630debd910188e82622fa9c306e",
+      "0x859e85445646aa9f0a8c773c8bac4b64442d42fd955c1ea803f6da70dc750ff9",
+      "0xe962e8252cddda4cd51fe05f705e878c1f60d505303c83e4ee9664d4dd48925b",
+      "0xd9941c59f6d45e974b66fd93cf2c6391a0f1ffb2f1bfda9d6169f664e599be86",
+      "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+      "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+    ]
+  },
+  {
+    "gameId": "0x3134626662633631613239356161616366643833613333616437373037373937",
+    "sportId": 9006,
+    "childId": 0,
+    "playerPropsId": 0,
+    "maturity": 1708560000,
+    "homeTeam": "Montreal Canadiens",
+    "awayTeam": "Buffalo Sabres",
+    "homeScore": 0,
+    "awayScore": 0,
+    "finalResult": 0,
+    "status": 0,
+    "spread": 0,
+    "total": 0,
+    "playerProps": {
+      "playerId": 0,
+      "playerName": "",
+      "line": 0,
+      "outcome": 0,
+      "score": 0
+    },
+    "odds": ["481877000000000000", "578927000000000000"],
+    "childMarkets": [
+      {
+        "gameId": "0x3134626662633631613239356161616366643833613333616437373037373937",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708560000,
+        "homeTeam": "Montreal Canadiens",
+        "awayTeam": "Buffalo Sabres",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41425,
+          "playerName": "Cole Caufield",
+          "line": 350,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["619068000000000000", "451941000000000000"],
+        "proof": [
+          "0xd59fb27a7dbc345bbf41e64ff74c2f985667d84ae0597e439d09ac8f51bc52f8",
+          "0x33f8b6e8862e93cda6d7018be6280d9c28e1a0d0200252ee00c39b115b368920",
+          "0xe962e8252cddda4cd51fe05f705e878c1f60d505303c83e4ee9664d4dd48925b",
+          "0xd9941c59f6d45e974b66fd93cf2c6391a0f1ffb2f1bfda9d6169f664e599be86",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x3134626662633631613239356161616366643833613333616437373037373937",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708560000,
+        "homeTeam": "Montreal Canadiens",
+        "awayTeam": "Buffalo Sabres",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41068,
+          "playerName": "Tage Thompson",
+          "line": 350,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["540744000000000000", "530265000000000000"],
+        "proof": [
+          "0x793bfa92803de6d965f1fb32d00a4fb3f318219e6af2aa05e692e3ea237c5fcb",
+          "0xc892b3de54b0fd0ca4fdc36f46445f3996abe4e086b154ad6f22435409b47a47",
+          "0x9e8960f22c59288e509d8b39e842af252ffb23dc1a441078ad6666b24d7b6e64",
+          "0x2ee7d7efeeda1fbdf548e9dc9b609a779de69d208e5f4c02a374a26e4429ac5b",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x3134626662633631613239356161616366643833613333616437373037373937",
+        "sportId": 9006,
+        "childId": 10001,
+        "playerPropsId": 0,
+        "maturity": 1708560000,
+        "homeTeam": "Montreal Canadiens",
+        "awayTeam": "Buffalo Sabres",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 150,
+        "total": 0,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["709162000000000000", "361848000000000000"],
+        "proof": [
+          "0xe4cc148325fa1237c1610ecafcd64006e22a93b108f2fb141f6c740aece15ba3",
+          "0x859e85445646aa9f0a8c773c8bac4b64442d42fd955c1ea803f6da70dc750ff9",
+          "0xe962e8252cddda4cd51fe05f705e878c1f60d505303c83e4ee9664d4dd48925b",
+          "0xd9941c59f6d45e974b66fd93cf2c6391a0f1ffb2f1bfda9d6169f664e599be86",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x3134626662633631613239356161616366643833613333616437373037373937",
+        "sportId": 9006,
+        "childId": 10002,
+        "playerPropsId": 0,
+        "maturity": 1708560000,
+        "homeTeam": "Montreal Canadiens",
+        "awayTeam": "Buffalo Sabres",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 650,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["566386000000000000", "504623000000000000"],
+        "proof": [
+          "0x159dffb24a4d4481b76bcb1aee8eab085cc32202d29fc4f6f9b365c45a97fdae",
+          "0x9959f591a29935a3ca27864ba44b84c3b6bab04213fb4619313c56bdfe29ac50",
+          "0x97c8cfc4f3f69e449d94ac3e03b6486db2166cad519c9ed69a2b827a83e33c6f",
+          "0xc3f981b768dd9966233bdfbc630706a73b413edb3fd2ad205609bdffe73d0e07",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x3134626662633631613239356161616366643833613333616437373037373937",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708560000,
+        "homeTeam": "Montreal Canadiens",
+        "awayTeam": "Buffalo Sabres",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41063,
+          "playerName": "Rasmus Dahlin",
+          "line": 350,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["429612000000000000", "641396000000000000"],
+        "proof": [
+          "0xb65fab2aeef57b0d608dabf18c56d2ea12be3b6c551203afc8ccc1b9398f90f0",
+          "0xa86f17c1c81cdcd7e7bb2b79a288c42d1d8e878dd90080d218de746c22eae3ea",
+          "0xa3493024a68dcd6fbc53d82d93d99e77fad75babd8d68e4cb32e1bee167b3819",
+          "0x9c972c6f7b9353583b63c3f3bcce4efbbbf321e3f6265da05587530e21050bf5",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      }
+    ],
+    "proof": [
+      "0xad2cb1fd75083efd42abccc248ede8d04c56dce487724dd5513ac43fa44f0349",
+      "0xd0494d675c95316ef3692c40b95306f3fb52482816d8bf44612d80199c6ad1b8",
+      "0xa3493024a68dcd6fbc53d82d93d99e77fad75babd8d68e4cb32e1bee167b3819",
+      "0x9c972c6f7b9353583b63c3f3bcce4efbbbf321e3f6265da05587530e21050bf5",
+      "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+      "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+    ]
+  },
+  {
+    "gameId": "0x6332623432343831373836636565383565646238343466663164623439376662",
+    "sportId": 9006,
+    "childId": 0,
+    "playerPropsId": 0,
+    "maturity": 1708561800,
+    "homeTeam": "Chicago Blackhawks",
+    "awayTeam": "Philadelphia Flyers",
+    "homeScore": 0,
+    "awayScore": 0,
+    "finalResult": 0,
+    "status": 0,
+    "spread": 0,
+    "total": 0,
+    "playerProps": {
+      "playerId": 0,
+      "playerName": "",
+      "line": 0,
+      "outcome": 0,
+      "score": 0
+    },
+    "odds": ["384015000000000000", "676789000000000000"],
+    "childMarkets": [
+      {
+        "gameId": "0x6332623432343831373836636565383565646238343466663164623439376662",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708561800,
+        "homeTeam": "Chicago Blackhawks",
+        "awayTeam": "Philadelphia Flyers",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41713,
+          "playerName": "Travis Konecny",
+          "line": 350,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["561857000000000000", "509151000000000000"],
+        "proof": [
+          "0xb8e194924a5b9daf586cfb53c3c256ff2ff721738d731f9ae1b8845dd183684f",
+          "0xa86f17c1c81cdcd7e7bb2b79a288c42d1d8e878dd90080d218de746c22eae3ea",
+          "0xa3493024a68dcd6fbc53d82d93d99e77fad75babd8d68e4cb32e1bee167b3819",
+          "0x9c972c6f7b9353583b63c3f3bcce4efbbbf321e3f6265da05587530e21050bf5",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x6332623432343831373836636565383565646238343466663164623439376662",
+        "sportId": 9006,
+        "childId": 10001,
+        "playerPropsId": 0,
+        "maturity": 1708561800,
+        "homeTeam": "Chicago Blackhawks",
+        "awayTeam": "Philadelphia Flyers",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 150,
+        "total": 0,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["630849000000000000", "440160000000000000"],
+        "proof": [
+          "0xb97bcb0a32cad429bea1346f8fcacd3ff5f902b187a71705e6b163bae1d4a45c",
+          "0x56cbeed6f71364c7dc0ef1e9b1ef6a5f556f383d6517250d3b0d544f18153709",
+          "0x5e9700d172abadfaace26be5cf20b752a27215fab7a5b78b4f4fd8d66f1609ed",
+          "0xd9941c59f6d45e974b66fd93cf2c6391a0f1ffb2f1bfda9d6169f664e599be86",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x6332623432343831373836636565383565646238343466663164623439376662",
+        "sportId": 9006,
+        "childId": 10002,
+        "playerPropsId": 0,
+        "maturity": 1708561800,
+        "homeTeam": "Chicago Blackhawks",
+        "awayTeam": "Philadelphia Flyers",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 550,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["573195000000000000", "497814000000000000"],
+        "proof": [
+          "0x8036b3e5367bf0643abfd89d17fe03fa91588f62e6cc2dc9dad3e7dce9244462",
+          "0x6bccfff9129f41995ba050c0c45fb29c2a51272c10712e6fe12dbc4790b34465",
+          "0x1326e15359fe82ed8f0a680abb6c7537590b3fba424784820a328fbb795f4c6b",
+          "0x2ee7d7efeeda1fbdf548e9dc9b609a779de69d208e5f4c02a374a26e4429ac5b",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x6332623432343831373836636565383565646238343466663164623439376662",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708561800,
+        "homeTeam": "Chicago Blackhawks",
+        "awayTeam": "Philadelphia Flyers",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41686,
+          "playerName": "Owen Tippett",
+          "line": 450,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["446081000000000000", "624928000000000000"],
+        "proof": [
+          "0xa424a91dc4135d58133023bdbdaaf142e1d9a1cbf33afe091c91571cc1f47987",
+          "0xb77b8d4be9f2fbab92a21f087c0ce03b835729d78eedf2b30d8d747806a456e7",
+          "0x0df73849ae8d07b43584375c694e7e66bc6dcba2afc75445307eb9f7c8010f4b",
+          "0x9c972c6f7b9353583b63c3f3bcce4efbbbf321e3f6265da05587530e21050bf5",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      }
+    ],
+    "proof": [
+      "0x5834b740358ea89b7432a6046bda8c64a4e383c06552bbf42db70025d1281c16",
+      "0x4e6dedeb3b82b7cb610c7be17d6ac9963135097ee8166f2aee02497c2afead1d",
+      "0x2af93f7b0c891e7b0583edbdeef6f35ee7e515f46ca6a5ad9da40fa46d288c89",
+      "0xc3f981b768dd9966233bdfbc630706a73b413edb3fd2ad205609bdffe73d0e07",
+      "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+      "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+    ]
+  },
+  {
+    "gameId": "0x6531383165393365303763313466323236383335376636623364343034626631",
+    "sportId": 9006,
+    "childId": 0,
+    "playerPropsId": 0,
+    "maturity": 1708570800,
+    "homeTeam": "Arizona Coyotes",
+    "awayTeam": "Toronto Maple Leafs",
+    "homeScore": 0,
+    "awayScore": 0,
+    "finalResult": 0,
+    "status": 0,
+    "spread": 0,
+    "total": 0,
+    "playerProps": {
+      "playerId": 0,
+      "playerName": "",
+      "line": 0,
+      "outcome": 0,
+      "score": 0
+    },
+    "odds": ["379561000000000000", "681243000000000000"],
+    "childMarkets": [
+      {
+        "gameId": "0x6531383165393365303763313466323236383335376636623364343034626631",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11029,
+        "maturity": 1708570800,
+        "homeTeam": "Arizona Coyotes",
+        "awayTeam": "Toronto Maple Leafs",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41823,
+          "playerName": "Auston Matthews",
+          "line": 150,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["416347000000000000", "654662000000000000"],
+        "proof": [
+          "0x8aa7f7c5e2940e0a579ac8f7957231b4833a1a2a4d994139091f144623c02c0b",
+          "0x375bd7a277f268f7396e695f9abd9810903b7fbe4207db9eeee1e0a5352d4fad",
+          "0x1326e15359fe82ed8f0a680abb6c7537590b3fba424784820a328fbb795f4c6b",
+          "0x2ee7d7efeeda1fbdf548e9dc9b609a779de69d208e5f4c02a374a26e4429ac5b",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x6531383165393365303763313466323236383335376636623364343034626631",
+        "sportId": 9006,
+        "childId": 10002,
+        "playerPropsId": 0,
+        "maturity": 1708570800,
+        "homeTeam": "Arizona Coyotes",
+        "awayTeam": "Toronto Maple Leafs",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 650,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["575425000000000000", "495583000000000000"],
+        "proof": [
+          "0x5d3b897d7845d51c8945442392dff9578a3acde912503e4063e2811888d176c4",
+          "0x4e6dedeb3b82b7cb610c7be17d6ac9963135097ee8166f2aee02497c2afead1d",
+          "0x2af93f7b0c891e7b0583edbdeef6f35ee7e515f46ca6a5ad9da40fa46d288c89",
+          "0xc3f981b768dd9966233bdfbc630706a73b413edb3fd2ad205609bdffe73d0e07",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x6531383165393365303763313466323236383335376636623364343034626631",
+        "sportId": 9006,
+        "childId": 10001,
+        "playerPropsId": 0,
+        "maturity": 1708570800,
+        "homeTeam": "Arizona Coyotes",
+        "awayTeam": "Toronto Maple Leafs",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 150,
+        "total": 0,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["605909000000000000", "465099000000000000"],
+        "proof": [
+          "0xa5aea50277eeae3991055d26f1760eba9317fc0ad2adcefaae3b8c6b4c0e1e8a",
+          "0xb77b8d4be9f2fbab92a21f087c0ce03b835729d78eedf2b30d8d747806a456e7",
+          "0x0df73849ae8d07b43584375c694e7e66bc6dcba2afc75445307eb9f7c8010f4b",
+          "0x9c972c6f7b9353583b63c3f3bcce4efbbbf321e3f6265da05587530e21050bf5",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x6531383165393365303763313466323236383335376636623364343034626631",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708570800,
+        "homeTeam": "Arizona Coyotes",
+        "awayTeam": "Toronto Maple Leafs",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41928,
+          "playerName": "William Nylander",
+          "line": 350,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["597109000000000000", "473899000000000000"],
+        "proof": [
+          "0x2078c5d54696b9410abf36a00f58afa3925becbe78da5c77b57b22ad59ff177a",
+          "0x9959f591a29935a3ca27864ba44b84c3b6bab04213fb4619313c56bdfe29ac50",
+          "0x97c8cfc4f3f69e449d94ac3e03b6486db2166cad519c9ed69a2b827a83e33c6f",
+          "0xc3f981b768dd9966233bdfbc630706a73b413edb3fd2ad205609bdffe73d0e07",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x6531383165393365303763313466323236383335376636623364343034626631",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11029,
+        "maturity": 1708570800,
+        "homeTeam": "Arizona Coyotes",
+        "awayTeam": "Toronto Maple Leafs",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41928,
+          "playerName": "William Nylander",
+          "line": 150,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["487747000000000000", "583261000000000000"],
+        "proof": [
+          "0x618fc27e078ab527262f361a078f6aad15d8eaef9671d578151cea924dc4c754",
+          "0xa6510ccbd913c70b0e9b5ca0975a7df8240d17401ef903411d6e27a73cf745b2",
+          "0x2af93f7b0c891e7b0583edbdeef6f35ee7e515f46ca6a5ad9da40fa46d288c89",
+          "0xc3f981b768dd9966233bdfbc630706a73b413edb3fd2ad205609bdffe73d0e07",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x6531383165393365303763313466323236383335376636623364343034626631",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708570800,
+        "homeTeam": "Arizona Coyotes",
+        "awayTeam": "Toronto Maple Leafs",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41823,
+          "playerName": "Auston Matthews",
+          "line": 450,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["519754000000000000", "551254000000000000"],
+        "proof": [
+          "0x4a1906c7b912c7e12cdd9c37b759d7df31428e0b7626a6eba23bf9ee38135b8f",
+          "0x9c9056064dc1ca18044bad5a75a446c70f2cae4d51af5062b8092c14f5b27b59",
+          "0x97c8cfc4f3f69e449d94ac3e03b6486db2166cad519c9ed69a2b827a83e33c6f",
+          "0xc3f981b768dd9966233bdfbc630706a73b413edb3fd2ad205609bdffe73d0e07",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x6531383165393365303763313466323236383335376636623364343034626631",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708570800,
+        "homeTeam": "Arizona Coyotes",
+        "awayTeam": "Toronto Maple Leafs",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41860,
+          "playerName": "John Tavares",
+          "line": 350,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["519754000000000000", "551254000000000000"],
+        "proof": [
+          "0x7adce45f6bee0e1fdff939fa8ec618afca0221b486aa9dbf0f771b26b42e86bf",
+          "0x6bccfff9129f41995ba050c0c45fb29c2a51272c10712e6fe12dbc4790b34465",
+          "0x1326e15359fe82ed8f0a680abb6c7537590b3fba424784820a328fbb795f4c6b",
+          "0x2ee7d7efeeda1fbdf548e9dc9b609a779de69d208e5f4c02a374a26e4429ac5b",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      }
+    ],
+    "proof": [
+      "0x449035344f76dd626199177c492a712c09d6444a11d26bc7bed2a192b48ddde7",
+      "0x9c9056064dc1ca18044bad5a75a446c70f2cae4d51af5062b8092c14f5b27b59",
+      "0x97c8cfc4f3f69e449d94ac3e03b6486db2166cad519c9ed69a2b827a83e33c6f",
+      "0xc3f981b768dd9966233bdfbc630706a73b413edb3fd2ad205609bdffe73d0e07",
+      "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+      "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+    ]
+  },
+  {
+    "gameId": "0x3336353532316533623264393433616632383661396539613335376262653232",
+    "sportId": 9006,
+    "childId": 0,
+    "playerPropsId": 0,
+    "maturity": 1708570800,
+    "homeTeam": "Edmonton Oilers",
+    "awayTeam": "Boston Bruins",
+    "homeScore": 0,
+    "awayScore": 0,
+    "finalResult": 0,
+    "status": 0,
+    "spread": 0,
+    "total": 0,
+    "playerProps": {
+      "playerId": 0,
+      "playerName": "",
+      "line": 0,
+      "outcome": 0,
+      "score": 0
+    },
+    "odds": ["588154000000000000", "472650000000000000"],
+    "childMarkets": [
+      {
+        "gameId": "0x3336353532316533623264393433616632383661396539613335376262653232",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708570800,
+        "homeTeam": "Edmonton Oilers",
+        "awayTeam": "Boston Bruins",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41254,
+          "playerName": "Connor McDavid",
+          "line": 350,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["483906000000000000", "587103000000000000"],
+        "proof": [
+          "0xd146ca9ced30f43be878668b3e6e2fc287bbec03730c06638eba05a9347a5a8f",
+          "0x099abb2e0f6b9a997c24828ffcc2040a056c23967ba48aa13fe99779ecb57c4a",
+          "0x5e9700d172abadfaace26be5cf20b752a27215fab7a5b78b4f4fd8d66f1609ed",
+          "0xd9941c59f6d45e974b66fd93cf2c6391a0f1ffb2f1bfda9d6169f664e599be86",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x3336353532316533623264393433616632383661396539613335376262653232",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11029,
+        "maturity": 1708570800,
+        "homeTeam": "Edmonton Oilers",
+        "awayTeam": "Boston Bruins",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41254,
+          "playerName": "Connor McDavid",
+          "line": 150,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["487747000000000000", "583261000000000000"],
+        "proof": [
+          "0xffe61dbebae7b9aab112d92cc00d4fc1e6e0495a1ca58d4929642dc7d74da190",
+          "0x3c39110dc7a3c8cd1fa08d13cb352800fadb746e3176032445d95090c207a517"
+        ]
+      },
+      {
+        "gameId": "0x3336353532316533623264393433616632383661396539613335376262653232",
+        "sportId": 9006,
+        "childId": 10002,
+        "playerPropsId": 0,
+        "maturity": 1708570800,
+        "homeTeam": "Edmonton Oilers",
+        "awayTeam": "Boston Bruins",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 650,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["509263000000000000", "561746000000000000"],
+        "proof": [
+          "0xbb5e91193f5012fc391959c020c97951a6701b5ac7e31050165ee0e3327ac085",
+          "0x56cbeed6f71364c7dc0ef1e9b1ef6a5f556f383d6517250d3b0d544f18153709",
+          "0x5e9700d172abadfaace26be5cf20b752a27215fab7a5b78b4f4fd8d66f1609ed",
+          "0xd9941c59f6d45e974b66fd93cf2c6391a0f1ffb2f1bfda9d6169f664e599be86",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x3336353532316533623264393433616632383661396539613335376262653232",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708570800,
+        "homeTeam": "Edmonton Oilers",
+        "awayTeam": "Boston Bruins",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 40955,
+          "playerName": "David Pastrnak",
+          "line": 450,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["551254000000000000", "519754000000000000"],
+        "proof": [
+          "0xd5b96a2e5dbd72403d54319a76f78cc24009031ec13b7ffea487adda8cef412f",
+          "0x33f8b6e8862e93cda6d7018be6280d9c28e1a0d0200252ee00c39b115b368920",
+          "0xe962e8252cddda4cd51fe05f705e878c1f60d505303c83e4ee9664d4dd48925b",
+          "0xd9941c59f6d45e974b66fd93cf2c6391a0f1ffb2f1bfda9d6169f664e599be86",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x3336353532316533623264393433616632383661396539613335376262653232",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11097,
+        "maturity": 1708570800,
+        "homeTeam": "Edmonton Oilers",
+        "awayTeam": "Boston Bruins",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41338,
+          "playerName": "Zach Hyman",
+          "line": 350,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["429612000000000000", "641396000000000000"],
+        "proof": [
+          "0x71e782573c52508a9b8f7988eb50eba079bbc3fef56944de2af7a19cb48907b2",
+          "0x92c81c24c8e6bba918cc9b6caaf2c112799418652d50ff0dfba54a0a9c24a83b",
+          "0x9e8960f22c59288e509d8b39e842af252ffb23dc1a441078ad6666b24d7b6e64",
+          "0x2ee7d7efeeda1fbdf548e9dc9b609a779de69d208e5f4c02a374a26e4429ac5b",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x3336353532316533623264393433616632383661396539613335376262653232",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11029,
+        "maturity": 1708570800,
+        "homeTeam": "Edmonton Oilers",
+        "awayTeam": "Boston Bruins",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 41299,
+          "playerName": "Leon Draisaitl",
+          "line": 150,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["392686000000000000", "678323000000000000"],
+        "proof": [
+          "0x84af191832c812912817c0ce74cbff758df3e7967f20062911f5f8fa7b9317a3",
+          "0x375bd7a277f268f7396e695f9abd9810903b7fbe4207db9eeee1e0a5352d4fad",
+          "0x1326e15359fe82ed8f0a680abb6c7537590b3fba424784820a328fbb795f4c6b",
+          "0x2ee7d7efeeda1fbdf548e9dc9b609a779de69d208e5f4c02a374a26e4429ac5b",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x3336353532316533623264393433616632383661396539613335376262653232",
+        "sportId": 9006,
+        "childId": 10001,
+        "playerPropsId": 0,
+        "maturity": 1708570800,
+        "homeTeam": "Edmonton Oilers",
+        "awayTeam": "Boston Bruins",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": -150,
+        "total": 0,
+        "playerProps": {
+          "playerId": 0,
+          "playerName": "",
+          "line": 0,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["356799000000000000", "714211000000000000"],
+        "proof": [
+          "0xa0507397c98a52d32f83637a344ce3b9e733237d53f3f6001b09685da4b78c0a",
+          "0x74f815058c4ee2c1e631c778f174bfa18fa1f8bd524ff5008a1001beff6f0d42",
+          "0x0df73849ae8d07b43584375c694e7e66bc6dcba2afc75445307eb9f7c8010f4b",
+          "0x9c972c6f7b9353583b63c3f3bcce4efbbbf321e3f6265da05587530e21050bf5",
+          "0xa6f99e3828933b7787823bcb3d396c5886fa9b16c0ecac0fba7a1457c341c454",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      },
+      {
+        "gameId": "0x3336353532316533623264393433616632383661396539613335376262653232",
+        "sportId": 9006,
+        "childId": 10010,
+        "playerPropsId": 11029,
+        "maturity": 1708570800,
+        "homeTeam": "Edmonton Oilers",
+        "awayTeam": "Boston Bruins",
+        "homeScore": 0,
+        "awayScore": 0,
+        "finalResult": 0,
+        "status": 0,
+        "spread": 0,
+        "total": 0,
+        "playerProps": {
+          "playerId": 40955,
+          "playerName": "David Pastrnak",
+          "line": 150,
+          "outcome": 0,
+          "score": 0
+        },
+        "odds": ["467691000000000000", "603317000000000000"],
+        "proof": [
+          "0x6aaaa8456034417159c582a7746b7e0b28fe4a5b36c0775acbf5df6e76e6c398",
+          "0xa6510ccbd913c70b0e9b5ca0975a7df8240d17401ef903411d6e27a73cf745b2",
+          "0x2af93f7b0c891e7b0583edbdeef6f35ee7e515f46ca6a5ad9da40fa46d288c89",
+          "0xc3f981b768dd9966233bdfbc630706a73b413edb3fd2ad205609bdffe73d0e07",
+          "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+          "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+        ]
+      }
+    ],
+    "proof": [
+      "0x7799a63385856eb764123a5e8a087dd81dab0c5a83cc33efbf28855b53601978",
+      "0x92c81c24c8e6bba918cc9b6caaf2c112799418652d50ff0dfba54a0a9c24a83b",
+      "0x9e8960f22c59288e509d8b39e842af252ffb23dc1a441078ad6666b24d7b6e64",
+      "0x2ee7d7efeeda1fbdf548e9dc9b609a779de69d208e5f4c02a374a26e4429ac5b",
+      "0xf59786abd9de73b39bab6477952879e62cd0b85cf077ed3129e8e25e2aee36b8",
+      "0x05ad28c528a2db1d5a946245978512ec82962eab3cae48282ed3a4c3ce17dfae"
+    ]
+  }
+]

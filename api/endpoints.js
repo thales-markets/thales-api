@@ -14,6 +14,7 @@ const ENDPOINTS = {
   PARLAY_LEADERBOARD: "/parlay-leaderboard/:networkParam/:period",
   BANNERS: "/banners/:networkParam",
   BANNERS_IMAGE: "/banners/image/:imageName",
+  PROMOTIONS: '/promotions',
   THALES_BANNERS: "/thales-banners/:networkParam",
   THALES_BANNERS_IMAGE: "/thales-banners/image/:imageName",
   LIVE_RESULT: "/live-result/:gameId",
@@ -53,6 +54,8 @@ const ENDPOINTS = {
   THALES_IO_WEEKLY_STATS: "/thales/thales-io/weekly-stats",
   THALES_IO_ECOSYSTEM_APPS: "/thales/thales-io/ecosystem-apps",
   THALES_IO_TIMELINE: "/thales/thales-io/timeline",
+  OVERTIME_V2_MARKETS: "/overtime-v2/markets",
+  OVERTIME_V2_MARKET: "/overtime-v2/markets/:marketAddress",
 };
 
 module.exports = ENDPOINTS;

@@ -9,6 +9,7 @@ const {
   POSITION_NAME_TYPE_MAP,
   PLAYER_PROPS_BET_TYPES,
   ONE_SIDER_PLAYER_PROPS_BET_TYPES,
+  SPECIAL_YES_NO_BET_TYPES,
 } = require("../constants/markets");
 const overtimeSportsList = require("../assets/overtime-sports.json");
 const {
@@ -82,6 +83,7 @@ const packMarket = (market) => {
     sport: SPORTS_MAP[market.tags[0]],
     leagueId: leagueId,
     leagueName: getLeagueNameById(leagueId),
+    typeId: market.betType,
     type: type,
     parentMarket: market.parentMarket,
     maturityDate: new Date(market.maturityDate),
@@ -307,6 +309,8 @@ const getIsPlayerPropsMarket = (betType) => PLAYER_PROPS_BET_TYPES.includes(betT
 
 const getIsOneSidePlayerPropsMarket = (betType) => ONE_SIDER_PLAYER_PROPS_BET_TYPES.includes(betType);
 
+const getIsYesNoPlayerPropsMarket = (betType) => SPECIAL_YES_NO_BET_TYPES.includes(betType);
+
 module.exports = {
   fixDuplicatedTeamName,
   convertPriceImpactToBonus,
@@ -322,4 +326,7 @@ module.exports = {
   getPositionTransactionStatus,
   packParlay,
   getIsDrawAvailable,
+  getIsPlayerPropsMarket,
+  getIsOneSidePlayerPropsMarket,
+  getIsYesNoPlayerPropsMarket,
 };
