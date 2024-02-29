@@ -34,6 +34,16 @@ const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json")
 const { isRangedPosition } = require("../thalesApi/utils/markets");
 const { isNumeric } = require("../services/utils");
 
+const { BigNumber } = require("ethers");
+const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
+const thalesSpeedAmmMarkets = require("../thalesSpeedApi/source/ammMarkets");
+const thalesSpeedMarketsData = require("../thalesSpeedApi/source/marketsData");
+const thalesPythPrice = require("../thalesSpeedApi/source/pythPrice");
+const thalesSpeedConst = require("../thalesSpeedApi/constants/markets");
+const thalesSpeedUtilsMarkets = require("../thalesSpeedApi/utils/markets");
+const thalesSpeedUtilsNetworks = require("../thalesSpeedApi/utils/networks");
+const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters");
+
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
 });
@@ -300,6 +310,33 @@ app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
   var url = `https://jsonodds.com/api/odds/${sportParameter}`;
 
   request.get(url, { headers: { "x-api-key": process.env.JSON_ODDS_KEY.toString() } }).pipe(res);
+});
+
+app.get(ENDPOINTS.MARCH_MADNESS, (req, res) => {
+  const network = req.params.networkId;
+  const leaderboardType = req.params.leaderboardType;
+
+  if (leaderboardType == 0) {
+    redisClient.get(KEYS.MARCH_MADNESS.BY_VOLUME[network], function (err, obj) {
+      const rewards = JSON.parse(obj);
+      try {
+        res.send(rewards);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
+
+  if (leaderboardType == 1) {
+    redisClient.get(KEYS.MARCH_MADNESS.BY_NUMBER_OF_CORRECT_PREDICTIONS[network], function (err, obj) {
+      const rewards = JSON.parse(obj);
+      try {
+        res.send(rewards);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
 });
 
 app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
@@ -979,6 +1016,347 @@ app.get(ENDPOINTS.THALES_USER_TRANSACTIONS, async (req, res) => {
 
   return res.send(userTransactions);
 });
+
+// THALES SPEED MARKETS
+
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
+  const network = Number(req.params.networkParam);
+  const asset = req.query.asset;
+  const deltaTimeSec = Number(req.query.deltaTimeSec || 0);
+  const strikeTimeSec = Number(req.query.strikeTimeSec || 0);
+  const direction = req.query.direction;
+  const collateral = req.query.collateral;
+  const buyin = Number(req.query.buyin || 0);
+
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  let response;
+  let responseError = "";
+  if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
+    responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
+  }
+  if (!thalesSpeedUtilsMarkets.getIsAssetSupported(asset)) {
+    responseError +=
+      (responseError ? "\n" : "") +
+      "Unsupported asset. Supported assets: " +
+      thalesSpeedConst.SUPPORTED_ASSETS.join(", ");
+  }
+  const speedLimits = await thalesSpeedLimits.getSpeedMarketsLimits(network);
+  if (speedLimits.minBuyinAmount == 0) {
+    responseError += (responseError ? "\n" : "") + "Cannot fetch data from speed AMM data contract!";
+  }
+  if (deltaTimeSec) {
+    if (deltaTimeSec < speedLimits.minimalTimeToMaturity || deltaTimeSec > speedLimits.maximalTimeToMaturity) {
+      responseError +=
+        (responseError ? "\n" : "") +
+        "Unsupported delta time. Minimal delta: " +
+        speedLimits.minimalTimeToMaturity +
+        ", maximal delta: " +
+        speedLimits.maximalTimeToMaturity;
+    }
+  } else if (strikeTimeSec) {
+    if (strikeTimeSec.toString().length != 10) {
+      responseError += (responseError ? "\n" : "") + "Unsupported strike time. Strike time has to be in seconds!";
+    }
+    if (
+      strikeTimeSec < nowSec + speedLimits.minimalTimeToMaturity ||
+      strikeTimeSec > nowSec + speedLimits.maximalTimeToMaturity
+    ) {
+      responseError +=
+        (responseError ? "\n" : "") +
+        "Unsupported strike time. Minimal strike time: " +
+        speedLimits.minimalTimeToMaturity +
+        " seconds from now" +
+        ", maximal strike time: " +
+        speedLimits.maximalTimeToMaturity +
+        " seconds from now";
+    }
+  } else {
+    responseError += (responseError ? "\n" : "") + "Missing delta time or strike time!";
+  }
+  if (!["UP", "DOWN"].includes(direction)) {
+    responseError += (responseError ? "\n" : "") + "Unsupported direction. Supported directions: UP, DOWN";
+  }
+  if (collateral && !thalesSpeedConst.SUPPORTED_COLLATERALS[network].includes(collateral)) {
+    responseError +=
+      (responseError ? "\n" : "") +
+      "Unsupported collateral for network. Supported collaterals: " +
+      thalesSpeedConst.SUPPORTED_COLLATERALS[network].join(", ");
+  }
+  // Buy-in calculation and validation
+  const isDefaultCollateral = !collateral || thalesSpeedUtilsMarkets.getIsDefaultCollateral(network, collateral);
+  let stableBuyin = buyin;
+  let buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
+    thalesSpeedUtilsFormmaters.truncToDecimals(buyin),
+    network,
+    collateral,
+  );
+  const skewImpact = thalesSpeedUtilsMarkets.getSkewImpact(speedLimits, asset);
+  if (!isDefaultCollateral) {
+    const lpFee = thalesSpeedUtilsMarkets.getFeeByTimeThreshold(
+      deltaTimeSec ? deltaTimeSec : strikeTimeSec - nowSec,
+      speedLimits.timeThresholdsForFees,
+      speedLimits.lpFees,
+      speedLimits.defaultLPFee,
+    );
+    const skew = skewImpact[direction];
+    const oppositeDirection = direction == "UP" ? "DOWN" : "UP";
+    const discount = skewImpact[oppositeDirection] / 2;
+    const totalFee = lpFee + skew - discount + speedLimits.safeBoxImpact;
+
+    if (thalesSpeedUtilsMarkets.getIsStableCollateral(collateral)) {
+      stableBuyin = buyin;
+      const buyinWithFees = buyin * (1 + totalFee + thalesSpeedConst.STABLECOIN_CONVERSION_BUFFER_PERCENTAGE);
+      buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
+        thalesSpeedUtilsFormmaters.truncToDecimals(buyinWithFees),
+        network,
+        collateral,
+      );
+    } else {
+      stableBuyin = await thalesSpeedUtilsMarkets.getConvertedToStable(buyin, collateral, network);
+      if (stableBuyin == 0) {
+        responseError += (responseError ? "\n" : "") + "Conversion to stable collateral failed! Please try again...";
+      }
+      const buyinWithFees = buyin * (1 + totalFee);
+      buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
+        thalesSpeedUtilsFormmaters.truncToDecimals(
+          buyinWithFees,
+          thalesSpeedUtilsMarkets.getCollateralDecimals(collateral),
+        ),
+        network,
+        collateral,
+      );
+    }
+  }
+  if (stableBuyin && (stableBuyin < speedLimits.minBuyinAmount || stableBuyin > speedLimits.maxBuyinAmount)) {
+    const minBuyin = await thalesSpeedUtilsMarkets.getConvertedFromStable(
+      speedLimits.minBuyinAmount,
+      collateral,
+      true,
+      network,
+    );
+    const maxBuyin = await thalesSpeedUtilsMarkets.getConvertedFromStable(
+      speedLimits.maxBuyinAmount,
+      collateral,
+      false,
+      network,
+    );
+    responseError +=
+      (responseError ? "\n" : "") + "Unsupported buyin. Minimal buyin: " + minBuyin + ", maximal buyin: " + maxBuyin;
+  }
+  // Liquidity per assset and direction validation
+  const riskPerAssetAndDirectionData = speedLimits.risksPerAssetAndDirection.filter(
+    (data) => data.currency == asset && data.position == direction,
+  )[0];
+  const liquidityPerDirection = riskPerAssetAndDirectionData.max - riskPerAssetAndDirectionData.current;
+  if (stableBuyin > liquidityPerDirection) {
+    responseError +=
+      (responseError ? "\n" : "") +
+      "Out of liquidity for asset and direction. Current liquidity: " +
+      liquidityPerDirection;
+  }
+  // Liquidity validation
+  const riskPerAssetData = speedLimits.risksPerAsset.filter((data) => data.currency == asset)[0];
+  const liquidity = riskPerAssetData.max - riskPerAssetData.current;
+  if (stableBuyin > liquidity) {
+    responseError += (responseError ? "\n" : "") + "Out of liquidity for asset. Current liquidity: " + liquidity;
+  }
+
+  let pythPriceData = { priceUpdateData: [], updateFee: 0, pythPrice: 0 };
+  if (!responseError) {
+    pythPriceData = await thalesPythPrice.getPythLatestPriceData(network, asset);
+
+    response = {
+      methodName: isDefaultCollateral ? "createNewMarket" : "createNewMarketWithDifferentCollateral",
+      asset: thalesSpeedUtilsFormmaters.assetFormatter(asset),
+      strikeTime: deltaTimeSec ? 0 : strikeTimeSec,
+      delta: deltaTimeSec ? deltaTimeSec : 0,
+      direction: direction == "UP" ? 0 : 1,
+      priceUpdateData: pythPriceData.priceUpdateData,
+      pythPrice: pythPriceData.pythPrice,
+      referrer: thalesSpeedConst.ZERO_ADDRESS,
+      skewImpact: thalesSpeedUtilsFormmaters.skewParser(skewImpact[direction]),
+    };
+
+    const isEth = thalesSpeedUtilsMarkets.getIsEth(collateral);
+    response = isDefaultCollateral
+      ? {
+          ...response,
+          buyinAmount,
+        }
+      : {
+          ...response,
+          collateral: thalesSpeedUtilsMarkets.getCollateralAddress(network, collateral),
+          collateralAmount: buyinAmount,
+          isEth,
+        };
+    response = { ...response, value: isEth ? buyinAmount.add(pythPriceData.updateFee) : pythPriceData.updateFee };
+  }
+
+  if (responseError) {
+    return res.status(400).send(responseError);
+  } else {
+    return res.send(response);
+  }
+});
+
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_USER_CLAIMABLE, async (req, res) => {
+  const network = Number(req.params.networkParam);
+  const user = req.params.userAddress;
+
+  let response;
+  let responseError = "";
+  if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
+    responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
+  } else {
+    const markets = await thalesSpeedAmmMarkets.getUserActiveMarkets(network, user);
+    const marketsData = await thalesSpeedMarketsData.getSpeedMarketsData(network, markets);
+    const maturedMarketsData = marketsData.filter((marketData) => marketData.strikeTime * 1000 < Date.now());
+    const assetsAndTimes = maturedMarketsData.map((marketData) => ({
+      asset: marketData.asset,
+      time: marketData.strikeTime,
+    }));
+    const pythDataArray = await thalesPythPrice.getPythHistoricalPricesData(network, assetsAndTimes);
+
+    const claimable = maturedMarketsData
+      .filter(
+        (marketData, i) =>
+          pythDataArray[i].pythPrice > 0 &&
+          thalesSpeedUtilsMarkets.getIsUserWon(
+            marketData.direction,
+            marketData.strikePrice,
+            pythDataArray[i].pythPrice,
+          ),
+      )
+      .map((marketData) => marketData.address);
+    const priceUnknown = maturedMarketsData
+      .filter((_, i) => pythDataArray[i].pythPrice == 0)
+      .map((marketData) => marketData.address);
+
+    response = { claimable, priceUnknown };
+  }
+
+  if (responseError) {
+    return res.status(400).send(responseError);
+  } else {
+    return res.send(response);
+  }
+});
+
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_RESOLVE_PARAMS, async (req, res) => {
+  const network = Number(req.params.networkParam);
+  const markets = req.query.markets;
+
+  let response;
+  let responseError = "";
+  if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
+    responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
+  } else {
+    const marketsData = await thalesSpeedMarketsData.getSpeedMarketsData(network, markets);
+    const maturedMarketsData = marketsData.filter((marketData) => marketData.strikeTime * 1000 < Date.now());
+    const assetsAndTimes = maturedMarketsData.map((marketData) => ({
+      asset: marketData.asset,
+      time: marketData.strikeTime,
+    }));
+    const pythDataArray = await thalesPythPrice.getPythHistoricalPricesData(network, assetsAndTimes);
+
+    const marketsToResolve = maturedMarketsData
+      .filter((_, i) => pythDataArray[i].pythPrice > 0)
+      .map((marketData) => marketData.address);
+
+    const priceUpdateDataToResolve = pythDataArray
+      .map((pythData) => (pythData.pythPrice > 0 ? pythData.priceUpdateData[0] : undefined))
+      .filter((p) => p != undefined);
+
+    const totalUpdateFee = pythDataArray.reduce(
+      (acc, pythData) => acc.add(pythData.pythPrice > 0 ? pythData.updateFee : BigNumber.from(0)),
+      BigNumber.from(0),
+    );
+
+    const priceUnknown = maturedMarketsData
+      .filter((_, i) => pythDataArray[i].pythPrice == 0)
+      .map((marketData) => marketData.address);
+
+    response = {
+      methodName: "resolveMarketsBatch",
+      markets: marketsToResolve,
+      priceUpdateData: priceUpdateDataToResolve,
+      value: totalUpdateFee,
+      priceUnknown,
+    };
+  }
+
+  if (responseError) {
+    return res.status(400).send(responseError);
+  } else {
+    return res.send(response);
+  }
+});
+
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_RESOLVE_OFFRAMP_PARAMS, async (req, res) => {
+  const network = Number(req.params.networkParam);
+  const market = req.params.marketAddress;
+  const collateral = req.query.collateral;
+
+  let response;
+  let responseError = "";
+  if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
+    responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
+  }
+  if (!thalesSpeedConst.SUPPORTED_COLLATERALS[network].includes(collateral)) {
+    responseError +=
+      (responseError ? "\n" : "") +
+      "Unsupported collateral for network. Supported collaterals: " +
+      thalesSpeedConst.SUPPORTED_COLLATERALS[network].join(", ");
+  }
+  const isDefaultCollateral = thalesSpeedUtilsMarkets.getIsDefaultCollateral(network, collateral);
+  if (isDefaultCollateral) {
+    responseError +=
+      (responseError ? "\n" : "") +
+      "Unsupported collateral offramp for default collateral! Please use resolve without offramp.";
+  }
+
+  if (!responseError) {
+    const marketData = (await thalesSpeedMarketsData.getSpeedMarketsData(network, [market]))[0];
+
+    if (marketData.strikeTime * 1000 > Date.now()) {
+      responseError += (responseError ? "\n" : "") + "Market is not matured! Strike time: " + marketData.strikeTime;
+    } else {
+      const assetsAndTimes = [
+        {
+          asset: marketData.asset,
+          time: marketData.strikeTime,
+        },
+      ];
+      const pythDataArray = await thalesPythPrice.getPythHistoricalPricesData(network, assetsAndTimes);
+
+      if (pythDataArray[0].pythPrice == 0) {
+        responseError +=
+          (responseError ? "\n" : "") + "Cannot fetch price from pyth! Publish time: " + assetsAndTimes[0].time;
+      } else {
+        const collateralAddress = thalesSpeedUtilsMarkets.getCollateralAddress(network, collateral);
+        const toEth = thalesSpeedUtilsMarkets.getIsEth(collateral);
+
+        response = {
+          methodName: "resolveMarketWithOfframp",
+          market,
+          priceUpdateData: pythDataArray[0].priceUpdateData,
+          collateral: collateralAddress,
+          toEth,
+          value: pythDataArray[0].updateFee,
+        };
+      }
+    }
+  }
+
+  if (responseError) {
+    return res.status(400).send(responseError);
+  } else {
+    return res.send(response);
+  }
+});
+
+// THALES IO
 
 app.get(ENDPOINTS.THALES_IO_USERS_DATA, async (req, res) => {
   const url = `https://raw.githubusercontent.com/thales-markets/thales-io-dapp/dev/src/assets/json/users-data.json`;

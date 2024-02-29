@@ -25,6 +25,8 @@ const ENDPOINTS = {
   ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
   JSON_ODDS_DATA: "/json-odds-data/:sportParameter",
 
+  MARCH_MADNESS: "/march-madness/:leaderboardType/:networkId",
+
   OVERTIME_SPORTS: "/overtime/networks/:networkParam/sports",
   OVERTIME_COLLATERALS: "/overtime/networks/:networkParam/collaterals",
   OVERTIME_MARKETS: "/overtime/networks/:networkParam/markets",
@@ -33,6 +35,7 @@ const ENDPOINTS = {
   OVERTIME_USER_TRANSACTIONS: "/overtime/networks/:networkParam/users/:userAddress/transactions",
   OVERTIME_MARKET_QUOTE: "/overtime/networks/:networkParam/markets/:marketAddress/quote",
   OVERTIME_PARLAY_QUOTE: "/overtime/networks/:networkParam/parlay/quote",
+
   THALES_COLLATERALS: "/thales/networks/:networkParam/collaterals",
   THALES_MARKETS: "/thales/networks/:networkParam/markets",
   THALES_MARKET: "/thales/networks/:networkParam/markets/:marketAddress",
@@ -40,6 +43,13 @@ const ENDPOINTS = {
   THALES_MARKET_SELL_QUOTE: "/thales/networks/:networkParam/markets/:marketAddress/sell-quote",
   THALES_USER_POSITIONS: "/thales/networks/:networkParam/users/:userAddress/positions",
   THALES_USER_TRANSACTIONS: "/thales/networks/:networkParam/users/:userAddress/transactions",
+
+  THALES_SPEED_MARKETS_BUY_PARAMS: "/thales/networks/:networkParam/speed-markets/buy",
+  THALES_SPEED_MARKETS_USER_CLAIMABLE: "/thales/networks/:networkParam/users/:userAddress/speed-markets",
+  THALES_SPEED_MARKETS_RESOLVE_PARAMS: "/thales/networks/:networkParam/speed-markets/resolve",
+  THALES_SPEED_MARKETS_RESOLVE_OFFRAMP_PARAMS:
+    "/thales/networks/:networkParam/speed-markets/:marketAddress/resolve-offramp",
+
   THALES_IO_VOLUME_DATA: "/thales/thales-io/volume-data",
   THALES_IO_USERS_DATA: "/thales/thales-io/users-data",
   THALES_IO_DAILY_STATS: "/thales/thales-io/stats",
