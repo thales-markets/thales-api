@@ -11,6 +11,7 @@ const {
   getIsOneSidePlayerPropsMarket,
   formatMarketOdds,
   getIsYesNoPlayerPropsMarket,
+  getIsEnetpulseSport,
 } = require("../../overtimeApi/utils/markets");
 const { SPORTS_MAP, ENETPULSE_SPORTS } = require("../../overtimeApi/constants/tags");
 const { MARKET_TYPE, ODDS_TYPE, BET_TYPE, CHILD_ID, STATUS } = require("../../overtimeApi/constants/markets");
@@ -44,7 +45,7 @@ async function processMarkets() {
 
 const packMarket = (market) => {
   const leagueId = market.sportId;
-  const isEnetpulseSport = ENETPULSE_SPORTS.includes(leagueId);
+  const isEnetpulseSport = getIsEnetpulseSport(leagueId);
   const isPlayerPropsMarket = market.childId === CHILD_ID.PlayerProps;
   const typeId = isPlayerPropsMarket ? market.playerPropsId : market.childId;
   const type = MARKET_TYPE[typeId];

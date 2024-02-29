@@ -7,6 +7,7 @@ const axios = require("axios");
 const { format, addDays, subDays } = require("date-fns");
 const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
+const { getIsEnetpulseSport, getIsJsonOddsSport } = require("../../overtimeApi/utils/markets");
 
 let teamNamesMap = new Map();
 
@@ -37,39 +38,69 @@ async function processTeamNames() {
   }
 }
 
-const procesRundownTeamNames = async () => {
-  const startDate = subDays(TODAYS_DATE, numberOfDaysInPast);
+const procesRundownTeamNamesPerDate = async (sports, formattedDate) => {
+  for (let j = 0; j < sports.length; j++) {
+    const sportId = Number(sports[j]);
+    const sport = sportId - 9000;
 
-  for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
-    const allSports = Object.keys(SPORTS_MAP);
-    const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
+    const apiUrl = `https://therundown.io/api/v1/sports/${sport}/events/${formattedDate}?key=${process.env.RUNDOWN_API_KEY}`;
+    const response = await axios.get(apiUrl);
 
-    console.log(`Getting team names for date: ${formattedDate}`);
-
-    for (let j = 0; j < allSports.length; j++) {
-      const sportId = Number(allSports[j]);
-      const isEnetpulseSport = ENETPULSE_SPORTS.includes(sportId);
-      const isJsonOddsSport = JSON_ODDS_SPORTS.includes(sportId);
-
-      if (isEnetpulseSport || isJsonOddsSport) continue;
-      const sport = sportId - 9000;
-
-      const apiUrl = `https://therundown.io/api/v1/sports/${sport}/events/${formattedDate}?key=${process.env.RUNDOWN_API_KEY}`;
-      const response = await axios.get(apiUrl);
-
-      response.data.events.forEach((event) => {
+    response.data.events.forEach((event) => {
+      if (event.event_id && event.teams) {
         const gameId = bytes32({ input: event.event_id });
         teamNamesMap.set(
           gameId,
-          event.teams_normalized.map((team) => team.name),
+          event.teams.map((team) => ({
+            name: team.name,
+            isHome: team.is_home,
+          })),
         );
-      });
-    }
+      }
+    });
+  }
+};
+
+const procesEnetpulseTeamNamesPerDate = async (sports, formattedDate) => {
+  for (let j = 0; j < sports.length; j++) {
+    const sportId = Number(sports[j]);
+    const sport = sportId - 9000;
+
+    const apiUrl = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${sport}&date=${formattedDate}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&includeEventProperties=no`;
+    const response = await axios.get(apiUrl);
+
+    Object.values(response.data.events).forEach((event) => {
+      if (event.id && event.event_participants) {
+        const gameId = bytes32({ input: event.id });
+        teamNamesMap.set(
+          gameId,
+          Object.values(event.event_participants).map((team) => ({
+            name: team.participant.name,
+            isHome: team.number === "1",
+          })),
+        );
+      }
+    });
   }
 };
 
 async function processAllTeamNames() {
-  await procesRundownTeamNames();
+  const startDate = subDays(TODAYS_DATE, numberOfDaysInPast);
+
+  for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
+    const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
+    console.log(`Getting team names for date: ${formattedDate}`);
+
+    const allSports = Object.keys(SPORTS_MAP);
+    const rundownSports = allSports.filter((sport) => !getIsEnetpulseSport(sport) && !getIsJsonOddsSport(sport));
+    const enetpulseSports = allSports.filter((sport) => getIsEnetpulseSport(sport));
+
+    await Promise.all([
+      procesRundownTeamNamesPerDate(rundownSports, formattedDate),
+      procesEnetpulseTeamNamesPerDate(enetpulseSports, formattedDate),
+    ]);
+  }
+
   redisClient.set(KEYS.OVERTIME_V2_TEAM_NAMES, JSON.stringify([...teamNamesMap]), function () {});
 }
 
