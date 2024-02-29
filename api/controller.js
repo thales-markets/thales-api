@@ -217,8 +217,10 @@ app.get(ENDPOINTS.THALES_BANNERS_IMAGE, (req, res) => {
 });
 
 app.get(ENDPOINTS.PROMOTIONS, async (req, res) => {
-  const branchName = req.query['branch-name'];
-  var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/${branchName ? branchName : 'main'}/src/assets/promotions/index.json`;
+  const branchName = req.query["branch-name"];
+  var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/${
+    branchName ? branchName : "main"
+  }/src/assets/promotions/index.json`;
   request.get(banners).pipe(res);
 });
 
@@ -1143,6 +1145,17 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
       const market = allMarkets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
 
       return res.send(market || `Market with gameId ${marketAddress} not found.`);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_TEAM_NAMES, (req, res) => {
+  redisClient.get(KEYS.OVERTIME_V2_TEAM_NAMES, function (err, obj) {
+    const teamNames = new Map(JSON.parse(obj));
+    try {
+      res.send(Object.fromEntries(teamNames));
     } catch (e) {
       console.log(e);
     }

@@ -33,6 +33,7 @@ const KEYS = {
     8453: "thalesBaseMarkets",
   },
   OVERTIME_V2_MARKETS: "overtimeV2Markets",
+  OVERTIME_V2_TEAM_NAMES: "overtimeV2TeamNames",
 };
 
 module.exports = KEYS;
