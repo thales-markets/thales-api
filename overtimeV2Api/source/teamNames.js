@@ -11,6 +11,7 @@ const { getIsEnetpulseSport, getIsJsonOddsSport } = require("../../overtimeApi/u
 
 let teamNamesMap = new Map();
 
+const AMERICAN_SPORTS = [1, 2, 3, 4, 5, 6, 8, 10, 20, 21];
 const TODAYS_DATE = new Date();
 const numberOfDaysInPast = Number(process.env.PROCESS_TEAM_NAMES_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_TEAM_NAMES_NUMBER_OF_DAYS_IN_FUTURE);
@@ -47,12 +48,12 @@ const procesRundownTeamNamesPerDate = async (sports, formattedDate) => {
     const response = await axios.get(apiUrl);
 
     response.data.events.forEach((event) => {
-      if (event.event_id && event.teams) {
+      if (event.event_id && event.teams_normalized) {
         const gameId = bytes32({ input: event.event_id });
         teamNamesMap.set(
           gameId,
-          event.teams.map((team) => ({
-            name: team.name,
+          event.teams_normalized.map((team) => ({
+            name: AMERICAN_SPORTS.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
             isHome: team.is_home,
           })),
         );
