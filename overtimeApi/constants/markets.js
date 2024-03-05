@@ -143,9 +143,9 @@ const CHILD_ID = {
 
 const STATUS = {
   Open: 0,
-  Resolved: 1,
-  Canceled: 2,
-  Paused: 3,
+  Paused: 1,
+  Resolved: 10,
+  Canceled: 255,
 };
 
 module.exports = {

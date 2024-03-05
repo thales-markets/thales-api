@@ -13,8 +13,8 @@ const {
   getIsYesNoPlayerPropsMarket,
   getIsEnetpulseSport,
 } = require("../../overtimeApi/utils/markets");
-const { SPORTS_MAP, ENETPULSE_SPORTS } = require("../../overtimeApi/constants/tags");
-const { MARKET_TYPE, ODDS_TYPE, BET_TYPE, CHILD_ID, STATUS } = require("../../overtimeApi/constants/markets");
+const { SPORTS_MAP } = require("../../overtimeApi/constants/tags");
+const { MARKET_TYPE, ODDS_TYPE, CHILD_ID, STATUS } = require("../../overtimeApi/constants/markets");
 const KEYS = require("../../redis/redis-keys");
 const axios = require("axios");
 

@@ -12,7 +12,6 @@ const { getIsEnetpulseSport, getIsJsonOddsSport } = require("../../overtimeApi/u
 let teamNamesMap = new Map();
 
 const AMERICAN_SPORTS = [1, 2, 3, 4, 5, 6, 8, 10, 20, 21];
-const TODAYS_DATE = new Date();
 const numberOfDaysInPast = Number(process.env.PROCESS_TEAM_NAMES_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_TEAM_NAMES_NUMBER_OF_DAYS_IN_FUTURE);
 
@@ -86,7 +85,7 @@ const procesEnetpulseTeamNamesPerDate = async (sports, formattedDate) => {
 };
 
 async function processAllTeamNames() {
-  const startDate = subDays(TODAYS_DATE, numberOfDaysInPast);
+  const startDate = subDays(new Date(), numberOfDaysInPast);
 
   for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
     const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
