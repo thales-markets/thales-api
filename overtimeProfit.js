@@ -5,18 +5,13 @@ const thalesData = require("thales-data");
 const KEYS = require("./redis/redis-keys");
 const {
   delay,
-  addMonthsToUTCDate,
   fixDuplicatedTeamName,
   convertPositionNameToPosition,
   convertFinalResultToResultType,
   sortByTotalQuote,
 } = require("./services/utils");
-
 const { subMilliseconds, differenceInDays, addDays } = require("date-fns");
-const { uniqBy } = require("lodash");
-const { NETWORK } = require("./overtimeApi/constants/networks");
 
-const TODAYS_DATE = new Date();
 const PARLAY_LEADERBOARD_WEEKLY_START_DATE = new Date(2024, 1, 14, 0, 0, 0);
 const PARLAY_LEADERBOARD_WEEKLY_START_DATE_UTC = new Date(Date.UTC(2024, 1, 14, 0, 0, 0));
 
@@ -139,7 +134,7 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod, pe
 async function processParlayLeaderboard(network) {
   const periodMap = new Map();
 
-  const latestPeriodWeekly = Math.ceil(differenceInDays(TODAYS_DATE, PARLAY_LEADERBOARD_WEEKLY_START_DATE) / 7);
+  const latestPeriodWeekly = Math.ceil(differenceInDays(new Date(), PARLAY_LEADERBOARD_WEEKLY_START_DATE) / 7);
 
   for (let period = 0; period <= latestPeriodWeekly; period++) {
     const startPeriod = Math.trunc(addDays(PARLAY_LEADERBOARD_WEEKLY_START_DATE_UTC, period * 7).getTime() / 1000);
