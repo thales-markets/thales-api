@@ -3,7 +3,7 @@ require("dotenv").config();
 const redis = require("redis");
 const { delay } = require("../../overtimeApi/utils/general");
 const { bigNumberFormatter } = require("../../overtimeApi/utils/formatters");
-// const markets = require("./treeMarketsAndHashes.json");
+const markets = require("./treeMarketsAndHashes.json");
 const {
   fixDuplicatedTeamName,
   getLeagueNameById,
@@ -94,19 +94,14 @@ const packMarket = (market) => {
       score: market.playerProps.score,
     },
     combinedPositions: market.combinedPositions
-      ? market.combinedPositions.map((position) => {
-          return {
-            position1: {
-              typeId: position.position1.childId,
-              position: position.position1.position,
-              line: position.position1.line / 100,
-            },
-            position2: {
-              typeId: position.position2.childId,
-              position: position.position2.position,
-              line: position.position2.line / 100,
-            },
-          };
+      ? market.combinedPositions.map((combinedPosition) => {
+          return combinedPosition.map((position) => {
+            return {
+              childId: position.childId,
+              position: position.position,
+              line: position.line / 100,
+            };
+          });
         })
       : [],
     odds: market.odds.map((odd) => {
@@ -165,7 +160,7 @@ const mapMarkets = async () => {
   const mappedCanceledMarkets = [];
   const mappedPausedMarkets = [];
 
-  const markets = await loadMarkets();
+  // const markets = await loadMarkets();
 
   markets.forEach((market) => {
     let packedMarket = packMarket(market);
