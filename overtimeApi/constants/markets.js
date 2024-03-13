@@ -138,8 +138,10 @@ const CHILD_ID = {
   Total: 10002,
   DoubleChance: 10003,
   CombinedPositions: 10004,
-  HalftimeEndtimeResult: 10005,
-  Goals: 10011,
+  Halftime: 10005,
+  HalftimeFulltime: 10006,
+  Goals: 10007,
+  HalftimeFulltimeGoals: 10008,
   PlayerProps: 10010,
 };
 

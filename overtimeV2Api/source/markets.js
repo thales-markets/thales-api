@@ -12,6 +12,7 @@ const {
   formatMarketOdds,
   getIsYesNoPlayerPropsMarket,
   getIsEnetpulseSport,
+  getIsPlayerPropsMarket,
 } = require("../../overtimeApi/utils/markets");
 const { SPORTS_MAP } = require("../../overtimeApi/constants/tags");
 const { MARKET_TYPE, ODDS_TYPE, CHILD_ID, STATUS } = require("../../overtimeApi/constants/markets");
@@ -46,17 +47,8 @@ async function processMarkets() {
 const packMarket = (market) => {
   const leagueId = market.sportId;
   const isEnetpulseSport = getIsEnetpulseSport(leagueId);
-  const isPlayerPropsMarket = market.childId === CHILD_ID.PlayerProps;
-  const typeId = isPlayerPropsMarket ? market.playerPropsId : market.childId;
-  const type = MARKET_TYPE[typeId];
-  const line =
-    market.childId === CHILD_ID.Spread
-      ? market.spread
-      : market.childId === CHILD_ID.Total
-      ? market.total
-      : market.childId === CHILD_ID.PlayerProps
-      ? market.playerProps.line
-      : 0;
+  const isPlayerPropsMarket = getIsPlayerPropsMarket(market.typeId);
+  const type = MARKET_TYPE[market.typeId];
 
   return {
     gameId: market.gameId,
@@ -65,7 +57,7 @@ const packMarket = (market) => {
     leagueName: getLeagueNameById(leagueId),
     childId: market.childId,
     playerPropsId: market.playerPropsId,
-    typeId: typeId,
+    typeId: market.typeId,
     type: type,
     maturity: market.maturity,
     maturityDate: new Date(market.maturity * 1000),
@@ -80,9 +72,7 @@ const packMarket = (market) => {
     isCanceled: market.status === STATUS.Canceled,
     isPaused: market.status === STATUS.Paused,
     isOneSideMarket: getIsOneSideMarket(leagueId),
-    spread: Number(market.spread) / 100,
-    total: Number(market.total) / 100,
-    line: Number(line) / 100,
+    line: Number(market.line) / 100,
     isPlayerPropsMarket: isPlayerPropsMarket,
     isOneSidePlayerPropsMarket: getIsOneSidePlayerPropsMarket(market.playerPropsId),
     isYesNoPlayerPropsMarket: getIsYesNoPlayerPropsMarket(market.playerPropsId),
@@ -97,13 +87,12 @@ const packMarket = (market) => {
       ? market.combinedPositions.map((combinedPosition) => {
           return combinedPosition.map((position) => {
             return {
-              childId: position.childId,
-              position: position.position,
+              ...position,
               line: position.line / 100,
             };
           });
         })
-      : [],
+      : new Array(market.odds.length).fill([]),
     odds: market.odds.map((odd) => {
       const formattedOdds = Number(odd) > 0 ? bigNumberFormatter(odd) : 0;
       return {
