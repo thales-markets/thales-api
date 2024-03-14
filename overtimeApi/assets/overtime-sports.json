@@ -248,6 +248,12 @@
     "supportedTypes": ["moneyline", "total"]
   },
   {
+    "id": 19595,
+    "name": "Boxing",
+    "sport": "MMA",
+    "supportedTypes": ["moneyline", "total"]
+  },
+  {
     "id": 18806,
     "name": "UEFA Nations League",
     "sport": "Soccer",

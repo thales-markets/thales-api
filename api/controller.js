@@ -419,10 +419,11 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
       "receptions",
       "firsttouchdown",
       "lasttouchdown",
+      "threepointsmade,",
     ].includes(type.toLowerCase())
   ) {
     res.send(
-      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, homeruns, strikeouts, passingYards, rushingYards, pasingTouchdowns, receivingYards, scoringTouchdowns, fieldGoalsMade, pitcherHitsAllowed, points, shots, goals, hitsRecorded, rebounds, assists, doubleDouble, tripleDouble, receptions, firstTouchdown, lastTouchdown.",
+      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, homeruns, strikeouts, passingYards, rushingYards, pasingTouchdowns, receivingYards, scoringTouchdowns, fieldGoalsMade, pitcherHitsAllowed, points, shots, goals, hitsRecorded, rebounds, assists, doubleDouble, tripleDouble, receptions, firstTouchdown, lastTouchdown, threePointsMade.",
     );
     return;
   }
