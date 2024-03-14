@@ -5,24 +5,62 @@ const thalesData = require("thales-data");
 const KEYS = require("../../redis/redis-keys");
 const ethers = require("ethers");
 const marchMadness = require("../contracts/marchMadness");
+const collateral = require("../contracts/collateral");
 const { delay } = require("../../services/utils");
-const { _ } = require("lodash");
+const { _, sortBy } = require("lodash");
 const { differenceInDays, addDays, subMilliseconds } = require("date-fns");
 const { getProvider } = require("../utils/provider");
+const { filterUniqueBracketsWithUniqueMinter, mergePointsDataWithMintersData, bigNumberFormatter } = require('../utils/helpers');
+const { floorNumberToDecimals } = require('../utils/formatters');
 
-const OP_REWARDS = 3000;
-const OP_VOLUME_REWARDS = 10000;
-const THALES_REWARDS = 10000;
-const THALES_VOLUME_REWARDS = 30000;
+const ARB_VOLUME_REWARDS = 30000;
 
 const ONE_MINUTE = 60 * 1000;
 const NUMBER_OF_DAYS_IN_PERIOD = 4;
+
+const ARB_DECIMALS = 6;
 
 const EXCLUDE_ADDRESSES = [
   "0x82b3634c0518507d5d817be6dab6233ebe4d68d9",
   "0x2bb7d689780e7a34dd365359bd7333ab24903268",
   "0x0ec9d8dac2178b041f85f60e3cf13cfaa3d23e0e",
 ];
+
+const PERCENTAGE_OF_PRIZE_POOL = [
+  0.15,
+  0.12,
+  0.10,
+  0.08,
+  0.07,
+  0.06,
+  0.05,
+  0.04,
+  0.04,
+  0.04,
+  0.03,
+  0.03,
+  0.03,
+  0.03,
+  0.03,
+  0.02,
+  0.02,
+  0.02,
+  0.02,
+  0.02,
+]
+
+const REWARDS = [
+  2500,
+  1000,
+  500,
+  200,
+  200,
+  150,
+  150,
+  150,
+  100,
+  100,
+]
 
 async function processRewards() {
   if (process.env.REDIS_URL) {
@@ -35,21 +73,21 @@ async function processRewards() {
 
     setTimeout(async () => {
       while (true) {
-        try {
-          await processOrders(420);
-        } catch (e) {
-          console.log("Error ", e);
-        }
+        // try {
+        //   await processOrders(420);
+        // } catch (e) {
+        //   console.log("Error ", e);
+        // }
 
-        await delay(ONE_MINUTE);
+        // await delay(ONE_MINUTE);
 
-        try {
-          await processOrders(10);
-        } catch (e) {
-          console.log("Error ", e);
-        }
+        // try {
+        //   await processOrders(10);
+        // } catch (e) {
+        //   console.log("Error ", e);
+        // }
 
-        await delay(ONE_MINUTE);
+        // await delay(ONE_MINUTE);
 
         try {
           await processOrders(42161);
@@ -64,59 +102,13 @@ async function processRewards() {
   }
 }
 
-const REWARDS = {
-  FIRST_ROUND: 1,
-  SECOND_ROUND: 2,
-  THIRD_ROUND: 4,
-  FOURTH_ROUND: 7,
-  FIFTH_ROUND: 10,
-  FINAL: 20,
-};
-
-const TOP_REWARDS = {
-  10: {
-    1: 750,
-    2: 600,
-    3: 450,
-    4: 350,
-    5: 250,
-    6: 200,
-    7: 150,
-    8: 100,
-    9: 90,
-    10: 60,
-  },
-  420: {
-    1: 750,
-    2: 600,
-    3: 450,
-    4: 350,
-    5: 250,
-    6: 200,
-    7: 150,
-    8: 100,
-    9: 90,
-    10: 60,
-  },
-  42161: {
-    1: 2500,
-    2: 2000,
-    3: 1500,
-    4: 1200,
-    5: 800,
-    6: 650,
-    7: 500,
-    8: 350,
-    9: 300,
-    10: 200,
-  },
-};
-
-const TAG_ID = "9005";
+const NCAA_TAG_ID = "9005";
 
 async function processOrders(network) {
-  const FROM_DATE = network == 420 ? new Date("03-09-2023") : new Date("03-13-2023");
-  const TO_DATE = new Date("04-04-2023");
+  // const FROM_DATE = network == 420 ? new Date("03-09-2023") : new Date("03-13-2023");
+  const FROM_DATE = network == 420 ? new Date("03-09-2024") : new Date("03-13-2024");
+  // const TO_DATE = new Date("04-04-2023");
+  const TO_DATE = new Date("04-04-2024");
 
   console.log("----------------------------------------------------------------------------");
   console.log("NetworkId -> ", network);
@@ -129,22 +121,34 @@ async function processOrders(network) {
   }
 
   const marchMadnessContract = new ethers.Contract(marchMadness.addresses[network], marchMadness.abi, provider);
+  const usdcContract = new ethers.Contract(collateral.addresses[network], collateral.abi, provider);
 
   const marchMadnessTokens = await thalesData.sportMarkets.marchMadnessToken({
     network: network,
   });
 
-  const marchMadnessTokenOwnersAddresses = marchMadnessTokens.map((token) => token.minter);
+  const bracketsCount = marchMadnessTokens.length || 0; 
 
-  console.log("MarchMadnessNFTOwners -> ", marchMadnessTokens.length);
+  const poolSize = await usdcContract.balanceOf(marchMadness.addresses[network]);
+  console.log('poolSize ', bigNumberFormatter(poolSize, ARB_DECIMALS));
+
+  const uniqueBracketsWithUniqueMinters = filterUniqueBracketsWithUniqueMinter(marchMadnessTokens);
+  console.log('uniqueBracketsWithUniqueMinters ', uniqueBracketsWithUniqueMinters);
+
+  // Fetch points per minter
+  const pointsPromises = [];
+
+  uniqueBracketsWithUniqueMinters.forEach((item) => {
+    pointsPromises.push(marchMadnessContract.getTotalPointsByTokenId(Number(item.itemId)));
+  })
+
+  const pointsData = await Promise.all(pointsPromises);
+
+  const detailMintersData = mergePointsDataWithMintersData(uniqueBracketsWithUniqueMinters, pointsData);
 
   const uniqueAccountsFromTransactionsData = await getUniqueTradersFromTransactionsData(FROM_DATE, TO_DATE, network);
 
-  console.log("UniqueAccountFromTransactionsData -> ", uniqueAccountsFromTransactionsData.length);
-
-  let uniqueAddresses = _.uniq(marchMadnessTokenOwnersAddresses.concat(uniqueAccountsFromTransactionsData));
-
-  console.log("uniqueAddresses of merged data ", uniqueAddresses.length);
+  let uniqueAddresses = uniqueAccountsFromTransactionsData;
 
   const users = [];
   let globalVolume = 0;
@@ -166,52 +170,24 @@ async function processOrders(network) {
     });
 
     // Check for singles and parlays that are in right competition
-    const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(TAG_ID));
+    const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(NCAA_TAG_ID));
     const parlayFromLeague = parlays.filter(
-      (parlayTx) => parlayTx.sportMarkets.filter((sportMarket) => sportMarket.tags.includes(TAG_ID)).length > 0,
+      (parlayTx) => parlayTx.sportMarkets.filter((sportMarket) => sportMarket.tags.includes(NCAA_TAG_ID)).length > 0,
     );
 
-    let numberOfCorrectedPredictionsPerRound;
-
-    const isAddressMinterOfNFT = marchMadnessTokens.find((token) => token.minter.toLowerCase() == owner.toLowerCase());
-
-    if (isAddressMinterOfNFT !== undefined) {
-      numberOfCorrectedPredictionsPerRound = await marchMadnessContract.getCorrectPositionsByRound(owner);
-    }
-
-    if (numberOfCorrectedPredictionsPerRound == undefined) numberOfCorrectedPredictionsPerRound = [0, 0, 0, 0, 0, 0];
-
-    const multiplier = (
-      calculateRewardPercentageBaseOnCorrectPredictions(numberOfCorrectedPredictionsPerRound) / 100
-    ).toFixed(2);
-
-    if (!numberOfCorrectedPredictionsPerRound.length) continue;
-
     let _volume = 0;
-    let _baseVolume = 0;
-    let _bonusVolume = 0;
 
     singleFromLeague.forEach((single) => {
-      _baseVolume += single.paid;
-      _bonusVolume += single.paid * Number(multiplier);
+      _volume += single.paid;
     });
 
     parlayFromLeague.forEach((parlay) => {
-      _baseVolume += parlay.sUSDPaid;
-      _bonusVolume += parlay.sUSDPaid * Number(multiplier);
+      _volume += parlay.sUSDPaid;
     });
-
-    _volume = _baseVolume + _bonusVolume;
 
     users.push({
       walletAddress: owner,
-      baseVolume: _baseVolume,
-      bonusVolume: _bonusVolume,
       volume: _volume,
-      totalCorrectedPredictions: numberOfCorrectedPredictionsPerRound.reduce(
-        (partialSum, a) => Number(partialSum) + Number(a),
-        0,
-      ),
     });
 
     globalVolume += _volume;
@@ -219,74 +195,51 @@ async function processOrders(network) {
 
   const clonedUsers = JSON.parse(JSON.stringify(users));
 
-  const finalArray = users
-    .sort((userA, userB) => userB.volume - userA.volume)
-    .map((user, index) => {
-      user.rank = index + 1;
-      user.rewards =
-        globalVolume > 0
-          ? `${Number((user.volume / globalVolume) * getVolumeRewardsForNetwork(network)).toFixed(
-              2,
-            )} ${getRewardCoinForNetwork(network)}`
-          : 0;
-      return user;
-    });
+  const finalUsersByVolume = sortBy(clonedUsers.map((item) => {
+    return {
+      ...item,
+      estimatedRewards: item.volume / globalVolume * ARB_VOLUME_REWARDS, 
+    }
+  }, ['estimatedRewards'])).map((item, index) => {
+    return {
+      rank: index + 1,
+      ...item,
+    }
+  });
 
-  const finalArrayByNumberOfCorrectPredictions = clonedUsers
-    .filter(
-      (user) =>
-        user.baseVolume >= 10 &&
-        !!marchMadnessTokens.find((token) => token.minter.toLowerCase() == user.walletAddress.toLowerCase()),
-    )
-    .sort(
-      (userA, userB) =>
-        userB.totalCorrectedPredictions - userA.totalCorrectedPredictions || userB.volume - userA.volume,
-    )
-    .map((user, index) => {
-      user.rank = index + 1;
-      user.rewards =
-        user.totalCorrectedPredictions > 0
-          ? `${getRewardsBasedOnRank(network, index + 1)}`
-          : `0 ${getRewardCoinForNetwork(network)}`;
-      return user;
-    });
+  const finalUsersByPoints = sortBy(detailMintersData.map((item) => {
+    return {
+      bracketId: Number(item.itemId),
+      owner: item.minter,
+      totalPoints: item.totalPoints,
+    }
+  }), ['totalPoints', 'bracketId']).map((item, index) => {
+    return {
+      rank: index + 1,
+      rewards: `${floorNumberToDecimals(PERCENTAGE_OF_PRIZE_POOL[index] ? PERCENTAGE_OF_PRIZE_POOL[index] * bigNumberFormatter(poolSize, ARB_DECIMALS) : 0, 2)} USDC + ${floorNumberToDecimals(REWARDS[index] ? REWARDS[index] : 0, 2)} ARB`,
+      ...item
+    }
+  }
+  );
 
-  const leaderboardData = { globalVolume, leaderboard: finalArray };
+  console.log('finalUsersByVolume ', finalUsersByVolume);
+  console.log('finalUsersByPoints ', finalUsersByPoints);
+
   if (process.env.REDIS_URL) {
-    redisClient.set(KEYS.MARCH_MADNESS.BY_VOLUME[network], JSON.stringify(leaderboardData), function () {});
+    redisClient.set(KEYS.MARCH_MADNESS.BY_VOLUME[network], JSON.stringify(finalUsersByVolume), function () {});
     redisClient.set(
       KEYS.MARCH_MADNESS.BY_NUMBER_OF_CORRECT_PREDICTIONS[network],
-      JSON.stringify(finalArrayByNumberOfCorrectPredictions),
+      JSON.stringify(finalUsersByPoints),
       function () {},
     );
+    redisClient.set(
+      KEYS.MARCH_MADNESS.GENERAL_STATS[network],
+      JSON.stringify({ poolSize: bigNumberFormatter(poolSize, ARB_DECIMALS), totalBracketsMinted: bracketsCount }),
+      function () {},
+    )
   }
   return;
 }
-
-const getVolumeRewardsForNetwork = (networkId) => {
-  if (networkId == 10) return OP_VOLUME_REWARDS;
-  if (networkId == 420) return OP_VOLUME_REWARDS;
-  return THALES_VOLUME_REWARDS;
-};
-
-const getRewardsForNetwork = (networkId) => {
-  if (networkId == 10) return OP_REWARDS;
-  if (networkId == 420) return OP_REWARDS;
-  return THALES_REWARDS;
-};
-
-const getRewardCoinForNetwork = (networkId) => {
-  if (networkId == 10) return "OP";
-  if (networkId == 420) return "OP";
-  return "THALES";
-};
-
-const getRewardsBasedOnRank = (networkId, rank) => {
-  if (![420, 10, 42161].includes(networkId)) networkId = 10;
-  if (rank > 10) return `0 ${getRewardCoinForNetwork(networkId)}`;
-
-  return `${TOP_REWARDS[networkId][rank]} ${getRewardCoinForNetwork(networkId)}`;
-};
 
 const getUniqueTradersFromTransactionsData = async (fromDate, toDate, network) => {
   if (!fromDate) return [];
@@ -306,7 +259,7 @@ const getUniqueTradersFromTransactionsData = async (fromDate, toDate, network) =
       network: network,
       minTimestamp: startPeriod,
       maxTimestamp: endPeriod,
-      leagueTag: 9005,
+      leagueTag: NCAA_TAG_ID,
     });
     singles = [...singles, ...periodSingles];
 
@@ -319,9 +272,9 @@ const getUniqueTradersFromTransactionsData = async (fromDate, toDate, network) =
   }
 
   // Filter only from NCAA
-  const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(TAG_ID));
+  const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(NCAA_TAG_ID));
   const parlayFromLeague = parlays.filter(
-    (parlayTx) => parlayTx.sportMarkets.filter((sportMarket) => sportMarket.tags.includes(TAG_ID)).length > 0,
+    (parlayTx) => parlayTx.sportMarkets.filter((sportMarket) => sportMarket.tags.includes(NCAA_TAG_ID)).length > 0,
   );
 
   const uniqueAccountsFromSingleTransactions = _.uniqBy(singleFromLeague, "account");
@@ -331,19 +284,6 @@ const getUniqueTradersFromTransactionsData = async (fromDate, toDate, network) =
   const uniqueAccountsFromParlays = uniqueAccountsFromParlayTransactions.map((parlay) => parlay.account);
 
   return uniqueAccountsFromSingle.concat(uniqueAccountsFromParlays);
-};
-
-const calculateRewardPercentageBaseOnCorrectPredictions = (arrayOfPredicitionsPerRound) => {
-  if (arrayOfPredicitionsPerRound.length !== 6) return 0;
-
-  return Number(
-    Number(arrayOfPredicitionsPerRound[0]) * REWARDS.FIRST_ROUND +
-      Number(arrayOfPredicitionsPerRound[1]) * REWARDS.SECOND_ROUND +
-      Number(arrayOfPredicitionsPerRound[2]) * REWARDS.THIRD_ROUND +
-      Number(arrayOfPredicitionsPerRound[3]) * REWARDS.FOURTH_ROUND +
-      Number(arrayOfPredicitionsPerRound[4]) * REWARDS.FIFTH_ROUND +
-      Number(arrayOfPredicitionsPerRound[5]) * REWARDS.FINAL,
-  );
 };
 
 module.exports = {

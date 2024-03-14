@@ -44,6 +44,10 @@ const KEYS = {
       420: "mmOPGoerliNOCP",
       42161: "mmArbNOCP",
     },
+    GENERAL_STATS: {
+      10: "mmOPGeneralStats",
+      420: "mmOPGoerliGeneralStats",
+      42161: "mmArbGeneralStats",    }
   },
 };
 

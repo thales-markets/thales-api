@@ -1,11 +1,10 @@
-const { Network } = require('../constants/networks');
+const { NETWORK } = require("../constants/networks");
 
-const erc20Contract = {
+const collateral = {
     addresses: {
-        [Network.OptimismMainnet]: '',
-        [Network.OptimismGoerli]: '',
-        [Network.Arbitrum]: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-        [Network.Base]: '',
+        [NETWORK.OptimismGoerli]: '',
+        [NETWORK.Optimism]: '',
+        [NETWORK.Arbitrum]: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
     },
     abi: [
         { inputs: [], stateMutability: 'nonpayable', type: 'constructor' },
@@ -607,4 +606,4 @@ const erc20Contract = {
     ],
 };
 
-export default erc20Contract;
+module.exports = collateral;

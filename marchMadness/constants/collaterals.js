@@ -1,0 +1,9 @@
+const DEFAULT_DECIMALS = 2;
+const SHORT_DECIMALS = 4;
+const LONG_DECIMALS = 8;
+
+module.exports = {
+  DEFAULT_DECIMALS,
+  SHORT_DECIMALS,
+  LONG_DECIMALS,
+};
