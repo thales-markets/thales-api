@@ -312,31 +312,21 @@ app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
   request.get(url, { headers: { "x-api-key": process.env.JSON_ODDS_KEY.toString() } }).pipe(res);
 });
 
-app.get(ENDPOINTS.MARCH_MADNESS, (req, res) => {
+app.get(ENDPOINTS.MARCH_MADNESS, async(req, res) => {
   const network = req.params.networkId;
-  const leaderboardType = req.params.leaderboardType;
-
-  if (leaderboardType == 0) {
-    redisClient.get(KEYS.MARCH_MADNESS.BY_VOLUME[network], function (err, obj) {
-      const rewards = JSON.parse(obj);
-      try {
-        res.send(rewards);
-      } catch (e) {
-        console.log(e);
-      }
-    });
-  }
-
-  if (leaderboardType == 1) {
-    redisClient.get(KEYS.MARCH_MADNESS.BY_NUMBER_OF_CORRECT_PREDICTIONS[network], function (err, obj) {
-      const rewards = JSON.parse(obj);
-      try {
-        res.send(rewards);
-      } catch (e) {
-        console.log(e);
-      }
-    });
-  }
+    try {
+      redisClient.get(KEYS.MARCH_MADNESS.FINAL_DATA[network], function (err, obj) {
+        try {
+          const data = JSON.parse(obj);
+          return res.send(data);
+        } catch (e) {
+          console.log(e);
+          return undefined
+        }
+      });
+    } catch(e) {
+      return res.status(404);
+    }
 });
 
 app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {

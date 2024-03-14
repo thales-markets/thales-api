@@ -25,7 +25,7 @@ const ENDPOINTS = {
   ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
   JSON_ODDS_DATA: "/json-odds-data/:sportParameter",
 
-  MARCH_MADNESS: "/march-madness/:leaderboardType/:networkId",
+  MARCH_MADNESS: "/march-madness/:networkId",
 
   OVERTIME_SPORTS: "/overtime/networks/:networkParam/sports",
   OVERTIME_COLLATERALS: "/overtime/networks/:networkParam/collaterals",

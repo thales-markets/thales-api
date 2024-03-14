@@ -130,10 +130,8 @@ async function processOrders(network) {
   const bracketsCount = marchMadnessTokens.length || 0; 
 
   const poolSize = await usdcContract.balanceOf(marchMadness.addresses[network]);
-  console.log('poolSize ', bigNumberFormatter(poolSize, ARB_DECIMALS));
 
   const uniqueBracketsWithUniqueMinters = filterUniqueBracketsWithUniqueMinter(marchMadnessTokens);
-  console.log('uniqueBracketsWithUniqueMinters ', uniqueBracketsWithUniqueMinters);
 
   // Fetch points per minter
   const pointsPromises = [];
@@ -226,17 +224,7 @@ async function processOrders(network) {
   console.log('finalUsersByPoints ', finalUsersByPoints);
 
   if (process.env.REDIS_URL) {
-    redisClient.set(KEYS.MARCH_MADNESS.BY_VOLUME[network], JSON.stringify(finalUsersByVolume), function () {});
-    redisClient.set(
-      KEYS.MARCH_MADNESS.BY_NUMBER_OF_CORRECT_PREDICTIONS[network],
-      JSON.stringify(finalUsersByPoints),
-      function () {},
-    );
-    redisClient.set(
-      KEYS.MARCH_MADNESS.GENERAL_STATS[network],
-      JSON.stringify({ poolSize: bigNumberFormatter(poolSize, ARB_DECIMALS), totalBracketsMinted: bracketsCount }),
-      function () {},
-    )
+    redisClient.set(KEYS.MARCH_MADNESS.FINAL_DATA[network], JSON.stringify({ dataByVolume: finalUsersByVolume, dataByPoints: finalUsersByPoints, generalStats: { poolSize: bigNumberFormatter(poolSize, ARB_DECIMALS), totalBracketsMinted: bracketsCount }}), function () {});
   }
   return;
 }

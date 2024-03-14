@@ -47,7 +47,13 @@ const KEYS = {
     GENERAL_STATS: {
       10: "mmOPGeneralStats",
       420: "mmOPGoerliGeneralStats",
-      42161: "mmArbGeneralStats",    }
+      42161: "mmArbGeneralStats",   
+    },
+    FINAL_DATA: {
+      10: "mmOPFinalData",
+      420: "mmOPFinalData",
+      42161: "mmArbFinalData",   
+    }
   },
 };
 
