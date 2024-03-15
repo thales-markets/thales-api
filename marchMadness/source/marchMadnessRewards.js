@@ -7,7 +7,7 @@ const ethers = require("ethers");
 const marchMadness = require("../contracts/marchMadness");
 const collateral = require("../contracts/collateral");
 const { delay } = require("../../services/utils");
-const { _, sortBy } = require("lodash");
+const { _, sortBy, orderBy } = require("lodash");
 const { differenceInDays, addDays, subMilliseconds } = require("date-fns");
 const { getProvider } = require("../utils/provider");
 const { filterUniqueBracketsWithUniqueMinter, mergePointsDataWithMintersData, bigNumberFormatter } = require('../utils/helpers');
@@ -189,25 +189,25 @@ async function processOrders(network) {
 
   const clonedUsers = JSON.parse(JSON.stringify(users));
 
-  const finalUsersByVolume = sortBy(clonedUsers.map((item) => {
+  const finalUsersByVolume = orderBy(clonedUsers.map((item) => {
     return {
       ...item,
       estimatedRewards: item.volume / globalVolume * ARB_VOLUME_REWARDS, 
     }
-  }, ['estimatedRewards'])).map((item, index) => {
+    }), ['volume'], ['desc']).map((item, index) => {
     return {
       rank: index + 1,
       ...item,
     }
   });
 
-  const finalUsersByPoints = sortBy(detailMintersData.map((item) => {
+  const finalUsersByPoints = orderBy(detailMintersData.map((item) => {
     return {
       bracketId: Number(item.itemId),
       owner: item.minter,
       totalPoints: item.totalPoints,
     }
-  }), ['totalPoints', 'bracketId']).map((item, index) => {
+  }), ['totalPoints', 'bracketId'], ['desc', 'asc']).map((item, index) => {
     return {
       rank: index + 1,
       rewards: `${floorNumberToDecimals(PERCENTAGE_OF_PRIZE_POOL[index] ? PERCENTAGE_OF_PRIZE_POOL[index] * bigNumberFormatter(poolSize, ARB_DECIMALS) : 0, 2)} USDC + ${floorNumberToDecimals(REWARDS[index] ? REWARDS[index] : 0, 2)} ARB`,
@@ -215,9 +215,6 @@ async function processOrders(network) {
     }
   }
   );
-
-  console.log('finalUsersByVolume ', finalUsersByVolume);
-  console.log('finalUsersByPoints ', finalUsersByPoints);
 
   if (process.env.REDIS_URL) {
     redisClient.set(KEYS.MARCH_MADNESS.FINAL_DATA[network], JSON.stringify({ dataByVolume: finalUsersByVolume, dataByPoints: finalUsersByPoints, generalStats: { poolSize: bigNumberFormatter(poolSize, ARB_DECIMALS), totalBracketsMinted: bracketsCount }}), function () {});
