@@ -24,6 +24,7 @@ const BET_TYPE = {
   Receptions: 11058,
   FirstTouchdown: 11049,
   LastTouchdown: 11056,
+  ThreePointsMade: 11038,
 };
 
 const MARKET_TYPE = {
@@ -52,6 +53,7 @@ const MARKET_TYPE = {
   [BET_TYPE.Receptions]: "receptions",
   [BET_TYPE.FirstTouchdown]: "firstTouchdown",
   [BET_TYPE.LastTouchdown]: "lastTouchdown",
+  [BET_TYPE.ThreePointsMade]: "threePointsMade",
 };
 
 const PLAYER_PROPS_BET_TYPES = [
@@ -75,6 +77,7 @@ const PLAYER_PROPS_BET_TYPES = [
   BET_TYPE.Receptions,
   BET_TYPE.FirstTouchdown,
   BET_TYPE.LastTouchdown,
+  BET_TYPE.ThreePointsMade,
 ];
 
 const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [
@@ -138,14 +141,18 @@ const CHILD_ID = {
   Total: 10002,
   DoubleChance: 10003,
   CombinedPositions: 10004,
+  Halftime: 10005,
+  HalftimeFulltime: 10006,
+  Goals: 10007,
+  HalftimeFulltimeGoals: 10008,
   PlayerProps: 10010,
 };
 
 const STATUS = {
   Open: 0,
-  Resolved: 1,
-  Canceled: 2,
-  Paused: 3,
+  Paused: 1,
+  Resolved: 10,
+  Canceled: 255,
 };
 
 module.exports = {

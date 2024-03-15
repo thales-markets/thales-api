@@ -409,10 +409,11 @@ app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
       "receptions",
       "firsttouchdown",
       "lasttouchdown",
+      "threepointsmade,",
     ].includes(type.toLowerCase())
   ) {
     res.send(
-      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, homeruns, strikeouts, passingYards, rushingYards, pasingTouchdowns, receivingYards, scoringTouchdowns, fieldGoalsMade, pitcherHitsAllowed, points, shots, goals, hitsRecorded, rebounds, assists, doubleDouble, tripleDouble, receptions, firstTouchdown, lastTouchdown.",
+      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, homeruns, strikeouts, passingYards, rushingYards, pasingTouchdowns, receivingYards, scoringTouchdowns, fieldGoalsMade, pitcherHitsAllowed, points, shots, goals, hitsRecorded, rebounds, assists, doubleDouble, tripleDouble, receptions, firstTouchdown, lastTouchdown, threePointsMade.",
     );
     return;
   }
@@ -1513,6 +1514,17 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
       const market = allMarkets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
 
       return res.send(market || `Market with gameId ${marketAddress} not found.`);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_TEAM_NAMES, (req, res) => {
+  redisClient.get(KEYS.OVERTIME_V2_TEAM_NAMES, function (err, obj) {
+    const teamNames = new Map(JSON.parse(obj));
+    try {
+      res.send(Object.fromEntries(teamNames));
     } catch (e) {
       console.log(e);
     }

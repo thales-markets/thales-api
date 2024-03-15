@@ -18,6 +18,7 @@ const {
   SPORTS_MAP,
   ENETPULSE_SPORTS,
   TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS,
+  JSON_ODDS_SPORTS,
 } = require("../constants/tags");
 const { parseBytes32String } = require("ethers/lib/utils");
 
@@ -73,7 +74,7 @@ const getIsOneSideMarket = (tag) =>
 
 const packMarket = (market) => {
   const leagueId = Number(market.tags[0]);
-  const isEnetpulseSport = ENETPULSE_SPORTS.includes(leagueId);
+  const isEnetpulseSport = getIsEnetpulseSport(leagueId);
   const isPlayerPropsMarket = getIsPlayerPropsMarket(market.betType);
   const type = MARKET_TYPE[market.betType];
 
@@ -311,6 +312,10 @@ const getIsOneSidePlayerPropsMarket = (betType) => ONE_SIDER_PLAYER_PROPS_BET_TY
 
 const getIsYesNoPlayerPropsMarket = (betType) => SPECIAL_YES_NO_BET_TYPES.includes(betType);
 
+const getIsEnetpulseSport = (sportId) => ENETPULSE_SPORTS.includes(Number(sportId));
+
+const getIsJsonOddsSport = (sportId) => JSON_ODDS_SPORTS.includes(Number(sportId));
+
 module.exports = {
   fixDuplicatedTeamName,
   convertPriceImpactToBonus,
@@ -329,4 +334,6 @@ module.exports = {
   getIsPlayerPropsMarket,
   getIsOneSidePlayerPropsMarket,
   getIsYesNoPlayerPropsMarket,
+  getIsEnetpulseSport,
+  getIsJsonOddsSport,
 };

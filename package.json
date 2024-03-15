@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node overtimeV2Api/utils/dummy/writeDummyMarkets.js",
+    "start": "node overtimeV2Api/index.js",
     "dev": "nodemon overtimeApi.js"
   },
   "keywords": [],
@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.0",
+    "bytes32": "^0.0.3",
     "cors": "^2.8.5",
     "date-fns": "^2.29.3",
     "deasync": "^0.1.21",

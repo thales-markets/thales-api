@@ -17,6 +17,7 @@ const { bigNumberFormatter } = require("../utils/formatters");
 const { getDefaultCollateral } = require("../utils/collaterals");
 
 let marketsMap = new Map();
+let errorOnOddsFetching = false;
 
 const BATCH_SIZE = 100;
 const BASE_BATCH_SIZE = 50;
@@ -56,15 +57,6 @@ async function processMarkets() {
           console.log("markets on base error: ", error);
         }
 
-        await delay(10 * 1000);
-
-        try {
-          console.log("process markets on op goerli");
-          await processMarketsPerNetwork(NETWORK.OptimismGoerli);
-        } catch (error) {
-          console.log("markets on op goerli error: ", error);
-        }
-
         await delay(60 * 1000);
       }
     }, 3000);
@@ -85,6 +77,7 @@ const groupMarkets = (allMarkets) => {
 
 const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
   const mappedMarkets = [];
+  errorOnOddsFetching = false;
 
   let oddsFromContract;
   let priceImpactFromContract;
@@ -126,6 +119,7 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
       liquidityFromContract = promisesResult.slice(2 * numberOfBatches, 3 * numberOfBatches).flat(1);
     } catch (e) {
       console.log("Could not get oods from chain", e);
+      errorOnOddsFetching = true;
     }
   }
 
@@ -256,7 +250,11 @@ async function processMarketsPerNetwork(network) {
     minMaturityDate: todaysDate,
   });
   let mappedMarkets = await mapMarkets(markets, true, network);
-  marketsMap.set("open", mappedMarkets);
+  if (errorOnOddsFetching) {
+    console.log("Error on odds fetching, skip write");
+  } else {
+    marketsMap.set("open", mappedMarkets);
+  }
 
   console.log(`${NETWORK_NAME[network]}: process resolved markets`);
   markets = await thalesData.sportMarkets.markets({

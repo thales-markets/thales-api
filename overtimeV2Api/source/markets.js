@@ -3,7 +3,7 @@ require("dotenv").config();
 const redis = require("redis");
 const { delay } = require("../../overtimeApi/utils/general");
 const { bigNumberFormatter } = require("../../overtimeApi/utils/formatters");
-// const markets = require("./treeMarketsAndHashes.json");
+const markets = require("./treeMarketsAndHashes.json");
 const {
   fixDuplicatedTeamName,
   getLeagueNameById,
@@ -11,9 +11,11 @@ const {
   getIsOneSidePlayerPropsMarket,
   formatMarketOdds,
   getIsYesNoPlayerPropsMarket,
+  getIsEnetpulseSport,
+  getIsPlayerPropsMarket,
 } = require("../../overtimeApi/utils/markets");
-const { SPORTS_MAP, ENETPULSE_SPORTS } = require("../../overtimeApi/constants/tags");
-const { MARKET_TYPE, ODDS_TYPE, BET_TYPE, CHILD_ID, STATUS } = require("../../overtimeApi/constants/markets");
+const { SPORTS_MAP } = require("../../overtimeApi/constants/tags");
+const { MARKET_TYPE, ODDS_TYPE, CHILD_ID, STATUS } = require("../../overtimeApi/constants/markets");
 const KEYS = require("../../redis/redis-keys");
 const axios = require("axios");
 
@@ -44,18 +46,9 @@ async function processMarkets() {
 
 const packMarket = (market) => {
   const leagueId = market.sportId;
-  const isEnetpulseSport = ENETPULSE_SPORTS.includes(leagueId);
-  const isPlayerPropsMarket = market.childId === CHILD_ID.PlayerProps;
-  const typeId = isPlayerPropsMarket ? market.playerPropsId : market.childId;
-  const type = MARKET_TYPE[typeId];
-  const line =
-    market.childId === CHILD_ID.Spread
-      ? market.spread
-      : market.childId === CHILD_ID.Total
-      ? market.total
-      : market.childId === CHILD_ID.PlayerProps
-      ? market.playerProps.line
-      : 0;
+  const isEnetpulseSport = getIsEnetpulseSport(leagueId);
+  const isPlayerPropsMarket = getIsPlayerPropsMarket(market.typeId);
+  const type = MARKET_TYPE[market.typeId];
 
   return {
     gameId: market.gameId,
@@ -64,50 +57,39 @@ const packMarket = (market) => {
     leagueName: getLeagueNameById(leagueId),
     childId: market.childId,
     playerPropsId: market.playerPropsId,
-    typeId: typeId,
+    typeId: market.typeId,
     type: type,
     maturity: market.maturity,
     maturityDate: new Date(market.maturity * 1000),
     homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
     awayTeam: fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
-    homeScore: market.homeScore,
-    awayScore: market.awayScore,
-    finalResult: market.finalResult,
+    homeScore: market.homeScore || 0,
+    awayScore: market.awayScore || 0,
+    finalResult: market.finalResult || 0,
     status: market.status,
     isOpen: market.status === STATUS.Open,
     isResolved: market.status === STATUS.Resolved,
     isCanceled: market.status === STATUS.Canceled,
     isPaused: market.status === STATUS.Paused,
     isOneSideMarket: getIsOneSideMarket(leagueId),
-    spread: Number(market.spread) / 100,
-    total: Number(market.total) / 100,
-    line: Number(line) / 100,
+    line: Number(market.line) / 100,
     isPlayerPropsMarket: isPlayerPropsMarket,
     isOneSidePlayerPropsMarket: getIsOneSidePlayerPropsMarket(market.playerPropsId),
     isYesNoPlayerPropsMarket: getIsYesNoPlayerPropsMarket(market.playerPropsId),
     playerProps: {
       playerId: market.playerProps.playerId,
       playerName: market.playerProps.playerName,
-      line: Number(market.playerProps.line) / 100,
-      outcome: market.playerProps.outcome,
-      score: market.playerProps.score,
     },
     combinedPositions: market.combinedPositions
-      ? market.combinedPositions.map((position) => {
-          return {
-            position1: {
-              typeId: position.position1.childId,
-              position: position.position1.position,
-              line: position.position1.line / 100,
-            },
-            position2: {
-              typeId: position.position2.childId,
-              position: position.position2.position,
-              line: position.position2.line / 100,
-            },
-          };
+      ? market.combinedPositions.map((combinedPosition) => {
+          return combinedPosition.map((position) => {
+            return {
+              ...position,
+              line: position.line / 100,
+            };
+          });
         })
-      : [],
+      : new Array(market.odds.length).fill([]),
     odds: market.odds.map((odd) => {
       const formattedOdds = Number(odd) > 0 ? bigNumberFormatter(odd) : 0;
       return {
@@ -164,7 +146,7 @@ const mapMarkets = async () => {
   const mappedCanceledMarkets = [];
   const mappedPausedMarkets = [];
 
-  const markets = await loadMarkets();
+  // const markets = await loadMarkets();
 
   markets.forEach((market) => {
     let packedMarket = packMarket(market);
