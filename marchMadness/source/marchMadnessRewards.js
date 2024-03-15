@@ -10,8 +10,12 @@ const { delay } = require("../../services/utils");
 const { _, sortBy, orderBy } = require("lodash");
 const { differenceInDays, addDays, subMilliseconds } = require("date-fns");
 const { getProvider } = require("../utils/provider");
-const { filterUniqueBracketsWithUniqueMinter, mergePointsDataWithMintersData, bigNumberFormatter } = require('../utils/helpers');
-const { floorNumberToDecimals } = require('../utils/formatters');
+const {
+  filterUniqueBracketsWithUniqueMinter,
+  mergePointsDataWithMintersData,
+  bigNumberFormatter,
+} = require("../utils/helpers");
+const { floorNumberToDecimals } = require("../utils/formatters");
 
 const ARB_VOLUME_REWARDS = 30000;
 
@@ -23,40 +27,10 @@ const ARB_DECIMALS = 6;
 const EXCLUDE_ADDRESSES = [];
 
 const PERCENTAGE_OF_PRIZE_POOL = [
-  0.15,
-  0.12,
-  0.10,
-  0.08,
-  0.07,
-  0.06,
-  0.05,
-  0.04,
-  0.04,
-  0.04,
-  0.03,
-  0.03,
-  0.03,
-  0.03,
-  0.03,
-  0.02,
-  0.02,
-  0.02,
-  0.02,
-  0.02,
-]
+  0.15, 0.12, 0.1, 0.08, 0.07, 0.06, 0.05, 0.04, 0.04, 0.04, 0.03, 0.03, 0.03, 0.03, 0.03, 0.02, 0.02, 0.02, 0.02, 0.02,
+];
 
-const REWARDS = [
-  2500,
-  1000,
-  500,
-  200,
-  200,
-  150,
-  150,
-  100,
-  100,
-  100,
-]
+const REWARDS = [2500, 1000, 500, 200, 200, 150, 150, 100, 100, 100];
 
 async function processRewards() {
   if (process.env.REDIS_URL) {
@@ -69,22 +43,6 @@ async function processRewards() {
 
     setTimeout(async () => {
       while (true) {
-        // try {
-        //   await processOrders(420);
-        // } catch (e) {
-        //   console.log("Error ", e);
-        // }
-
-        // await delay(ONE_MINUTE);
-
-        // try {
-        //   await processOrders(10);
-        // } catch (e) {
-        //   console.log("Error ", e);
-        // }
-
-        // await delay(ONE_MINUTE);
-
         try {
           await processOrders(42161);
         } catch (e) {
@@ -123,7 +81,7 @@ async function processOrders(network) {
     network: network,
   });
 
-  const bracketsCount = marchMadnessTokens.length || 0; 
+  const bracketsCount = marchMadnessTokens.length || 0;
 
   const poolSize = await usdcContract.balanceOf(marchMadness.addresses[network]);
 
@@ -134,7 +92,7 @@ async function processOrders(network) {
 
   uniqueBracketsWithUniqueMinters.forEach((item) => {
     pointsPromises.push(marchMadnessContract.getTotalPointsByTokenId(Number(item.itemId)));
-  })
+  });
 
   const pointsData = await Promise.all(pointsPromises);
 
@@ -189,35 +147,55 @@ async function processOrders(network) {
 
   const clonedUsers = JSON.parse(JSON.stringify(users));
 
-  const finalUsersByVolume = orderBy(clonedUsers.map((item) => {
-    return {
-      ...item,
-      estimatedRewards: item.volume / globalVolume * ARB_VOLUME_REWARDS, 
-    }
-    }), ['volume'], ['desc']).map((item, index) => {
+  const finalUsersByVolume = orderBy(
+    clonedUsers.map((item) => {
+      return {
+        ...item,
+        estimatedRewards: (item.volume / globalVolume) * ARB_VOLUME_REWARDS,
+      };
+    }),
+    ["volume"],
+    ["desc"],
+  ).map((item, index) => {
     return {
       rank: index + 1,
       ...item,
-    }
+    };
   });
 
-  const finalUsersByPoints = orderBy(detailMintersData.map((item) => {
-    return {
-      bracketId: Number(item.itemId),
-      owner: item.minter,
-      totalPoints: item.totalPoints,
-    }
-  }), ['totalPoints', 'bracketId'], ['desc', 'asc']).map((item, index) => {
+  const finalUsersByPoints = orderBy(
+    detailMintersData.map((item) => {
+      return {
+        bracketId: Number(item.itemId),
+        owner: item.minter,
+        totalPoints: item.totalPoints,
+      };
+    }),
+    ["totalPoints", "bracketId"],
+    ["desc", "asc"],
+  ).map((item, index) => {
     return {
       rank: index + 1,
-      rewards: `${floorNumberToDecimals(PERCENTAGE_OF_PRIZE_POOL[index] ? PERCENTAGE_OF_PRIZE_POOL[index] * bigNumberFormatter(poolSize, ARB_DECIMALS) : 0, 2)} USDC + ${floorNumberToDecimals(REWARDS[index] ? REWARDS[index] : 0, 2)} ARB`,
-      ...item
-    }
-  }
-  );
+      rewards: `${floorNumberToDecimals(
+        PERCENTAGE_OF_PRIZE_POOL[index]
+          ? PERCENTAGE_OF_PRIZE_POOL[index] * bigNumberFormatter(poolSize, ARB_DECIMALS)
+          : 0,
+        2,
+      )} USDC + ${floorNumberToDecimals(REWARDS[index] ? REWARDS[index] : 0, 2)} ARB`,
+      ...item,
+    };
+  });
 
   if (process.env.REDIS_URL) {
-    redisClient.set(KEYS.MARCH_MADNESS.FINAL_DATA[network], JSON.stringify({ dataByVolume: finalUsersByVolume, dataByPoints: finalUsersByPoints, generalStats: { poolSize: bigNumberFormatter(poolSize, ARB_DECIMALS), totalBracketsMinted: bracketsCount }}), function () {});
+    redisClient.set(
+      KEYS.MARCH_MADNESS.FINAL_DATA[network],
+      JSON.stringify({
+        dataByVolume: finalUsersByVolume,
+        dataByPoints: finalUsersByPoints,
+        generalStats: { poolSize: bigNumberFormatter(poolSize, ARB_DECIMALS), totalBracketsMinted: bracketsCount },
+      }),
+      function () {},
+    );
   }
   return;
 }
