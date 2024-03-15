@@ -176,11 +176,15 @@ async function processOrders(network) {
   ).map((item, index) => {
     return {
       rank: index + 1,
-      rewards: `${floorNumberToDecimals(PERCENTAGE_OF_PRIZE_POOL[index] ? PERCENTAGE_OF_PRIZE_POOL[index] * bigNumberFormatter(poolSize, ARB_DECIMALS) : 0, 2)} USDCe + ${floorNumberToDecimals(REWARDS[index] ? REWARDS[index] : 0, 2)} ARB`,
-      ...item
-    }
-  }
-  );
+      rewards: `${floorNumberToDecimals(
+        PERCENTAGE_OF_PRIZE_POOL[index]
+          ? PERCENTAGE_OF_PRIZE_POOL[index] * bigNumberFormatter(poolSize, ARB_DECIMALS)
+          : 0,
+        2,
+      )} USDCe + ${floorNumberToDecimals(REWARDS[index] ? REWARDS[index] : 0, 2)} ARB`,
+      ...item,
+    };
+  });
 
   if (process.env.REDIS_URL) {
     redisClient.set(
