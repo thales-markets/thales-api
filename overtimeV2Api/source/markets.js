@@ -63,9 +63,9 @@ const packMarket = (market) => {
     maturityDate: new Date(market.maturity * 1000),
     homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
     awayTeam: fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
-    homeScore: market.homeScore,
-    awayScore: market.awayScore,
-    finalResult: market.finalResult,
+    homeScore: market.homeScore || 0,
+    awayScore: market.awayScore || 0,
+    finalResult: market.finalResult || 0,
     status: market.status,
     isOpen: market.status === STATUS.Open,
     isResolved: market.status === STATUS.Resolved,
@@ -79,9 +79,6 @@ const packMarket = (market) => {
     playerProps: {
       playerId: market.playerProps.playerId,
       playerName: market.playerProps.playerName,
-      line: Number(market.playerProps.line) / 100,
-      outcome: market.playerProps.outcome,
-      score: market.playerProps.score,
     },
     combinedPositions: market.combinedPositions
       ? market.combinedPositions.map((combinedPosition) => {
