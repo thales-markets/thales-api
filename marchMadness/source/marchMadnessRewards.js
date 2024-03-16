@@ -30,7 +30,7 @@ const PERCENTAGE_OF_PRIZE_POOL = [
   0.15, 0.12, 0.1, 0.08, 0.07, 0.06, 0.05, 0.04, 0.04, 0.04, 0.03, 0.03, 0.03, 0.03, 0.03, 0.02, 0.02, 0.02, 0.02, 0.02,
 ];
 
-const REWARDS = [2500, 1000, 500, 200, 200, 150, 150, 100, 100, 100];
+const REWARDS = [2500, 1000, 500, 200, 200, 150, 150, 150, 100, 100, 50, 50, 50, 50, 50, 30, 30, 30, 30, 30];
 
 async function processRewards() {
   if (process.env.REDIS_URL) {
@@ -176,12 +176,13 @@ async function processOrders(network) {
   ).map((item, index) => {
     return {
       rank: index + 1,
-      rewards: `${floorNumberToDecimals(
+      tokenRewards: floorNumberToDecimals(REWARDS[index] ? REWARDS[index] : 0, 2),
+      stableRewards: floorNumberToDecimals(
         PERCENTAGE_OF_PRIZE_POOL[index]
           ? PERCENTAGE_OF_PRIZE_POOL[index] * bigNumberFormatter(poolSize, ARB_DECIMALS)
           : 0,
         2,
-      )} USDCe + ${floorNumberToDecimals(REWARDS[index] ? REWARDS[index] : 0, 2)} ARB`,
+      ),
       ...item,
     };
   });
