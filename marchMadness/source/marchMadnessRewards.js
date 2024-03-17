@@ -60,9 +60,9 @@ const NCAA_TAG_ID = "9005";
 
 async function processOrders(network) {
   // const FROM_DATE = network == 420 ? new Date("03-09-2023") : new Date("03-13-2023");
-  const FROM_DATE = network == 420 ? new Date("03-09-2024") : new Date("03-13-2024");
+  const FROM_DATE = new Date("03-17-2024");
   // const TO_DATE = new Date("04-04-2023");
-  const TO_DATE = new Date("04-04-2024");
+  const TO_DATE = new Date("04-06-2024");
 
   console.log("----------------------------------------------------------------------------");
   console.log("NetworkId -> ", network);
