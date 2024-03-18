@@ -100,7 +100,7 @@ async function processOrders(network) {
 
   const uniqueAccountsFromTransactionsData = await getUniqueTradersFromTransactionsData(FROM_DATE, TO_DATE, network);
 
-  let uniqueAddresses = uniqueAccountsFromTransactionsData;
+  let uniqueAddresses = _.uniqBy(uniqueAccountsFromTransactionsData);
 
   const users = [];
   let globalVolume = 0;
