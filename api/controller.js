@@ -13,6 +13,9 @@ app.use(function (req, res, next) {
   next();
 });
 
+const bytes32 = require("bytes32");
+const oddslib = require("oddslib");
+
 const ENDPOINTS = require("./endpoints");
 const sigUtil = require("eth-sig-util");
 const KEYS = require("../redis/redis-keys");
@@ -33,6 +36,9 @@ const {
 const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json");
 const { isRangedPosition } = require("../thalesApi/utils/markets");
 const { isNumeric } = require("../services/utils");
+const { findOddsForBookmakers, getAverageOdds } = require("../overtimeApi/utils/markets");
+const { LIVE_ODDS_PROVIDERS } = require("../overtimeApi/constants/oddsProviders");
+const { TWO_POSITIONAL_SPORTS } = require("../overtimeApi/constants/tags");
 
 const { BigNumber } = require("ethers");
 const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
@@ -1397,6 +1403,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   let sport = req.query.sport;
   let leagueId = req.query.leagueid;
   let ungroup = req.query.ungroup;
+  let live = req.query.live;
 
   if (!status) {
     status = "open";
@@ -1444,6 +1451,11 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     return;
   }
 
+  if (live && !["true", "false"].includes(live.toLowerCase())) {
+    res.send("Invalid value for live. Possible values: true or false.");
+    return;
+  }
+
   const sports = overtimeSportsList;
   const allLeagueIds = sports.map((sport) => Number(sport.id));
   const allSports = uniqBy(sports.map((sport) => sport.sport.toLowerCase()));
@@ -1459,7 +1471,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     return;
   }
 
-  redisClient.get(KEYS.OVERTIME_V2_MARKETS, function (err, obj) {
+  redisClient.get(KEYS.OVERTIME_V2_MARKETS, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
     try {
       const marketsByStatus = markets.get(status);
@@ -1478,6 +1490,47 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
           (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
           (!type || market.type.toLowerCase() === type.toLowerCase()),
       );
+
+      if (live && live.toLowerCase() === "true") {
+        const currentDate = new Date().toISOString().split("T")[0];
+        const sportId = 9000 - filteredMarkets[0].tags[0];
+        const response = await fetch(
+          `https://therundown.io/api/v1/sports/${sportId}/events/${currentDate}?key=${process.env.RUNDOWN_API_KEY}`,
+          { method: "GET" },
+        );
+
+        const eventsd = response.data.events;
+
+        const liveFilteredMarketsWithOdds = filteredMarkets.map((market) => {
+          const decodedGameId = bytes32({ input: market.gameId });
+          const filteredEvent = events.find((market) => market.gameId == decodedGameId);
+          const filteredOdds = findOddsForBookmakers(
+            filteredEvent,
+            LIVE_ODDS_PROVIDERS,
+            TWO_POSITIONAL_SPORTS.includes(sportId),
+          );
+          const aggregatedOdds = getAverageOdds(filteredOdds);
+          market.odds = market.odds.map((_odd, index) => {
+            let positionOdds;
+            switch (index) {
+              case 0:
+                positionOdds = aggregatedOdds.homeOdds;
+              case 1:
+                positionOdds = aggregatedOdds.awayOdds;
+              case 2:
+                positionOdds = aggregatedOdds.drawOdds;
+            }
+            return {
+              american: positionOdds,
+              decimal: oddslib.from("moneyline", positionOdds).to("decimal"),
+              normalizedImplied: oddslib.from("moneyline", positionOdds).to("impliedProbability"),
+            };
+          });
+        });
+
+        res.send(liveFilteredMarketsWithOdds);
+        return;
+      }
 
       if (ungroup && ungroup.toLowerCase() === "true") {
         res.send(filteredMarkets);

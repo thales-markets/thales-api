@@ -155,6 +155,9 @@ const STATUS = {
   Canceled: 255,
 };
 
+const MAX_PERCENTAGE_DIFF_BETWEEN_ODDS = 10;
+const MIN_ODDS_FOR_DIFF_CHECKING = 0.2;
+
 module.exports = {
   BET_TYPE,
   MARKET_TYPE,
@@ -172,4 +175,6 @@ module.exports = {
   SPECIAL_YES_NO_BET_TYPES,
   CHILD_ID,
   STATUS,
+  MAX_PERCENTAGE_DIFF_BETWEEN_ODDS,
+  MIN_ODDS_FOR_DIFF_CHECKING,
 };
