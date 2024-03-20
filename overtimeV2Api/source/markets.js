@@ -3,7 +3,7 @@ require("dotenv").config();
 const redis = require("redis");
 const { delay } = require("../../overtimeApi/utils/general");
 const { bigNumberFormatter } = require("../../overtimeApi/utils/formatters");
-const markets = require("./treeMarketsAndHashes.json");
+// const markets = require("./treeMarketsAndHashes.json");
 const {
   fixDuplicatedTeamName,
   getLeagueNameById,
@@ -146,7 +146,7 @@ const mapMarkets = async () => {
   const mappedCanceledMarkets = [];
   const mappedPausedMarkets = [];
 
-  // const markets = await loadMarkets();
+  const markets = await loadMarkets();
 
   markets.forEach((market) => {
     let packedMarket = packMarket(market);
