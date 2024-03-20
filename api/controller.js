@@ -318,21 +318,21 @@ app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
   request.get(url, { headers: { "x-api-key": process.env.JSON_ODDS_KEY.toString() } }).pipe(res);
 });
 
-app.get(ENDPOINTS.MARCH_MADNESS, async(req, res) => {
+app.get(ENDPOINTS.MARCH_MADNESS, async (req, res) => {
   const network = req.params.networkId;
-    try {
-      redisClient.get(KEYS.MARCH_MADNESS.FINAL_DATA[network], function (err, obj) {
-        try {
-          const data = JSON.parse(obj);
-          return res.send(data);
-        } catch (e) {
-          console.log(e);
-          return undefined
-        }
-      });
-    } catch(e) {
-      return res.status(404);
-    }
+  try {
+    redisClient.get(KEYS.MARCH_MADNESS.FINAL_DATA[network], function (err, obj) {
+      try {
+        const data = JSON.parse(obj);
+        return res.send(data);
+      } catch (e) {
+        console.log(e);
+        return undefined;
+      }
+    });
+  } catch (e) {
+    return res.status(404);
+  }
 });
 
 app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
@@ -1499,33 +1499,43 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
           { method: "GET" },
         );
 
-        const eventsd = response.data.events;
+        const events = response.data.events;
 
         const liveFilteredMarketsWithOdds = filteredMarkets.map((market) => {
           const decodedGameId = bytes32({ input: market.gameId });
           const filteredEvent = events.find((market) => market.gameId == decodedGameId);
-          const filteredOdds = findOddsForBookmakers(
-            filteredEvent,
-            LIVE_ODDS_PROVIDERS,
-            TWO_POSITIONAL_SPORTS.includes(sportId),
-          );
-          const aggregatedOdds = getAverageOdds(filteredOdds);
-          market.odds = market.odds.map((_odd, index) => {
-            let positionOdds;
-            switch (index) {
-              case 0:
-                positionOdds = aggregatedOdds.homeOdds;
-              case 1:
-                positionOdds = aggregatedOdds.awayOdds;
-              case 2:
-                positionOdds = aggregatedOdds.drawOdds;
-            }
-            return {
-              american: positionOdds,
-              decimal: oddslib.from("moneyline", positionOdds).to("decimal"),
-              normalizedImplied: oddslib.from("moneyline", positionOdds).to("impliedProbability"),
-            };
-          });
+          if (filteredEvent) {
+            const filteredOdds = findOddsForBookmakers(
+              filteredEvent,
+              LIVE_ODDS_PROVIDERS,
+              TWO_POSITIONAL_SPORTS.includes(sportId),
+            );
+            const aggregatedOdds = getAverageOdds(filteredOdds);
+            market.odds = market.odds.map((_odd, index) => {
+              let positionOdds;
+              switch (index) {
+                case 0:
+                  positionOdds = aggregatedOdds.homeOdds;
+                case 1:
+                  positionOdds = aggregatedOdds.awayOdds;
+                case 2:
+                  positionOdds = aggregatedOdds.drawOdds;
+              }
+              return {
+                american: positionOdds,
+                decimal: oddslib.from("moneyline", positionOdds).to("decimal"),
+                normalizedImplied: oddslib.from("moneyline", positionOdds).to("impliedProbability"),
+              };
+            });
+          } else {
+            market.odds = market.odds.map((odd) => {
+              return {
+                american: odd.american,
+                decimal: odd.decimal,
+                normalizedImplied: 0,
+              };
+            });
+          }
         });
 
         res.send(liveFilteredMarketsWithOdds);

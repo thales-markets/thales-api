@@ -344,11 +344,13 @@ const findOddsForBookmakers = (event, arrayOfBookmakers, isTwoPositionalSport) =
 
   if (hasZeroOdds) {
     // If any bookmaker has zero odds, return zero odds
-    return {
-      homeOdds: 0,
-      awayOdds: 0,
-      drawOdds: 0,
-    };
+    return [
+      {
+        homeOdds: 0,
+        awayOdds: 0,
+        drawOdds: 0,
+      },
+    ];
   } else {
     // If none of the bookmakers have zero odds, check implied odds percentage difference
     const firstBookmaker = arrayOfBookmakers[0];
@@ -425,11 +427,13 @@ const findOddsForBookmakers = (event, arrayOfBookmakers, isTwoPositionalSport) =
 
       if (hasLargeImpliedPercentageDifference) {
         console.log("Returning zero odds due to percentage difference");
-        return {
-          homeOdds: 0,
-          awayOdds: 0,
-          drawOdds: 0,
-        };
+        return [
+          {
+            homeOdds: 0,
+            awayOdds: 0,
+            drawOdds: 0,
+          },
+        ];
       }
 
       const firstBookieOdds = {
@@ -454,11 +458,13 @@ const findOddsForBookmakers = (event, arrayOfBookmakers, isTwoPositionalSport) =
 
   // If no matching bookmakers are found, return zero odds
   console.log("Returning zero odds cause no matching bookmakers have been found");
-  return {
-    homeOdds: 0,
-    awayOdds: 0,
-    drawOdds: 0,
-  };
+  return [
+    {
+      homeOdds: 0,
+      awayOdds: 0,
+      drawOdds: 0,
+    },
+  ];
 };
 
 const getAverageOdds = (multipleOddsFromProviders) => {
