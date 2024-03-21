@@ -1248,7 +1248,12 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_RESOLVE_PARAMS, async (req, res) => {
   let responseError = "";
   if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
     responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
-  } else {
+  }
+  if (markets.length == 0) {
+    responseError += (responseError ? "\n" : "") + "At least one market is required!";
+  }
+
+  if (!responseError) {
     const marketsData = await thalesSpeedMarketsData.getSpeedMarketsData(network, markets);
     const maturedMarketsData = marketsData.filter((marketData) => marketData.strikeTime * 1000 < Date.now());
     const assetsAndTimes = maturedMarketsData.map((marketData) => ({
@@ -1300,6 +1305,9 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_RESOLVE_OFFRAMP_PARAMS, async (req, res) 
   if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
     responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
   }
+  if (market.length == 0) {
+    responseError += (responseError ? "\n" : "") + "Market address is missing!";
+  }
   if (!thalesSpeedConst.SUPPORTED_COLLATERALS[network].includes(collateral)) {
     responseError +=
       (responseError ? "\n" : "") +
@@ -1310,7 +1318,7 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_RESOLVE_OFFRAMP_PARAMS, async (req, res) 
   if (isDefaultCollateral) {
     responseError +=
       (responseError ? "\n" : "") +
-      "Unsupported collateral offramp for default collateral! Please use resolve without offramp.";
+      "Unsupported collateral offramp with default collateral! Please use other collateral or resolve API without offramp.";
   }
 
   if (!responseError) {
