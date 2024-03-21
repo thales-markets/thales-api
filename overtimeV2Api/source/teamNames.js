@@ -54,11 +54,21 @@ const procesRundownTeamNamesPerDate = async (sports, formattedDate) => {
           event.teams_normalized.map((team) => ({
             name: AMERICAN_SPORTS.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
             isHome: team.is_home,
+            score: team.is_home ? event.score.score_home : event.score.score_away,
+            scoreByPeriod: team.is_home ? event.score.score_home_by_period : event.score.score_away_by_period,
           })),
         );
       }
     });
   }
+};
+
+const getEnetpulseScore = (results) => {
+  const finalScore = results.find((result) => result.result_code == "finalresult");
+  if (finalScore) {
+    return Number(finalScore.value);
+  }
+  return 0;
 };
 
 const procesEnetpulseTeamNamesPerDate = async (sports, formattedDate) => {
@@ -77,6 +87,9 @@ const procesEnetpulseTeamNamesPerDate = async (sports, formattedDate) => {
           Object.values(event.event_participants).map((team) => ({
             name: team.participant.name,
             isHome: team.number === "1",
+            score: team.result ? getEnetpulseScore(Object.values(team.result)) : 0,
+            // TODO: add logic
+            scoreByPeriod: [],
           })),
         );
       }
