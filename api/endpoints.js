@@ -44,11 +44,11 @@ const ENDPOINTS = {
   THALES_USER_POSITIONS: "/thales/networks/:networkParam/users/:userAddress/positions",
   THALES_USER_TRANSACTIONS: "/thales/networks/:networkParam/users/:userAddress/transactions",
 
-  THALES_SPEED_MARKETS_BUY_PARAMS: "/thales/networks/:networkParam/speed-markets/buy",
-  THALES_SPEED_MARKETS_USER_CLAIMABLE: "/thales/networks/:networkParam/users/:userAddress/speed-markets",
-  THALES_SPEED_MARKETS_RESOLVE_PARAMS: "/thales/networks/:networkParam/speed-markets/resolve",
+  THALES_SPEED_MARKETS_BUY_PARAMS: "/speed-markets/networks/:networkParam/buy",
+  THALES_SPEED_MARKETS_USER_CLAIMABLE: "/speed-markets/networks/:networkParam/users/:userAddress/claimable",
+  THALES_SPEED_MARKETS_RESOLVE_PARAMS: "/speed-markets/networks/:networkParam/resolve",
   THALES_SPEED_MARKETS_RESOLVE_OFFRAMP_PARAMS:
-    "/thales/networks/:networkParam/speed-markets/:marketAddress/resolve-offramp",
+    "/speed-markets/networks/:networkParam/markets/:marketAddress/resolve-offramp",
 
   THALES_IO_VOLUME_DATA: "/thales/thales-io/volume-data",
   THALES_IO_USERS_DATA: "/thales/thales-io/users-data",
