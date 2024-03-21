@@ -14,8 +14,8 @@ const {
   filterUniqueBracketsWithUniqueMinter,
   mergePointsDataWithMintersData,
   bigNumberFormatter,
+  floorNumberToDecimals,
 } = require("../utils/helpers");
-const { floorNumberToDecimals } = require("../utils/formatters");
 
 const ARB_VOLUME_REWARDS = 30000;
 
@@ -59,9 +59,7 @@ async function processRewards() {
 const NCAA_TAG_ID = "9005";
 
 async function processOrders(network) {
-  // const FROM_DATE = network == 420 ? new Date("03-09-2023") : new Date("03-13-2023");
   const FROM_DATE = new Date("03-18-2024");
-  // const TO_DATE = new Date("04-04-2023");
   const TO_DATE = new Date("04-10-2024");
 
   console.log("----------------------------------------------------------------------------");
@@ -75,7 +73,6 @@ async function processOrders(network) {
   }
 
   const marchMadnessContract = new ethers.Contract(marchMadness.addresses[network], marchMadness.abi, provider);
-  const usdcContract = new ethers.Contract(collateral.addresses[network], collateral.abi, provider);
 
   const marchMadnessTokens = await thalesData.sportMarkets.marchMadnessToken({
     network: network,
@@ -83,18 +80,21 @@ async function processOrders(network) {
 
   const bracketsCount = marchMadnessTokens.length || 0;
 
-  const poolSize = await usdcContract.balanceOf(marchMadness.addresses[network]);
-
   const uniqueBracketsWithUniqueMinters = filterUniqueBracketsWithUniqueMinter(marchMadnessTokens);
+  const itemIds = uniqueBracketsWithUniqueMinters.map((item) => Number(item.itemId));
 
   // Fetch points per minter
   const pointsPromises = [];
 
-  uniqueBracketsWithUniqueMinters.forEach((item) => {
-    pointsPromises.push(marchMadnessContract.getTotalPointsByTokenId(Number(item.itemId)));
-  });
+  const BATCH_SIZE = 100;
+  const numOfBatches = itemIds.length / BATCH_SIZE;
+  for (let i = 0; i < numOfBatches; i++) {
+    const startIndex = i * BATCH_SIZE;
+    const slice = itemIds.slice(startIndex, startIndex + BATCH_SIZE);
+    pointsPromises.push(marchMadnessContract.getTotalPointsByTokenIds(slice));
+  }
 
-  const pointsData = await Promise.all(pointsPromises);
+  const pointsData = (await Promise.all(pointsPromises)).flat().map((point) => Number(point));
 
   const detailMintersData = mergePointsDataWithMintersData(uniqueBracketsWithUniqueMinters, pointsData);
 
@@ -107,6 +107,7 @@ async function processOrders(network) {
 
   uniqueAddresses = uniqueAddresses.filter((address) => !EXCLUDE_ADDRESSES.includes(address));
 
+  // Time consuming operation: for 1000 unique addresses processing takes 10min
   for (let i = 0; i < uniqueAddresses.length; i++) {
     const owner = uniqueAddresses[i];
 
@@ -162,6 +163,11 @@ async function processOrders(network) {
       ...item,
     };
   });
+
+  // funds moved from contract so use fixed 19428.57 instead of call to contract
+  const poolSize = ethers.BigNumber.from("19428570000");
+  // const usdcContract = new ethers.Contract(collateral.addresses[network], collateral.abi, provider);
+  // const poolSize = await usdcContract.balanceOf(marchMadness.addresses[network]);
 
   const finalUsersByPoints = orderBy(
     detailMintersData.map((item) => {
