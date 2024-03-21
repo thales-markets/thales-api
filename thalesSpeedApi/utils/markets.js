@@ -12,7 +12,9 @@ const getIsNetworkSupported = (network) => SUPPORTED_NETWORKS.includes(network);
 
 const getIsAssetSupported = (asset) => SUPPORTED_ASSETS.includes(asset);
 
-const getIsDefaultCollateral = (network, collateral) => SUPPORTED_COLLATERALS[network][0].includes(collateral);
+const getDefaultCollateral = (network) => SUPPORTED_COLLATERALS[network][0];
+
+const getIsDefaultCollateral = (network, collateral) => getDefaultCollateral(network).includes(collateral);
 
 const getIsStableCollateral = (collateral) => STABLE_COLLATERALS.includes(collateral);
 
@@ -89,6 +91,7 @@ const getIsUserWon = (direction, strikePrice, finalPrice) =>
 module.exports = {
   getIsNetworkSupported,
   getIsAssetSupported,
+  getDefaultCollateral,
   getIsDefaultCollateral,
   getIsStableCollateral,
   getIsEth,
