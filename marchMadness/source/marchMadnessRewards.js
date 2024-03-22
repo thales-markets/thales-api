@@ -64,6 +64,7 @@ async function processOrders(network) {
 
   console.log("----------------------------------------------------------------------------");
   console.log("NetworkId -> ", network);
+  console.log("FROM_DATE:", FROM_DATE, "TO_DATE:", TO_DATE);
 
   const provider = getProvider(network);
 
@@ -98,52 +99,37 @@ async function processOrders(network) {
 
   const detailMintersData = mergePointsDataWithMintersData(uniqueBracketsWithUniqueMinters, pointsData);
 
-  const uniqueAccountsFromTransactionsData = await getUniqueTradersFromTransactionsData(FROM_DATE, TO_DATE, network);
+  const transactionsData = await getTransactionsData(FROM_DATE, TO_DATE, network);
 
-  let uniqueAddresses = _.uniqBy(uniqueAccountsFromTransactionsData);
+  let uniqueAddresses = _.uniqBy(transactionsData.uniqueAccounts);
 
   const users = [];
   let globalVolume = 0;
 
   uniqueAddresses = uniqueAddresses.filter((address) => !EXCLUDE_ADDRESSES.includes(address));
 
-  // Time consuming operation: for 1000 unique addresses processing takes 10min
   for (let i = 0; i < uniqueAddresses.length; i++) {
     const owner = uniqueAddresses[i];
 
-    const singles = await thalesData.sportMarkets.marketTransactions({
-      network: network,
-      account: owner,
-      minTimestamp: FROM_DATE.getTime() / 1000,
-    });
-    const parlays = await thalesData.sportMarkets.parlayMarkets({
-      network: network,
-      account: owner,
-      minTimestamp: FROM_DATE.getTime() / 1000,
+    const singles = transactionsData.singleTransactions.filter((singleTx) => singleTx.account == owner);
+    const parlays = transactionsData.parlayTransactions.filter((parlayTx) => parlayTx.account == owner);
+
+    let volume = 0;
+
+    singles.forEach((single) => {
+      volume += single.paid;
     });
 
-    // Check for singles and parlays that are in right competition
-    const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(NCAA_TAG_ID));
-    const parlayFromLeague = parlays.filter(
-      (parlayTx) => parlayTx.sportMarkets.filter((sportMarket) => sportMarket.tags.includes(NCAA_TAG_ID)).length > 0,
-    );
-
-    let _volume = 0;
-
-    singleFromLeague.forEach((single) => {
-      _volume += single.paid;
-    });
-
-    parlayFromLeague.forEach((parlay) => {
-      _volume += parlay.sUSDPaid;
+    parlays.forEach((parlay) => {
+      volume += parlay.sUSDPaid;
     });
 
     users.push({
       walletAddress: owner,
-      volume: _volume,
+      volume: volume,
     });
 
-    globalVolume += _volume;
+    globalVolume += volume;
   }
 
   const clonedUsers = JSON.parse(JSON.stringify(users));
@@ -207,7 +193,7 @@ async function processOrders(network) {
   return;
 }
 
-const getUniqueTradersFromTransactionsData = async (fromDate, toDate, network) => {
+const getTransactionsData = async (fromDate, toDate, network) => {
   if (!fromDate) return [];
 
   const numberOfPeriods = Math.trunc(differenceInDays(toDate, fromDate) / NUMBER_OF_DAYS_IN_PERIOD);
@@ -238,18 +224,19 @@ const getUniqueTradersFromTransactionsData = async (fromDate, toDate, network) =
   }
 
   // Filter only from NCAA
-  const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(NCAA_TAG_ID));
+  const singleFromLeague = singles.filter((singleTx) => singleTx.wholeMarket.tags.includes(NCAA_TAG_ID)); // this is already done on subgraph query
   const parlayFromLeague = parlays.filter(
-    (parlayTx) => parlayTx.sportMarkets.filter((sportMarket) => sportMarket.tags.includes(NCAA_TAG_ID)).length > 0,
+    (parlayTx) => parlayTx.sportMarkets.filter((sportMarket) => sportMarket.tags.includes(NCAA_TAG_ID)).length > 0, // this could be added to subgraph
   );
 
-  const uniqueAccountsFromSingleTransactions = _.uniqBy(singleFromLeague, "account");
-  const uniqueAccountsFromParlayTransactions = _.uniqBy(parlayFromLeague, "account");
+  const uniqueAccountsFromSingle = _.uniqBy(singleFromLeague, "account").map((single) => single.account);
+  const uniqueAccountsFromParlays = _.uniqBy(parlayFromLeague, "account").map((parlay) => parlay.account);
 
-  const uniqueAccountsFromSingle = uniqueAccountsFromSingleTransactions.map((single) => single.account);
-  const uniqueAccountsFromParlays = uniqueAccountsFromParlayTransactions.map((parlay) => parlay.account);
-
-  return uniqueAccountsFromSingle.concat(uniqueAccountsFromParlays);
+  return {
+    uniqueAccounts: uniqueAccountsFromSingle.concat(uniqueAccountsFromParlays),
+    singleTransactions: singleFromLeague,
+    parlayTransactions: parlayFromLeague,
+  };
 };
 
 module.exports = {
