@@ -1507,8 +1507,8 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
           (!type || market.type.toLowerCase() === type.toLowerCase()),
       );
 
-      if (filteredMarkets && filteredMarkets.length > 0) {
-        if (live && live.toLowerCase() === "true") {
+      if (live && live.toLowerCase() === "true") {
+        if (filteredMarkets && filteredMarkets.length > 0) {
           const currentDate = new Date().toISOString().split("T")[0];
           const sportId = 9000 - filteredMarkets[0].tags[0];
           const response = await fetch(
@@ -1559,17 +1559,13 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
             res.send(liveFilteredMarketsWithOdds);
             return;
           } else {
-            res.send(`Could not obtain odds from the providers for the given leagueID ${sportId}`);
-            return;
+            res.send(
+              `Live markets for the given parameters could not be fetched currently. Supported live markets league IDs: ${LIVE_SUPPORTED_LEAGUES.join(
+                ", ",
+              )}. See details on: /overtime/sports.`,
+            );
           }
         }
-      } else {
-        res.send(
-          `Live markets for the given parameters could not be fetched currently. Supported live markets league IDs: ${LIVE_SUPPORTED_LEAGUES.join(
-            ", ",
-          )}. See details on: /overtime/sports.`,
-        );
-        return;
       }
 
       if (ungroup && ungroup.toLowerCase() === "true") {
