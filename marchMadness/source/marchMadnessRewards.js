@@ -101,12 +101,10 @@ async function processOrders(network) {
 
   const transactionsData = await getTransactionsData(FROM_DATE, TO_DATE, network);
 
-  let uniqueAddresses = _.uniqBy(transactionsData.uniqueAccounts);
-
   const users = [];
   let globalVolume = 0;
 
-  uniqueAddresses = uniqueAddresses.filter((address) => !EXCLUDE_ADDRESSES.includes(address));
+  const uniqueAddresses = transactionsData.uniqueAccounts.filter((address) => !EXCLUDE_ADDRESSES.includes(address));
 
   for (let i = 0; i < uniqueAddresses.length; i++) {
     const owner = uniqueAddresses[i];
