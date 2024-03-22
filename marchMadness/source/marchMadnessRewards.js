@@ -230,8 +230,10 @@ const getTransactionsData = async (fromDate, toDate, network) => {
   const uniqueAccountsFromSingle = _.uniqBy(singleFromLeague, "account").map((single) => single.account);
   const uniqueAccountsFromParlays = _.uniqBy(parlayFromLeague, "account").map((parlay) => parlay.account);
 
+  const uniqueAccounts = _.uniqBy(uniqueAccountsFromSingle.concat(uniqueAccountsFromParlays));
+
   return {
-    uniqueAccounts: uniqueAccountsFromSingle.concat(uniqueAccountsFromParlays),
+    uniqueAccounts,
     singleTransactions: singleFromLeague,
     parlayTransactions: parlayFromLeague,
   };
