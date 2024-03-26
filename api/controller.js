@@ -803,6 +803,44 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
   });
 });
 
+app.get(ENDPOINTS.THALES_MARKETS_COUNT, (req, res) => {
+  const network = req.params.networkParam;
+
+  redisClient.get(KEYS.THALES_MARKETS[network], function (err, obj) {
+    const markets = JSON.parse(obj);
+
+    const groupByAsset = groupBy(markets, 'asset');
+    const data = [];
+
+    Object.entries(groupByAsset).forEach(([assetKey, byAsset]) => {
+      const groupByMaturityDate = groupBy(byAsset, 'maturityDate');
+
+      const byMaturityData = [];
+      let totalCountByAsset = 0;
+      Object.entries(groupByMaturityDate).forEach(([maturityKey, byMaturity]) => {
+        const groupByPosition = groupBy(byMaturity, 'position');
+
+        const byPositionData = [];
+        let totalCountByPositions = 0;
+        Object.entries(groupByPosition).forEach(([positionKey, byPositions]) => {
+          byPositionData.push({ position: positionKey, count: byPositions.length });
+          totalCountByPositions += byPositions.length;
+        });
+
+        totalCountByAsset += totalCountByPositions;
+        byMaturityData.push({ maturity: maturityKey, count: totalCountByPositions, positions: byPositionData });
+      });
+
+      data.push({ asset: assetKey, count: totalCountByAsset, byMaturity: byMaturityData });
+    })
+    try {
+      return res.send(data);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+})
+
 app.get(ENDPOINTS.THALES_MARKET, (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
