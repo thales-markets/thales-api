@@ -15,6 +15,7 @@ app.use(function (req, res, next) {
 
 const bytes32 = require("bytes32");
 const oddslib = require("oddslib");
+const axios = require("axios");
 
 const ENDPOINTS = require("./endpoints");
 const sigUtil = require("eth-sig-util");
@@ -1510,10 +1511,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       if (live && live.toLowerCase() === "true") {
         if (filteredMarkets && filteredMarkets.length > 0) {
           const currentDate = new Date().toISOString().split("T")[0];
-          const sportId = 9000 - filteredMarkets[0].tags[0];
-          const response = await fetch(
+          const sportId = filteredMarkets[0].leagueId - 9000;
+          const response = await axios.get(
             `https://therundown.io/api/v1/sports/${sportId}/events/${currentDate}?key=${process.env.RUNDOWN_API_KEY}`,
-            { method: "GET" },
           );
 
           const events = response.data.events;
@@ -1521,38 +1521,44 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
           if (events && events.length > 0) {
             const liveFilteredMarketsWithOdds = filteredMarkets.map((market) => {
               const decodedGameId = bytes32({ input: market.gameId });
-              const filteredEvent = events.find((market) => market.gameId == decodedGameId);
+              const filteredEvent = events.find((market) => {
+                return market.event_id == decodedGameId;
+              });
               if (filteredEvent) {
                 const filteredOdds = findOddsForBookmakers(
                   filteredEvent,
                   LIVE_ODDS_PROVIDERS,
                   TWO_POSITIONAL_SPORTS.includes(sportId),
                 );
-                const aggregatedOdds = getAverageOdds(filteredOdds);
-                market.odds = market.odds.map((_odd, index) => {
-                  let positionOdds;
-                  switch (index) {
-                    case 0:
-                      positionOdds = aggregatedOdds.homeOdds;
-                    case 1:
-                      positionOdds = aggregatedOdds.awayOdds;
-                    case 2:
-                      positionOdds = aggregatedOdds.drawOdds;
-                  }
-                  return {
-                    american: positionOdds,
-                    decimal: oddslib.from("moneyline", positionOdds).to("decimal"),
-                    normalizedImplied: oddslib.from("moneyline", positionOdds).to("impliedProbability"),
-                  };
-                });
+                if (filteredOdds) {
+                  const aggregatedOdds = getAverageOdds(filteredOdds);
+                  market.odds = market.odds.map((_odd, index) => {
+                    let positionOdds;
+                    switch (index) {
+                      case 0:
+                        positionOdds = aggregatedOdds.homeOdds;
+                      case 1:
+                        positionOdds = aggregatedOdds.awayOdds;
+                      case 2:
+                        positionOdds = aggregatedOdds.drawOdds;
+                    }
+                    return {
+                      american: positionOdds,
+                      decimal: oddslib.from("moneyline", positionOdds).to("decimal"),
+                      normalizedImplied: oddslib.from("moneyline", positionOdds).to("impliedProbability"),
+                    };
+                  });
+                } else {
+                  market.odds = market.odds.map((odd) => {
+                    return {
+                      american: odd.american,
+                      decimal: odd.decimal,
+                      normalizedImplied: 0,
+                    };
+                  });
+                }
               } else {
-                market.odds = market.odds.map((odd) => {
-                  return {
-                    american: odd.american,
-                    decimal: odd.decimal,
-                    normalizedImplied: 0,
-                  };
-                });
+                return null;
               }
             });
 
