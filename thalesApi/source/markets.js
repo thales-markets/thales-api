@@ -302,6 +302,7 @@ async function processMarketsPerNetwork(network) {
     }
 
     console.log(`${NETWORK_NAME[network]}: Number of contract calls is ${numberOfContractCalls}.`);
+    console.log(`${NETWORK_NAME[network]}: All Markets length -> `, allMarkets.length);
 
     redisClient.set(KEYS.THALES_MARKETS[network], JSON.stringify(allMarkets), function () {});
   } catch (e) {
