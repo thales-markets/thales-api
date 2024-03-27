@@ -784,7 +784,7 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
         return;
       }
 
-      const groupMarkets = groupBy(filteredMarkets, (market) => market.asset);
+      const groupMarkets = groupBy(JSON.parse(JSON.stringify(filteredMarkets)), (market) => market.asset);
       Object.keys(groupMarkets).forEach((assetKey) => {
         groupMarkets[assetKey] = groupBy(groupMarkets[assetKey], (market) => market.maturityDate);
         Object.keys(groupMarkets[assetKey]).forEach((maturityDateKey) => {
@@ -812,12 +812,12 @@ app.get(ENDPOINTS.THALES_MARKETS_COUNT, (req, res) => {
     const data = [];
 
     Object.entries(groupByAsset).forEach(([assetKey, byAsset]) => {
-      const groupByMaturityDate = groupBy(byAsset, 'maturityDate');
+      const groupByMaturityDate = groupBy(JSON.parse(JSON.stringify(byAsset)), 'maturityDate');
 
       const byMaturityData = [];
       let totalCountByAsset = 0;
       Object.entries(groupByMaturityDate).forEach(([maturityKey, byMaturity]) => {
-        const groupByPosition = groupBy(byMaturity, 'position');
+        const groupByPosition = groupBy(JSON.parse(JSON.stringify(byMaturity)), 'position');
 
         const byPositionData = [];
         let totalCountByPositions = 0;
