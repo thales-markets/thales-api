@@ -47,7 +47,6 @@ async function processMarkets() {
 const packMarket = (market) => {
   const leagueId = market.sportId;
   const isEnetpulseSport = getIsEnetpulseSport(leagueId);
-  const isPlayerPropsMarket = getIsPlayerPropsMarket(market.typeId);
   const type = MARKET_TYPE[market.typeId];
 
   return {
@@ -55,8 +54,6 @@ const packMarket = (market) => {
     sport: SPORTS_MAP[leagueId],
     leagueId: leagueId,
     leagueName: getLeagueNameById(leagueId),
-    childId: market.childId,
-    playerPropsId: market.playerPropsId,
     typeId: market.typeId,
     type: type,
     maturity: market.maturity,
@@ -73,9 +70,9 @@ const packMarket = (market) => {
     isPaused: market.status === STATUS.Paused,
     isOneSideMarket: getIsOneSideMarket(leagueId),
     line: Number(market.line) / 100,
-    isPlayerPropsMarket: isPlayerPropsMarket,
-    isOneSidePlayerPropsMarket: getIsOneSidePlayerPropsMarket(market.playerPropsId),
-    isYesNoPlayerPropsMarket: getIsYesNoPlayerPropsMarket(market.playerPropsId),
+    isPlayerPropsMarket: getIsPlayerPropsMarket(market.typeId),
+    isOneSidePlayerPropsMarket: getIsOneSidePlayerPropsMarket(market.typeId),
+    isYesNoPlayerPropsMarket: getIsYesNoPlayerPropsMarket(market.typeId),
     playerProps: {
       playerId: market.playerProps.playerId,
       playerName: market.playerProps.playerName,
