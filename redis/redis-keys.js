@@ -32,6 +32,12 @@ const KEYS = {
     42161: "thalesArbMarkets",
     8453: "thalesBaseMarkets",
   },
+  THALES_MARKETS_LAST_UPDATED_AT: {
+    10: "thalesOpMarketsLastUpdate",
+    137: "thalesPolygonMarketsLastUpdate",
+    42161: "thalesArbMarketsLastUpdate",
+    8453: "thalesBaseMarketsLastUpdate",
+  },
   OVERTIME_V2_MARKETS: "overtimeV2Markets",
   OVERTIME_V2_TEAM_NAMES: "overtimeV2TeamNames",
   MARCH_MADNESS: {

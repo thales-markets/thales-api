@@ -806,39 +806,42 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
 app.get(ENDPOINTS.THALES_MARKETS_COUNT, (req, res) => {
   const network = req.params.networkParam;
 
-  redisClient.get(KEYS.THALES_MARKETS[network], function (err, obj) {
-    const markets = JSON.parse(obj);
+  try {
+    redisClient.mget([KEYS.THALES_MARKETS[network], KEYS.THALES_MARKETS_LAST_UPDATED_AT[network]], function (err, obj) {
+      if (!obj) return res.sendStatus(204);
+      const markets = JSON.parse(obj[0]);
 
-    const groupByAsset = groupBy(markets, "asset");
-    const data = [];
+      const groupByAsset = groupBy(markets, "asset");
+      const data = [];
 
-    Object.entries(groupByAsset).forEach(([assetKey, byAsset]) => {
-      const groupByMaturityDate = groupBy(JSON.parse(JSON.stringify(byAsset)), "maturityDate");
+      Object.entries(groupByAsset).forEach(([assetKey, byAsset]) => {
+        const groupByMaturityDate = groupBy(JSON.parse(JSON.stringify(byAsset)), "maturityDate");
 
-      const byMaturityData = [];
-      let totalCountByAsset = 0;
-      Object.entries(groupByMaturityDate).forEach(([maturityKey, byMaturity]) => {
-        const groupByPosition = groupBy(JSON.parse(JSON.stringify(byMaturity)), "position");
+        const byMaturityData = [];
+        let totalCountByAsset = 0;
+        Object.entries(groupByMaturityDate).forEach(([maturityKey, byMaturity]) => {
+          const groupByPosition = groupBy(JSON.parse(JSON.stringify(byMaturity)), "position");
 
-        const byPositionData = [];
-        let totalCountByPositions = 0;
-        Object.entries(groupByPosition).forEach(([positionKey, byPositions]) => {
-          byPositionData.push({ position: positionKey, count: byPositions.length });
-          totalCountByPositions += byPositions.length;
+          const byPositionData = [];
+          let totalCountByPositions = 0;
+          Object.entries(groupByPosition).forEach(([positionKey, byPositions]) => {
+            byPositionData.push({ position: positionKey, count: byPositions.length });
+            totalCountByPositions += byPositions.length;
+          });
+
+          totalCountByAsset += totalCountByPositions;
+          byMaturityData.push({ maturity: maturityKey, count: totalCountByPositions, positions: byPositionData });
         });
 
-        totalCountByAsset += totalCountByPositions;
-        byMaturityData.push({ maturity: maturityKey, count: totalCountByPositions, positions: byPositionData });
+        data.push({ asset: assetKey, count: totalCountByAsset, byMaturity: byMaturityData });
       });
 
-      data.push({ asset: assetKey, count: totalCountByAsset, byMaturity: byMaturityData });
-    });
-    try {
-      return res.send(data);
-    } catch (e) {
-      console.log(e);
-    }
-  });
+      return res.send({ data, lastUpdatedAt: obj[1] ? obj[1] : '' });
+    })
+  } catch (e) {
+    console.log('Error ', e);
+    return null;
+  }
 });
 
 app.get(ENDPOINTS.THALES_MARKET, (req, res) => {
