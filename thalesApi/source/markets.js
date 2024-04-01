@@ -302,8 +302,10 @@ async function processMarketsPerNetwork(network) {
     }
 
     console.log(`${NETWORK_NAME[network]}: Number of contract calls is ${numberOfContractCalls}.`);
+    console.log(`${NETWORK_NAME[network]}: All Markets length -> `, allMarkets.length);
 
     redisClient.set(KEYS.THALES_MARKETS[network], JSON.stringify(allMarkets), function () {});
+    redisClient.set(KEYS.THALES_MARKETS_LAST_UPDATED_AT[network], new Date().toISOString(), function () {});
   } catch (e) {
     console.log("Error: could not process markets.", e);
   }
