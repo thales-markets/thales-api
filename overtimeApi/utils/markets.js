@@ -473,9 +473,9 @@ const getAverageOdds = (multipleOddsFromProviders) => {
   let drawOdds;
 
   multipleOddsFromProviders.forEach((oddsObject) => {
-    homeOdds += homeOdds;
-    awayOdds += awayOdds;
-    drawOdds += drawOdds;
+    homeOdds += oddsObject;
+    awayOdds += oddsObject;
+    drawOdds += oddsObject;
   });
 
   homeOdds = homeOdds / multipleOddsFromProviders.length;
