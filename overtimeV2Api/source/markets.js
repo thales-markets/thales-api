@@ -15,7 +15,7 @@ const {
   getIsPlayerPropsMarket,
 } = require("../../overtimeApi/utils/markets");
 const { SPORTS_MAP } = require("../../overtimeApi/constants/tags");
-const { MARKET_TYPE, ODDS_TYPE, CHILD_ID, STATUS } = require("../../overtimeApi/constants/markets");
+const { MARKET_TYPE, ODDS_TYPE, STATUS } = require("../../overtimeApi/constants/markets");
 const KEYS = require("../../redis/redis-keys");
 const axios = require("axios");
 
