@@ -40,28 +40,6 @@ const KEYS = {
   },
   OVERTIME_V2_MARKETS: "overtimeV2Markets",
   OVERTIME_V2_TEAM_NAMES: "overtimeV2TeamNames",
-  MARCH_MADNESS: {
-    BY_VOLUME: {
-      10: "mmOPVolume",
-      420: "mmOPGoerliVolume",
-      42161: "mmArbVolume",
-    },
-    BY_NUMBER_OF_CORRECT_PREDICTIONS: {
-      10: "mmOPNOCP",
-      420: "mmOPGoerliNOCP",
-      42161: "mmArbNOCP",
-    },
-    GENERAL_STATS: {
-      10: "mmOPGeneralStats",
-      420: "mmOPGoerliGeneralStats",
-      42161: "mmArbGeneralStats",   
-    },
-    FINAL_DATA: {
-      10: "mmOPFinalData",
-      420: "mmOPFinalData",
-      42161: "mmArbFinalData",   
-    }
-  },
 };
 
 module.exports = KEYS;

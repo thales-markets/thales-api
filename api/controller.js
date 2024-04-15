@@ -319,23 +319,6 @@ app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
   request.get(url, { headers: { "x-api-key": process.env.JSON_ODDS_KEY.toString() } }).pipe(res);
 });
 
-app.get(ENDPOINTS.MARCH_MADNESS, async (req, res) => {
-  const network = req.params.networkId;
-  try {
-    redisClient.get(KEYS.MARCH_MADNESS.FINAL_DATA[network], function (err, obj) {
-      try {
-        const data = JSON.parse(obj);
-        return res.send(data);
-      } catch (e) {
-        console.log(e);
-        return undefined;
-      }
-    });
-  } catch (e) {
-    return res.status(404);
-  }
-});
-
 app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
   const network = req.params.networkParam;
   if ([10, 420, 8453, 42161].includes(Number(network))) {
