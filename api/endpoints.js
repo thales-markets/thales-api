@@ -58,6 +58,7 @@ const ENDPOINTS = {
   THALES_IO_ECOSYSTEM_APPS: "/thales/thales-io/ecosystem-apps",
   THALES_IO_TIMELINE: "/thales/thales-io/timeline",
   OVERTIME_V2_MARKETS: "/overtime-v2/markets",
+  OVERTIME_V2_LIVE_MARKETS: "/overtime-v2/live-markets",
   OVERTIME_V2_MARKET: "/overtime-v2/markets/:marketAddress",
   OVERTIME_V2_TEAM_NAMES: "/overtime-v2/team-names",
 };
