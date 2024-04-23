@@ -38,14 +38,20 @@ async function processMarkets() {
           console.log("markets error: ", error);
         }
 
-        await delay(10 * 1000);
+        await delay(10 * 60 * 1000);
       }
     }, 3000);
   }
 }
 
 const packMarket = (market) => {
-  const leagueId = market.sportId;
+  const leagueId = `${market.sportId}`.startsWith("9153")
+    ? 9153
+    : `${market.sportId}`.startsWith("9156")
+    ? 9156
+    : `${market.sportId}`.startsWith("9007")
+    ? 9007
+    : market.sportId;
   const isEnetpulseSport = getIsEnetpulseSport(leagueId);
   const type = MARKET_TYPE[market.typeId];
 
@@ -54,8 +60,9 @@ const packMarket = (market) => {
     sport: SPORTS_MAP[leagueId],
     leagueId: leagueId,
     leagueName: getLeagueNameById(leagueId),
+    subLeagueId: market.sportId,
     typeId: market.typeId,
-    type: type,
+    type,
     maturity: market.maturity,
     maturityDate: new Date(market.maturity * 1000),
     homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
@@ -122,15 +129,19 @@ const loadMarkets = async () => {
   let markets = [];
   for (let index = 0; index < files.length; index++) {
     const file = files[index];
-    const marketsResponse = await axios.get(`${apiUrl}${folderName}/${file}`, {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
+    try {
+      const marketsResponse = await axios.get(`${apiUrl}${folderName}/${file}`, {
+        headers: {
+          Authorization: `token ${token}`,
+          Accept: "application/vnd.github.v3+json",
+        },
+      });
 
-    const marketsContent = Buffer.from(marketsResponse.data.content, "base64").toString("utf8");
-    markets = [...markets, ...JSON.parse(marketsContent)];
+      const marketsContent = Buffer.from(marketsResponse.data.content, "base64").toString("utf8");
+      markets = [...markets, ...JSON.parse(marketsContent)];
+    } catch (e) {
+      console.log(`Error reading file ${file}. Skipped for now.`);
+    }
   }
 
   return markets;

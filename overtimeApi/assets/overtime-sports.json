@@ -306,5 +306,35 @@
     "name": "Golf Tournament Winner",
     "sport": "Golf",
     "supportedTypes": ["moneyline"]
+  },
+  {
+    "id": 9132,
+    "name": "FA Cup",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
+  },
+  {
+    "id": 9134,
+    "name": "Coupe de France",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
+  },
+  {
+    "id": 9138,
+    "name": "Copa del Rey",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
+  },
+  {
+    "id": 9209,
+    "name": "DFB Pokal",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
+  },
+  {
+    "id": 9141,
+    "name": "Coppa Italia",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   }
 ]
