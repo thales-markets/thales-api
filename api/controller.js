@@ -13,7 +13,6 @@ app.use(function (req, res, next) {
   next();
 });
 
-const bytes32 = require("bytes32");
 const oddslib = require("oddslib");
 const axios = require("axios");
 
@@ -37,9 +36,15 @@ const {
 const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json");
 const { isRangedPosition } = require("../thalesApi/utils/markets");
 const { isNumeric } = require("../services/utils");
-const { findOddsForBookmakers, getAverageOdds } = require("../overtimeApi/utils/markets");
+const {
+  checkOddsFromMultipleBookmakersV2,
+  getAverageOdds,
+  getOpticOddsLeagueNameById,
+  getLeagueNameById,
+} = require("../overtimeApi/utils/markets");
 const { LIVE_ODDS_PROVIDERS } = require("../overtimeApi/constants/oddsProviders");
 const { TWO_POSITIONAL_SPORTS, LIVE_SUPPORTED_LEAGUES } = require("../overtimeApi/constants/tags");
+const teamsMapping = require("../overtimeApi/utils/teamsMapping.json");
 
 const { BigNumber } = require("ethers");
 const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
@@ -1554,7 +1559,6 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
   let sport = req.query.sport;
   let leagueId = req.query.leagueid;
   let ungroup = req.query.ungroup;
-
   if (
     type &&
     ![
@@ -1600,9 +1604,11 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
     res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime/sports.`);
     return;
   }
-  if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
+  if (leagueId && !allLeagueIds.includes(Number(leagueId)) && !LIVE_SUPPORTED_LEAGUES.includes(Number(leagueId))) {
     res.send(
-      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime/sports.`,
+      `Unsupported live league ID. Supported live league IDs: ${LIVE_SUPPORTED_LEAGUES.join(
+        ", ",
+      )}. See details on: /overtime/sports.`,
     );
     return;
   }
@@ -1628,28 +1634,145 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
       );
 
       if (filteredMarkets && filteredMarkets.length > 0) {
-        const currentDate = new Date().toISOString().split("T")[0];
-        const sportId = filteredMarkets[0].leagueId - 9000;
-        const response = await axios.get(
-          `https://therundown.io/api/v1/sports/${sportId}/events/${currentDate}?key=${process.env.RUNDOWN_API_KEY}`,
-        );
+        const teamsMap = new Map();
 
-        const events = response.data.events;
+        Object.keys(teamsMapping).forEach(function (key) {
+          teamsMap.set(key, teamsMapping[key]);
+        });
 
-        if (events && events.length > 0) {
-          const liveFilteredMarketsWithOdds = filteredMarkets.map((market) => {
-            const decodedGameId = bytes32({ input: market.gameId });
-            const filteredEvent = events.find((market) => {
-              return market.event_id == decodedGameId;
-            });
-            if (filteredEvent) {
-              const filteredOdds = findOddsForBookmakers(
-                filteredEvent,
-                LIVE_ODDS_PROVIDERS,
-                TWO_POSITIONAL_SPORTS.includes(sportId),
+        const leagueName = getOpticOddsLeagueNameById(leagueId);
+
+        const responseOptiOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?league=${leagueName}`, {
+          headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+        });
+
+        const opticOddsResponseData = responseOptiOddsGames.data.data;
+
+        if (opticOddsResponseData.length == 0) {
+          res.send(`Could not find any games on the provider side for the given league ${leagueName}`);
+          return;
+        }
+
+        const providerMarketsMatchingOffer = [];
+        filteredMarkets.forEach((market) => {
+          const opticOddsGameEvent = opticOddsResponseData.find((opticOddsGame) => {
+            const homeTeamOpticOdds = teamsMap.get(opticOddsGame.home_team.toLowerCase());
+            const awayTeamOpticOdds = teamsMap.get(opticOddsGame.away_team.toLowerCase());
+
+            const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
+            const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
+
+            const homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
+            const awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
+            const datesMatch =
+              new Date(opticOddsGame.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
+
+            return homeTeamsMatch && awayTeamsMatch && datesMatch;
+          });
+          if (opticOddsGameEvent != undefined) {
+            providerMarketsMatchingOffer.push(opticOddsGameEvent);
+          }
+        });
+
+        if (providerMarketsMatchingOffer.length == 0) {
+          res.send(`Could not find any matches on the provider side for the given league ${leagueName}`);
+          return;
+        }
+
+        const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
+          return axios.get(
+            `https://api.opticodds.com/api/v2/game-odds?game_id=${game.id}&market_name=Moneyline&sportsbook=${LIVE_ODDS_PROVIDERS[0]}&sportsbook=${LIVE_ODDS_PROVIDERS[1]}&sportsbook=${LIVE_ODDS_PROVIDERS[2]}&odds_format=Decimal`,
+            {
+              headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+            },
+          );
+        });
+
+        const responsesOddsPerGame = await Promise.all(urlsGamesOdds);
+
+        console.log(responsesOddsPerGame[0].data.data);
+
+        const filteredMarketsWithLiveOdds = filteredMarkets.map((market) => {
+          // TODO refactor below line, so responses odds per game is looped through
+          const gameOdds = responsesOddsPerGame[0].data.data.find((response) => {
+            const homeTeamOpticOdds = teamsMap.get(response.home_team.toLowerCase());
+            const awayTeamOpticOdds = teamsMap.get(response.away_team.toLowerCase());
+
+            const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
+            const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
+
+            const homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
+            const awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
+
+            const datesMatch =
+              new Date(response.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
+
+            return homeTeamsMatch && awayTeamsMatch && datesMatch;
+          });
+
+          if (gameOdds != undefined) {
+            let linesMap = new Map();
+
+            LIVE_ODDS_PROVIDERS.forEach((oddsProvider) => {
+              const providerOddsObjects = gameOdds.odds.filter(
+                (oddsObject) => oddsObject.sports_book_name.toLowerCase() == oddsProvider.toLowerCase(),
               );
-              if (filteredOdds) {
-                const aggregatedOdds = getAverageOdds(filteredOdds);
+
+              const homeOddsObject = providerOddsObjects.find(
+                (oddsObject) =>
+                  teamsMap.get(oddsObject.name.toLowerCase()) == teamsMap.get(market.homeTeam.toLowerCase()),
+              );
+
+              let homeOdds = 0;
+              if (homeOddsObject != undefined) {
+                homeOdds = homeOddsObject.price;
+              }
+
+              let awayOdds = 0;
+              const awayOddsObject = providerOddsObjects.find(
+                (oddsObject) =>
+                  teamsMap.get(oddsObject.name.toLowerCase()) == teamsMap.get(market.awayTeam.toLowerCase()),
+              );
+              if (awayOddsObject != undefined) {
+                awayOdds = awayOddsObject.price;
+              }
+
+              let drawOdds = 0;
+              if (!TWO_POSITIONAL_SPORTS.includes(leagueId)) {
+                const drawOddsObject = providerOddsObjects.find(
+                  (oddsObject) => oddsObject.name.toLowerCase() == "draw",
+                );
+
+                if (drawOddsObject != undefined) {
+                  drawOdds = drawOddsObject.price;
+                }
+              }
+
+              linesMap.set(oddsProvider.toLowerCase(), {
+                homeOdds: homeOdds,
+                awayOdds: awayOdds,
+                drawOdds: drawOdds,
+              });
+            });
+
+            const oddsList = checkOddsFromMultipleBookmakersV2(
+              linesMap,
+              LIVE_ODDS_PROVIDERS,
+              TWO_POSITIONAL_SPORTS.includes(leagueId),
+            );
+
+            console.log(oddsList);
+
+            if (
+              oddsList.length == 1 &&
+              oddsList[0].homeOdds == 0 &&
+              oddsList[0].awayOdds == 0 &&
+              oddsList[0].drawOdds == 0
+            ) {
+              return null;
+            } else {
+              if (process.env.ODDS_AGGREGATION_ENABLED) {
+                const aggregatedOdds = getAverageOdds(oddsList);
                 market.odds = market.odds.map((_odd, index) => {
                   let positionOdds;
                   switch (index) {
@@ -1661,35 +1784,40 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
                       positionOdds = aggregatedOdds.drawOdds;
                   }
                   return {
-                    american: positionOdds,
-                    decimal: oddslib.from("moneyline", positionOdds).to("decimal"),
-                    normalizedImplied: oddslib.from("moneyline", positionOdds).to("impliedProbability"),
+                    american: oddslib.from("decimal", positionOdds).to("moneyline"),
+                    decimal: positionOdds,
+                    normalizedImplied: oddslib.from("decimal", positionOdds).to("impliedProbability"),
                   };
                 });
+                return market;
               } else {
-                market.odds = market.odds.map((odd) => {
+                const primaryBookmakerOdds = oddsList[0];
+                market.odds = market.odds.map((_odd, index) => {
+                  let positionOdds;
+                  switch (index) {
+                    case 0:
+                      positionOdds = primaryBookmakerOdds.homeOdds;
+                    case 1:
+                      positionOdds = primaryBookmakerOdds.awayOdds;
+                    case 2:
+                      positionOdds = primaryBookmakerOdds.drawOdds;
+                  }
                   return {
-                    american: odd.american,
-                    decimal: odd.decimal,
-                    normalizedImplied: 0,
+                    american: oddslib.from("decimal", positionOdds).to("moneyline"),
+                    decimal: positionOdds,
+                    normalizedImplied: oddslib.from("decimal", positionOdds).to("impliedProbability"),
                   };
                 });
+                return market;
               }
-            } else {
-              return null;
             }
-          });
+          } else {
+            return null;
+          }
+        });
 
-          res.send(liveFilteredMarketsWithOdds);
-          return;
-        } else {
-          res.send(
-            `Live markets for the given parameters could not be fetched currently. Supported live markets league IDs: ${LIVE_SUPPORTED_LEAGUES.join(
-              ", ",
-            )}. See details on: /overtime/sports.`,
-          );
-          return;
-        }
+        res.send(filteredMarketsWithLiveOdds.filter((market) => market != null));
+        return;
       }
       res.send([]);
     } catch (e) {
