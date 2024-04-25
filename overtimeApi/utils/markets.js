@@ -357,6 +357,18 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPosi
     return false;
   });
 
+  if (arrayOfBookmakers.length == 1) {
+    const firstBookmaker = arrayOfBookmakers[0];
+    const firstLine = oddsMap.get(firstBookmaker);
+    return [
+      {
+        homeOdds: firstLine.homeOdds,
+        awayOdds: firstLine.awayOdds,
+        drawOdds: isTwoPositionalSport ? 0 : firstLine.drawOdds,
+      },
+    ];
+  }
+
   if (hasZeroOdds) {
     // If any bookmaker has zero odds, return zero odds
     return [

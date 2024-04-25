@@ -1690,11 +1690,10 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
         const responsesOddsPerGame = await Promise.all(urlsGamesOdds);
 
-        console.log(responsesOddsPerGame[0].data.data);
-
         const filteredMarketsWithLiveOdds = filteredMarkets.map((market) => {
-          const gameOdds = responsesOddsPerGame.find((responseObject) => {
-            const response = responseObject.data.data;
+          const responseObject = responsesOddsPerGame.find((responseObject) => {
+            const response = responseObject.data.data[0];
+
             const homeTeamOpticOdds = teamsMap.get(response.home_team.toLowerCase());
             const awayTeamOpticOdds = teamsMap.get(response.away_team.toLowerCase());
 
@@ -1710,8 +1709,10 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             return homeTeamsMatch && awayTeamsMatch && datesMatch;
           });
 
-          if (gameOdds != undefined) {
+          if (responseObject != undefined) {
             let linesMap = new Map();
+
+            const gameOdds = responseObject.data.data[0];
 
             LIVE_ODDS_PROVIDERS.forEach((oddsProvider) => {
               const providerOddsObjects = gameOdds.odds.filter(
@@ -1797,10 +1798,13 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
                   switch (index) {
                     case 0:
                       positionOdds = primaryBookmakerOdds.homeOdds;
+                      break;
                     case 1:
                       positionOdds = primaryBookmakerOdds.awayOdds;
+                      break;
                     case 2:
                       positionOdds = primaryBookmakerOdds.drawOdds;
+                      break;
                   }
                   return {
                     american: oddslib.from("decimal", positionOdds).to("moneyline"),
