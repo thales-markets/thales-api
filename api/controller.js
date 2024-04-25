@@ -1693,8 +1693,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
         console.log(responsesOddsPerGame[0].data.data);
 
         const filteredMarketsWithLiveOdds = filteredMarkets.map((market) => {
-          // TODO refactor below line, so responses odds per game is looped through
-          const gameOdds = responsesOddsPerGame[0].data.data.find((response) => {
+          const gameOdds = responsesOddsPerGame.find((responseObject) => {
+            const response = responseObject.data.data;
             const homeTeamOpticOdds = teamsMap.get(response.home_team.toLowerCase());
             const awayTeamOpticOdds = teamsMap.get(response.away_team.toLowerCase());
 
