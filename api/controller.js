@@ -40,9 +40,7 @@ const {
   checkOddsFromMultipleBookmakersV2,
   getAverageOdds,
   getOpticOddsLeagueNameById,
-  getLeagueNameById,
 } = require("../overtimeApi/utils/markets");
-const { LIVE_ODDS_PROVIDERS } = require("../overtimeApi/constants/oddsProviders");
 const { TWO_POSITIONAL_SPORTS, LIVE_SUPPORTED_LEAGUES } = require("../overtimeApi/constants/tags");
 const teamsMapping = require("../overtimeApi/utils/teamsMapping.json");
 
@@ -1613,6 +1611,12 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
     return;
   }
 
+  const liveOddsProviders = process.env.LIVE_ODDS_PROVIDERS.split(",");
+
+  if (liveOddsProviders.length == 0) {
+    res.send(`No suppored live odds providers found`);
+  }
+
   redisClient.get(KEYS.OVERTIME_V2_MARKETS, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
     try {
@@ -1681,7 +1685,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
         const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
           return axios.get(
-            `https://api.opticodds.com/api/v2/game-odds?game_id=${game.id}&market_name=Moneyline&sportsbook=${LIVE_ODDS_PROVIDERS[0]}&sportsbook=${LIVE_ODDS_PROVIDERS[1]}&sportsbook=${LIVE_ODDS_PROVIDERS[2]}&odds_format=Decimal`,
+            `https://api.opticodds.com/api/v2/game-odds?game_id=${game.id}&market_name=Moneyline&sportsbook=${liveOddsProviders[0]}&sportsbook=${liveOddsProviders[1]}&sportsbook=${liveOddsProviders[2]}&odds_format=Decimal`,
             {
               headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
             },
@@ -1714,7 +1718,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
             const gameOdds = responseObject.data.data[0];
 
-            LIVE_ODDS_PROVIDERS.forEach((oddsProvider) => {
+            liveOddsProviders.forEach((oddsProvider) => {
               const providerOddsObjects = gameOdds.odds.filter(
                 (oddsObject) => oddsObject.sports_book_name.toLowerCase() == oddsProvider.toLowerCase(),
               );
@@ -1758,7 +1762,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
             const oddsList = checkOddsFromMultipleBookmakersV2(
               linesMap,
-              LIVE_ODDS_PROVIDERS,
+              liveOddsProviders,
               TWO_POSITIONAL_SPORTS.includes(leagueId),
             );
 
