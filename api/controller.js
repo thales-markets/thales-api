@@ -1614,7 +1614,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
   const liveOddsProviders = process.env.LIVE_ODDS_PROVIDERS.split(",");
 
   if (liveOddsProviders.length == 0) {
-    res.send(`No suppored live odds providers found`);
+    res.send(`No suppored live odds providers found in the config`);
   }
 
   redisClient.get(KEYS.OVERTIME_V2_MARKETS, async function (err, obj) {
