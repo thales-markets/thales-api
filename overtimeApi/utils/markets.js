@@ -68,8 +68,12 @@ const formatMarketOdds = (odds, oddsType) => {
 };
 
 const getLeagueNameById = (id) => {
-  const league = overtimeSportsList.find((sport) => sport.id === id);
+  const league = overtimeSportsList.find((sport) => Number(sport.id) === Number(id));
   return league ? league.name : undefined;
+};
+const getOpticOddsLeagueNameById = (id) => {
+  const league = overtimeSportsList.find((sport) => Number(sport.id) === Number(id));
+  return league ? league.opticOddsName : undefined;
 };
 
 const getIsOneSideMarket = (tag) =>
@@ -325,22 +329,45 @@ const calculateImpliedOddsDifference = (impliedOddsA, impliedOddsB) => {
   return percentageDifference;
 };
 
-const findOddsForBookmakers = (event, arrayOfBookmakers, isTwoPositionalSport) => {
+const getAverageOdds = (multipleOddsFromProviders) => {
+  let homeOdds;
+  let awayOdds;
+  let drawOdds;
+
+  multipleOddsFromProviders.forEach((oddsObject) => {
+    homeOdds += oddsObject;
+    awayOdds += oddsObject;
+    drawOdds += oddsObject;
+  });
+
+  homeOdds = homeOdds / multipleOddsFromProviders.length;
+  awayOdds = awayOdds / multipleOddsFromProviders.length;
+  drawOdds = drawOdds / multipleOddsFromProviders.length;
+
+  return { homeOdds: homeOdds, awayOdds: awayOdds, drawOdds: drawOdds };
+};
+
+const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPositionalSport) => {
   // Check if any bookmaker has odds of 0 or 0.0001
   const hasZeroOdds = arrayOfBookmakers.some((bookmakerId) => {
-    const line = event.lines[bookmakerId];
+    const line = oddsMap.get(bookmakerId);
     if (line) {
-      const { moneyline } = line;
-      return (
-        moneyline.moneyline_home === 0 ||
-        moneyline.moneyline_home === 0.0001 ||
-        moneyline.moneyline_away === 0 ||
-        moneyline.moneyline_away === 0.0001 ||
-        (!isTwoPositionalSport && (moneyline.moneyline_draw === 0 || moneyline.moneyline_draw === 0.0001))
-      );
+      return line.homeOdds === 0 || line.awayOdds === 0 || (!isTwoPositionalSport && line.drawOdds === 0);
     }
     return false;
   });
+
+  if (arrayOfBookmakers.length == 1) {
+    const firstBookmaker = arrayOfBookmakers[0];
+    const firstLine = oddsMap.get(firstBookmaker);
+    return [
+      {
+        homeOdds: firstLine.homeOdds,
+        awayOdds: firstLine.awayOdds,
+        drawOdds: isTwoPositionalSport ? 0 : firstLine.drawOdds,
+      },
+    ];
+  }
 
   if (hasZeroOdds) {
     // If any bookmaker has zero odds, return zero odds
@@ -355,46 +382,42 @@ const findOddsForBookmakers = (event, arrayOfBookmakers, isTwoPositionalSport) =
     // If none of the bookmakers have zero odds, check implied odds percentage difference
     const firstBookmaker = arrayOfBookmakers[0];
     const secondBookmaker = arrayOfBookmakers[1];
-    const thirdBookmaker = arrayOfBookmakers[3];
-    const firstLine = event.lines[firstBookmaker];
-    const secondLine = event.lines[secondBookmaker];
-    const thirdLine = event.lines[thirdBookmaker];
+    const thirdBookmaker = arrayOfBookmakers[2];
+    const firstLine = oddsMap.get(firstBookmaker);
+    const secondLine = oddsMap.get(secondBookmaker);
+    const thirdLine = oddsMap.get(thirdBookmaker);
 
     if (firstLine) {
-      const { moneyline } = firstLine;
-      const homeOdd = moneyline.moneyline_home;
-      const awayOdd = moneyline.moneyline_away;
-      const drawOdd = moneyline.moneyline_draw;
+      const homeOdd = firstLine.homeOdds;
+      const awayOdd = firstLine.awayOdds;
+      const drawOdd = firstLine.drawOdds;
 
       // Maximum allowed percentage difference for implied odds
       const maxImpliedPercentageDifference = Number(MAX_PERCENTAGE_DIFF_BETWEEN_ODDS);
 
       // Check if the implied odds from other bookmakers have a difference of more than 10%
       const hasLargeImpliedPercentageDifference = arrayOfBookmakers.slice(1).some((bookmakerId) => {
-        const line = event.lines[bookmakerId];
+        const line = oddsMap[bookmakerId];
         if (line) {
-          const { moneyline } = line;
-          const otherHomeOdd = moneyline.moneyline_home;
-          const otherAwayOdd = moneyline.moneyline_away;
-          const otherDrawOdd = moneyline.moneyline_draw;
+          const otherHomeOdd = line.homeOdds;
+          const otherAwayOdd = line.awayOdds;
+          const otherDrawOdd = line.drawOdds;
 
-          const homeOddsImplied = oddslib.from("moneyline", homeOdd).to("impliedProbability");
+          const homeOddsImplied = oddslib.from("decimal", homeOdd).to("impliedProbability");
 
-          const awayOddsImplied = oddslib.from("moneyline", awayOdd).to("impliedProbability");
+          const awayOddsImplied = oddslib.from("decimal", awayOdd).to("impliedProbability");
 
           // Calculate implied odds for the "draw" if it's not a two-positions sport
-          const drawOddsImplied = isTwoPositionalSport
-            ? 0
-            : oddslib.from("moneyline", drawOdd).to("impliedProbability");
+          const drawOddsImplied = isTwoPositionalSport ? 0 : oddslib.from("decimal", drawOdd).to("impliedProbability");
 
-          const otherHomeOddImplied = oddslib.from("moneyline", otherHomeOdd).to("impliedProbability");
+          const otherHomeOddImplied = oddslib.from("decimal", otherHomeOdd).to("impliedProbability");
 
-          const otherAwayOddImplied = oddslib.from("moneyline", otherAwayOdd).to("impliedProbability");
+          const otherAwayOddImplied = oddslib.from("decimal", otherAwayOdd).to("impliedProbability");
 
           // Calculate implied odds for the "draw" if it's not a two-positions sport
           const otherDrawOddImplied = isTwoPositionalSport
             ? 0
-            : oddslib.from("moneyline", otherDrawOdd).to("impliedProbability");
+            : oddslib.from("decimal", otherDrawOdd).to("impliedProbability");
 
           // Calculate the percentage difference for implied odds
           const homeOddsDifference = calculateImpliedOddsDifference(homeOddsImplied, otherHomeOddImplied);
@@ -442,16 +465,15 @@ const findOddsForBookmakers = (event, arrayOfBookmakers, isTwoPositionalSport) =
         drawOdds: isTwoPositionalSport ? 0 : drawOdd,
       };
       const secondBookieOdds = {
-        homeOdds: secondLine.moneyline.moneyline_home,
-        awayOdds: secondLine.moneyline.moneyline_away,
-        drawOdds: isTwoPositionalSport ? 0 : secondLine.moneyline.moneyline_draw,
+        homeOdds: secondLine.homeOdds,
+        awayOdds: secondLine.awayOdds,
+        drawOdds: isTwoPositionalSport ? 0 : secondLine.drawOdds,
       };
       const thirdBookieOdds = {
-        homeOdds: thirdLine.moneyline.moneyline_home,
-        awayOdds: thirdLine.moneyline.moneyline_away,
-        drawOdds: isTwoPositionalSport ? 0 : thirdLine.moneyline.moneyline_draw,
+        homeOdds: thirdLine.homeOdds,
+        awayOdds: thirdLine.awayOdds,
+        drawOdds: isTwoPositionalSport ? 0 : thirdLine.drawOdds,
       };
-
       return [firstBookieOdds, secondBookieOdds, thirdBookieOdds];
     }
   }
@@ -467,29 +489,12 @@ const findOddsForBookmakers = (event, arrayOfBookmakers, isTwoPositionalSport) =
   ];
 };
 
-const getAverageOdds = (multipleOddsFromProviders) => {
-  let homeOdds;
-  let awayOdds;
-  let drawOdds;
-
-  multipleOddsFromProviders.forEach((oddsObject) => {
-    homeOdds += oddsObject;
-    awayOdds += oddsObject;
-    drawOdds += oddsObject;
-  });
-
-  homeOdds = homeOdds / multipleOddsFromProviders.length;
-  awayOdds = awayOdds / multipleOddsFromProviders.length;
-  drawOdds = drawOdds / multipleOddsFromProviders.length;
-
-  return { homeOdds: homeOdds, awayOdds: awayOdds, drawOdds: drawOdds };
-};
-
 module.exports = {
   fixDuplicatedTeamName,
   convertPriceImpactToBonus,
   formatMarketOdds,
   getLeagueNameById,
+  getOpticOddsLeagueNameById,
   getIsOneSideMarket,
   packMarket,
   isMarketExpired,
@@ -505,6 +510,6 @@ module.exports = {
   getIsYesNoPlayerPropsMarket,
   getIsEnetpulseSport,
   getIsJsonOddsSport,
-  findOddsForBookmakers,
   getAverageOdds,
+  checkOddsFromMultipleBookmakersV2,
 };
