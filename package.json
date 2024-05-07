@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node overtimeV2Api/index.js",
+    "start": "node overtimeApi/s3test.js",
     "dev": "nodemon overtimeApi.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.569.0",
     "axios": "^0.21.0",
     "bytes32": "^0.0.3",
     "cors": "^2.8.5",

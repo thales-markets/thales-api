@@ -17,9 +17,22 @@ const {
 const { SPORTS_MAP } = require("../../overtimeApi/constants/tags");
 const { MARKET_TYPE, ODDS_TYPE, STATUS } = require("../../overtimeApi/constants/markets");
 const KEYS = require("../../redis/redis-keys");
-const axios = require("axios");
+const {
+  // This command supersedes the ListObjectsCommand and is the recommended way to list objects.
+  ListObjectsV2Command,
+  S3Client,
+  GetObjectCommand,
+} = require("@aws-sdk/client-s3");
 
 let marketsMap = new Map();
+
+const awsS3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
 async function processMarkets() {
   if (process.env.REDIS_URL) {
@@ -38,7 +51,7 @@ async function processMarkets() {
           console.log("markets error: ", error);
         }
 
-        await delay(10 * 60 * 1000);
+        await delay(60 * 1000);
       }
     }, 3000);
   }
@@ -106,42 +119,61 @@ const packMarket = (market) => {
   };
 };
 
+const readAwsS3File = async (bucket, key) => {
+  const params = {
+    Bucket: bucket,
+    Key: key,
+  };
+  const command = new GetObjectCommand(params);
+  const response = await awsS3Client.send(command);
+  return response.Body.transformToString();
+};
+
 const loadMarkets = async () => {
-  const repoOwner = process.env.GH_REPO_OWNER;
-  const repoName = process.env.GH_REPO_NAME;
-  const token = process.env.GH_TOKEN;
-  const folderName = process.env.GH_FOLDER_NAME;
-  const listFileName = process.env.GH_LIST_FILE_NAME;
+  const bucketName = process.env.AWS_BUCKET_NAME;
+  const merkleTreeFolderName = process.env.AWS_FOLDER_NAME_MERKLES;
+  const listFolderName = process.env.AWS_FOLDER_NAME_LIST;
 
-  const listFilePath = `${folderName}/${listFileName}`;
-  const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
-
-  const response = await axios.get(`${apiUrl}${listFilePath}`, {
-    headers: {
-      Authorization: `token ${token}`,
-      Accept: "application/vnd.github.v3+json",
-    },
+  const command = new ListObjectsV2Command({
+    Bucket: bucketName,
+    Prefix: listFolderName,
   });
-  const listContent = Buffer.from(response.data.content, "base64").toString("utf8");
-
-  const files = listContent ? listContent.split(",").map((f) => f.trim()) : [];
 
   let markets = [];
-  for (let index = 0; index < files.length; index++) {
-    const file = files[index];
-    try {
-      const marketsResponse = await axios.get(`${apiUrl}${folderName}/${file}`, {
-        headers: {
-          Authorization: `token ${token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-      });
+  try {
+    let isTruncated = true;
 
-      const marketsContent = Buffer.from(marketsResponse.data.content, "base64").toString("utf8");
-      markets = [...markets, ...JSON.parse(marketsContent)];
-    } catch (e) {
-      console.log(`Error reading file ${file}. Skipped for now.`);
+    console.log("Available merkle trees:");
+    let merkleTreesList = [];
+
+    while (isTruncated) {
+      const { Contents, IsTruncated, NextContinuationToken } = await awsS3Client.send(command);
+      const contentsList = Contents.map((c) => c.Key);
+      console.log(contentsList);
+      merkleTreesList = [...merkleTreesList, ...contentsList];
+
+      isTruncated = IsTruncated;
+      command.input.ContinuationToken = NextContinuationToken;
     }
+
+    for (let i = 0; i < merkleTreesList.length; i++) {
+      const merkleTreesItem = merkleTreesList[i];
+      const merkleTreeFileConent = await readAwsS3File(bucketName, merkleTreesItem);
+
+      const marketFiles = merkleTreeFileConent ? merkleTreeFileConent.split(",").map((f) => f.trim()) : [];
+
+      for (let j = 0; j < marketFiles.length; j++) {
+        const marketFile = marketFiles[j];
+        try {
+          const marketFileContent = await readAwsS3File(bucketName, marketFile);
+          markets = [...markets, ...JSON.parse(marketFileContent)];
+        } catch (e) {
+          console.log(`Error reading file ${marketFile}. Skipped for now.`);
+        }
+      }
+    }
+  } catch (e) {
+    console.log(`Error reading merkle trees: ${e}`);
   }
 
   return markets;
