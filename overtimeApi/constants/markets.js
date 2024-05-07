@@ -8,6 +8,9 @@ const BET_TYPE = {
   HalftimeFulltime: 10006,
   Goals: 10007,
   HalftimeFulltimeGoals: 10008,
+  BothTeamsToScore: 10009,
+  Winner2: 10011,
+  Winner3: 10012,
   Spread2: 10013,
   Total2: 10014,
   Homeruns: 11010,
@@ -106,6 +109,16 @@ const BET_TYPE = {
   SeventhPeriodTotal2OddEven: 10097,
   EightPeriodTotal2OddEven: 10098,
   NinthPeriodTotal2OddEven: 10099,
+
+  FirstPeriodBothTeamsToScore: 10101,
+  SecondPeriodBothTeamsToScore: 10102,
+  ThirdPeriodBothTeamsToScore: 10103,
+  FourthPeriodBothTeamsToScore: 10104,
+  FifthPeriodBothTeamsToScore: 10105,
+  SixthPeriodBothTeamsToScore: 10106,
+  SeventhPeriodBothTeamsToScore: 10107,
+  EightPeriodBothTeamsToScore: 10108,
+  NinthPeriodBothTeamsToScore: 10109,
 };
 
 const MARKET_TYPE = {
@@ -118,6 +131,9 @@ const MARKET_TYPE = {
   [BET_TYPE.HalftimeFulltime]: "halftimeFulltime",
   [BET_TYPE.Goals]: "goals",
   [BET_TYPE.HalftimeFulltimeGoals]: "halftimeFulltimeGoals",
+  [BET_TYPE.BothTeamsToScore]: "bothTeamsToScore",
+  [BET_TYPE.Winner2]: "winner2",
+  [BET_TYPE.Winner3]: "winner3",
   [BET_TYPE.Spread2]: "halftimeSpread",
   [BET_TYPE.Total2]: "halftimeTotal",
   [BET_TYPE.Homeruns]: "homeruns",
@@ -216,6 +232,16 @@ const MARKET_TYPE = {
   [BET_TYPE.SeventhPeriodTotal2OddEven]: "seventhPeriodTotal2OddEven",
   [BET_TYPE.EightPeriodTotal2OddEven]: "eightPeriodTotal2OddEven",
   [BET_TYPE.NinthPeriodTotal2OddEven]: "ninthPeriodTotal2OddEven",
+
+  [BET_TYPE.FirstPeriodBothTeamsToScore]: "firstPeriodBothTeamsToScore",
+  [BET_TYPE.SecondPeriodBothTeamsToScore]: "secondPeriodBothTeamsToScore",
+  [BET_TYPE.ThirdPeriodBothTeamsToScore]: "thirdPeriodBothTeamsToScore",
+  [BET_TYPE.FourthPeriodBothTeamsToScore]: "fourthPeriodBothTeamsToScore",
+  [BET_TYPE.FifthPeriodBothTeamsToScore]: "fifthPeriodBothTeamsToScore",
+  [BET_TYPE.SixthPeriodBothTeamsToScore]: "sixthPeriodBothTeamsToScore",
+  [BET_TYPE.SeventhPeriodBothTeamsToScore]: "seventhPeriodBothTeamsToScore",
+  [BET_TYPE.EightPeriodBothTeamsToScore]: "eightPeriodBothTeamsToScore",
+  [BET_TYPE.NinthPeriodBothTeamsToScore]: "ninthPeriodBothTeamsToScore",
 };
 
 const PLAYER_PROPS_BET_TYPES = [
