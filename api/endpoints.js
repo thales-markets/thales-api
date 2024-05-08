@@ -58,7 +58,7 @@ const ENDPOINTS = {
   OVERTIME_V2_MARKETS: "/overtime-v2/markets",
   OVERTIME_V2_LIVE_MARKETS: "/overtime-v2/live-markets",
   OVERTIME_V2_MARKET: "/overtime-v2/markets/:marketAddress",
-  OVERTIME_V2_TEAM_NAMES: "/overtime-v2/team-names",
+  OVERTIME_V2_GAMES_INFO: "/overtime-v2/games-info",
 };
 
 module.exports = ENDPOINTS;

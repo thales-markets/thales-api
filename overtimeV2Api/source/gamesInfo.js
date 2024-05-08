@@ -2,20 +2,20 @@ require("dotenv").config();
 
 const redis = require("redis");
 const { delay } = require("../../overtimeApi/utils/general");
-const { SPORTS_MAP, JSON_ODDS_SPORTS, ENETPULSE_SPORTS } = require("../../overtimeApi/constants/tags");
+const { SPORTS_MAP, SPORT_ID_MAP_ENETPULSE, SPORT_ID_MAP_RUNDOWN } = require("../../overtimeApi/constants/tags");
 const axios = require("axios");
 const { format, addDays, subDays } = require("date-fns");
 const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
-const { getIsEnetpulseSport, getIsJsonOddsSport } = require("../../overtimeApi/utils/markets");
+const { getIsEnetpulseSportV2, getIsJsonOddsSport } = require("../../overtimeApi/utils/markets");
 
-let teamNamesMap = new Map();
+let gamesInfoMap = new Map();
 
 const AMERICAN_SPORTS = [1, 2, 3, 4, 5, 6, 8, 10, 20, 21];
-const numberOfDaysInPast = Number(process.env.PROCESS_TEAM_NAMES_NUMBER_OF_DAYS_IN_PAST);
-const numberOfDaysInFuture = Number(process.env.PROCESS_TEAM_NAMES_NUMBER_OF_DAYS_IN_FUTURE);
+const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
+const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_FUTURE);
 
-async function processTeamNames() {
+async function processGamesInfo() {
   if (process.env.REDIS_URL) {
     redisClient = redis.createClient(process.env.REDIS_URL);
     console.log("create client from index");
@@ -26,30 +26,32 @@ async function processTeamNames() {
     setTimeout(async () => {
       while (true) {
         try {
-          console.log("process markets");
-          await processAllTeamNames();
+          console.log("process games info");
+          await processAllGamesInfo();
         } catch (error) {
-          console.log("markets error: ", error);
+          console.log("games info error: ", error);
         }
 
-        await delay(10 * 1000);
+        await delay(60 * 1000);
       }
     }, 3000);
   }
 }
 
-const procesRundownTeamNamesPerDate = async (sports, formattedDate) => {
+const procesRundownGamesInfoPerDate = async (sports, formattedDate) => {
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
     const sport = sportId - 9000;
+    const rundownSport = SPORT_ID_MAP_RUNDOWN[sport];
 
-    const apiUrl = `https://therundown.io/api/v1/sports/${sport}/events/${formattedDate}?key=${process.env.RUNDOWN_API_KEY}`;
+    console.log(`Getting games info for Rundown sport: ${rundownSport}, ${sport} and date ${formattedDate}`);
+    const apiUrl = `https://therundown.io/api/v1/sports/${rundownSport}/events/${formattedDate}?key=${process.env.RUNDOWN_API_KEY}`;
     const response = await axios.get(apiUrl);
 
     response.data.events.forEach((event) => {
       if (event.event_id && event.teams_normalized) {
         const gameId = bytes32({ input: event.event_id });
-        teamNamesMap.set(
+        gamesInfoMap.set(
           gameId,
           event.teams_normalized.map((team) => ({
             name: AMERICAN_SPORTS.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
@@ -60,6 +62,8 @@ const procesRundownTeamNamesPerDate = async (sports, formattedDate) => {
         );
       }
     });
+
+    await delay(1 * 1000);
   }
 };
 
@@ -71,18 +75,20 @@ const getEnetpulseScore = (results) => {
   return 0;
 };
 
-const procesEnetpulseTeamNamesPerDate = async (sports, formattedDate) => {
+const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate) => {
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
     const sport = sportId - 9000;
+    const enetpulseSport = SPORT_ID_MAP_ENETPULSE[sport];
 
-    const apiUrl = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${sport}&date=${formattedDate}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&includeEventProperties=no`;
+    console.log(`Getting games info for Enetpulse sport: ${enetpulseSport}, ${sport} and date ${formattedDate}`);
+    const apiUrl = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${enetpulseSport}&date=${formattedDate}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&includeEventProperties=no`;
     const response = await axios.get(apiUrl);
 
     Object.values(response.data.events).forEach((event) => {
       if (event.id && event.event_participants) {
         const gameId = bytes32({ input: event.id });
-        teamNamesMap.set(
+        gamesInfoMap.set(
           gameId,
           Object.values(event.event_participants).map((team) => ({
             name: team.participant.name,
@@ -94,29 +100,31 @@ const procesEnetpulseTeamNamesPerDate = async (sports, formattedDate) => {
         );
       }
     });
+
+    await delay(1 * 1000);
   }
 };
 
-async function processAllTeamNames() {
+async function processAllGamesInfo() {
   const startDate = subDays(new Date(), numberOfDaysInPast);
 
   for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
     const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
-    console.log(`Getting team names for date: ${formattedDate}`);
+    console.log(`Getting games info for date: ${formattedDate}`);
 
     const allSports = Object.keys(SPORTS_MAP);
-    const rundownSports = allSports.filter((sport) => !getIsEnetpulseSport(sport) && !getIsJsonOddsSport(sport));
-    const enetpulseSports = allSports.filter((sport) => getIsEnetpulseSport(sport));
+    const rundownSports = allSports.filter((sport) => !getIsEnetpulseSportV2(sport) && !getIsJsonOddsSport(sport));
+    const enetpulseSports = allSports.filter((sport) => getIsEnetpulseSportV2(sport));
 
     await Promise.all([
-      procesRundownTeamNamesPerDate(rundownSports, formattedDate),
-      procesEnetpulseTeamNamesPerDate(enetpulseSports, formattedDate),
+      procesRundownGamesInfoPerDate(rundownSports, formattedDate),
+      procesEnetpulseGamesInfoPerDate(enetpulseSports, formattedDate),
     ]);
   }
 
-  redisClient.set(KEYS.OVERTIME_V2_TEAM_NAMES, JSON.stringify([...teamNamesMap]), function () {});
+  redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
 }
 
 module.exports = {
-  processTeamNames,
+  processGamesInfo,
 };

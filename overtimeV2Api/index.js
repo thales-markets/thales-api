@@ -1,7 +1,7 @@
 const markets = require("./source/markets");
-const teamNames = require("./source/teamNames");
+const gamesInfo = require("./source/gamesInfo");
 
 require("dotenv").config();
 
 markets.processMarkets();
-teamNames.processTeamNames();
+gamesInfo.processGamesInfo();

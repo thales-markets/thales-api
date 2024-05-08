@@ -17,12 +17,7 @@ const {
 const { SPORTS_MAP } = require("../../overtimeApi/constants/tags");
 const { MARKET_TYPE, ODDS_TYPE, STATUS } = require("../../overtimeApi/constants/markets");
 const KEYS = require("../../redis/redis-keys");
-const {
-  // This command supersedes the ListObjectsCommand and is the recommended way to list objects.
-  ListObjectsV2Command,
-  S3Client,
-  GetObjectCommand,
-} = require("@aws-sdk/client-s3");
+const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 
 let marketsMap = new Map();
 
@@ -45,13 +40,16 @@ async function processMarkets() {
     setTimeout(async () => {
       while (true) {
         try {
+          const startTime = new Date().getTime();
           console.log("process markets");
           await processAllMarkets();
+          const endTime = new Date().getTime();
+          console.log(`Seconds for processing: ${((endTime - startTime) / 1000).toFixed(0)}`);
         } catch (error) {
           console.log("markets error: ", error);
         }
 
-        await delay(60 * 1000);
+        await delay(5 * 1000);
       }
     }, 3000);
   }
@@ -143,13 +141,12 @@ const loadMarkets = async () => {
   try {
     let isTruncated = true;
 
-    console.log("Available merkle trees:");
     let merkleTreesList = [];
 
     while (isTruncated) {
       const { Contents, IsTruncated, NextContinuationToken } = await awsS3Client.send(command);
       const contentsList = Contents.map((c) => c.Key);
-      console.log(contentsList);
+      console.log(`Available sport merkle trees: ${contentsList.length}`);
       merkleTreesList = [...merkleTreesList, ...contentsList];
 
       isTruncated = IsTruncated;

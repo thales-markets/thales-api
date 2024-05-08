@@ -1,4 +1,3 @@
-const { ethers } = require("ethers");
 const {
   ODDS_TYPE,
   MARKET_TYPE,
@@ -21,6 +20,7 @@ const {
   ENETPULSE_SPORTS,
   TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS,
   JSON_ODDS_SPORTS,
+  SPORT_ID_MAP_ENETPULSE,
 } = require("../constants/tags");
 const { parseBytes32String } = require("ethers/lib/utils");
 const oddslib = require("oddslib");
@@ -321,6 +321,8 @@ const getIsYesNoPlayerPropsMarket = (betType) => SPECIAL_YES_NO_BET_TYPES.includ
 
 const getIsEnetpulseSport = (sportId) => ENETPULSE_SPORTS.includes(Number(sportId));
 
+const getIsEnetpulseSportV2 = (sportId) => SPORT_ID_MAP_ENETPULSE[Number(sportId) - 9000] !== undefined;
+
 const getIsJsonOddsSport = (sportId) => JSON_ODDS_SPORTS.includes(Number(sportId));
 
 const calculateImpliedOddsDifference = (impliedOddsA, impliedOddsB) => {
@@ -512,4 +514,5 @@ module.exports = {
   getIsJsonOddsSport,
   getAverageOdds,
   checkOddsFromMultipleBookmakersV2,
+  getIsEnetpulseSportV2,
 };

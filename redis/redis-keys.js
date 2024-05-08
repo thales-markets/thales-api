@@ -39,7 +39,7 @@ const KEYS = {
     8453: "thalesBaseMarketsLastUpdate",
   },
   OVERTIME_V2_MARKETS: "overtimeV2Markets",
-  OVERTIME_V2_TEAM_NAMES: "overtimeV2TeamNames",
+  OVERTIME_V2_GAMES_INFO: "overtimeV2GamesInfo",
 };
 
 module.exports = KEYS;

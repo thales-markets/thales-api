@@ -1858,11 +1858,11 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   });
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_TEAM_NAMES, (req, res) => {
-  redisClient.get(KEYS.OVERTIME_V2_TEAM_NAMES, function (err, obj) {
-    const teamNames = new Map(JSON.parse(obj));
+app.get(ENDPOINTS.OVERTIME_V2_GAMES_INFO, (req, res) => {
+  redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
+    const gamesInfo = new Map(JSON.parse(obj));
     try {
-      res.send(Object.fromEntries(teamNames));
+      res.send(Object.fromEntries(gamesInfo));
     } catch (e) {
       console.log(e);
     }
