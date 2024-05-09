@@ -67,8 +67,8 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate) => {
   }
 };
 
-const getEnetpulseScore = (results) => {
-  const finalScore = results.find((result) => result.result_code == "finalresult");
+const getEnetpulseScore = (results, resultCode) => {
+  const finalScore = results.find((result) => result.result_code == resultCode);
   if (finalScore) {
     return Number(finalScore.value);
   }
@@ -93,9 +93,9 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate) => {
           Object.values(event.event_participants).map((team) => ({
             name: team.participant.name,
             isHome: team.number === "1",
-            score: team.result ? getEnetpulseScore(Object.values(team.result)) : 0,
-            // TODO: add logic
-            scoreByPeriod: [],
+            score: team.result ? getEnetpulseScore(Object.values(team.result), "ordinarytime") : 0,
+            // TODO: add logic for other sports
+            scoreByPeriod: [team.result ? getEnetpulseScore(Object.values(team.result), "halftime") : 0],
           })),
         );
       }

@@ -1517,8 +1517,11 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
   redisClient.get(KEYS.OVERTIME_V2_MARKETS, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
-    try {
-      const marketsByStatus = markets.get(status);
+    try {            
+      let allMarkets = Array.from(markets.values());
+      const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
+
+      const marketsByStatus = groupMarketsByStatus[status];
       let marketsByType = marketsByStatus;
       if (type) {
         marketsByType = [];
@@ -1840,15 +1843,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   redisClient.get(KEYS.OVERTIME_V2_MARKETS, function (err, obj) {
     const markets = new Map(JSON.parse(obj));
     try {
-      let allMarkets = [];
-
-      markets.forEach((marketsByStatus) => {
-        marketsByStatus.forEach((market) => {
-          allMarkets.push(market);
-          allMarkets.push(...market.childMarkets);
-        });
-      });
-
+      let allMarkets = Array.from(markets.values());
       const market = allMarkets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
 
       return res.send(market || `Market with gameId ${marketAddress} not found.`);

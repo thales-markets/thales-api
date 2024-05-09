@@ -19,8 +19,6 @@ const { MARKET_TYPE, ODDS_TYPE, STATUS } = require("../../overtimeApi/constants/
 const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 
-let marketsMap = new Map();
-
 const awsS3Client = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -129,7 +127,6 @@ const readAwsS3File = async (bucket, key) => {
 
 const loadMarkets = async () => {
   const bucketName = process.env.AWS_BUCKET_NAME;
-  const merkleTreeFolderName = process.env.AWS_FOLDER_NAME_MERKLES;
   const listFolderName = process.env.AWS_FOLDER_NAME_LIST;
 
   const command = new ListObjectsV2Command({
@@ -176,53 +173,50 @@ const loadMarkets = async () => {
   return markets;
 };
 
-const mapMarkets = async () => {
-  const mappedOpenMarkets = [];
-  const mappedOngoingMarkets = [];
-  const mappedResolvedMarkets = [];
-  const mappedCanceledMarkets = [];
-  const mappedPausedMarkets = [];
+const mapMarket = (market) => {
+  const packedMarket = packMarket(market);
+  packedMarket.childMarkets = [];
+  market.childMarkets.forEach((childMarket) => {
+    let packedChildMarket = packMarket(childMarket);
+    packedMarket.childMarkets.push(packedChildMarket);
+  });
 
+  const isStarted = packedMarket.maturityDate < new Date();
+
+  if (packedMarket.isOpen && !isStarted) {
+    packedMarket.statusCode = "open";
+  }
+  if ((packedMarket.isOpen || packedMarket.isPaused) && isStarted) {
+    packedMarket.statusCode = "ongoing";
+  }
+  if (packedMarket.isResolved) {
+    packedMarket.statusCode = "resolved";
+  }
+  if (packedMarket.isCanceled) {
+    packedMarket.statusCode = "canceled";
+  }
+  if (packedMarket.isPaused) {
+    packedMarket.statusCode = "paused";
+  }
+
+  return packedMarket;
+};
+
+const mapMarkets = async () => {
+  const marketsMap = new Map();
   const markets = await loadMarkets();
 
   markets.forEach((market) => {
-    let packedMarket = packMarket(market);
-    packedMarket.childMarkets = [];
-    market.childMarkets.forEach((childMarket) => {
-      let packedChildMarket = packMarket(childMarket);
-      packedMarket.childMarkets.push(packedChildMarket);
-    });
-
-    const isStarted = packedMarket.maturityDate < new Date();
-
-    if (packedMarket.isOpen && !isStarted) {
-      mappedOpenMarkets.push(packedMarket);
-    }
-    if ((packedMarket.isOpen || packedMarket.isPaused) && isStarted) {
-      mappedOngoingMarkets.push(packedMarket);
-    }
-    if (packedMarket.isResolved) {
-      mappedResolvedMarkets.push(packedMarket);
-    }
-    if (packedMarket.isCanceled) {
-      mappedCanceledMarkets.push(packedMarket);
-    }
-    if (packedMarket.isPaused) {
-      mappedPausedMarkets.push(packedMarket);
-    }
+    const mappedMarket = mapMarket(market);
+    marketsMap.set(mappedMarket.gameId, mappedMarket);
   });
 
-  return { mappedOpenMarkets, mappedOngoingMarkets, mappedResolvedMarkets, mappedCanceledMarkets, mappedPausedMarkets };
+  return marketsMap;
 };
 
 async function processAllMarkets() {
   const mappedMarkets = await mapMarkets();
-  marketsMap.set("open", mappedMarkets.mappedOpenMarkets);
-  marketsMap.set("ongoing", mappedMarkets.mappedOngoingMarkets);
-  marketsMap.set("resolved", mappedMarkets.mappedResolvedMarkets);
-  marketsMap.set("canceled", mappedMarkets.mappedCanceledMarkets);
-  marketsMap.set("paused", mappedMarkets.mappedPausedMarkets);
-  redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...marketsMap]), function () {});
+  redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...mappedMarkets]), function () {});
 }
 
 module.exports = {
