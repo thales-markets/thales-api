@@ -9,8 +9,6 @@ const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
 const { getIsEnetpulseSportV2, getIsJsonOddsSport } = require("../../overtimeApi/utils/markets");
 
-let gamesInfoMap = new Map();
-
 const AMERICAN_SPORTS = [1, 2, 3, 4, 5, 6, 8, 10, 20, 21];
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_FUTURE);
@@ -38,7 +36,7 @@ async function processGamesInfo() {
   }
 }
 
-const procesRundownGamesInfoPerDate = async (sports, formattedDate) => {
+const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap) => {
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
     const sport = sportId - 9000;
@@ -75,7 +73,7 @@ const getEnetpulseScore = (results, resultCode) => {
   return 0;
 };
 
-const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate) => {
+const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap) => {
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
     const sport = sportId - 9000;
@@ -107,6 +105,10 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate) => {
 
 async function processAllGamesInfo() {
   const startDate = subDays(new Date(), numberOfDaysInPast);
+  let gamesInfoMap = new Map();
+  redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
+    gamesInfoMap = new Map(JSON.parse(obj));
+  });
 
   for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
     const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
@@ -117,11 +119,12 @@ async function processAllGamesInfo() {
     const enetpulseSports = allSports.filter((sport) => getIsEnetpulseSportV2(sport));
 
     await Promise.all([
-      procesRundownGamesInfoPerDate(rundownSports, formattedDate),
-      procesEnetpulseGamesInfoPerDate(enetpulseSports, formattedDate),
+      procesRundownGamesInfoPerDate(rundownSports, formattedDate, gamesInfoMap),
+      procesEnetpulseGamesInfoPerDate(enetpulseSports, formattedDate, gamesInfoMap),
     ]);
   }
 
+  console.log(`Number of games info: ${Array.from(gamesInfoMap.values()).length}`);
   redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
 }
 

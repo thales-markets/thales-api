@@ -1624,8 +1624,11 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
   redisClient.get(KEYS.OVERTIME_V2_MARKETS, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
-    try {
-      const marketsByStatus = markets.get("ongoing");
+    try {      
+      let allMarkets = Array.from(markets.values());
+      const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
+
+      const marketsByStatus = groupMarketsByStatus["ongoing"] || [];
       let marketsByType = marketsByStatus;
       if (type) {
         marketsByType = [];
