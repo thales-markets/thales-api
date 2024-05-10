@@ -54,6 +54,8 @@ const thalesSpeedUtilsMarkets = require("../thalesSpeedApi/utils/markets");
 const thalesSpeedUtilsNetworks = require("../thalesSpeedApi/utils/networks");
 const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters");
 
+const overtimeMarketsV2 = require("../overtimeV2Api/source/markets");
+
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
 });
@@ -1521,7 +1523,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       let allMarkets = Array.from(markets.values());
       const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
 
-      const marketsByStatus = groupMarketsByStatus[status];
+      const marketsByStatus = groupMarketsByStatus[status] || [];
       let marketsByType = marketsByStatus;
       if (type) {
         marketsByType = [];
@@ -1862,4 +1864,20 @@ app.get(ENDPOINTS.OVERTIME_V2_GAMES_INFO, (req, res) => {
       console.log(e);
     }
   });
+});
+
+app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, (req, res) => {
+  const gameIds = req.body.gameIds;
+
+  if (!gameIds) {
+    res.send("Game IDs are required.");
+    return;
+  }
+  const gameIdsArray = gameIds.split(",");
+  if (!Array.isArray(gameIdsArray)) {
+    res.send("Invalid value for game IDs. The game IDs must be an array.");
+    return;
+  }
+  overtimeMarketsV2.updateMerkleTree(gameIdsArray);
+  res.send();
 });

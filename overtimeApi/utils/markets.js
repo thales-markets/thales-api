@@ -24,6 +24,7 @@ const {
 } = require("../constants/tags");
 const { parseBytes32String } = require("ethers/lib/utils");
 const oddslib = require("oddslib");
+const bytes32 = require("bytes32");
 
 const fixDuplicatedTeamName = (name, isEnetpulseSport) => {
   if (isEnetpulseSport) return name;
@@ -491,6 +492,11 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPosi
   ];
 };
 
+const convertFromBytes32 = (value) => {
+  const result = bytes32({ input: value });
+  return result.replace(/\0/g, "");
+};
+
 module.exports = {
   fixDuplicatedTeamName,
   convertPriceImpactToBonus,
@@ -515,4 +521,5 @@ module.exports = {
   getAverageOdds,
   checkOddsFromMultipleBookmakersV2,
   getIsEnetpulseSportV2,
+  convertFromBytes32,
 };

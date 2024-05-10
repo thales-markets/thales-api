@@ -13,6 +13,7 @@ const {
   getIsYesNoPlayerPropsMarket,
   getIsEnetpulseSport,
   getIsPlayerPropsMarket,
+  convertFromBytes32,
 } = require("../../overtimeApi/utils/markets");
 const { SPORTS_MAP } = require("../../overtimeApi/constants/tags");
 const { MARKET_TYPE, ODDS_TYPE, STATUS } = require("../../overtimeApi/constants/markets");
@@ -162,7 +163,7 @@ const loadMarkets = async () => {
           const marketFileContent = await readAwsS3File(bucketName, marketFile);
           markets = [...markets, ...JSON.parse(marketFileContent)];
         } catch (e) {
-          console.log(`Error reading file ${marketFile}. Skipped for now.`);
+          console.log(`Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
         }
       }
     }
@@ -214,6 +215,37 @@ const mapMarkets = async () => {
   return marketsMap;
 };
 
+async function updateMerkleTree(gameIds) {
+  const startTime = new Date().getTime();
+  console.log(`Updating merkle tree for ${gameIds.length} games`);
+
+  const bucketName = process.env.AWS_BUCKET_NAME;
+  const merkleTreesFolderName = process.env.AWS_FOLDER_NAME_MERKLES;
+
+  let marketsMap = new Map();
+  redisClient.get(KEYS.OVERTIME_V2_MARKETS, function (err, obj) {
+    marketsMap = new Map(JSON.parse(obj));
+  });
+
+  for (let i = 0; i < gameIds.length; i++) {
+    const gameIdString = convertFromBytes32(gameIds[i]);
+    const marketFile = `${merkleTreesFolderName}/${gameIdString}.json`;
+    try {
+      const marketFileContent = await readAwsS3File(bucketName, marketFile);
+      const market = JSON.parse(marketFileContent)[0];
+
+      const mappedMarket = mapMarket(market);
+      marketsMap.set(mappedMarket.gameId, mappedMarket);
+    } catch (e) {
+      console.log(`Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
+    }
+  }
+  redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...marketsMap]), function () {});
+
+  const endTime = new Date().getTime();
+  console.log(`Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);
+}
+
 async function processAllMarkets() {
   const mappedMarkets = await mapMarkets();
   redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...mappedMarkets]), function () {});
@@ -221,4 +253,5 @@ async function processAllMarkets() {
 
 module.exports = {
   processMarkets,
+  updateMerkleTree,
 };
