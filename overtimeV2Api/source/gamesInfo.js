@@ -30,7 +30,7 @@ async function processGamesInfo() {
           console.log("games info error: ", error);
         }
 
-        await delay(60 * 1000);
+        await delay(10 * 60 * 1000);
       }
     }, 3000);
   }
