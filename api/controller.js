@@ -42,7 +42,7 @@ const {
   getOpticOddsLeagueNameById,
 } = require("../overtimeApi/utils/markets");
 const { TWO_POSITIONAL_SPORTS, LIVE_SUPPORTED_LEAGUES } = require("../overtimeV2Api/constants/tags");
-const teamsMapping = require("../overtimeApi/utils/teamsMapping.json");
+const teamsMapping = require("../overtimeV2Api/utils/teamsMapping.json");
 
 const { BigNumber } = require("ethers");
 const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
