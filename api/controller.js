@@ -41,7 +41,7 @@ const {
   getAverageOdds,
   getOpticOddsLeagueNameById,
 } = require("../overtimeApi/utils/markets");
-const { TWO_POSITIONAL_SPORTS, LIVE_SUPPORTED_LEAGUES } = require("../overtimeApi/constants/tags");
+const { TWO_POSITIONAL_SPORTS, LIVE_SUPPORTED_LEAGUES } = require("../overtimeV2Api/constants/tags");
 const teamsMapping = require("../overtimeApi/utils/teamsMapping.json");
 
 const { BigNumber } = require("ethers");
@@ -1519,7 +1519,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
   redisClient.get(KEYS.OVERTIME_V2_MARKETS, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
-    try {            
+    try {
       let allMarkets = Array.from(markets.values());
       const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
 
@@ -1624,7 +1624,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
   redisClient.get(KEYS.OVERTIME_V2_MARKETS, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
-    try {      
+    try {
       let allMarkets = Array.from(markets.values());
       const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
 
