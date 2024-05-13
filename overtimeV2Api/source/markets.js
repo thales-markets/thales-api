@@ -1,8 +1,8 @@
 require("dotenv").config();
 
 const redis = require("redis");
-const { delay } = require("../../overtimeApi/utils/general");
-const { bigNumberFormatter } = require("../../overtimeApi/utils/formatters");
+const { delay } = require("../utils/general");
+const { bigNumberFormatter } = require("../utils/formatters");
 // const markets = require("./treeMarketsAndHashes.json");
 const {
   fixDuplicatedTeamName,
@@ -14,9 +14,9 @@ const {
   getIsEnetpulseSport,
   getIsPlayerPropsMarket,
   convertFromBytes32,
-} = require("../../overtimeApi/utils/markets");
-const { SPORTS_MAP } = require("../../overtimeApi/constants/tags");
-const { MARKET_TYPE, ODDS_TYPE, STATUS } = require("../../overtimeApi/constants/markets");
+} = require("../utils/markets");
+const { SPORTS_MAP } = require("../constants/tags");
+const { MARKET_TYPE, ODDS_TYPE, STATUS } = require("../constants/markets");
 const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 
@@ -55,12 +55,12 @@ async function processMarkets() {
 }
 
 const packMarket = (market) => {
-  const leagueId = `${market.sportId}`.startsWith("9153")
-    ? 9153
-    : `${market.sportId}`.startsWith("9156")
-    ? 9156
-    : `${market.sportId}`.startsWith("9007")
-    ? 9007
+  const leagueId = `${market.sportId}`.startsWith("153")
+    ? 153
+    : `${market.sportId}`.startsWith("156")
+    ? 156
+    : market.sportId === 701 || market.sportId == 702
+    ? 7
     : market.sportId;
   const isEnetpulseSport = getIsEnetpulseSport(leagueId);
   const type = MARKET_TYPE[market.typeId];

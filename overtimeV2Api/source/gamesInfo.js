@@ -1,13 +1,13 @@
 require("dotenv").config();
 
 const redis = require("redis");
-const { delay } = require("../../overtimeApi/utils/general");
-const { SPORTS_MAP, SPORT_ID_MAP_ENETPULSE, SPORT_ID_MAP_RUNDOWN } = require("../../overtimeApi/constants/tags");
+const { delay } = require("../utils/general");
+const { SPORTS_MAP, SPORT_ID_MAP_ENETPULSE, SPORT_ID_MAP_RUNDOWN } = require("../constants/tags");
 const axios = require("axios");
 const { format, addDays, subDays } = require("date-fns");
 const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
-const { getIsEnetpulseSportV2, getIsJsonOddsSport } = require("../../overtimeApi/utils/markets");
+const { getIsEnetpulseSportV2, getIsJsonOddsSport } = require("../utils/markets");
 
 const AMERICAN_SPORTS = [1, 2, 3, 4, 5, 6, 8, 10, 20, 21];
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
@@ -39,7 +39,7 @@ async function processGamesInfo() {
 const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap) => {
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
-    const sport = sportId - 9000;
+    const sport = sportId;
     const rundownSport = SPORT_ID_MAP_RUNDOWN[sport];
 
     console.log(`Getting games info for Rundown sport: ${rundownSport}, ${sport} and date ${formattedDate}`);
@@ -76,7 +76,7 @@ const getEnetpulseScore = (results, resultCode) => {
 const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap) => {
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
-    const sport = sportId - 9000;
+    const sport = sportId;
     const enetpulseSport = SPORT_ID_MAP_ENETPULSE[sport];
 
     console.log(`Getting games info for Enetpulse sport: ${enetpulseSport}, ${sport} and date ${formattedDate}`);
