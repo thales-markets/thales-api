@@ -1652,7 +1652,12 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           teamsMap.set(key, teamsMapping[key]);
         });
 
-        const leagueName = getOpticOddsLeagueNameById(leagueId);
+        let leagueName;
+        if (Number(leagueId) > 9000) {
+          leagueName = getOpticOddsLeagueNameById(leagueId);
+        } else {
+          leagueName = getOpticOddsLeagueNameById(Number(leagueId) + 9000);
+        }
 
         const responseOptiOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?league=${leagueName}`, {
           headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
@@ -1674,6 +1679,14 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
             const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
 
+            console.log(opticOddsGame.home_team);
+            console.log(opticOddsGame.away_team);
+            console.log(market.homeTeam);
+            console.log(market.awayTeam);
+            console.log(homeTeamOpticOdds);
+            console.log(gameHomeTeam);
+            console.log(awayTeamOpticOdds);
+            console.log(gameAwayTeam);
             const homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
             const awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
             const datesMatch =
@@ -1685,6 +1698,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             providerMarketsMatchingOffer.push(opticOddsGameEvent);
           }
         });
+
+        console.log("passed filtering names");
+        console.log(providerMarketsMatchingOffer);
 
         if (providerMarketsMatchingOffer.length == 0) {
           res.send(`Could not find any matches on the provider side for the given league ${leagueName}`);
@@ -1824,6 +1840,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
                     normalizedImplied: oddslib.from("decimal", positionOdds).to("impliedProbability"),
                   };
                 });
+                console.log("returning market without aggregation");
+                console.log(market);
                 return market;
               }
             }
