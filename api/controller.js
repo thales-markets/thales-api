@@ -40,7 +40,7 @@ const {
   checkOddsFromMultipleBookmakersV2,
   getAverageOdds,
   getOpticOddsLeagueNameById,
-} = require("../overtimeApi/utils/markets");
+} = require("../overtimeV2Api/utils/markets");
 const { TWO_POSITIONAL_SPORTS, LIVE_SUPPORTED_LEAGUES } = require("../overtimeV2Api/constants/tags");
 const teamsMapping = require("../overtimeV2Api/utils/teamsMapping.json");
 

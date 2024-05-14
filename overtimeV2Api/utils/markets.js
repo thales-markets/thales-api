@@ -392,71 +392,71 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPosi
       const drawOdd = firstLine.drawOdds;
 
       // Maximum allowed percentage difference for implied odds
-      const maxImpliedPercentageDifference = Number(MAX_PERCENTAGE_DIFF_BETWEEN_ODDS);
+      // const maxImpliedPercentageDifference = Number(MAX_PERCENTAGE_DIFF_BETWEEN_ODDS);
 
-      // Check if the implied odds from other bookmakers have a difference of more than 10%
-      const hasLargeImpliedPercentageDifference = arrayOfBookmakers.slice(1).some((bookmakerId) => {
-        const line = oddsMap[bookmakerId];
-        if (line) {
-          const otherHomeOdd = line.homeOdds;
-          const otherAwayOdd = line.awayOdds;
-          const otherDrawOdd = line.drawOdds;
+      // // Check if the implied odds from other bookmakers have a difference of more than 10%
+      // const hasLargeImpliedPercentageDifference = arrayOfBookmakers.slice(1).some((bookmakerId) => {
+      //   const line = oddsMap[bookmakerId];
+      //   if (line) {
+      //     const otherHomeOdd = line.homeOdds;
+      //     const otherAwayOdd = line.awayOdds;
+      //     const otherDrawOdd = line.drawOdds;
 
-          const homeOddsImplied = oddslib.from("decimal", homeOdd).to("impliedProbability");
+      //     const homeOddsImplied = oddslib.from("decimal", homeOdd).to("impliedProbability");
 
-          const awayOddsImplied = oddslib.from("decimal", awayOdd).to("impliedProbability");
+      //     const awayOddsImplied = oddslib.from("decimal", awayOdd).to("impliedProbability");
 
-          // Calculate implied odds for the "draw" if it's not a two-positions sport
-          const drawOddsImplied = isTwoPositionalSport ? 0 : oddslib.from("decimal", drawOdd).to("impliedProbability");
+      //     // Calculate implied odds for the "draw" if it's not a two-positions sport
+      //     const drawOddsImplied = isTwoPositionalSport ? 0 : oddslib.from("decimal", drawOdd).to("impliedProbability");
 
-          const otherHomeOddImplied = oddslib.from("decimal", otherHomeOdd).to("impliedProbability");
+      //     const otherHomeOddImplied = oddslib.from("decimal", otherHomeOdd).to("impliedProbability");
 
-          const otherAwayOddImplied = oddslib.from("decimal", otherAwayOdd).to("impliedProbability");
+      //     const otherAwayOddImplied = oddslib.from("decimal", otherAwayOdd).to("impliedProbability");
 
-          // Calculate implied odds for the "draw" if it's not a two-positions sport
-          const otherDrawOddImplied = isTwoPositionalSport
-            ? 0
-            : oddslib.from("decimal", otherDrawOdd).to("impliedProbability");
+      //     // Calculate implied odds for the "draw" if it's not a two-positions sport
+      //     const otherDrawOddImplied = isTwoPositionalSport
+      //       ? 0
+      //       : oddslib.from("decimal", otherDrawOdd).to("impliedProbability");
 
-          // Calculate the percentage difference for implied odds
-          const homeOddsDifference = calculateImpliedOddsDifference(homeOddsImplied, otherHomeOddImplied);
+      //     // Calculate the percentage difference for implied odds
+      //     const homeOddsDifference = calculateImpliedOddsDifference(homeOddsImplied, otherHomeOddImplied);
 
-          const awayOddsDifference = calculateImpliedOddsDifference(awayOddsImplied, otherAwayOddImplied);
+      //     const awayOddsDifference = calculateImpliedOddsDifference(awayOddsImplied, otherAwayOddImplied);
 
-          // Check implied odds difference for the "draw" only if it's not a two-positions sport
-          const drawOddsDifference = isTwoPositionalSport
-            ? 0
-            : calculateImpliedOddsDifference(drawOddsImplied, otherDrawOddImplied);
+      //     // Check implied odds difference for the "draw" only if it's not a two-positions sport
+      //     const drawOddsDifference = isTwoPositionalSport
+      //       ? 0
+      //       : calculateImpliedOddsDifference(drawOddsImplied, otherDrawOddImplied);
 
-          // Check if the percentage difference exceeds the threshold
-          if (
-            (homeOddsDifference > maxImpliedPercentageDifference &&
-              homeOddsImplied > MIN_ODDS_FOR_DIFF_CHECKING &&
-              otherHomeOddImplied > MIN_ODDS_FOR_DIFF_CHECKING) ||
-            (awayOddsDifference > maxImpliedPercentageDifference &&
-              awayOddsImplied > MIN_ODDS_FOR_DIFF_CHECKING &&
-              otherAwayOddImplied > MIN_ODDS_FOR_DIFF_CHECKING) ||
-            (!isTwoPositionalSport &&
-              drawOddsDifference > maxImpliedPercentageDifference &&
-              drawOddsImplied > MIN_ODDS_FOR_DIFF_CHECKING &&
-              otherDrawOddImplied > MIN_ODDS_FOR_DIFF_CHECKING)
-          ) {
-            return true;
-          }
-        }
-        return false;
-      });
+      //     // Check if the percentage difference exceeds the threshold
+      //     if (
+      //       (homeOddsDifference > maxImpliedPercentageDifference &&
+      //         homeOddsImplied > MIN_ODDS_FOR_DIFF_CHECKING &&
+      //         otherHomeOddImplied > MIN_ODDS_FOR_DIFF_CHECKING) ||
+      //       (awayOddsDifference > maxImpliedPercentageDifference &&
+      //         awayOddsImplied > MIN_ODDS_FOR_DIFF_CHECKING &&
+      //         otherAwayOddImplied > MIN_ODDS_FOR_DIFF_CHECKING) ||
+      //       (!isTwoPositionalSport &&
+      //         drawOddsDifference > maxImpliedPercentageDifference &&
+      //         drawOddsImplied > MIN_ODDS_FOR_DIFF_CHECKING &&
+      //         otherDrawOddImplied > MIN_ODDS_FOR_DIFF_CHECKING)
+      //     ) {
+      //       return true;
+      //     }
+      //   }
+      //   return false;
+      // });
 
-      if (hasLargeImpliedPercentageDifference) {
-        console.log("Returning zero odds due to percentage difference");
-        return [
-          {
-            homeOdds: 0,
-            awayOdds: 0,
-            drawOdds: 0,
-          },
-        ];
-      }
+      // if (hasLargeImpliedPercentageDifference) {
+      //   console.log("Returning zero odds due to percentage difference");
+      //   return [
+      //     {
+      //       homeOdds: 0,
+      //       awayOdds: 0,
+      //       drawOdds: 0,
+      //     },
+      //   ];
+      // }
 
       const firstBookieOdds = {
         homeOdds: homeOdd,
