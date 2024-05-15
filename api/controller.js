@@ -1603,6 +1603,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
   const allLeagueIds = sports.map((sport) => Number(sport.id));
   const allSports = uniqBy(sports.map((sport) => sport.sport.toLowerCase()));
 
+  console.log("entering live");
+
   if (sport && !allSports.includes(sport.toLowerCase())) {
     res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime/sports.`);
     return;
@@ -1652,13 +1654,10 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           teamsMap.set(key, teamsMapping[key]);
         });
 
-        let leagueName;
-        if (Number(leagueId) > 9000) {
-          leagueName = getOpticOddsLeagueNameById(leagueId);
-        } else {
-          leagueName = getOpticOddsLeagueNameById(Number(leagueId) + 9000);
-        }
+        console.log(leagueId);
+        const leagueName = getOpticOddsLeagueNameById(leagueId);
 
+        console.log(leagueName);
         const responseOptiOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?league=${leagueName}`, {
           headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
         });
@@ -1687,6 +1686,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             console.log(gameHomeTeam);
             console.log(awayTeamOpticOdds);
             console.log(gameAwayTeam);
+
             const homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
             const awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
             const datesMatch =
