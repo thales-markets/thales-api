@@ -1,6 +1,6 @@
 const thalesData = require("thales-data");
 const cache = require("../services/cache");
-const { getStakersKey, getCacheKey } = require("../utils/getters");
+const { getCacheKey } = require("../utils/getters");
 const TTL = require("../constants/ttl");
 const { PREFIX_KEYS } = require("../constants/cacheKeys");
 

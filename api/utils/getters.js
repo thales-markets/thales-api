@@ -3,7 +3,10 @@ const getCacheKey = (prefixKey, keys) => {
 
   keys.unshift(prefixKey);
 
-  return keys.map((item) => item?.toLowerCase()).join("-");
+  return keys
+    .filter((item) => item)
+    .map((item) => item?.toLowerCase())
+    .join("-");
 };
 
 module.exports = {

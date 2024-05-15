@@ -3,6 +3,10 @@ const express = require("express");
 const request = require("request");
 const app = express();
 
+const stakersRoutes = require("./routes/stakers.route");
+const cacheControlRoutes = require("./routes/cache.route");
+const lpRoutes = require("./routes/lp.route");
+
 var cors = require("cors");
 app.use(cors());
 app.use(express.json());
@@ -12,6 +16,11 @@ app.use(function (req, res, next) {
   }
   next();
 });
+
+// V1 API with caching
+app.use("/v1/stakers", stakersRoutes);
+app.use("/v1/liquidity-providing", lpRoutes);
+app.use("/v1/cache-control", cacheControlRoutes);
 
 const bytes32 = require("bytes32");
 const oddslib = require("oddslib");
@@ -51,7 +60,7 @@ const thalesSpeedUtilsMarkets = require("../thalesSpeedApi/utils/markets");
 const thalesSpeedUtilsNetworks = require("../thalesSpeedApi/utils/networks");
 const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters");
 
-app.listen(process.env.PORT || 3002, () => {
+app.listen(process.env.PORT || 3050, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
 });
 
@@ -836,10 +845,10 @@ app.get(ENDPOINTS.THALES_MARKETS_COUNT, (req, res) => {
         data.push({ asset: assetKey, count: totalCountByAsset, byMaturity: byMaturityData });
       });
 
-      return res.send({ data, lastUpdatedAt: obj[1] ? obj[1] : '' });
-    })
+      return res.send({ data, lastUpdatedAt: obj[1] ? obj[1] : "" });
+    });
   } catch (e) {
-    console.log('Error ', e);
+    console.log("Error ", e);
     return null;
   }
 });
