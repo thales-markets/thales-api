@@ -1,7 +1,8 @@
 const thalesData = require("thales-data");
 const cache = require("../services/cache");
-const { getStakersKey } = require("../constants/cacheKeys");
+const { getStakersKey, getCacheKey } = require("../utils/getters");
 const TTL = require("../constants/ttl");
+const { PREFIX_KEYS } = require("../constants/cacheKeys");
 
 const stakers = async (req, res) => {
   try {
@@ -9,7 +10,7 @@ const stakers = async (req, res) => {
 
     if (!networkId) return res.status(400);
 
-    const cachedStakers = cache.get(getStakersKey(networkId));
+    const cachedStakers = cache.get(getCacheKey(PREFIX_KEYS.Stakers, [networkId]));
 
     if (cachedStakers) return res.send(cachedStakers);
 
@@ -17,7 +18,7 @@ const stakers = async (req, res) => {
       network: networkId,
     });
 
-    cache.set(getStakersKey(networkId), stakersData, TTL.Stakers);
+    cache.set(getCacheKey(PREFIX_KEYS.Stakers, [networkId]), stakersData, TTL.Stakers);
 
     if (!stakersData) return res.status(204);
 
