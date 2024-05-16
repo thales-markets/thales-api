@@ -7,6 +7,7 @@ const stakersRoutes = require("./routes/stakers.route");
 const cacheControlRoutes = require("./routes/cache.route");
 const lpRoutes = require("./routes/lp.route");
 const marketsRoutes = require("./routes/markets.route");
+const tradesRoutes = require("./routes/trades.route");
 
 var cors = require("cors");
 app.use(cors());
@@ -22,6 +23,7 @@ app.use(function (req, res, next) {
 app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/liquidity-providing", lpRoutes);
 app.use("/v1/markets", marketsRoutes);
+app.use("/v1/trades", tradesRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
 
 const bytes32 = require("bytes32");

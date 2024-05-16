@@ -1,9 +1,9 @@
 const express = require("express");
-const { markets, trades } = require("../controllers/markets.controller");
+const { markets, rangedMarkets } = require("../controllers/markets.controller");
 
 const router = express.Router();
 
 router.get("/list/:networkId", markets);
-router.get("/trades/:networkId", trades);
+router.get("/ranged/:networkId", rangedMarkets);
 
 module.exports = router;

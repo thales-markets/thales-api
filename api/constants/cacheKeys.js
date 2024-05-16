@@ -4,6 +4,8 @@ const PREFIX_KEYS = {
   LiquidityPoolTransactions: "liquidity-pool-tx-",
   Markets: "markets-",
   Trades: "trades-",
+  OptionTransactions: "option-transactions-",
+  RangedMarkets: "ranged-markets",
 };
 
 module.exports = {

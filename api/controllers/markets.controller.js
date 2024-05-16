@@ -3,6 +3,7 @@ const { PREFIX_KEYS } = require("../constants/cacheKeys");
 const cache = require("../services/cache");
 const TTL = require("../constants/ttl");
 const { getCacheKey } = require("../utils/getters");
+const { ethers } = require("ethers");
 
 const markets = async (req, res) => {
   try {
@@ -36,37 +37,66 @@ const markets = async (req, res) => {
   }
 };
 
-const trades = async (req, res) => {
+const rangedMarkets = async (req, res) => {
   try {
     const networkId = req?.params?.networkId;
 
-    const makerToken = req?.query?.["maker-token"];
-    const takerToken = req?.query?.["taker-token"];
+    const minMaturity = req?.query?.["min-maturity"];
+    const maxMaturity = req?.query?.["max-maturity"];
 
-    const maker = req?.query?.["maker"];
-    const taker = req?.query?.["taker"];
+    const currencyKey = req?.query?.["currency-key"];
+    const marketIds = req?.query?.["markets-ids"];
 
-    if (!networkId && (!makerToken || !takerToken || !maker || !taker)) return res.status(400);
+    const marketsIdsArr = [];
+
+    if (marketIds && marketIds.includes(",")) {
+      marketsIdsArr.push(
+        ...marketIds
+          .split(",")
+          .filter((item) => item)
+          .map((item) => item.trim()),
+      );
+    }
+
+    if (!networkId) return res.status(400);
+    if (!minMaturity) return res.status(400);
 
     const cachedResponse = cache.get(
-      getCacheKey(PREFIX_KEYS.Trades, [networkId, takerToken, makerToken, taker, maker]),
+      getCacheKey(PREFIX_KEYS.RangedMarkets, [
+        networkId,
+        minMaturity,
+        maxMaturity,
+        marketsIdsArr.length ? marketsIdsArr.join("-") : undefined,
+        currencyKey,
+      ]),
     );
 
     if (cachedResponse) return res.send(cachedResponse);
 
-    const trades = await thalesData.binaryOptions.trades({
+    const markets = await thalesData.binaryOptions.rangedMarkets({
+      max: Infinity,
       network: networkId,
-      makerToken: makerToken ? makerToken : undefined,
-      takerToken: takerToken ? takerToken : undefined,
-      maker: maker ? maker : undefined,
-      taker: taker ? taker : undefined,
+      minMaturity: minMaturity ? minMaturity : undefined,
+      maxMaturity: maxMaturity ? maxMaturity : undefined,
+      currencyKey: currencyKey ? ethers.utils.formatBytes32String(currencyKey) : undefined,
+      marketIds: marketsIdsArr.length ? marketsIdsArr : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.Trades, [networkId, takerToken, makerToken, taker, maker]), trades, TTL.MARKETS);
+    cache.set(
+      getCacheKey(PREFIX_KEYS.RangedMarkets, [
+        networkId,
+        minMaturity,
+        maxMaturity,
+        marketsIdsArr.length ? marketsIdsArr.join("-") : undefined,
+        currencyKey,
+      ]),
+      markets,
+      TTL.MARKETS,
+    );
 
-    if (!trades) return res.status(204);
+    if (!markets) return res.status(204);
 
-    return res.status(200).send(trades);
+    return res.status(200).send(markets);
   } catch (e) {
     console.log("Error ", e);
     return res.send(500);
@@ -75,5 +105,5 @@ const trades = async (req, res) => {
 
 module.exports = {
   markets,
-  trades,
+  rangedMarkets,
 };
