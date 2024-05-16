@@ -6,6 +6,7 @@ const PREFIX_KEYS = {
   Trades: "trades-",
   OptionTransactions: "option-transactions-",
   RangedMarkets: "ranged-markets",
+  PositionBalance: "position-balance",
 };
 
 module.exports = {

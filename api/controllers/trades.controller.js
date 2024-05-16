@@ -76,7 +76,36 @@ const trades = async (req, res) => {
   }
 };
 
+const positionBalance = async (req, res) => {
+  try {
+    const networkId = req?.params?.networkId;
+
+    const account = req?.query?.["account"];
+
+    if (!networkId && !account) return res.status(400);
+
+    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.PositionBalance, [networkId, account]));
+
+    if (cachedResponse) return res.send(cachedResponse);
+
+    const positionBalances = await thalesData.binaryOptions.positionBalances({
+      network: networkId,
+      account: account ? account : undefined,
+    });
+
+    cache.set(getCacheKey(PREFIX_KEYS.PositionBalance, [networkId, account]), positionBalances, TTL.POSITION_BALANCE);
+
+    if (!positionBalances) return res.status(204);
+
+    return res.status(200).send(positionBalances);
+  } catch (e) {
+    console.log("Error ", e);
+    return res.send(500);
+  }
+};
+
 module.exports = {
   optionTransactions,
   trades,
+  positionBalance,
 };
