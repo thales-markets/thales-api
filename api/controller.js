@@ -1603,8 +1603,6 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
   const allLeagueIds = sports.map((sport) => Number(sport.id));
   const allSports = uniqBy(sports.map((sport) => sport.sport.toLowerCase()));
 
-  console.log("entering live");
-
   if (sport && !allSports.includes(sport.toLowerCase())) {
     res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime/sports.`);
     return;
@@ -1654,10 +1652,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           teamsMap.set(key, teamsMapping[key]);
         });
 
-        console.log(leagueId);
         const leagueName = getOpticOddsLeagueNameById(leagueId);
 
-        console.log(leagueName);
         const responseOptiOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?league=${leagueName}`, {
           headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
         });
@@ -1698,9 +1694,6 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             providerMarketsMatchingOffer.push(opticOddsGameEvent);
           }
         });
-
-        console.log("passed filtering names");
-        console.log(providerMarketsMatchingOffer);
 
         if (providerMarketsMatchingOffer.length == 0) {
           res.send(`Could not find any matches on the provider side for the given league ${leagueName}`);
@@ -1790,17 +1783,11 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
               TWO_POSITIONAL_SPORTS.includes(leagueId),
             );
 
-            console.log(oddsList);
-
-            if (
-              oddsList.length == 1 &&
-              oddsList[0].homeOdds == 0 &&
-              oddsList[0].awayOdds == 0 &&
-              oddsList[0].drawOdds == 0
-            ) {
+            if (oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0) {
               return null;
             } else {
-              if (process.env.ODDS_AGGREGATION_ENABLED) {
+              const aggregationEnabled = Number(process.env.ODDS_AGGREGATION_ENABLED);
+              if (aggregationEnabled > 0) {
                 const aggregatedOdds = getAverageOdds(oddsList);
                 market.odds = market.odds.map((_odd, index) => {
                   let positionOdds;
@@ -1840,8 +1827,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
                     normalizedImplied: oddslib.from("decimal", positionOdds).to("impliedProbability"),
                   };
                 });
-                console.log("returning market without aggregation");
-                console.log(market);
+
                 return market;
               }
             }
