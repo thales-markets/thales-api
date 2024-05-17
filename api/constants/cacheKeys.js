@@ -8,6 +8,9 @@ const PREFIX_KEYS = {
   RangedMarkets: "ranged-markets",
   PositionBalance: "position-balance",
   RangePositionBalance: "range-position-balance",
+  ReferralTransactions: "referral-transactions",
+  ReferredTraders: "referred-traders",
+  Referrers: "referrers",
 };
 
 module.exports = {
