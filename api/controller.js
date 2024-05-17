@@ -9,6 +9,7 @@ const lpRoutes = require("./routes/lp.route");
 const marketsRoutes = require("./routes/markets.route");
 const tradesRoutes = require("./routes/trades.route");
 const referralRoutes = require("./routes/referral.route");
+const vaultRoutes = require("./routes/vaults.route");
 
 var cors = require("cors");
 app.use(cors());
@@ -26,6 +27,7 @@ app.use("/v1/liquidity-providing", lpRoutes);
 app.use("/v1/markets", marketsRoutes);
 app.use("/v1/trades", tradesRoutes);
 app.use("/v1/referral", referralRoutes);
+app.use("/v1/vaults", vaultRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
 
 const bytes32 = require("bytes32");

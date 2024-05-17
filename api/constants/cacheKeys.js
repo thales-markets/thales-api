@@ -13,6 +13,10 @@ const PREFIX_KEYS = {
   ReferralTransactions: "referral-transactions",
   ReferredTraders: "referred-traders",
   Referrers: "referrers",
+
+  VaultUserTransactions: "vault-user-transactions",
+  VaultPnl: "vault-pnl",
+  VaultTransactions: "vault-transactions",
 };
 
 module.exports = {
