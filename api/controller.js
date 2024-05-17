@@ -43,6 +43,7 @@ const {
 } = require("../overtimeV2Api/utils/markets");
 const { TWO_POSITIONAL_SPORTS, LIVE_SUPPORTED_LEAGUES } = require("../overtimeV2Api/constants/tags");
 const teamsMapping = require("../overtimeV2Api/utils/teamsMapping.json");
+const dummyMarketsLive = require("../overtimeV2Api/utils/dummy/dummyMarketsLive.json");
 
 const { BigNumber } = require("ethers");
 const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
@@ -1624,6 +1625,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
   redisClient.get(KEYS.OVERTIME_V2_MARKETS, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
+
+    const enabledDummyMarkets = Number(process.env.LIVE_DUMMY_MARKETS_ENABLED);
     try {
       let allMarkets = Array.from(markets.values());
       const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
@@ -1660,7 +1663,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
         const opticOddsResponseData = responseOptiOddsGames.data.data;
 
-        if (opticOddsResponseData.length == 0) {
+        if (opticOddsResponseData.length == 0 && enabledDummyMarkets == 0) {
           res.send(`Could not find any games on the provider side for the given league ${leagueName}`);
           return;
         }
@@ -1695,7 +1698,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           }
         });
 
-        if (providerMarketsMatchingOffer.length == 0) {
+        if (providerMarketsMatchingOffer.length == 0 && enabledDummyMarkets == 0) {
           res.send(`Could not find any matches on the provider side for the given league ${leagueName}`);
           return;
         }
@@ -1835,8 +1838,14 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             return null;
           }
         });
-
-        res.send(filteredMarketsWithLiveOdds.filter((market) => market != null));
+        let filteredMarketsWithLiveOddsAndDummyMarkets;
+        if (leagueId == 536) {
+          const dummyMarkets = [...dummyMarketsLive];
+          filteredMarketsWithLiveOddsAndDummyMarkets = filteredMarketsWithLiveOdds.concat(dummyMarkets);
+        } else {
+          filteredMarketsWithLiveOddsAndDummyMarkets = filteredMarketsWithLiveOdds;
+        }
+        res.send(filteredMarketsWithLiveOddsAndDummyMarkets.filter((market) => market != null));
         return;
       }
       res.send([]);
