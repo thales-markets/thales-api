@@ -11,6 +11,7 @@ const PREFIX_KEYS = {
   ReferralTransactions: "referral-transactions",
   ReferredTraders: "referred-traders",
   Referrers: "referrers",
+  ClaimOnBehalfItems: "claim-on-behalf",
 };
 
 module.exports = {

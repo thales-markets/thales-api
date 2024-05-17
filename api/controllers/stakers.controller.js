@@ -29,6 +29,35 @@ const stakers = async (req, res) => {
   }
 };
 
+const claimOnBehalfItems = async (req, res) => {
+  try {
+    const networkId = req.params.networkParam;
+
+    const sender = req?.query?.["sender"];
+
+    if (!networkId) return res.status(400);
+
+    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.ClaimOnBehalfItems, [networkId, sender]));
+
+    if (cachedResponse) return res.send(cachedResponse);
+
+    const canClaimOnBehalfItems = await thalesData.binaryOptions.canClaimOnBehalfItems({
+      network: networkId,
+      sender: sender ? sender : undefined,
+    });
+
+    cache.set(getCacheKey(PREFIX_KEYS.ClaimOnBehalfItems, [networkId, sender]), canClaimOnBehalfItems, TTL.Stakers);
+
+    if (!canClaimOnBehalfItems) return res.status(204);
+
+    return res.status(200).send(canClaimOnBehalfItems);
+  } catch (e) {
+    console.log("Error ", e);
+    return res.send(500);
+  }
+};
+
 module.exports = {
   stakers,
+  claimOnBehalfItems,
 };
