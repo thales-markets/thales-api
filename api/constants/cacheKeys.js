@@ -1,5 +1,7 @@
 const PREFIX_KEYS = {
   Stakers: "stakers-",
+  ClaimOnBehalfItems: "claim-on-behalf",
+  TokenTransactions: "token-transactions",
   LiquidityPoolPnl: "liquidity-pool-pnl-",
   LiquidityPoolTransactions: "liquidity-pool-tx-",
   Markets: "markets-",
@@ -11,7 +13,6 @@ const PREFIX_KEYS = {
   ReferralTransactions: "referral-transactions",
   ReferredTraders: "referred-traders",
   Referrers: "referrers",
-  ClaimOnBehalfItems: "claim-on-behalf",
 };
 
 module.exports = {

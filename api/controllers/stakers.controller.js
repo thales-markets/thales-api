@@ -57,6 +57,36 @@ const claimOnBehalfItems = async (req, res) => {
   }
 };
 
+const tokenTransaction = async (req, res) => {
+  try {
+    const networkId = req.params.networkParam;
+
+    const account = req?.query?.["account"];
+    const typeIn = req?.query?.["type_in"];
+
+    if (!networkId) return res.status(400);
+
+    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.TokenTransactions, [networkId, account, typeIn]));
+
+    if (cachedResponse) return res.send(cachedResponse);
+
+    const tokenTransactions = await thalesData.binaryOptions.tokenTransactions({
+      network: networkId,
+      account: account ? account : undefined,
+      typeIn: typeIn ? typeIn : undefined,
+    });
+
+    cache.set(getCacheKey(PREFIX_KEYS.TokenTransactions, [networkId, account, typeIn]), tokenTransactions, TTL.Stakers);
+
+    if (!tokenTransactions) return res.status(204);
+
+    return res.status(200).send(tokenTransactions);
+  } catch (e) {
+    console.log("Error ", e);
+    return res.send(500);
+  }
+};
+
 module.exports = {
   stakers,
   claimOnBehalfItems,
