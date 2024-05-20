@@ -41,7 +41,8 @@ const {
   getAverageOdds,
   getOpticOddsLeagueNameById,
 } = require("../overtimeV2Api/utils/markets");
-const { TWO_POSITIONAL_SPORTS, LIVE_SUPPORTED_LEAGUES } = require("../overtimeV2Api/constants/tags");
+const { TWO_POSITIONAL_SPORTS, LIVE_SUPPORTED_LEAGUES, SPORTS_TAGS_MAP } = require("../overtimeV2Api/constants/tags");
+const { MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL } = require("../overtimeV2Api/constants/markets");
 const teamsMapping = require("../overtimeV2Api/utils/teamsMapping.json");
 const dummyMarketsLive = require("../overtimeV2Api/utils/dummy/dummyMarketsLive.json");
 
@@ -1714,7 +1715,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
         const responsesOddsPerGame = await Promise.all(urlsGamesOdds);
 
-        const filteredMarketsWithLiveOdds = filteredMarkets.map((market) => {
+        const filteredMarketsWithLiveOdds = filteredMarkets.map(async (market) => {
           const responseObject = responsesOddsPerGame.find((responseObject) => {
             const response = responseObject.data.data[0];
 
@@ -1734,6 +1735,25 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           });
 
           if (responseObject != undefined) {
+            if (SPORTS_TAGS_MAP["Soccer"].includes(Number(leagueId))) {
+              console.log("Entering 85th minute logic");
+              const responseOpticOddsScores = await axios.get(
+                `https://api.opticodds.com/api/v2/scores?game_id=${responseObject.data.data[0]}`,
+                {
+                  headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+                },
+              );
+
+              const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
+
+              const gameClock = gameTimeOpticOddsResponseData.clock;
+              console.log("Game clock from API:", gameClock);
+
+              if (gameClock != null && Number(gameClock) >= MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL) {
+                return null;
+              }
+            }
+
             let linesMap = new Map();
 
             const gameOdds = responseObject.data.data[0];
