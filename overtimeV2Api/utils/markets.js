@@ -357,8 +357,18 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPosi
   });
 
   if (arrayOfBookmakers.length == 1) {
+    if (hasZeroOdds) {
+      return [
+        {
+          homeOdds: 0,
+          awayOdds: 0,
+          drawOdds: 0,
+        },
+      ];
+    }
     const firstBookmaker = arrayOfBookmakers[0];
     const firstLine = oddsMap.get(firstBookmaker);
+
     return [
       {
         homeOdds: firstLine.homeOdds,

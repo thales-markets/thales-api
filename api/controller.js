@@ -1678,15 +1678,6 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
             const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
 
-            console.log(opticOddsGame.home_team);
-            console.log(opticOddsGame.away_team);
-            console.log(market.homeTeam);
-            console.log(market.awayTeam);
-            console.log(homeTeamOpticOdds);
-            console.log(gameHomeTeam);
-            console.log(awayTeamOpticOdds);
-            console.log(gameAwayTeam);
-
             const homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
             const awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
             const datesMatch =
@@ -1735,31 +1726,38 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           });
 
           if (responseObject != undefined) {
+            const gameWithOdds = responseObject.data.data[0];
+
             if (SPORTS_TAGS_MAP["Soccer"].includes(Number(leagueId))) {
-              console.log("Entering 85th minute logic");
               const responseOpticOddsScores = await axios.get(
-                `https://api.opticodds.com/api/v2/scores?game_id=${responseObject.data.data[0]}`,
+                `https://api.opticodds.com/api/v2/scores?game_id=${gameWithOdds.id}`,
                 {
                   headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
                 },
               );
-
               const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
 
+              if (responseOpticOddsScores.data.data.length == 0) {
+                console.log(
+                  `BLOCKING GAME ${gameWithOdds.home_team} - ${gameWithOdds.away_team} DUE TO GAME CLOCK BEING UNAVAILABLE`,
+                );
+                return null;
+              }
+
               const gameClock = gameTimeOpticOddsResponseData.clock;
-              console.log("Game clock from API:", gameClock);
 
               if (gameClock != null && Number(gameClock) >= MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL) {
+                console.log(
+                  `BLOCKING GAME ${gameWithOdds.home_team} - ${gameWithOdds.away_team} DUE TO CLOCK ${gameClock}`,
+                );
                 return null;
               }
             }
 
             let linesMap = new Map();
 
-            const gameOdds = responseObject.data.data[0];
-
             liveOddsProviders.forEach((oddsProvider) => {
-              const providerOddsObjects = gameOdds.odds.filter(
+              const providerOddsObjects = gameWithOdds.odds.filter(
                 (oddsObject) => oddsObject.sports_book_name.toLowerCase() == oddsProvider.toLowerCase(),
               );
 
@@ -1783,7 +1781,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
               }
 
               let drawOdds = 0;
-              if (!TWO_POSITIONAL_SPORTS.includes(leagueId)) {
+              if (!TWO_POSITIONAL_SPORTS.includes(Number(leagueId))) {
                 const drawOddsObject = providerOddsObjects.find(
                   (oddsObject) => oddsObject.name.toLowerCase() == "draw",
                 );
@@ -1800,11 +1798,21 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
               });
             });
 
+            console.log(linesMap);
+
             const oddsList = checkOddsFromMultipleBookmakersV2(
               linesMap,
               liveOddsProviders,
-              TWO_POSITIONAL_SPORTS.includes(leagueId),
+              TWO_POSITIONAL_SPORTS.includes(Number(leagueId)),
             );
+
+            const isThere100PercentOdd = oddsList.some(
+              (oddsObject) => oddsObject.homeOdds == 1 || oddsObject.awayOdds == 1 || oddsObject.drawOdds == 1,
+            );
+
+            if (isThere100PercentOdd) {
+              return null;
+            }
 
             if (oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0) {
               return null;
@@ -1850,7 +1858,6 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
                     normalizedImplied: oddslib.from("decimal", positionOdds).to("impliedProbability"),
                   };
                 });
-
                 return market;
               }
             }
@@ -1859,11 +1866,12 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           }
         });
         let filteredMarketsWithLiveOddsAndDummyMarkets;
+        const resolvedMarketPromises = await Promise.all(filteredMarketsWithLiveOdds);
         if (leagueId == 536) {
           const dummyMarkets = [...dummyMarketsLive];
-          filteredMarketsWithLiveOddsAndDummyMarkets = filteredMarketsWithLiveOdds.concat(dummyMarkets);
+          filteredMarketsWithLiveOddsAndDummyMarkets = resolvedMarketPromises.concat(dummyMarkets);
         } else {
-          filteredMarketsWithLiveOddsAndDummyMarkets = filteredMarketsWithLiveOdds;
+          filteredMarketsWithLiveOddsAndDummyMarkets = resolvedMarketPromises;
         }
         res.send(filteredMarketsWithLiveOddsAndDummyMarkets.filter((market) => market != null));
         return;
