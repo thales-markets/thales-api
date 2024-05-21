@@ -169,6 +169,7 @@
   {
     "id": 50,
     "name": "UEFA EURO Qualifications",
+    "opticOddsName": "UEFA - European Championship",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },

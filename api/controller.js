@@ -1736,27 +1736,30 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           if (responseObject != undefined) {
             const gameWithOdds = responseObject.data.data[0];
 
-            if (SPORTS_TAGS_MAP["Soccer"].includes(Number(leagueId))) {
-              const responseOpticOddsScores = await axios.get(
-                `https://api.opticodds.com/api/v2/scores?game_id=${gameWithOdds.id}`,
-                {
-                  headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-                },
-              );
-              const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
+            const responseOpticOddsScores = await axios.get(
+              `https://api.opticodds.com/api/v2/scores?game_id=${gameWithOdds.id}`,
+              {
+                headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+              },
+            );
+            const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
 
+            const currentScoreHome = gameTimeOpticOddsResponseData.score_home_total;
+            const currentScoreAway = gameTimeOpticOddsResponseData.score_away_total;
+            const currentClock = gameTimeOpticOddsResponseData.clock;
+            const currentPeriod = gameTimeOpticOddsResponseData.period;
+
+            if (SPORTS_TAGS_MAP["Soccer"].includes(Number(leagueId))) {
               if (responseOpticOddsScores.data.data.length == 0) {
                 console.log(
-                  `BLOCKING GAME ${gameWithOdds.home_team} - ${gameWithOdds.away_team} DUE TO GAME CLOCK BEING UNAVAILABLE`,
+                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
                 );
                 return null;
               }
 
-              const gameClock = gameTimeOpticOddsResponseData.clock;
-
-              if (gameClock != null && Number(gameClock) >= MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL) {
+              if (currentClock != null && Number(currentClock) >= MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL) {
                 console.log(
-                  `BLOCKING GAME ${gameWithOdds.home_team} - ${gameWithOdds.away_team} DUE TO CLOCK ${gameClock}`,
+                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to clock: ${currentClock}min`,
                 );
                 return null;
               }
@@ -1866,6 +1869,10 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
                     normalizedImplied: oddslib.from("decimal", positionOdds).to("impliedProbability"),
                   };
                 });
+                market.homeScore = currentScoreHome;
+                market.awayScore = currentScoreAway;
+                market.gameClock = currentClock;
+                market.gamePeriod = currentPeriod;
                 return market;
               }
             }
