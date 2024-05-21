@@ -21,15 +21,6 @@ app.use(function (req, res, next) {
   next();
 });
 
-// V1 API with caching
-app.use("/v1/stakers", stakersRoutes);
-app.use("/v1/liquidity-providing", lpRoutes);
-app.use("/v1/markets", marketsRoutes);
-app.use("/v1/trades", tradesRoutes);
-app.use("/v1/referral", referralRoutes);
-app.use("/v1/vaults", vaultRoutes);
-app.use("/v1/cache-control", cacheControlRoutes);
-
 const bytes32 = require("bytes32");
 const oddslib = require("oddslib");
 const axios = require("axios");
@@ -68,7 +59,7 @@ const thalesSpeedUtilsMarkets = require("../thalesSpeedApi/utils/markets");
 const thalesSpeedUtilsNetworks = require("../thalesSpeedApi/utils/networks");
 const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters");
 
-app.listen(process.env.PORT || 3050, () => {
+app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
 });
 
@@ -1683,3 +1674,12 @@ app.get(ENDPOINTS.OVERTIME_V2_TEAM_NAMES, (req, res) => {
     }
   });
 });
+
+// V1 API with caching
+app.use("/v1/stakers", stakersRoutes);
+app.use("/v1/liquidity-providing", lpRoutes);
+app.use("/v1/markets", marketsRoutes);
+app.use("/v1/trades", tradesRoutes);
+app.use("/v1/referral", referralRoutes);
+app.use("/v1/vaults", vaultRoutes);
+app.use("/v1/cache-control", cacheControlRoutes);

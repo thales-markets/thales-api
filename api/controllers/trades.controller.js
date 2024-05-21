@@ -2,14 +2,14 @@ const thalesData = require("thales-data");
 const { PREFIX_KEYS } = require("../constants/cacheKeys");
 const cache = require("../services/cache");
 const TTL = require("../constants/ttl");
-const { getCacheKey } = require("../utils/getters");
+const { getCacheKey, getQueryProperty } = require("../utils/getters");
 
 const optionTransactions = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const market = req?.query?.["market"];
-    const account = req?.query?.["account"];
+    const market = getQueryProperty(req, "market");
+    const account = getQueryProperty(req, "account");
 
     if (!networkId) return res.status(400);
 
@@ -41,13 +41,13 @@ const optionTransactions = async (req, res) => {
 
 const trades = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const makerToken = req?.query?.["maker-token"];
-    const takerToken = req?.query?.["taker-token"];
+    const makerToken = getQueryProperty(req, "maker-token");
+    const takerToken = getQueryProperty(req, "taker-token");
 
-    const maker = req?.query?.["maker"];
-    const taker = req?.query?.["taker"];
+    const maker = getQueryProperty(req, "maker");
+    const taker = getQueryProperty(req, "taker");
 
     if (!networkId && (!makerToken || !takerToken || !maker || !taker)) return res.status(400);
 
@@ -78,9 +78,9 @@ const trades = async (req, res) => {
 
 const positionBalance = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const account = req?.query?.["account"];
+    const account = getQueryProperty(req, "account");
 
     if (!networkId && !account) return res.status(400);
 
@@ -106,9 +106,9 @@ const positionBalance = async (req, res) => {
 
 const rangePositionBalance = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const account = req?.query?.["account"];
+    const account = getQueryProperty(req, "account");
 
     if (!networkId && !account) return res.status(400);
 

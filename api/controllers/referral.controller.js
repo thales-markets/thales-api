@@ -2,14 +2,14 @@ const thalesData = require("thales-data");
 const { PREFIX_KEYS } = require("../constants/cacheKeys");
 const cache = require("../services/cache");
 const TTL = require("../constants/ttl");
-const { getCacheKey } = require("../utils/getters");
+const { getCacheKey, getQueryProperty } = require("../utils/getters");
 
 const referralTransactions = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const trader = req?.query?.["trader"];
-    const referrer = req?.query?.["referrer"];
+    const trader = getQueryProperty(req, "trader");
+    const referrer = getQueryProperty(req, "referrer");
 
     if (!networkId) return res.status(400);
 
@@ -36,9 +36,9 @@ const referralTransactions = async (req, res) => {
 
 const referredTraders = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const referrer = req?.query?.["referrer"];
+    const referrer = getQueryProperty(req, "referrer");
 
     if (!networkId) return res.status(400);
 
@@ -64,9 +64,9 @@ const referredTraders = async (req, res) => {
 
 const referrers = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const address = req?.query?.["address"];
+    const address = getQueryProperty(req, "address");
 
     if (!networkId) return res.status(400);
 

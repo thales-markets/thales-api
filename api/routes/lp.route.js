@@ -3,7 +3,7 @@ const { lpPnl, lpTransactions } = require("../controllers/lp.controller");
 
 const router = express.Router();
 
-router.get("/pnl/:networkParam", lpPnl);
-router.get("/transactions", lpTransactions);
+router.get("/pnl/:networkId", lpPnl);
+router.get("/transactions/:networkId", lpTransactions);
 
 module.exports = router;

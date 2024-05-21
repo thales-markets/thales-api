@@ -2,9 +2,9 @@ const cache = require("../services/cache");
 
 const flushSpecificCacheKey = (req, res) => {
   try {
-    const reqBody = req?.body;
+    const reqBody = req.body;
 
-    if (!Array.isArray(reqBody?.cacheKeys)) return res.status(400);
+    if (!Array.isArray(reqBody.hasOwnProperty("cacheKeys") && reqBody.cacheKeys)) return res.status(400);
 
     const keys = cache.del(reqBody.cacheKeys);
 

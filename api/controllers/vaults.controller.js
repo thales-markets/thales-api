@@ -6,10 +6,10 @@ const { getCacheKey } = require("../utils/getters");
 
 const userTransactions = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const vault = req?.query?.["vault"];
-    const account = req?.query?.["account"];
+    const vault = getQueryProperty(req, "vault");
+    const account = getQueryProperty(req, "account");
 
     if (!networkId) return res.status(400);
 
@@ -36,9 +36,9 @@ const userTransactions = async (req, res) => {
 
 const vaultPnl = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const vault = req?.query?.["vault"];
+    const vault = getQueryProperty(req, "vault");
 
     if (!networkId) return res.status(400);
 
@@ -64,9 +64,9 @@ const vaultPnl = async (req, res) => {
 
 const vaultTransactions = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const vault = req?.query?.["vault"];
+    const vault = getQueryProperty("vault");
 
     if (!networkId) return res.status(400);
 

@@ -2,15 +2,15 @@ const thalesData = require("thales-data");
 const { PREFIX_KEYS } = require("../constants/cacheKeys");
 const cache = require("../services/cache");
 const TTL = require("../constants/ttl");
-const { getCacheKey } = require("../utils/getters");
+const { getCacheKey, getQueryProperty } = require("../utils/getters");
 const { ethers } = require("ethers");
 
 const markets = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const minMaturity = req?.query?.["min-maturity"];
-    const maxMaturity = req?.query?.["max-maturity"];
+    const minMaturity = getQueryProperty(req, "min-maturity");
+    const maxMaturity = getQueryProperty(req, "max-maturity");
 
     if (!networkId) return res.status(400);
     if (!minMaturity) return res.status(400);
@@ -39,13 +39,13 @@ const markets = async (req, res) => {
 
 const rangedMarkets = async (req, res) => {
   try {
-    const networkId = req?.params?.networkId;
+    const networkId = getQueryParam(req, "networkId");
 
-    const minMaturity = req?.query?.["min-maturity"];
-    const maxMaturity = req?.query?.["max-maturity"];
+    const minMaturity = getQueryProperty(req, "min-maturity");
+    const maxMaturity = getQueryProperty(req, "max-maturity");
 
-    const currencyKey = req?.query?.["currency-key"];
-    const marketIds = req?.query?.["markets-ids"];
+    const currencyKey = getQueryProperty(req, "currency-key");
+    const marketIds = getQueryProperty(req, "markets-ids");
 
     const marketsIdsArr = [];
 

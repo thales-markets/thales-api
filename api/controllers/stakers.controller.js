@@ -1,12 +1,12 @@
 const thalesData = require("thales-data");
 const cache = require("../services/cache");
-const { getCacheKey } = require("../utils/getters");
+const { getCacheKey, getQueryProperty, getQueryParam } = require("../utils/getters");
 const TTL = require("../constants/ttl");
 const { PREFIX_KEYS } = require("../constants/cacheKeys");
 
 const stakers = async (req, res) => {
   try {
-    const networkId = req.params.networkParam;
+    const networkId = getQueryParam(req, "networkId");
 
     if (!networkId) return res.status(400);
 
@@ -31,9 +31,9 @@ const stakers = async (req, res) => {
 
 const claimOnBehalfItems = async (req, res) => {
   try {
-    const networkId = req.params.networkParam;
+    const networkId = getQueryParam(req, "networkId");
 
-    const sender = req?.query?.["sender"];
+    const sender = getQueryProperty(req, "seller");
 
     if (!networkId) return res.status(400);
 
@@ -59,10 +59,10 @@ const claimOnBehalfItems = async (req, res) => {
 
 const tokenTransaction = async (req, res) => {
   try {
-    const networkId = req.params.networkParam;
+    const networkId = getQueryParam(req, "networkId");
 
-    const account = req?.query?.["account"];
-    const typeIn = req?.query?.["type_in"];
+    const account = getQueryProperty(req, "account");
+    const typeIn = getQueryProperty(req, "type_in");
 
     if (!networkId) return res.status(400);
 
@@ -90,4 +90,5 @@ const tokenTransaction = async (req, res) => {
 module.exports = {
   stakers,
   claimOnBehalfItems,
+  tokenTransaction,
 };

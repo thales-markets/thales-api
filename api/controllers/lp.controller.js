@@ -2,11 +2,11 @@ const thalesData = require("thales-data");
 const { PREFIX_KEYS } = require("../constants/cacheKeys");
 const cache = require("../services/cache");
 const TTL = require("../constants/ttl");
-const { getCacheKey } = require("../utils/getters");
+const { getCacheKey, getQueryProperty, getQueryParam } = require("../utils/getters");
 
 const lpPnl = async (req, res) => {
   try {
-    const networkId = req.params.networkParam;
+    const networkId = getQueryParam(req, "networkId");
 
     if (!networkId) return res.status(400);
 
@@ -31,8 +31,9 @@ const lpPnl = async (req, res) => {
 
 const lpTransactions = async (req, res) => {
   try {
-    const networkId = req?.query?.["network-id"];
-    const account = req?.query?.account;
+    const networkId = getQueryParam(req, "networkId");
+
+    const account = getQueryProperty(req, "account");
 
     if (!networkId) return res.status(400);
 
