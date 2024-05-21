@@ -1,8 +1,8 @@
 require("dotenv").config();
 
 const redis = require("redis");
-const { delay } = require("../../overtimeApi/utils/general");
-const { bigNumberFormatter } = require("../../overtimeApi/utils/formatters");
+const { delay } = require("../utils/general");
+const { bigNumberFormatter } = require("../utils/formatters");
 // const markets = require("./treeMarketsAndHashes.json");
 const {
   fixDuplicatedTeamName,
@@ -13,13 +13,20 @@ const {
   getIsYesNoPlayerPropsMarket,
   getIsEnetpulseSport,
   getIsPlayerPropsMarket,
-} = require("../../overtimeApi/utils/markets");
-const { SPORTS_MAP } = require("../../overtimeApi/constants/tags");
-const { MARKET_TYPE, ODDS_TYPE, CHILD_ID, STATUS } = require("../../overtimeApi/constants/markets");
+  convertFromBytes32,
+} = require("../utils/markets");
+const { SPORTS_MAP } = require("../constants/tags");
+const { MARKET_TYPE, ODDS_TYPE, STATUS } = require("../constants/markets");
 const KEYS = require("../../redis/redis-keys");
-const axios = require("axios");
+const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 
-let marketsMap = new Map();
+const awsS3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
 async function processMarkets() {
   if (process.env.REDIS_URL) {
@@ -32,22 +39,30 @@ async function processMarkets() {
     setTimeout(async () => {
       while (true) {
         try {
+          const startTime = new Date().getTime();
           console.log("process markets");
           await processAllMarkets();
+          const endTime = new Date().getTime();
+          console.log(`Seconds for processing: ${((endTime - startTime) / 1000).toFixed(0)}`);
         } catch (error) {
           console.log("markets error: ", error);
         }
 
-        await delay(10 * 1000);
+        await delay(5 * 1000);
       }
     }, 3000);
   }
 }
 
 const packMarket = (market) => {
-  const leagueId = market.sportId;
+  const leagueId = `${market.sportId}`.startsWith("153")
+    ? 153
+    : `${market.sportId}`.startsWith("156")
+    ? 156
+    : market.sportId === 701 || market.sportId == 702
+    ? 7
+    : market.sportId;
   const isEnetpulseSport = getIsEnetpulseSport(leagueId);
-  const isPlayerPropsMarket = getIsPlayerPropsMarket(market.typeId);
   const type = MARKET_TYPE[market.typeId];
 
   return {
@@ -55,10 +70,9 @@ const packMarket = (market) => {
     sport: SPORTS_MAP[leagueId],
     leagueId: leagueId,
     leagueName: getLeagueNameById(leagueId),
-    childId: market.childId,
-    playerPropsId: market.playerPropsId,
+    subLeagueId: market.sportId,
     typeId: market.typeId,
-    type: type,
+    type,
     maturity: market.maturity,
     maturityDate: new Date(market.maturity * 1000),
     homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
@@ -73,9 +87,9 @@ const packMarket = (market) => {
     isPaused: market.status === STATUS.Paused,
     isOneSideMarket: getIsOneSideMarket(leagueId),
     line: Number(market.line) / 100,
-    isPlayerPropsMarket: isPlayerPropsMarket,
-    isOneSidePlayerPropsMarket: getIsOneSidePlayerPropsMarket(market.playerPropsId),
-    isYesNoPlayerPropsMarket: getIsYesNoPlayerPropsMarket(market.playerPropsId),
+    isPlayerPropsMarket: getIsPlayerPropsMarket(market.typeId),
+    isOneSidePlayerPropsMarket: getIsOneSidePlayerPropsMarket(market.typeId),
+    isYesNoPlayerPropsMarket: getIsYesNoPlayerPropsMarket(market.typeId),
     playerProps: {
       playerId: market.playerProps.playerId,
       playerName: market.playerProps.playerName,
@@ -102,92 +116,142 @@ const packMarket = (market) => {
   };
 };
 
+const readAwsS3File = async (bucket, key) => {
+  const params = {
+    Bucket: bucket,
+    Key: key,
+  };
+  const command = new GetObjectCommand(params);
+  const response = await awsS3Client.send(command);
+  return response.Body.transformToString();
+};
+
 const loadMarkets = async () => {
-  const repoOwner = process.env.GH_REPO_OWNER;
-  const repoName = process.env.GH_REPO_NAME;
-  const token = process.env.GH_TOKEN;
-  const folderName = process.env.GH_FOLDER_NAME;
-  const listFileName = process.env.GH_LIST_FILE_NAME;
+  const bucketName = process.env.AWS_BUCKET_NAME;
+  const listFolderName = process.env.AWS_FOLDER_NAME_LIST;
 
-  const listFilePath = `${folderName}/${listFileName}`;
-  const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
-
-  const response = await axios.get(`${apiUrl}${listFilePath}`, {
-    headers: {
-      Authorization: `token ${token}`,
-      Accept: "application/vnd.github.v3+json",
-    },
+  const command = new ListObjectsV2Command({
+    Bucket: bucketName,
+    Prefix: listFolderName,
   });
-  const listContent = Buffer.from(response.data.content, "base64").toString("utf8");
-
-  const files = listContent ? listContent.split(",").map((f) => f.trim()) : [];
 
   let markets = [];
-  for (let index = 0; index < files.length; index++) {
-    const file = files[index];
-    const marketsResponse = await axios.get(`${apiUrl}${folderName}/${file}`, {
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
+  try {
+    let isTruncated = true;
 
-    const marketsContent = Buffer.from(marketsResponse.data.content, "base64").toString("utf8");
-    markets = [...markets, ...JSON.parse(marketsContent)];
+    let merkleTreesList = [];
+
+    while (isTruncated) {
+      const { Contents, IsTruncated, NextContinuationToken } = await awsS3Client.send(command);
+      const contentsList = Contents.map((c) => c.Key);
+      console.log(`Available sport merkle trees: ${contentsList.length}`);
+      merkleTreesList = [...merkleTreesList, ...contentsList];
+
+      isTruncated = IsTruncated;
+      command.input.ContinuationToken = NextContinuationToken;
+    }
+
+    for (let i = 0; i < merkleTreesList.length; i++) {
+      const merkleTreesItem = merkleTreesList[i];
+      const merkleTreeFileConent = await readAwsS3File(bucketName, merkleTreesItem);
+
+      const marketFiles = merkleTreeFileConent ? merkleTreeFileConent.split(",").map((f) => f.trim()) : [];
+
+      for (let j = 0; j < marketFiles.length; j++) {
+        const marketFile = marketFiles[j];
+        try {
+          const marketFileContent = await readAwsS3File(bucketName, marketFile);
+          markets = [...markets, ...JSON.parse(marketFileContent)];
+        } catch (e) {
+          console.log(`Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
+        }
+      }
+    }
+  } catch (e) {
+    console.log(`Error reading merkle trees: ${e}`);
   }
 
   return markets;
 };
 
-const mapMarkets = async () => {
-  const mappedOpenMarkets = [];
-  const mappedOngoingMarkets = [];
-  const mappedResolvedMarkets = [];
-  const mappedCanceledMarkets = [];
-  const mappedPausedMarkets = [];
+const mapMarket = (market) => {
+  const packedMarket = packMarket(market);
+  packedMarket.childMarkets = [];
+  market.childMarkets.forEach((childMarket) => {
+    let packedChildMarket = packMarket(childMarket);
+    packedMarket.childMarkets.push(packedChildMarket);
+  });
 
+  const isStarted = packedMarket.maturityDate < new Date();
+
+  if (packedMarket.isOpen && !isStarted) {
+    packedMarket.statusCode = "open";
+  }
+  if ((packedMarket.isOpen || packedMarket.isPaused) && isStarted) {
+    packedMarket.statusCode = "ongoing";
+  }
+  if (packedMarket.isResolved) {
+    packedMarket.statusCode = "resolved";
+  }
+  if (packedMarket.isCanceled) {
+    packedMarket.statusCode = "canceled";
+  }
+  if (packedMarket.isPaused) {
+    packedMarket.statusCode = "paused";
+  }
+
+  return packedMarket;
+};
+
+const mapMarkets = async () => {
+  const marketsMap = new Map();
   const markets = await loadMarkets();
 
   markets.forEach((market) => {
-    let packedMarket = packMarket(market);
-    packedMarket.childMarkets = [];
-    market.childMarkets.forEach((childMarket) => {
-      let packedChildMarket = packMarket(childMarket);
-      packedMarket.childMarkets.push(packedChildMarket);
-    });
-
-    const isStarted = packedMarket.maturityDate < new Date();
-
-    if (packedMarket.isOpen && !isStarted) {
-      mappedOpenMarkets.push(packedMarket);
-    }
-    if ((packedMarket.isOpen || packedMarket.isPaused) && isStarted) {
-      mappedOngoingMarkets.push(packedMarket);
-    }
-    if (packedMarket.isResolved) {
-      mappedResolvedMarkets.push(packedMarket);
-    }
-    if (packedMarket.isCanceled) {
-      mappedCanceledMarkets.push(packedMarket);
-    }
-    if (packedMarket.isPaused) {
-      mappedPausedMarkets.push(packedMarket);
-    }
+    const mappedMarket = mapMarket(market);
+    marketsMap.set(mappedMarket.gameId, mappedMarket);
   });
 
-  return { mappedOpenMarkets, mappedOngoingMarkets, mappedResolvedMarkets, mappedCanceledMarkets, mappedPausedMarkets };
+  return marketsMap;
 };
+
+async function updateMerkleTree(gameIds) {
+  const startTime = new Date().getTime();
+  console.log(`Updating merkle tree for ${gameIds.length} games`);
+
+  const bucketName = process.env.AWS_BUCKET_NAME;
+  const merkleTreesFolderName = process.env.AWS_FOLDER_NAME_MERKLES;
+
+  let marketsMap = new Map();
+  redisClient.get(KEYS.OVERTIME_V2_MARKETS, function (err, obj) {
+    marketsMap = new Map(JSON.parse(obj));
+  });
+
+  for (let i = 0; i < gameIds.length; i++) {
+    const gameIdString = convertFromBytes32(gameIds[i]);
+    const marketFile = `${merkleTreesFolderName}/${gameIdString}.json`;
+    try {
+      const marketFileContent = await readAwsS3File(bucketName, marketFile);
+      const market = JSON.parse(marketFileContent)[0];
+
+      const mappedMarket = mapMarket(market);
+      marketsMap.set(mappedMarket.gameId, mappedMarket);
+    } catch (e) {
+      console.log(`Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
+    }
+  }
+  redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...marketsMap]), function () {});
+
+  const endTime = new Date().getTime();
+  console.log(`Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);
+}
 
 async function processAllMarkets() {
   const mappedMarkets = await mapMarkets();
-  marketsMap.set("open", mappedMarkets.mappedOpenMarkets);
-  marketsMap.set("ongoing", mappedMarkets.mappedOngoingMarkets);
-  marketsMap.set("resolved", mappedMarkets.mappedResolvedMarkets);
-  marketsMap.set("canceled", mappedMarkets.mappedCanceledMarkets);
-  marketsMap.set("paused", mappedMarkets.mappedPausedMarkets);
-  redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...marketsMap]), function () {});
+  redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...mappedMarkets]), function () {});
 }
 
 module.exports = {
   processMarkets,
+  updateMerkleTree,
 };

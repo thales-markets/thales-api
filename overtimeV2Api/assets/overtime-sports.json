@@ -1,12 +1,12 @@
 [
   {
-    "id": 9001,
+    "id": 1,
     "name": "NCAAF",
     "sport": "Football",
     "supportedTypes": ["moneyline", "spread", "total"]
   },
   {
-    "id": 9002,
+    "id": 2,
     "name": "NFL",
     "sport": "Football",
     "opticOddsName": "NFL",
@@ -27,334 +27,334 @@
     ]
   },
   {
-    "id": 9003,
+    "id": 3,
     "name": "MLB",
     "opticOddsName": "MLB",
     "sport": "Baseball",
     "supportedTypes": ["moneyline", "spread", "total", "homeruns", "strikeouts", "pitcherHitsAllowed", "hitsRecorded"]
   },
   {
-    "id": 9004,
+    "id": 4,
     "name": "NBA",
     "opticOddsName": "NBA",
     "sport": "Basketball",
     "supportedTypes": ["moneyline", "spread", "total", "points", "rebounds", "assists", "doubleDouble", "tripleDouble"]
   },
   {
-    "id": 9005,
+    "id": 5,
     "name": "NCAAB",
     "sport": "Basketball",
     "supportedTypes": ["moneyline", "spread", "total"]
   },
   {
-    "id": 9006,
+    "id": 6,
     "name": "NHL",
     "opticOddsName": "NHL",
     "sport": "Hockey",
     "supportedTypes": ["moneyline", "spread", "total"]
   },
   {
-    "id": 9007,
+    "id": 7,
     "name": "UFC",
     "sport": "MMA",
     "supportedTypes": ["moneyline", "total"]
   },
   {
-    "id": 9008,
+    "id": 8,
     "name": "WNBA",
     "opticOddsName": "WNBA",
     "sport": "Basketball",
     "supportedTypes": ["moneyline"]
   },
   {
-    "id": 9010,
+    "id": 10,
     "name": "MLS",
     "opticOddsName": "USA - Major League Soccer",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9011,
+    "id": 11,
     "name": "EPL",
     "opticOddsName": "England - Premier League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9012,
+    "id": 12,
     "name": "France Ligue 1",
     "opticOddsName": "France - Ligue 1",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9013,
+    "id": 13,
     "name": "Bundesliga",
     "opticOddsName": "Germany - Bundesliga",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9014,
+    "id": 14,
     "name": "La Liga",
     "opticOddsName": "Spain - La Liga",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9015,
+    "id": 15,
     "name": "Serie A",
     "opticOddsName": "Italy - Serie A",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9016,
+    "id": 16,
     "name": "UEFA Champions League",
     "opticOddsName": "UEFA - Champions League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9017,
+    "id": 17,
     "name": "UEFA Europa League",
     "opticOddsName": "UEFA - Europa League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9018,
+    "id": 18,
     "name": "FIFA World Cup",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9019,
+    "id": 19,
     "name": "J1 League",
     "opticOddsName": "Japan - J1 League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9020,
+    "id": 20,
     "name": "Indian Premier League",
     "sport": "Cricket",
     "supportedTypes": ["moneyline"]
   },
   {
-    "id": 9021,
+    "id": 21,
     "name": "T20 Blast",
     "sport": "Cricket",
     "supportedTypes": ["moneyline"]
   },
   {
-    "id": 9033,
+    "id": 33,
     "name": "IIHF World Championship",
     "sport": "Hockey",
     "supportedTypes": ["moneyline", "spread", "total"]
   },
   {
-    "id": 9042,
+    "id": 42,
     "name": "UEFA Champions League Qualification",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9045,
+    "id": 45,
     "name": "Copa Libertadores",
     "opticOddsName": "CONMEBOL - Copa Libertadores",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9050,
+    "id": 50,
     "name": "UEFA EURO Qualifications",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9057,
+    "id": 57,
     "name": "Netherlands Eredivisie",
     "opticOddsName": "Netherlands - Eredivisie",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "doubleChance"]
   },
   {
-    "id": 9061,
+    "id": 61,
     "name": "Portugal Primeira Liga",
     "opticOddsName": "Portugal - Primeira Liga",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "doubleChance"]
   },
   {
-    "id": 9073,
+    "id": 73,
     "name": "UEFA Europa League",
     "opticOddsName": "UEFA - Europa League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9076,
+    "id": 76,
     "name": "FIFA World Cup Women",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9153,
+    "id": 153,
     "name": "Tennis Grand Slam",
     "sport": "Tennis",
     "supportedTypes": ["moneyline", "spread", "total"]
   },
   {
-    "id": 9156,
+    "id": 156,
     "name": "Tennis Masters 1000",
     "sport": "Tennis",
     "supportedTypes": ["moneyline", "spread", "total"]
   },
   {
-    "id": 9268,
+    "id": 268,
     "name": "Brazil Football League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9288,
+    "id": 288,
     "name": "UEFA EURO U21",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9296,
+    "id": 296,
     "name": "FIFA World Cup U20",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9399,
+    "id": 399,
     "name": "Euroleague",
     "opticOddsName": "Euroleague",
     "sport": "Basketball",
     "supportedTypes": ["moneyline", "spread", "total"]
   },
   {
-    "id": 9409,
+    "id": 409,
     "name": "FIBA World Cup",
     "sport": "Basketball",
     "supportedTypes": ["moneyline", "spread", "total"]
   },
   {
-    "id": 9445,
+    "id": 445,
     "name": "Formula 1",
     "sport": "Motosport",
     "supportedTypes": ["moneyline"]
   },
   {
-    "id": 9497,
+    "id": 497,
     "name": "Moto GP",
     "sport": "Motosport",
     "supportedTypes": ["moneyline"]
   },
   {
-    "id": 9536,
+    "id": 536,
     "name": "Saudi Arabia Football League",
     "opticOddsName": "Saudi Arabia - Saudi League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 18196,
+    "id": 9196,
     "name": "Boxing",
     "sport": "MMA",
     "supportedTypes": ["moneyline", "total"]
   },
   {
-    "id": 19595,
+    "id": 10595,
     "name": "Boxing",
     "sport": "MMA",
     "supportedTypes": ["moneyline", "total"]
   },
   {
-    "id": 18806,
+    "id": 9806,
     "name": "UEFA Nations League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 18821,
+    "id": 9821,
     "name": "CONCACAF Nations League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 18977,
+    "id": 9977,
     "name": "CS GO",
     "sport": "eSports",
     "supportedTypes": ["moneyline"]
   },
   {
-    "id": 18983,
+    "id": 9983,
     "name": "DOTA 2",
     "sport": "eSports",
     "supportedTypes": ["moneyline"]
   },
   {
-    "id": 19138,
+    "id": 10138,
     "name": "LOL",
     "sport": "eSports",
     "supportedTypes": ["moneyline"]
   },
   {
-    "id": 19216,
+    "id": 10216,
     "name": "UEFA Conference League",
     "opticOddsName": "UEFA - Europa Conference League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 19199,
+    "id": 10199,
     "name": "CONMEBOL World Cup Qualifications",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 109021,
+    "id": 100021,
     "name": "Golf H2H",
     "sport": "Golf",
     "supportedTypes": ["moneyline"]
   },
   {
-    "id": 109121,
+    "id": 100121,
     "name": "Golf Tournament Winner",
     "sport": "Golf",
     "supportedTypes": ["moneyline"]
   },
   {
-    "id": 9132,
+    "id": 132,
     "name": "FA Cup",
     "opticOddsName": "England - FA Cup",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9134,
+    "id": 134,
     "name": "Coupe de France",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9138,
+    "id": 138,
     "name": "Copa del Rey",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9209,
+    "id": 209,
     "name": "DFB Pokal",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
-    "id": 9141,
+    "id": 141,
     "name": "Coppa Italia",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]

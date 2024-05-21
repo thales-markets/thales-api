@@ -127,10 +127,10 @@ async function fetchWeeklyDuneData() {
     // execute queries
     // 10 credits
 
-    // check if current day is Thursday and between 6 PM and 7 PM UTC in order to refresh CCIP data and save Dune credits
+    // check if current day is Wednesday and between 6 PM and 7 PM UTC in order to refresh CCIP data and save Dune credits
     const now = new Date();
 
-    if (now.getDay() == 4 && now.getUTCHours() == 18) {
+    if (now.getDay() == 3 && now.getUTCHours() == 18) {
       console.log("Thursday, time for fetching CCIP rev share data");
       await fetch("https://api.dune.com/api/v1/query/3099522/execute?api_key=" + process.env.DUNE_API_KEY, {
         method: "POST",

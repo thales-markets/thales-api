@@ -18,7 +18,6 @@ const {
   GOLF_TOURNAMENT_WINNER_TAG,
   SPORTS_MAP,
   ENETPULSE_SPORTS,
-  TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS,
   JSON_ODDS_SPORTS,
   SPORT_ID_MAP_ENETPULSE,
 } = require("../constants/tags");
@@ -311,9 +310,6 @@ const packParlay = (parlayMarket) => {
   };
 };
 
-const getIsDrawAvailable = (market) =>
-  !(TAGS_OF_MARKETS_WITHOUT_DRAW_ODDS.includes(market.leagueId) || market.type === "total" || market.type === "spread");
-
 const getIsPlayerPropsMarket = (betType) => PLAYER_PROPS_BET_TYPES.includes(betType);
 
 const getIsOneSidePlayerPropsMarket = (betType) => ONE_SIDER_PLAYER_PROPS_BET_TYPES.includes(betType);
@@ -322,7 +318,7 @@ const getIsYesNoPlayerPropsMarket = (betType) => SPECIAL_YES_NO_BET_TYPES.includ
 
 const getIsEnetpulseSport = (sportId) => ENETPULSE_SPORTS.includes(Number(sportId));
 
-const getIsEnetpulseSportV2 = (sportId) => SPORT_ID_MAP_ENETPULSE[Number(sportId) - 9000] !== undefined;
+const getIsEnetpulseSportV2 = (sportId) => SPORT_ID_MAP_ENETPULSE[Number(sportId)] !== undefined;
 
 const getIsJsonOddsSport = (sportId) => JSON_ODDS_SPORTS.includes(Number(sportId));
 
@@ -361,8 +357,18 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPosi
   });
 
   if (arrayOfBookmakers.length == 1) {
+    if (hasZeroOdds) {
+      return [
+        {
+          homeOdds: 0,
+          awayOdds: 0,
+          drawOdds: 0,
+        },
+      ];
+    }
     const firstBookmaker = arrayOfBookmakers[0];
     const firstLine = oddsMap.get(firstBookmaker);
+
     return [
       {
         homeOdds: firstLine.homeOdds,
@@ -512,7 +518,6 @@ module.exports = {
   getPositionStatus,
   getPositionTransactionStatus,
   packParlay,
-  getIsDrawAvailable,
   getIsPlayerPropsMarket,
   getIsOneSidePlayerPropsMarket,
   getIsYesNoPlayerPropsMarket,

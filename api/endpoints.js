@@ -25,8 +25,6 @@ const ENDPOINTS = {
   ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
   JSON_ODDS_DATA: "/json-odds-data/:sportParameter",
 
-  MARCH_MADNESS: "/march-madness/:networkId",
-
   OVERTIME_SPORTS: "/overtime/networks/:networkParam/sports",
   OVERTIME_COLLATERALS: "/overtime/networks/:networkParam/collaterals",
   OVERTIME_MARKETS: "/overtime/networks/:networkParam/markets",
@@ -58,8 +56,10 @@ const ENDPOINTS = {
   THALES_IO_ECOSYSTEM_APPS: "/thales/thales-io/ecosystem-apps",
   THALES_IO_TIMELINE: "/thales/thales-io/timeline",
   OVERTIME_V2_MARKETS: "/overtime-v2/markets",
+  OVERTIME_V2_LIVE_MARKETS: "/overtime-v2/live-markets",
   OVERTIME_V2_MARKET: "/overtime-v2/markets/:marketAddress",
-  OVERTIME_V2_TEAM_NAMES: "/overtime-v2/team-names",
+  OVERTIME_V2_GAMES_INFO: "/overtime-v2/games-info",
+  OVERTIME_V2_UPDATE_MERKLE_TREE: "/overtime-v2/update-merkle-tree",
 };
 
 module.exports = ENDPOINTS;
