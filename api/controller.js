@@ -1925,6 +1925,17 @@ app.get(ENDPOINTS.OVERTIME_V2_GAMES_INFO, (req, res) => {
   });
 });
 
+app.get(ENDPOINTS.OVERTIME_V2_PLAYERS_INFO, (req, res) => {
+  redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO, function (err, obj) {
+    const playersInfo = new Map(JSON.parse(obj));
+    try {
+      res.send(Object.fromEntries(playersInfo));
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
 // V1 API with caching
 app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/liquidity-providing", lpRoutes);

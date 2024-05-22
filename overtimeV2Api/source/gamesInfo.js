@@ -24,8 +24,11 @@ async function processGamesInfo() {
     setTimeout(async () => {
       while (true) {
         try {
+          const startTime = new Date().getTime();
           console.log("process games info");
           await processAllGamesInfo();
+          const endTime = new Date().getTime();
+          console.log(`Seconds for processing games info: ${((endTime - startTime) / 1000).toFixed(0)}`);
         } catch (error) {
           console.log("games info error: ", error);
         }
@@ -42,7 +45,7 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
     const sport = sportId;
     const rundownSport = SPORT_ID_MAP_RUNDOWN[sport];
 
-    console.log(`Getting games info for Rundown sport: ${rundownSport}, ${sport} and date ${formattedDate}`);
+    // console.log(`Getting games info for Rundown sport: ${rundownSport}, ${sport} and date ${formattedDate}`);
     const apiUrl = `https://therundown.io/api/v1/sports/${rundownSport}/events/${formattedDate}?key=${process.env.RUNDOWN_API_KEY}`;
     const response = await axios.get(apiUrl);
 
@@ -79,7 +82,7 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
     const sport = sportId;
     const enetpulseSport = SPORT_ID_MAP_ENETPULSE[sport];
 
-    console.log(`Getting games info for Enetpulse sport: ${enetpulseSport}, ${sport} and date ${formattedDate}`);
+    // console.log(`Getting games info for Enetpulse sport: ${enetpulseSport}, ${sport} and date ${formattedDate}`);
     const apiUrl = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${enetpulseSport}&date=${formattedDate}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&includeEventProperties=no`;
     const response = await axios.get(apiUrl);
 
@@ -106,26 +109,26 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
 async function processAllGamesInfo() {
   const startDate = subDays(new Date(), numberOfDaysInPast);
   let gamesInfoMap = new Map();
-  redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
+  redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, async function (err, obj) {
     gamesInfoMap = new Map(JSON.parse(obj));
+
+    for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
+      const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
+      console.log(`Getting games info for date: ${formattedDate}`);
+
+      const allSports = Object.keys(SPORTS_MAP);
+      const rundownSports = allSports.filter((sport) => !getIsEnetpulseSportV2(sport) && !getIsJsonOddsSport(sport));
+      const enetpulseSports = allSports.filter((sport) => getIsEnetpulseSportV2(sport));
+
+      await Promise.all([
+        procesRundownGamesInfoPerDate(rundownSports, formattedDate, gamesInfoMap),
+        procesEnetpulseGamesInfoPerDate(enetpulseSports, formattedDate, gamesInfoMap),
+      ]);
+    }
+
+    console.log(`Number of games info: ${Array.from(gamesInfoMap.values()).length}`);
+    redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
   });
-
-  for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
-    const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
-    console.log(`Getting games info for date: ${formattedDate}`);
-
-    const allSports = Object.keys(SPORTS_MAP);
-    const rundownSports = allSports.filter((sport) => !getIsEnetpulseSportV2(sport) && !getIsJsonOddsSport(sport));
-    const enetpulseSports = allSports.filter((sport) => getIsEnetpulseSportV2(sport));
-
-    await Promise.all([
-      procesRundownGamesInfoPerDate(rundownSports, formattedDate, gamesInfoMap),
-      procesEnetpulseGamesInfoPerDate(enetpulseSports, formattedDate, gamesInfoMap),
-    ]);
-  }
-
-  console.log(`Number of games info: ${Array.from(gamesInfoMap.values()).length}`);
-  redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
 }
 
 module.exports = {

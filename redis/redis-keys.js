@@ -40,6 +40,7 @@ const KEYS = {
   },
   OVERTIME_V2_MARKETS: "overtimeV2Markets",
   OVERTIME_V2_GAMES_INFO: "overtimeV2GamesInfo",
+  OVERTIME_V2_PLAYERS_INFO: "overtimeV2PlayersInfo",
 };
 
 module.exports = KEYS;
