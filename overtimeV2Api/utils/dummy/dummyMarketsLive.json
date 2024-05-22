@@ -1,16 +1,16 @@
 [
   {
-    "gameId": "0x3432353631383500000000000000000000000000000000000000000000000000",
+    "gameId": "0x3530366635613237386632343166303833306230663037366436396362646536",
     "sport": "Soccer",
-    "leagueId": 536,
-    "leagueName": "Saudi Arabia Football League",
-    "subLeagueId": 536,
+    "leagueId": 10,
+    "leagueName": "MLS",
+    "subLeagueId": 10,
     "typeId": 0,
     "type": "winner",
-    "maturity": 1715871600,
-    "maturityDate": "2024-05-16T15:00:00.000Z",
-    "homeTeam": "Al Taee",
-    "awayTeam": "Al Fateh FC",
+    "maturity": 1716679800,
+    "maturityDate": "2024-05-25T23:30:00.000Z",
+    "homeTeam": "Toronto FC",
+    "awayTeam": "FC Cincinnati",
     "homeScore": 3,
     "awayScore": 2,
     "gameClock": 82,
@@ -32,34 +32,42 @@
     },
     "combinedPositions": [[], [], []],
     "odds": [
-      { "normalizedImplied": 0.408163265306, "american": 145, "decimal": 2.45 },
-      { "normalizedImplied": 0.363636363636, "american": 175, "decimal": 2.75 },
-      { "normalizedImplied": 0.344827586207, "american": 191, "decimal": 2.91 }
+      {
+        "american": 188.000000000184,
+        "decimal": 2.88000000000184,
+        "normalizedImplied": 0.347222222222
+      },
+      {
+        "american": 147.999999999762,
+        "decimal": 2.47999999999762,
+        "normalizedImplied": 0.403225806452
+      },
+      {
+        "american": 248.000000000097,
+        "decimal": 3.48000000000097,
+        "normalizedImplied": 0.287356321839
+      }
     ],
     "proof": [
-      "0x93f15953d7e36ae72e22c2bb5198de5f9fb7bd7af595a6a6df1752fae042daf7",
-      "0x0168e404f1dc225ca0c6290a9cd86989ef454f8549aff99f1cce0d315a7358c7",
-      "0x8b5b49c65c2c4c177199a25c7954b2af7909cac2273d00fe3fdd9ab2dd01e795",
-      "0x690e2fddd74d43f7ed97d72e7693cb416866a3c4895022ca8172deb8f1ae4221",
-      "0x37946e42bbc296703951bc8bd013b7498725e4c55150927ed2f4cd0592c118c3",
-      "0xc911b4baea06ff7914ad58d9626fde9a96754a676a3343f2056c79da65c63b14"
+      "0xda99ce905965676e20806b901cca63dae78213261ed45921cf6f39bbb4b85c24",
+      "0xb1ff121b809fafe4d2f775923ac3bcf2de9ce2db206e5a7472357269f47a18d5",
+      "0xe62418bfc7d98a561aaa89e838cd1c2c60b8f1c6502588a7d61002eb648d3390"
     ],
     "childMarkets": [],
-    "statusCode": "ongoing",
-    "live": true
+    "statusCode": "open"
   },
   {
-    "gameId": "0x3432353631383600000000000000000000000000000000000000000000000000",
+    "gameId": "0x3938663665326430316132613937643065666433646133396230653332373031",
     "sport": "Soccer",
-    "leagueId": 536,
-    "leagueName": "Saudi Arabia Football League",
-    "subLeagueId": 536,
+    "leagueId": 10,
+    "leagueName": "MLS",
+    "subLeagueId": 10,
     "typeId": 0,
     "type": "winner",
-    "maturity": 1715882400,
-    "maturityDate": "2024-05-16T18:00:00.000Z",
-    "homeTeam": "Al-Wehda",
-    "awayTeam": "Al-Raed",
+    "maturity": 1716679800,
+    "maturityDate": "2024-05-25T23:30:00.000Z",
+    "homeTeam": "Orlando City SC",
+    "awayTeam": "Columbus Crew",
     "homeScore": 1,
     "awayScore": 1,
     "gameClock": 43,
@@ -81,20 +89,29 @@
     },
     "combinedPositions": [[], [], []],
     "odds": [
-      { "normalizedImplied": 0.458163265306, "american": 118, "decimal": 2.18 },
-      { "normalizedImplied": 0.323636363636, "american": 210, "decimal": 3.1 },
-      { "normalizedImplied": 0.374827586207, "american": 167, "decimal": 2.67 }
+      {
+        "american": 100.999999999978,
+        "decimal": 2.00999999999978,
+        "normalizedImplied": 0.497512437811
+      },
+      {
+        "american": 259.999999999712,
+        "decimal": 3.59999999999712,
+        "normalizedImplied": 0.277777777778
+      },
+      {
+        "american": 279.000000000091,
+        "decimal": 3.79000000000091,
+        "normalizedImplied": 0.263852242744
+      }
     ],
     "proof": [
-      "0x93f15953d7e36ae72e22c2bb5198de5f9fb7bd7af595a6a6df1752fae042daf7",
-      "0x0168e404f1dc225ca0c6290a9cd86989ef454f8549aff99f1cce0d315a7358c7",
-      "0x8b5b49c65c2c4c177199a25c7954b2af7909cac2273d00fe3fdd9ab2dd01e795",
-      "0x690e2fddd74d43f7ed97d72e7693cb416866a3c4895022ca8172deb8f1ae4221",
-      "0x37946e42bbc296703951bc8bd013b7498725e4c55150927ed2f4cd0592c118c3",
-      "0xc911b4baea06ff7914ad58d9626fde9a96754a676a3343f2056c79da65c63b14"
+      "0xc3c4e01c2502952f07ceed405052fe19ba783b7c9e155282114065061ee90304",
+      "0x9785e8e1641ec4e3f17dd5398f9e8067048cc1bac8b4bb55a8dd90ec2f7c6ef7",
+      "0x5cdd6f62096ff2f9062d29b9f8b0ad604f2f8bd0ba37686fe2d5fc65a8414c00",
+      "0x7bc082785de34b8450133cfa60688443f7fa51e60c2efa5133cffa87a2d7ff6a"
     ],
     "childMarkets": [],
-    "statusCode": "ongoing",
-    "live": true
+    "statusCode": "open"
   }
 ]

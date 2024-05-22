@@ -1882,7 +1882,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
         });
         let filteredMarketsWithLiveOddsAndDummyMarkets;
         const resolvedMarketPromises = await Promise.all(filteredMarketsWithLiveOdds);
-        if (leagueId == 536) {
+        if (leagueId == 10) {
           const dummyMarkets = [...dummyMarketsLive];
           filteredMarketsWithLiveOddsAndDummyMarkets = resolvedMarketPromises.concat(dummyMarkets);
         } else {
