@@ -1528,52 +1528,45 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   }
 
   redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS, async function (err, objOpen) {
-    redisClient.get(KEYS.OVERTIME_V2_ONGOING_MARKETS, async function (err, objOngoing) {
-      redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS, async function (err, objClosed) {
-        const openMarkets = new Map(JSON.parse(objOpen));
-        const ongoingMarkets = new Map(JSON.parse(objOngoing));
-        const closedMarkets = new Map(JSON.parse(objClosed));
+    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS, async function (err, objClosed) {
+      const openMarkets = new Map(JSON.parse(objOpen));
+      const closedMarkets = new Map(JSON.parse(objClosed));
 
-        try {
-          let allMarkets = [
-            ...Array.from(openMarkets.values()),
-            ...Array.from(ongoingMarkets.values()),
-            ...Array.from(closedMarkets.values()),
-          ];
-          const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
+      try {
+        let allMarkets = [...Array.from(openMarkets.values()), ...Array.from(closedMarkets.values())];
+        const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
 
-          const marketsByStatus = groupMarketsByStatus[status] || [];
-          let marketsByType = marketsByStatus;
-          if (type) {
-            marketsByType = [];
-            marketsByStatus.forEach((market) => {
-              marketsByType.push(market);
-              marketsByType.push(...market.childMarkets);
-            });
-          }
-
-          const filteredMarkets = marketsByType.filter(
-            (market) =>
-              (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
-              (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
-              (!type || market.type.toLowerCase() === type.toLowerCase()),
-          );
-
-          if (ungroup && ungroup.toLowerCase() === "true") {
-            res.send(filteredMarkets);
-            return;
-          }
-
-          const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
-          Object.keys(groupMarkets).forEach((key) => {
-            groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
+        const marketsByStatus = groupMarketsByStatus[status] || [];
+        let marketsByType = marketsByStatus;
+        if (type) {
+          marketsByType = [];
+          marketsByStatus.forEach((market) => {
+            marketsByType.push(market);
+            marketsByType.push(...market.childMarkets);
           });
-
-          res.send(groupMarkets);
-        } catch (e) {
-          console.log(e);
         }
-      });
+
+        const filteredMarkets = marketsByType.filter(
+          (market) =>
+            (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
+            (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
+            (!type || market.type.toLowerCase() === type.toLowerCase()),
+        );
+
+        if (ungroup && ungroup.toLowerCase() === "true") {
+          res.send(filteredMarkets);
+          return;
+        }
+
+        const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
+        Object.keys(groupMarkets).forEach((key) => {
+          groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
+        });
+
+        res.send(groupMarkets);
+      } catch (e) {
+        console.log(e);
+      }
     });
   });
 });
@@ -1643,7 +1636,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
     res.send(`No suppored live odds providers found in the config`);
   }
 
-  redisClient.get(KEYS.OVERTIME_V2_ONGOING_MARKETS, async function (err, obj) {
+  redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
 
     const enabledDummyMarkets = Number(process.env.LIVE_DUMMY_MARKETS_ENABLED);
@@ -1913,25 +1906,18 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   const marketAddress = req.params.marketAddress;
 
   redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS, async function (err, objOpen) {
-    redisClient.get(KEYS.OVERTIME_V2_ONGOING_MARKETS, async function (err, objOngoing) {
-      redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS, async function (err, objClosed) {
-        const openMarkets = new Map(JSON.parse(objOpen));
-        const ongoingMarkets = new Map(JSON.parse(objOngoing));
-        const closedMarkets = new Map(JSON.parse(objClosed));
+    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS, async function (err, objClosed) {
+      const openMarkets = new Map(JSON.parse(objOpen));
+      const closedMarkets = new Map(JSON.parse(objClosed));
 
-        try {
-          let allMarkets = [
-            ...Array.from(openMarkets.values()),
-            ...Array.from(ongoingMarkets.values()),
-            ...Array.from(closedMarkets.values()),
-          ];
-          const market = allMarkets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
+      try {
+        let allMarkets = [...Array.from(openMarkets.values()), ...Array.from(closedMarkets.values())];
+        const market = allMarkets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
 
-          return res.send(market || `Market with gameId ${marketAddress} not found.`);
-        } catch (e) {
-          console.log(e);
-        }
-      });
+        return res.send(market || `Market with gameId ${marketAddress} not found.`);
+      } catch (e) {
+        console.log(e);
+      }
     });
   });
 });

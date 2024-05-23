@@ -43,7 +43,7 @@ async function processMarkets() {
           console.log("process markets");
           await processAllMarkets();
           const endTime = new Date().getTime();
-          console.log(`Seconds for processing markets: ${((endTime - startTime) / 1000).toFixed(0)}`);
+          console.log(`=== Seconds for processing markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
         } catch (error) {
           console.log("markets error: ", error);
         }
@@ -203,33 +203,46 @@ const mapMarket = (market) => {
   return packedMarket;
 };
 
+function getClosedMarketsMap() {
+  return new Promise(function (resolve) {
+    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS, function (err, obj) {
+      const closedMarketsMap = new Map(JSON.parse(obj));
+      resolve(closedMarketsMap);
+    });
+  });
+}
+
 const mapMarkets = async () => {
-  const allMarketsMap = new Map();
   const openMarketsMap = new Map();
-  const ongoingMarketsMap = new Map();
   const markets = await loadMarkets();
 
-  redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS, async function (err, obj) {
-    const closedMarketsMap = new Map(JSON.parse(obj));
+  const closedMarketsMap = await getClosedMarketsMap();
 
-    markets.forEach((market) => {
-      const isMarketClosed = !!closedMarketsMap.get(market.gameId);
-      if (!isMarketClosed) {
-        const mappedMarket = mapMarket(market);
-        if (mappedMarket.statusCode === "open" || mappedMarket.statusCode === "paused") {
-          openMarketsMap.set(mappedMarket.gameId, mappedMarket);
-        } else if (mappedMarket.statusCode === "ongoing") {
-          ongoingMarketsMap.set(mappedMarket.gameId, mappedMarket);
-        }
-        allMarketsMap.set(mappedMarket.gameId, mappedMarket);
+  markets.forEach((market) => {
+    const isMarketClosed = !!closedMarketsMap.get(market.gameId);
+    if (!isMarketClosed) {
+      const mappedMarket = mapMarket(market);
+      if (
+        mappedMarket.statusCode === "open" ||
+        mappedMarket.statusCode === "ongoing" ||
+        mappedMarket.statusCode === "paused"
+      ) {
+        openMarketsMap.set(mappedMarket.gameId, mappedMarket);
       }
-    });
-
-    redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS, JSON.stringify([...openMarketsMap]), function () {});
-    redisClient.set(KEYS.OVERTIME_V2_ONGOING_MARKETS, JSON.stringify([...ongoingMarketsMap]), function () {});
-    redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...allMarketsMap]), function () {});
+    }
   });
+
+  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS, JSON.stringify([...openMarketsMap]), function () {});
 };
+
+function getOpenMarketsMap() {
+  return new Promise(function (resolve) {
+    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS, function (err, obj) {
+      const openMarketsMap = new Map(JSON.parse(obj));
+      resolve(openMarketsMap);
+    });
+  });
+}
 
 async function updateMerkleTree(gameIds) {
   const startTime = new Date().getTime();
@@ -238,27 +251,24 @@ async function updateMerkleTree(gameIds) {
   const bucketName = process.env.AWS_BUCKET_NAME;
   const merkleTreesFolderName = process.env.AWS_FOLDER_NAME_MERKLES;
 
-  let marketsMap = new Map();
-  redisClient.get(KEYS.OVERTIME_V2_MARKETS, async function (err, obj) {
-    marketsMap = new Map(JSON.parse(obj));
-    for (let i = 0; i < gameIds.length; i++) {
-      const gameIdString = convertFromBytes32(gameIds[i]);
-      const marketFile = `${merkleTreesFolderName}/${gameIdString}.json`;
-      try {
-        const marketFileContent = await readAwsS3File(bucketName, marketFile);
-        const market = JSON.parse(marketFileContent)[0];
+  const openMarketsMap = await getOpenMarketsMap();
+  for (let i = 0; i < gameIds.length; i++) {
+    const gameIdString = convertFromBytes32(gameIds[i]);
+    const marketFile = `${merkleTreesFolderName}/${gameIdString}.json`;
+    try {
+      const marketFileContent = await readAwsS3File(bucketName, marketFile);
+      const market = JSON.parse(marketFileContent)[0];
 
-        const mappedMarket = mapMarket(market);
-        marketsMap.set(mappedMarket.gameId, mappedMarket);
-      } catch (e) {
-        console.log(`Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
-      }
+      const mappedMarket = mapMarket(market);
+      openMarketsMap.set(mappedMarket.gameId, mappedMarket);
+    } catch (e) {
+      console.log(`Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
     }
-    redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...marketsMap]), function () {});
+  }
+  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS, JSON.stringify([...openMarketsMap]), function () {});
 
-    const endTime = new Date().getTime();
-    console.log(`Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);
-  });
+  const endTime = new Date().getTime();
+  console.log(`Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);
 }
 
 async function processAllMarkets() {
