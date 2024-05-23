@@ -10,9 +10,9 @@ const CHAINNODES_URL = {
 
 const ANKR_URL = {
   [NETWORK.Optimism]: "https://rpc.ankr.com/optimism/",
-  [NETWORK.OptimismSepolia]: "https://rpc.ankr.com/polygon/",
+  [NETWORK.OptimismSepolia]: "https://rpc.ankr.com/optimism_sepolia/",
   [NETWORK.Arbitrum]: "https://rpc.ankr.com/arbitrum/",
-  [NETWORK.Base]: "https://rpc.ankr.com/optimism_sepolia",
+  [NETWORK.Base]: "https://rpc.ankr.com/base/",
 };
 
 const BLAST_URL = {

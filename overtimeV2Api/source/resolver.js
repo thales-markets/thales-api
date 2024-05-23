@@ -21,12 +21,12 @@ async function processResolve() {
       while (true) {
         try {
           const startTime = new Date().getTime();
-          console.log("process markets");
+          console.log("resolve markets");
           await resolveMarkets(NETWORK.OptimismSepolia);
           const endTime = new Date().getTime();
           console.log(`=== Seconds for resolving markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
         } catch (error) {
-          console.log("markets error: ", error);
+          console.log("resolve markets error: ", error);
         }
 
         await delay(60 * 1000);
@@ -91,6 +91,7 @@ async function resolveMarkets(network) {
   const gamesInfoMap = await getGamesInfoMap();
   const closedMarketsMap = await getClosedMarketsMap();
 
+  console.log(`Total ready for resolve markets: ${readyForResolveGameIds.length}`);
   for (let i = 0; i < readyForResolveGameIds.length; i++) {
     const readyForResolveGameId = readyForResolveGameIds[i];
     const ongoingMarket = openMarketsMap.get(readyForResolveGameId);
