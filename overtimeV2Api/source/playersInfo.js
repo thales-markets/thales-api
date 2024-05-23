@@ -16,7 +16,7 @@ const {
 async function processPlayersInfo() {
   if (process.env.REDIS_URL) {
     redisClient = redis.createClient(process.env.REDIS_URL);
-    console.log("create client from index");
+    console.log("Players info: create client from index");
 
     redisClient.on("error", function (error) {
       console.error(error);
@@ -25,12 +25,14 @@ async function processPlayersInfo() {
       while (true) {
         try {
           const startTime = new Date().getTime();
-          console.log("process players info");
+          console.log("Players info: process players info");
           await processAllPlayersInfo();
           const endTime = new Date().getTime();
-          console.log(`=== Seconds for processing players info: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
+          console.log(
+            `Players info: === Seconds for processing players info: ${((endTime - startTime) / 1000).toFixed(0)} ===`,
+          );
         } catch (error) {
-          console.log("players info error: ", error);
+          console.log("Players info: players info error: ", error);
         }
 
         await delay(5 * 60 * 1000);
@@ -106,7 +108,7 @@ async function processAllPlayersInfo() {
                   playerName: playerInfo.participant_name,
                 });
               } else {
-                console.log(`Player with ID ${playerId} not found.`);
+                console.log(`Players info: Player with ID ${playerId} not found.`);
               }
             }
           }
@@ -115,7 +117,7 @@ async function processAllPlayersInfo() {
     }
   }
 
-  console.log(`Number of players info: ${Array.from(playersInfoMap.values()).length}`);
+  console.log(`Players info: Number of players info: ${Array.from(playersInfoMap.values()).length}`);
   redisClient.set(KEYS.OVERTIME_V2_PLAYERS_INFO, JSON.stringify([...playersInfoMap]), function () {});
 }
 

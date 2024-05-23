@@ -12,7 +12,7 @@ const { STATUS, ResultType, OverUnderType, MarketType, MarketTypeMap } = require
 async function processResolve() {
   if (process.env.REDIS_URL) {
     redisClient = redis.createClient(process.env.REDIS_URL);
-    console.log("create client from index");
+    console.log("Resolver: create client from index");
 
     redisClient.on("error", function (error) {
       console.error(error);
@@ -21,12 +21,12 @@ async function processResolve() {
       while (true) {
         try {
           const startTime = new Date().getTime();
-          console.log("resolve markets");
+          console.log("Resolver: resolve markets");
           await resolveMarkets(NETWORK.OptimismSepolia);
           const endTime = new Date().getTime();
-          console.log(`=== Seconds for resolving markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
+          console.log(`Resolver: === Seconds for resolving markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
         } catch (error) {
-          console.log("resolve markets error: ", error);
+          console.log("Resolver: resolve markets error: ", error);
         }
 
         await delay(60 * 1000);
@@ -91,7 +91,7 @@ async function resolveMarkets(network) {
   const gamesInfoMap = await getGamesInfoMap();
   const closedMarketsMap = await getClosedMarketsMap();
 
-  console.log(`Total ready for resolve markets: ${readyForResolveGameIds.length}`);
+  console.log(`Resolver: Total ready for resolve: ${readyForResolveGameIds.length}`);
   for (let i = 0; i < readyForResolveGameIds.length; i++) {
     const readyForResolveGameId = readyForResolveGameIds[i];
     const ongoingMarket = openMarketsMap.get(readyForResolveGameId);
@@ -123,9 +123,11 @@ async function resolveMarkets(network) {
 
   const allClosedMarkets = Array.from(closedMarketsMap.values());
 
-  console.log(`Total resolved markets: ${allClosedMarkets.length}`);
+  console.log(`Resolver: Total resolved markets: ${allClosedMarkets.length}`);
   for (let i = 0; i < allClosedMarkets.length; i++) {
-    const childMarkets = allClosedMarkets[i].childMarkets.filter((market) => !market.isPlayerPropsMarket);
+    const childMarkets = allClosedMarkets[i].childMarkets.filter(
+      (market) => market.playerProps.playerId < 65535 && market.typeId !== ResultType.COMBINED_POSITIONS,
+    );
 
     const childMarketsGameIds = childMarkets.map((childMarket) => childMarket.gameId);
     const childMarketsTypeIds = childMarkets.map((childMarket) => childMarket.typeId);
@@ -160,6 +162,7 @@ async function resolveMarkets(network) {
           if (resultLine == childMarket.line) {
             childMarket.isResolved = false;
             childMarket.isCanceled = true;
+            childMarket.statusCode = "canceled";
             childMarket.winningPositions = [];
           } else {
             const winningPosition =
@@ -172,6 +175,62 @@ async function resolveMarkets(network) {
                 : OverUnderType.Under;
             childMarket.winningPositions = [winningPosition];
           }
+        }
+      }
+    }
+
+    const onlyCombinedPositionsMarkets = allClosedMarkets[i].childMarkets.filter(
+      (market) => market.typeId === MarketType.WINNER_TOTAL || market.typeId === MarketType.HALFTIME_FULLTIME,
+    );
+    for (let j = 0; j < onlyCombinedPositionsMarkets.length; j++) {
+      const childMarket = onlyCombinedPositionsMarkets[j];
+
+      const winningPositions = [];
+      for (let k = 0; k < childMarket.combinedPositions.length; k++) {
+        const combinedPositions = childMarket.combinedPositions[k];
+
+        let hasCancelledPosition = false;
+        let hasOpenPosition = false;
+        let hasLosingPosition = false;
+        for (let m = 0; m < combinedPositions.length; m++) {
+          const combinedPosition = combinedPositions[m];
+          const singleMarket = [...childMarkets, allClosedMarkets[i]].find(
+            (singleMarket) =>
+              singleMarket.typeId === combinedPosition.typeId && singleMarket.line === combinedPosition.line,
+          );
+          if (singleMarket.isResolved && !singleMarket.winningPositions.includes(combinedPosition.position)) {
+            hasLosingPosition = true;
+            break;
+          }
+          hasOpenPosition = singleMarket.isOpen;
+          hasCancelledPosition = singleMarket.isCanceled;
+        }
+
+        if (hasCancelledPosition) {
+          childMarket.status === STATUS.Canceled;
+          childMarket.isResolved = false;
+          childMarket.isCanceled = true;
+          childMarket.isPaused = false;
+          childMarket.isOpen = false;
+          childMarket.statusCode = "canceled";
+          childMarket.winningPositions = winningPositions;
+          break;
+        }
+        if (hasOpenPosition) {
+          break;
+        }
+        if (!hasLosingPosition) {
+          winningPositions.push(k);
+        }
+
+        if (winningPositions.length > 0) {
+          childMarket.status === STATUS.Resolved;
+          childMarket.isResolved = true;
+          childMarket.isCanceled = false;
+          childMarket.isPaused = false;
+          childMarket.isOpen = false;
+          childMarket.statusCode = "resolved";
+          childMarket.winningPositions = winningPositions;
         }
       }
     }

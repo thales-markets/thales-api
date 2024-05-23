@@ -31,7 +31,7 @@ const awsS3Client = new S3Client({
 async function processMarkets() {
   if (process.env.REDIS_URL) {
     redisClient = redis.createClient(process.env.REDIS_URL);
-    console.log("create client from index");
+    console.log("Markets: create client from index");
 
     redisClient.on("error", function (error) {
       console.error(error);
@@ -40,12 +40,12 @@ async function processMarkets() {
       while (true) {
         try {
           const startTime = new Date().getTime();
-          console.log("process markets");
+          console.log("Markets: process markets");
           await processAllMarkets();
           const endTime = new Date().getTime();
-          console.log(`=== Seconds for processing markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
+          console.log(`Markets: === Seconds for processing markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
         } catch (error) {
-          console.log("markets error: ", error);
+          console.log("Markets: markets error: ", error);
         }
 
         await delay(5 * 1000);
@@ -144,7 +144,7 @@ const loadMarkets = async () => {
     while (isTruncated) {
       const { Contents, IsTruncated, NextContinuationToken } = await awsS3Client.send(command);
       const contentsList = Contents.map((c) => c.Key);
-      console.log(`Available sport merkle trees: ${contentsList.length}`);
+      console.log(`Markets: Available sport merkle trees: ${contentsList.length}`);
       merkleTreesList = [...merkleTreesList, ...contentsList];
 
       isTruncated = IsTruncated;
@@ -163,12 +163,12 @@ const loadMarkets = async () => {
           const marketFileContent = await readAwsS3File(bucketName, marketFile);
           markets = [...markets, ...JSON.parse(marketFileContent)];
         } catch (e) {
-          console.log(`Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
+          console.log(`Markets: Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
         }
       }
     }
   } catch (e) {
-    console.log(`Error reading merkle trees: ${e}`);
+    console.log(`Markets: Error reading merkle trees: ${e}`);
   }
 
   return markets;
@@ -246,7 +246,7 @@ function getOpenMarketsMap() {
 
 async function updateMerkleTree(gameIds) {
   const startTime = new Date().getTime();
-  console.log(`Updating merkle tree for ${gameIds.length} games`);
+  console.log(`Markets: Updating merkle tree for ${gameIds.length} games`);
 
   const bucketName = process.env.AWS_BUCKET_NAME;
   const merkleTreesFolderName = process.env.AWS_FOLDER_NAME_MERKLES;
@@ -262,13 +262,13 @@ async function updateMerkleTree(gameIds) {
       const mappedMarket = mapMarket(market);
       openMarketsMap.set(mappedMarket.gameId, mappedMarket);
     } catch (e) {
-      console.log(`Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
+      console.log(`Markets: Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
     }
   }
   redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS, JSON.stringify([...openMarketsMap]), function () {});
 
   const endTime = new Date().getTime();
-  console.log(`Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);
+  console.log(`Markets: Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);
 }
 
 async function processAllMarkets() {

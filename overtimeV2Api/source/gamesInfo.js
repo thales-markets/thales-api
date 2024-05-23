@@ -16,7 +16,7 @@ const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAY
 async function processGamesInfo() {
   if (process.env.REDIS_URL) {
     redisClient = redis.createClient(process.env.REDIS_URL);
-    console.log("create client from index");
+    console.log("Games info: create client from index");
 
     redisClient.on("error", function (error) {
       console.error(error);
@@ -25,12 +25,14 @@ async function processGamesInfo() {
       while (true) {
         try {
           const startTime = new Date().getTime();
-          console.log("process games info");
+          console.log("Games info: process games info");
           await processAllGamesInfo();
           const endTime = new Date().getTime();
-          console.log(`=== Seconds for processing games info: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
+          console.log(
+            `Games info: === Seconds for processing games info: ${((endTime - startTime) / 1000).toFixed(0)} ===`,
+          );
         } catch (error) {
-          console.log("games info error: ", error);
+          console.log("Games info: games info error: ", error);
         }
 
         await delay(10 * 60 * 1000);
@@ -121,7 +123,7 @@ async function processAllGamesInfo() {
 
   for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
     const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
-    console.log(`Getting games info for date: ${formattedDate}`);
+    console.log(`Games info: Getting games info for date: ${formattedDate}`);
 
     const allSports = Object.keys(SPORTS_MAP);
     const rundownSports = allSports.filter((sport) => !getIsEnetpulseSportV2(sport) && !getIsJsonOddsSport(sport));
@@ -133,7 +135,7 @@ async function processAllGamesInfo() {
     ]);
   }
 
-  console.log(`Number of games info: ${Array.from(gamesInfoMap.values()).length}`);
+  console.log(`Games info: Number of games info: ${Array.from(gamesInfoMap.values()).length}`);
   redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
 }
 
