@@ -16,7 +16,7 @@ const {
   convertFromBytes32,
 } = require("../utils/markets");
 const { SPORTS_MAP } = require("../constants/tags");
-const { MARKET_TYPE, ODDS_TYPE, STATUS } = require("../constants/markets");
+const { ODDS_TYPE, STATUS, MarketTypeMap } = require("../constants/markets");
 const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 
@@ -63,7 +63,7 @@ const packMarket = (market) => {
     ? 7
     : market.sportId;
   const isEnetpulseSport = getIsEnetpulseSport(leagueId);
-  const type = MARKET_TYPE[market.typeId];
+  const type = MarketTypeMap[market.typeId];
 
   return {
     gameId: market.gameId,
@@ -190,12 +190,12 @@ const mapMarket = (market) => {
   if ((packedMarket.isOpen || packedMarket.isPaused) && isStarted) {
     packedMarket.statusCode = "ongoing";
   }
-  if (packedMarket.isResolved) {
-    packedMarket.statusCode = "resolved";
-  }
-  if (packedMarket.isCanceled) {
-    packedMarket.statusCode = "canceled";
-  }
+  // if (packedMarket.isResolved) {
+  //   packedMarket.statusCode = "resolved";
+  // }
+  // if (packedMarket.isCanceled) {
+  //   packedMarket.statusCode = "canceled";
+  // }
   if (packedMarket.isPaused) {
     packedMarket.statusCode = "paused";
   }
@@ -204,15 +204,31 @@ const mapMarket = (market) => {
 };
 
 const mapMarkets = async () => {
-  const marketsMap = new Map();
+  const allMarketsMap = new Map();
+  const openMarketsMap = new Map();
+  const ongoingMarketsMap = new Map();
   const markets = await loadMarkets();
 
-  markets.forEach((market) => {
-    const mappedMarket = mapMarket(market);
-    marketsMap.set(mappedMarket.gameId, mappedMarket);
-  });
+  redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS, async function (err, obj) {
+    const closedMarketsMap = new Map(JSON.parse(obj));
 
-  return marketsMap;
+    markets.forEach((market) => {
+      const isMarketClosed = !!closedMarketsMap.get(market.gameId);
+      if (!isMarketClosed) {
+        const mappedMarket = mapMarket(market);
+        if (mappedMarket.statusCode === "open" || mappedMarket.statusCode === "paused") {
+          openMarketsMap.set(mappedMarket.gameId, mappedMarket);
+        } else if (mappedMarket.statusCode === "ongoing") {
+          ongoingMarketsMap.set(mappedMarket.gameId, mappedMarket);
+        }
+        allMarketsMap.set(mappedMarket.gameId, mappedMarket);
+      }
+    });
+
+    redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS, JSON.stringify([...openMarketsMap]), function () {});
+    redisClient.set(KEYS.OVERTIME_V2_ONGOING_MARKETS, JSON.stringify([...ongoingMarketsMap]), function () {});
+    redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...allMarketsMap]), function () {});
+  });
 };
 
 async function updateMerkleTree(gameIds) {
@@ -246,8 +262,7 @@ async function updateMerkleTree(gameIds) {
 }
 
 async function processAllMarkets() {
-  const mappedMarkets = await mapMarkets();
-  redisClient.set(KEYS.OVERTIME_V2_MARKETS, JSON.stringify([...mappedMarkets]), function () {});
+  await mapMarkets();
 }
 
 module.exports = {
