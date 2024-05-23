@@ -49,7 +49,12 @@ const {
   getAverageOdds,
   getOpticOddsLeagueNameById,
 } = require("../overtimeV2Api/utils/markets");
-const { TWO_POSITIONAL_SPORTS, LIVE_SUPPORTED_LEAGUES, SPORTS_TAGS_MAP } = require("../overtimeV2Api/constants/tags");
+const {
+  TWO_POSITIONAL_SPORTS,
+  LIVE_SUPPORTED_LEAGUES,
+  SPORTS_TAGS_MAP,
+  SPORTS_NO_FORMAL_HOME_AWAY,
+} = require("../overtimeV2Api/constants/tags");
 const { MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL } = require("../overtimeV2Api/constants/markets");
 const teamsMapping = require("../overtimeV2Api/utils/teamsMapping.json");
 const dummyMarketsLive = require("../overtimeV2Api/utils/dummy/dummyMarketsLive.json");
@@ -1635,7 +1640,6 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
   if (liveOddsProviders.length == 0) {
     res.send(`No suppored live odds providers found in the config`);
   }
-
   redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
 
@@ -1660,7 +1664,6 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
           (!type || market.type.toLowerCase() === type.toLowerCase()),
       );
-
       if (filteredMarkets && filteredMarkets.length > 0) {
         const teamsMap = new Map();
 
@@ -1690,8 +1693,15 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
             const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
 
-            const homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
-            const awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
+            let homeTeamsMatch;
+            let awayTeamsMatch;
+            if (SPORTS_NO_FORMAL_HOME_AWAY.includes(Number(leagueId))) {
+              homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
+              awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
+            } else {
+              homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
+              awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
+            }
             const datesMatch =
               new Date(opticOddsGame.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
 
@@ -1728,8 +1738,15 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
             const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
 
-            const homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
-            const awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
+            let homeTeamsMatch;
+            let awayTeamsMatch;
+            if (SPORTS_NO_FORMAL_HOME_AWAY.includes(Number(leagueId))) {
+              homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
+              awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
+            } else {
+              homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
+              awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
+            }
 
             const datesMatch =
               new Date(response.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
