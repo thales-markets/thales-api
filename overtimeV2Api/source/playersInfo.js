@@ -28,85 +28,95 @@ async function processPlayersInfo() {
           console.log("process players info");
           await processAllPlayersInfo();
           const endTime = new Date().getTime();
-          console.log(`Seconds for processing players info: ${((endTime - startTime) / 1000).toFixed(0)}`);
+          console.log(`=== Seconds for processing players info: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
         } catch (error) {
           console.log("players info error: ", error);
         }
 
-        await delay(10 * 1000);
+        await delay(5 * 60 * 1000);
       }
     }, 3000);
   }
 }
 
+function getPlayersInfoMap() {
+  return new Promise(function (resolve) {
+    redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO, function (err, obj) {
+      const playersInfoMap = new Map(JSON.parse(obj));
+      resolve(playersInfoMap);
+    });
+  });
+}
+
+function getOpenMarketsMap() {
+  return new Promise(function (resolve) {
+    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS, function (err, obj) {
+      const openMarketsMap = new Map(JSON.parse(obj));
+      resolve(openMarketsMap);
+    });
+  });
+}
+
 async function processAllPlayersInfo() {
-  let playersInfoMap = new Map();
-  redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO, function (err, obj) {
-    playersInfoMap = new Map(JSON.parse(obj));
+  let playersInfoMap = await getPlayersInfoMap();
+  let openMarketsMap = await getOpenMarketsMap();
 
-    let marketsMap = new Map();
-    redisClient.get(KEYS.OVERTIME_V2_MARKETS, async function (err, obj) {
-      marketsMap = new Map(JSON.parse(obj));
+  let allOpenMarketsMap = Array.from(openMarketsMap.values());
 
-      let allMarkets = Array.from(marketsMap.values());
+  for (let i = 0; i < allOpenMarketsMap.length; i++) {
+    const market = allOpenMarketsMap[i];
+    const leagueId = market.leagueId;
 
-      for (let i = 0; i < allMarkets.length; i++) {
-        const market = allMarkets[i];
-        const leagueId = market.leagueId;
-        const rundownSport = SPORT_ID_MAP_RUNDOWN[leagueId];
+    if (!getIsEnetpulseSportV2(leagueId) && !getIsJsonOddsSport(leagueId)) {
+      const hasPlayerPropsMarkets = market.childMarkets.some((childMarket) =>
+        getIsPlayerPropsMarket(childMarket.typeId),
+      );
 
-        if (!getIsEnetpulseSportV2(leagueId) && !getIsJsonOddsSport(leagueId)) {
-          const hasPlayerPropsMarkets = market.childMarkets.some((childMarket) =>
-            getIsPlayerPropsMarket(childMarket.typeId),
-          );
+      if (hasPlayerPropsMarkets) {
+        // console.log(
+        //   `Getting players info for Rundown sport: ${rundownSport}, ${leagueId} and game ${market.gameId}`,
+        // );
 
-          if (hasPlayerPropsMarkets) {
-            // console.log(
-            //   `Getting players info for Rundown sport: ${rundownSport}, ${leagueId} and game ${market.gameId}`,
-            // );
+        const optionsApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(
+          market.gameId,
+        )}/markets?participant_type=TYPE_PLAYER&key=${process.env.RUNDOWN_API_KEY}`;
 
-            const optionsApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(
-              market.gameId,
-            )}/markets?participant_type=TYPE_PLAYER&key=${process.env.RUNDOWN_API_KEY}`;
+        const optionsResponse = await axios.get(optionsApiUrl);
+        const optionsResponseData = optionsResponse.data;
+        if (optionsResponseData !== null) {
+          const optionsIds = optionsResponseData.map((options) => options.id).join(",");
 
-            const optionsResponse = await axios.get(optionsApiUrl);
-            const optionsResponseData = optionsResponse.data;
-            if (optionsResponseData !== null) {
-              const optionsIds = optionsResponseData.map((options) => options.id).join(",");
+          const apiUrl = `https://therundown.io/api/v2/markets/participants?market_ids=${optionsIds}&event_id=${convertFromBytes32(
+            market.gameId,
+          )}&key=${process.env.RUNDOWN_API_KEY}`;
+          const response = await axios.get(apiUrl);
+          const responseData = response.data;
 
-              const apiUrl = `https://therundown.io/api/v2/markets/participants?market_ids=${optionsIds}&event_id=${convertFromBytes32(
-                market.gameId,
-              )}&key=${process.env.RUNDOWN_API_KEY}`;
-              const response = await axios.get(apiUrl);
-              const responseData = response.data;
-
-              if (responseData !== null) {
-                const playerPropsChildMarkets = market.childMarkets.filter((childMarket) =>
-                  getIsPlayerPropsMarket(childMarket.typeId),
-                );
-                for (let j = 0; j < playerPropsChildMarkets.length; j++) {
-                  const playerId = Number(playerPropsChildMarkets[j].playerProps.playerId);
-                  const playerInfo = responseData.participants.find(
-                    (playerInfo) => Number(playerInfo.participant_id) === playerId,
-                  );
-                  if (playerInfo) {
-                    playersInfoMap.set(`${playerId}`, {
-                      playerName: playerInfo.participant_name,
-                    });
-                  } else {
-                    console.log(`Player with ID ${playerId} not found.`);
-                  }
-                }
+          if (responseData !== null) {
+            const playerPropsChildMarkets = market.childMarkets.filter((childMarket) =>
+              getIsPlayerPropsMarket(childMarket.typeId),
+            );
+            for (let j = 0; j < playerPropsChildMarkets.length; j++) {
+              const playerId = Number(playerPropsChildMarkets[j].playerProps.playerId);
+              const playerInfo = responseData.participants.find(
+                (playerInfo) => Number(playerInfo.participant_id) === playerId,
+              );
+              if (playerInfo) {
+                playersInfoMap.set(`${playerId}`, {
+                  playerName: playerInfo.participant_name,
+                });
+              } else {
+                console.log(`Player with ID ${playerId} not found.`);
               }
             }
           }
         }
       }
+    }
+  }
 
-      console.log(`Number of players info: ${Array.from(playersInfoMap.values()).length}`);
-      redisClient.set(KEYS.OVERTIME_V2_PLAYERS_INFO, JSON.stringify([...playersInfoMap]), function () {});
-    });
-  });
+  console.log(`Number of players info: ${Array.from(playersInfoMap.values()).length}`);
+  redisClient.set(KEYS.OVERTIME_V2_PLAYERS_INFO, JSON.stringify([...playersInfoMap]), function () {});
 }
 
 module.exports = {

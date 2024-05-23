@@ -1,6 +1,6 @@
 const NETWORK = {
   Optimism: 10,
-  OptimismGoerli: 420,
+  OptimismSepolia: 11155420,
   Arbitrum: 42161,
   Base: 8453,
 };
