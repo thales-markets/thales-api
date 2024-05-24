@@ -2,7 +2,7 @@ const thalesData = require("thales-data");
 const { PREFIX_KEYS } = require("../constants/cacheKeys");
 const cache = require("../services/cache");
 const TTL = require("../constants/ttl");
-const { getCacheKey } = require("../utils/getters");
+const { getCacheKey, getQueryParam, getQueryProperty } = require("../utils/getters");
 
 const userTransactions = async (req, res) => {
   try {
