@@ -8,6 +8,7 @@ const KEYS = require("../../redis/redis-keys");
 const { NETWORK } = require("../constants/networks");
 const { ethers } = require("ethers");
 const { STATUS, ResultType, OverUnderType, MarketType, MarketTypeMap } = require("../constants/markets");
+const { getIsCombinedPositionsMarket } = require("../utils/markets");
 
 async function processResolve() {
   if (process.env.REDIS_URL) {
@@ -77,6 +78,7 @@ async function resolveMarkets(network) {
 
   let emptyArrays = Array(allOpenGameIds.length).fill(0);
 
+  // check are there any unresolved open markets
   const areMarketsResolved = await sportsAmmData.areMarketsResolved(
     allOpenGameIds,
     emptyArrays,
@@ -86,22 +88,31 @@ async function resolveMarkets(network) {
   const readyForResolveGameIds = allOpenGameIds.filter((_, index) => areMarketsResolved[index]);
 
   emptyArrays = Array(readyForResolveGameIds.length).fill(0);
+  // get results for unresolved markets
   const resultsForMarkets = await sportsAmmData.getResultsForMarkets(readyForResolveGameIds, emptyArrays, emptyArrays);
 
   const gamesInfoMap = await getGamesInfoMap();
   const closedMarketsMap = await getClosedMarketsMap();
 
   console.log(`Resolver: Total ready for resolve: ${readyForResolveGameIds.length}`);
+  // resolve parent markets - update status and move under closed markets map
   for (let i = 0; i < readyForResolveGameIds.length; i++) {
     const readyForResolveGameId = readyForResolveGameIds[i];
     const ongoingMarket = openMarketsMap.get(readyForResolveGameId);
 
-    ongoingMarket.status === STATUS.Resolved;
-    ongoingMarket.isResolved = true;
-    ongoingMarket.isCanceled = false;
+    if (resultsForMarkets[i].length > 0) {
+      ongoingMarket.status === STATUS.Resolved;
+      ongoingMarket.isResolved = true;
+      ongoingMarket.isCanceled = false;
+      ongoingMarket.statusCode = "resolved";
+    } else {
+      ongoingMarket.status === STATUS.Canceled;
+      ongoingMarket.isResolved = false;
+      ongoingMarket.isCanceled = true;
+      ongoingMarket.statusCode = "canceled";
+    }
     ongoingMarket.isPaused = false;
     ongoingMarket.isOpen = false;
-    ongoingMarket.statusCode = "resolved";
     ongoingMarket.winningPositions = resultsForMarkets[i];
 
     const gameInfo = gamesInfoMap.get(ongoingMarket.gameId);
@@ -121,80 +132,108 @@ async function resolveMarkets(network) {
     closedMarketsMap.set(readyForResolveGameId, ongoingMarket);
   }
 
-  const allClosedMarkets = Array.from(closedMarketsMap.values());
+  // get all unresolved closed markets - has some child markets unresolved
+  const allUnresolvedClosedMarkets = Array.from(closedMarketsMap.values()).filter(
+    (market) => !market.isWholeGameResolved,
+  );
 
-  console.log(`Resolver: Total resolved markets: ${allClosedMarkets.length}`);
-  for (let i = 0; i < allClosedMarkets.length; i++) {
-    const childMarkets = allClosedMarkets[i].childMarkets.filter(
-      (market) => market.playerProps.playerId < 65535 && market.typeId !== ResultType.COMBINED_POSITIONS,
+  console.log(`Resolver: Total unresolved markets: ${allUnresolvedClosedMarkets.length}`);
+  //
+  for (let i = 0; i < allUnresolvedClosedMarkets.length; i++) {
+    // get all unresolved child markets (except combined positions)
+    const unresolvedChildMarkets = allUnresolvedClosedMarkets[i].childMarkets.filter(
+      // TODO: remove condition once uint24 for playerId is deployed
+      (market) =>
+        !market.isResolved &&
+        !market.isCanceled &&
+        market.playerProps.playerId < 65535 &&
+        !getIsCombinedPositionsMarket(market.typeId),
     );
 
-    const childMarketsGameIds = childMarkets.map((childMarket) => childMarket.gameId);
-    const childMarketsTypeIds = childMarkets.map((childMarket) => childMarket.typeId);
-    const childMarketsPlayerIds = childMarkets.map((childMarket) => childMarket.playerProps.playerId);
-    const childMarketsLines = childMarkets.map((childMarket) => childMarket.line * 100);
+    const unresolvedChildMarketsGameIds = unresolvedChildMarkets.map((childMarket) => childMarket.gameId);
+    const unresolvedChildMarketsTypeIds = unresolvedChildMarkets.map((childMarket) => childMarket.typeId);
+    const unresolvedChildMarketsPlayerIds = unresolvedChildMarkets.map(
+      (childMarket) => childMarket.playerProps.playerId,
+    );
+    const unresolvedChildMarketsLines = unresolvedChildMarkets.map((childMarket) => childMarket.line * 100);
 
     const [areMarketsResolved, resultsForMarkets] = await Promise.all([
       sportsAmmData.areMarketsResolved(
-        childMarketsGameIds,
-        childMarketsTypeIds,
-        childMarketsPlayerIds,
-        childMarketsLines,
+        unresolvedChildMarketsGameIds,
+        unresolvedChildMarketsTypeIds,
+        unresolvedChildMarketsPlayerIds,
+        unresolvedChildMarketsLines,
       ),
-      sportsAmmData.getResultsForMarkets(childMarketsGameIds, childMarketsTypeIds, childMarketsPlayerIds),
+      sportsAmmData.getResultsForMarkets(
+        unresolvedChildMarketsGameIds,
+        unresolvedChildMarketsTypeIds,
+        unresolvedChildMarketsPlayerIds,
+      ),
     ]);
 
-    for (let j = 0; j < childMarkets.length; j++) {
-      const childMarket = childMarkets[j];
+    // resolve child markets (except combined positions)
+    for (let j = 0; j < unresolvedChildMarkets.length; j++) {
+      const unresolvedChildMarket = unresolvedChildMarkets[j];
       if (areMarketsResolved[j]) {
-        childMarket.status === STATUS.Resolved;
-        childMarket.isResolved = true;
-        childMarket.isCanceled = false;
-        childMarket.isPaused = false;
-        childMarket.isOpen = false;
-        childMarket.statusCode = "resolved";
+        if (resultsForMarkets[j].length > 0) {
+          unresolvedChildMarket.status === STATUS.Resolved;
+          unresolvedChildMarket.isResolved = true;
+          unresolvedChildMarket.isCanceled = false;
+          unresolvedChildMarket.statusCode = "resolved";
 
-        const resultType = MarketTypeMap[childMarket.typeId].resultType;
-        if (resultType === ResultType.EXACT_POSITION) {
-          childMarket.winningPositions = resultsForMarkets[j];
-        } else if (resultType === ResultType.OVER_UNDER) {
-          const resultLine = Number(resultsForMarkets[j][0]) / 100;
-          if (resultLine == childMarket.line) {
-            childMarket.isResolved = false;
-            childMarket.isCanceled = true;
-            childMarket.statusCode = "canceled";
-            childMarket.winningPositions = [];
-          } else {
-            const winningPosition =
-              childMarket.typeId === MarketType.SPREAD
-                ? resultLine < childMarket.line
+          const resultType = MarketTypeMap[unresolvedChildMarket.typeId].resultType;
+          if (resultType === ResultType.EXACT_POSITION) {
+            unresolvedChildMarket.winningPositions = resultsForMarkets[j];
+          } else if (resultType === ResultType.OVER_UNDER) {
+            const resultLine = Number(resultsForMarkets[j][0]) / 100;
+            if (resultLine == unresolvedChildMarket.line) {
+              unresolvedChildMarket.status === STATUS.Canceled;
+              unresolvedChildMarket.isResolved = false;
+              unresolvedChildMarket.isCanceled = true;
+              unresolvedChildMarket.statusCode = "canceled";
+              unresolvedChildMarket.winningPositions = [];
+            } else {
+              const winningPosition =
+                unresolvedChildMarket.typeId === MarketType.SPREAD
+                  ? resultLine < unresolvedChildMarket.line
+                    ? OverUnderType.Over
+                    : OverUnderType.Under
+                  : resultLine > unresolvedChildMarket.line
                   ? OverUnderType.Over
-                  : OverUnderType.Under
-                : resultLine > childMarket.line
-                ? OverUnderType.Over
-                : OverUnderType.Under;
-            childMarket.winningPositions = [winningPosition];
+                  : OverUnderType.Under;
+              unresolvedChildMarket.winningPositions = [winningPosition];
+            }
           }
+        } else {
+          unresolvedChildMarket.status === STATUS.Canceled;
+          unresolvedChildMarket.isResolved = false;
+          unresolvedChildMarket.isCanceled = true;
+          unresolvedChildMarket.statusCode = "canceled";
+          unresolvedChildMarket.winningPositions = [];
         }
+        unresolvedChildMarket.isPaused = false;
+        unresolvedChildMarket.isOpen = false;
       }
     }
 
-    const onlyCombinedPositionsMarkets = allClosedMarkets[i].childMarkets.filter(
-      (market) => market.typeId === MarketType.WINNER_TOTAL || market.typeId === MarketType.HALFTIME_FULLTIME,
+    // get all unresolvded combined positions child markets
+    const cpUnresolvedChildMarkets = allUnresolvedClosedMarkets[i].childMarkets.filter(
+      (market) => !market.isResolved && !market.isCanceled && getIsCombinedPositionsMarket(market.typeId),
     );
-    for (let j = 0; j < onlyCombinedPositionsMarkets.length; j++) {
-      const childMarket = onlyCombinedPositionsMarkets[j];
+    for (let j = 0; j < cpUnresolvedChildMarkets.length; j++) {
+      const cpUnresolvdeCildMarket = cpUnresolvedChildMarkets[j];
 
       const winningPositions = [];
-      for (let k = 0; k < childMarket.combinedPositions.length; k++) {
-        const combinedPositions = childMarket.combinedPositions[k];
+      let status = STATUS.Canceled;
+      for (let j = 0; j < cpUnresolvdeCildMarket.combinedPositions.length; j++) {
+        const combinedPositions = cpUnresolvdeCildMarket.combinedPositions[j];
 
         let hasCancelledPosition = false;
         let hasOpenPosition = false;
         let hasLosingPosition = false;
-        for (let m = 0; m < combinedPositions.length; m++) {
-          const combinedPosition = combinedPositions[m];
-          const singleMarket = [...childMarkets, allClosedMarkets[i]].find(
+        for (let k = 0; k < combinedPositions.length; k++) {
+          const combinedPosition = combinedPositions[k];
+          const singleMarket = [...allUnresolvedClosedMarkets[i].childMarkets, allUnresolvedClosedMarkets[i]].find(
             (singleMarket) =>
               singleMarket.typeId === combinedPosition.typeId && singleMarket.line === combinedPosition.line,
           );
@@ -202,40 +241,49 @@ async function resolveMarkets(network) {
             hasLosingPosition = true;
             break;
           }
-          hasOpenPosition = singleMarket.isOpen;
+          hasOpenPosition = singleMarket.isOpen || singleMarket.isPaused;
           hasCancelledPosition = singleMarket.isCanceled;
         }
 
-        if (hasCancelledPosition) {
-          childMarket.status === STATUS.Canceled;
-          childMarket.isResolved = false;
-          childMarket.isCanceled = true;
-          childMarket.isPaused = false;
-          childMarket.isOpen = false;
-          childMarket.statusCode = "canceled";
-          childMarket.winningPositions = winningPositions;
-          break;
+        // TODO: check logic with multiple (or zero) winning positions
+        if (hasLosingPosition) {
+          status = STATUS.Resolved;
+        } else {
+          if (!hasCancelledPosition) {
+            if (hasOpenPosition) {
+              status = STATUS.Open;
+              break;
+            } else {
+              status = STATUS.Resolved;
+              winningPositions.push(j);
+            }
+          }
         }
-        if (hasOpenPosition) {
-          break;
-        }
-        if (!hasLosingPosition) {
-          winningPositions.push(k);
-        }
+      }
 
-        if (winningPositions.length > 0) {
-          childMarket.status === STATUS.Resolved;
-          childMarket.isResolved = true;
-          childMarket.isCanceled = false;
-          childMarket.isPaused = false;
-          childMarket.isOpen = false;
-          childMarket.statusCode = "resolved";
-          childMarket.winningPositions = winningPositions;
-        }
+      if (status === STATUS.Resolved) {
+        cpUnresolvdeCildMarket.status === STATUS.Resolved;
+        cpUnresolvdeCildMarket.isResolved = true;
+        cpUnresolvdeCildMarket.isCanceled = false;
+        cpUnresolvdeCildMarket.statusCode = "resolved";
+        cpUnresolvdeCildMarket.isPaused = false;
+        cpUnresolvdeCildMarket.isOpen = false;
+        cpUnresolvdeCildMarket.winningPositions = winningPositions;
+      } else if (status === STATUS.Canceled) {
+        cpUnresolvdeCildMarket.status === STATUS.Canceled;
+        cpUnresolvdeCildMarket.isResolved = false;
+        cpUnresolvdeCildMarket.isCanceled = true;
+        cpUnresolvdeCildMarket.isPaused = false;
+        cpUnresolvdeCildMarket.isOpen = false;
+        cpUnresolvdeCildMarket.statusCode = "canceled";
+        cpUnresolvdeCildMarket.winningPositions = [];
       }
     }
 
-    closedMarketsMap.set(allClosedMarkets[i].gameId, allClosedMarkets[i]);
+    allUnresolvedClosedMarkets[i].isWholeGameResolved = allUnresolvedClosedMarkets[i].childMarkets.every(
+      (childMarket) => childMarket.isResolved || childMarket.isCanceled,
+    );
+    closedMarketsMap.set(allUnresolvedClosedMarkets[i].gameId, allUnresolvedClosedMarkets[i]);
   }
 
   redisClient.set(KEYS.OVERTIME_V2_CLOSED_MARKETS, JSON.stringify([...closedMarketsMap]), function () {});

@@ -3,6 +3,7 @@ const {
   PLAYER_PROPS_MARKET_TYPES,
   ONE_SIDE_PLAYER_PROPS_MARKET_TYPES,
   YES_NO_PLAYER_PROPS_MARKET_TYPES,
+  COMBINED_POSITIONS_MARKET_TYPES,
 } = require("../constants/markets");
 const overtimeSportsList = require("../assets/overtime-sports.json");
 const {
@@ -71,6 +72,10 @@ const getIsPlayerPropsMarket = (betType) => PLAYER_PROPS_MARKET_TYPES.includes(b
 const getIsOneSidePlayerPropsMarket = (betType) => ONE_SIDE_PLAYER_PROPS_MARKET_TYPES.includes(betType);
 
 const getIsYesNoPlayerPropsMarket = (betType) => YES_NO_PLAYER_PROPS_MARKET_TYPES.includes(betType);
+
+const getIsCombinedPositionsMarket = (betType) => {
+  return COMBINED_POSITIONS_MARKET_TYPES.includes(betType);
+};
 
 const getIsEnetpulseSport = (sportId) => ENETPULSE_SPORTS.includes(Number(sportId));
 
@@ -268,4 +273,5 @@ module.exports = {
   checkOddsFromMultipleBookmakersV2,
   getIsEnetpulseSportV2,
   convertFromBytes32,
+  getIsCombinedPositionsMarket,
 };
