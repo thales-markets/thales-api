@@ -17,7 +17,7 @@ const markets = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.Markets, [networkId, minMaturity, maxMaturity]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const markets = await thalesData.binaryOptions.markets({
       max: Infinity,
@@ -71,7 +71,7 @@ const rangedMarkets = async (req, res) => {
       ]),
     );
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const markets = await thalesData.binaryOptions.rangedMarkets({
       max: Infinity,

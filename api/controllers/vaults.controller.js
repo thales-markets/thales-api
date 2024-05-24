@@ -15,7 +15,7 @@ const userTransactions = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultUserTransactions, [networkId, vault, account]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const transactions = await thalesData.binaryOptions.vaultUserTransactions({
       network: networkId,
@@ -44,7 +44,7 @@ const vaultPnl = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultPnl, [networkId, vault]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const pnls = await thalesData.binaryOptions.vaultPnls({
       network: networkId,
@@ -72,7 +72,7 @@ const vaultTransactions = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const transactions = await thalesData.binaryOptions.vaultTransactions({
       network: networkId,

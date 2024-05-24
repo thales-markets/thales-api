@@ -15,7 +15,7 @@ const optionTransactions = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.OptionTransactions, [networkId, market, account]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const transactions = await thalesData.binaryOptions.optionTransactions({
       max: 5000,
@@ -55,7 +55,7 @@ const trades = async (req, res) => {
       getCacheKey(PREFIX_KEYS.Trades, [networkId, takerToken, makerToken, taker, maker]),
     );
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const trades = await thalesData.binaryOptions.trades({
       network: networkId,
@@ -86,7 +86,7 @@ const positionBalance = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.PositionBalance, [networkId, account]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const positionBalances = await thalesData.binaryOptions.positionBalances({
       network: networkId,
@@ -114,7 +114,7 @@ const rangePositionBalance = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.RangePositionBalance, [networkId, account]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const positionBalances = await thalesData.binaryOptions.rangedPositionBalances({
       network: networkId,

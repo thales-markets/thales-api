@@ -12,7 +12,7 @@ const stakers = async (req, res) => {
 
     const cachedStakers = cache.get(getCacheKey(PREFIX_KEYS.Stakers, [networkId]));
 
-    if (cachedStakers) return res.send(cachedStakers);
+    if (cachedStakers !== undefined) return res.send(cachedStakers);
 
     const stakersData = await thalesData.binaryOptions.stakers({
       network: networkId,
@@ -39,7 +39,7 @@ const claimOnBehalfItems = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.ClaimOnBehalfItems, [networkId, sender]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const canClaimOnBehalfItems = await thalesData.binaryOptions.canClaimOnBehalfItems({
       network: networkId,
@@ -68,7 +68,7 @@ const tokenTransaction = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.TokenTransactions, [networkId, account, typeIn]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const tokenTransactions = await thalesData.binaryOptions.tokenTransactions({
       network: networkId,

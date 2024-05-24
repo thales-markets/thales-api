@@ -15,7 +15,7 @@ const referralTransactions = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.ReferralTransactions, [networkId, trader, referrer]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const transactions = await thalesData.binaryOptions.referralTransfers({
       network: networkId,
@@ -44,7 +44,7 @@ const referredTraders = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.ReferredTraders, [networkId, referrer]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const traders = await thalesData.binaryOptions.referredTraders({
       network: networkId,
@@ -72,7 +72,7 @@ const referrers = async (req, res) => {
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.Referrers, [networkId, address]));
 
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const referrers = await thalesData.binaryOptions.referrers({
       network: networkId,

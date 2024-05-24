@@ -12,7 +12,7 @@ const lpPnl = async (req, res) => {
 
     const cachedLpPnls = cache.get(getCacheKey(PREFIX_KEYS.LiquidityPoolPnl, [networkId]));
 
-    if (cachedLpPnls) return res.send(cachedLpPnls);
+    if (cachedLpPnls !== undefined) return res.send(cachedLpPnls);
 
     const lpPnls = await thalesData.binaryOptions.liquidityPoolPnls({
       network: networkId,
@@ -22,7 +22,7 @@ const lpPnl = async (req, res) => {
 
     if (!lpPnls) return res.sendStatus(204);
 
-    return res.sendStatus(200).send(lpPnls);
+    return res.send(lpPnls);
   } catch (e) {
     console.log("Error ", e);
     return res.sendStatus(500);
@@ -38,7 +38,7 @@ const lpTransactions = async (req, res) => {
     if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.LiquidityPoolTransactions, [networkId, account]));
-    if (cachedResponse) return res.send(cachedResponse);
+    if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const transactions = await thalesData.binaryOptions.liquidityPoolUserTransactions({
       network: networkId,
