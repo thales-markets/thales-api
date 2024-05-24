@@ -2,7 +2,7 @@ const thalesData = require("thales-data");
 const { PREFIX_KEYS } = require("../constants/cacheKeys");
 const cache = require("../services/cache");
 const TTL = require("../constants/ttl");
-const { getCacheKey, getQueryProperty } = require("../utils/getters");
+const { getCacheKey, getQueryProperty, getQueryParam } = require("../utils/getters");
 
 const referralTransactions = async (req, res) => {
   try {
@@ -30,7 +30,7 @@ const referralTransactions = async (req, res) => {
     return res.send(transactions);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
