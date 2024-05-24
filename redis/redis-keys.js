@@ -38,7 +38,8 @@ const KEYS = {
     42161: "thalesArbMarketsLastUpdate",
     8453: "thalesBaseMarketsLastUpdate",
   },
-  OVERTIME_V2_MARKETS: "overtimeV2Markets",
+  OVERTIME_V2_OPEN_MARKETS: "overtimeV2OpenMarkets",
+  OVERTIME_V2_CLOSED_MARKETS: "overtimeV2ClosedMarkets",
   OVERTIME_V2_GAMES_INFO: "overtimeV2GamesInfo",
   OVERTIME_V2_PLAYERS_INFO: "overtimeV2PlayersInfo",
 };

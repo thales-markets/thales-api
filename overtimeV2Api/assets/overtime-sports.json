@@ -289,18 +289,21 @@
   {
     "id": 9977,
     "name": "CS GO",
+    "opticOddsName": "CS2",
     "sport": "eSports",
     "supportedTypes": ["moneyline"]
   },
   {
     "id": 9983,
     "name": "DOTA 2",
+    "opticOddsName": "Dota 2",
     "sport": "eSports",
     "supportedTypes": ["moneyline"]
   },
   {
     "id": 10138,
     "name": "LOL",
+    "opticOddsName": "League of Legends",
     "sport": "eSports",
     "supportedTypes": ["moneyline"]
   },
