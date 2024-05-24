@@ -11,7 +11,7 @@ const userTransactions = async (req, res) => {
     const vault = getQueryProperty(req, "vault");
     const account = getQueryProperty(req, "account");
 
-    if (!networkId) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultUserTransactions, [networkId, vault, account]));
 
@@ -25,12 +25,12 @@ const userTransactions = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.VaultUserTransactions, [networkId, vault, account]), transactions, TTL.VAULT);
 
-    if (!transactions) return res.status(204);
+    if (!transactions) return res.sendStatus(204);
 
-    return res.status(200).send(transactions);
+    return res.send(transactions);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
@@ -40,7 +40,7 @@ const vaultPnl = async (req, res) => {
 
     const vault = getQueryProperty(req, "vault");
 
-    if (!networkId) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultPnl, [networkId, vault]));
 
@@ -53,12 +53,12 @@ const vaultPnl = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.VaultPnl, [networkId, vault]), pnls, TTL.VAULT);
 
-    if (!pnls) return res.status(204);
+    if (!pnls) return res.sendStatus(204);
 
-    return res.status(200).send(pnls);
+    return res.send(pnls);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
@@ -68,7 +68,7 @@ const vaultTransactions = async (req, res) => {
 
     const vault = getQueryProperty("vault");
 
-    if (!networkId) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault]));
 
@@ -81,12 +81,12 @@ const vaultTransactions = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault]), transactions, TTL.VAULT);
 
-    if (!transactions) return res.status(204);
+    if (!transactions) return res.sendStatus(204);
 
-    return res.status(200).send(transactions);
+    return res.send(transactions);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 

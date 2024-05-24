@@ -8,7 +8,7 @@ const stakers = async (req, res) => {
   try {
     const networkId = getQueryParam(req, "networkId");
 
-    if (!networkId) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
 
     const cachedStakers = cache.get(getCacheKey(PREFIX_KEYS.Stakers, [networkId]));
 
@@ -20,12 +20,12 @@ const stakers = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.Stakers, [networkId]), stakersData, TTL.Stakers);
 
-    if (!stakersData) return res.status(204);
+    if (!stakersData) return res.sendStatus(204);
 
-    return res.status(200).send(stakersData);
+    return res.send(stakersData);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
@@ -35,7 +35,7 @@ const claimOnBehalfItems = async (req, res) => {
 
     const sender = getQueryProperty(req, "seller");
 
-    if (!networkId) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.ClaimOnBehalfItems, [networkId, sender]));
 
@@ -48,12 +48,12 @@ const claimOnBehalfItems = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.ClaimOnBehalfItems, [networkId, sender]), canClaimOnBehalfItems, TTL.Stakers);
 
-    if (!canClaimOnBehalfItems) return res.status(204);
+    if (!canClaimOnBehalfItems) return res.sendStatus(204);
 
-    return res.status(200).send(canClaimOnBehalfItems);
+    return res.send(canClaimOnBehalfItems);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
@@ -64,7 +64,7 @@ const tokenTransaction = async (req, res) => {
     const account = getQueryProperty(req, "account");
     const typeIn = getQueryProperty(req, "type_in");
 
-    if (!networkId) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.TokenTransactions, [networkId, account, typeIn]));
 
@@ -78,12 +78,12 @@ const tokenTransaction = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.TokenTransactions, [networkId, account, typeIn]), tokenTransactions, TTL.Stakers);
 
-    if (!tokenTransactions) return res.status(204);
+    if (!tokenTransactions) return res.sendStatus(204);
 
-    return res.status(200).send(tokenTransactions);
+    return res.send(tokenTransactions);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 

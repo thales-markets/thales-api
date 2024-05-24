@@ -4,17 +4,17 @@ const flushSpecificCacheKey = (req, res) => {
   try {
     const reqBody = req.body;
 
-    if (!Array.isArray(reqBody.hasOwnProperty("cacheKeys") && reqBody.cacheKeys)) return res.status(400);
+    if (!Array.isArray(reqBody.hasOwnProperty("cacheKeys") && reqBody.cacheKeys)) return res.sendStatus(400);
 
     const keys = cache.del(reqBody.cacheKeys);
 
-    return res.status(200).send({
+    return res.send({
       status: "ok",
       keys,
     });
   } catch (e) {
     console.log("Error ", e);
-    return res.status(500);
+    return res.sendStatus(500);
   }
 };
 

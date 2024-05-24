@@ -11,7 +11,7 @@ const optionTransactions = async (req, res) => {
     const market = getQueryProperty(req, "market");
     const account = getQueryProperty(req, "account");
 
-    if (!networkId) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.OptionTransactions, [networkId, market, account]));
 
@@ -30,12 +30,12 @@ const optionTransactions = async (req, res) => {
       TTL.OPTION_TRANSACTIONS,
     );
 
-    if (!transactions) return res.status(204);
+    if (!transactions) return res.sendStatus(204);
 
-    return res.status(200).send(transactions);
+    return res.send(transactions);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
@@ -49,7 +49,7 @@ const trades = async (req, res) => {
     const maker = getQueryProperty(req, "maker");
     const taker = getQueryProperty(req, "taker");
 
-    if (!networkId && (!makerToken || !takerToken || !maker || !taker)) return res.status(400);
+    if (!networkId && (!makerToken || !takerToken || !maker || !taker)) return res.sendStatus(400);
 
     const cachedResponse = cache.get(
       getCacheKey(PREFIX_KEYS.Trades, [networkId, takerToken, makerToken, taker, maker]),
@@ -67,12 +67,12 @@ const trades = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.Trades, [networkId, takerToken, makerToken, taker, maker]), trades, TTL.MARKETS);
 
-    if (!trades) return res.status(204);
+    if (!trades) return res.sendStatus(204);
 
-    return res.status(200).send(trades);
+    return res.send(trades);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
@@ -82,7 +82,7 @@ const positionBalance = async (req, res) => {
 
     const account = getQueryProperty(req, "account");
 
-    if (!networkId && !account) return res.status(400);
+    if (!networkId && !account) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.PositionBalance, [networkId, account]));
 
@@ -95,12 +95,12 @@ const positionBalance = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.PositionBalance, [networkId, account]), positionBalances, TTL.POSITION_BALANCE);
 
-    if (!positionBalances) return res.status(204);
+    if (!positionBalances) return res.sendStatus(204);
 
-    return res.status(200).send(positionBalances);
+    return res.send(positionBalances);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
@@ -110,7 +110,7 @@ const rangePositionBalance = async (req, res) => {
 
     const account = getQueryProperty(req, "account");
 
-    if (!networkId && !account) return res.status(400);
+    if (!networkId && !account) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.RangePositionBalance, [networkId, account]));
 
@@ -127,12 +127,12 @@ const rangePositionBalance = async (req, res) => {
       TTL.POSITION_BALANCE,
     );
 
-    if (!positionBalances) return res.status(204);
+    if (!positionBalances) return res.sendStatus(204);
 
-    return res.status(200).send(positionBalances);
+    return res.send(positionBalances);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 

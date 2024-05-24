@@ -12,8 +12,8 @@ const markets = async (req, res) => {
     const minMaturity = getQueryProperty(req, "min-maturity");
     const maxMaturity = getQueryProperty(req, "max-maturity");
 
-    if (!networkId) return res.status(400);
-    if (!minMaturity) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
+    if (!minMaturity) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.Markets, [networkId, minMaturity, maxMaturity]));
 
@@ -28,12 +28,12 @@ const markets = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.Markets, [networkId, minMaturity, maxMaturity]), markets, TTL.MARKETS);
 
-    if (!markets) return res.status(204);
+    if (!markets) return res.sendStatus(204);
 
-    return res.status(200).send(markets);
+    return res.send(markets);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
@@ -45,7 +45,7 @@ const rangedMarkets = async (req, res) => {
     const maxMaturity = getQueryProperty(req, "max-maturity");
 
     const currencyKey = getQueryProperty(req, "currency-key");
-    const marketIds = getQueryProperty(req, "markets-ids");
+    const marketIds = getQueryProperty(req, "market-ids");
 
     const marketsIdsArr = [];
 
@@ -58,8 +58,8 @@ const rangedMarkets = async (req, res) => {
       );
     }
 
-    if (!networkId) return res.status(400);
-    if (!minMaturity) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
+    if (!minMaturity) return res.sendStatus(400);
 
     const cachedResponse = cache.get(
       getCacheKey(PREFIX_KEYS.RangedMarkets, [
@@ -94,12 +94,12 @@ const rangedMarkets = async (req, res) => {
       TTL.MARKETS,
     );
 
-    if (!markets) return res.status(204);
+    if (!markets) return res.sendStatus(204);
 
-    return res.status(200).send(markets);
+    return res.send(markets);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 

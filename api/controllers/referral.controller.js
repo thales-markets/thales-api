@@ -11,7 +11,7 @@ const referralTransactions = async (req, res) => {
     const trader = getQueryProperty(req, "trader");
     const referrer = getQueryProperty(req, "referrer");
 
-    if (!networkId) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.ReferralTransactions, [networkId, trader, referrer]));
 
@@ -25,9 +25,9 @@ const referralTransactions = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.ReferralTransactions, [networkId, trader, referrer]), transactions, TTL.REFERRAL);
 
-    if (!transactions) return res.status(204);
+    if (!transactions) return res.sendStatus(204);
 
-    return res.status(200).send(transactions);
+    return res.send(transactions);
   } catch (e) {
     console.log("Error ", e);
     return res.send(500);
@@ -40,7 +40,7 @@ const referredTraders = async (req, res) => {
 
     const referrer = getQueryProperty(req, "referrer");
 
-    if (!networkId) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.ReferredTraders, [networkId, referrer]));
 
@@ -53,12 +53,12 @@ const referredTraders = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.ReferredTraders, [networkId, referrer]), traders, TTL.REFERRAL);
 
-    if (!traders) return res.status(204);
+    if (!traders) return res.sendStatus(204);
 
-    return res.status(200).send(traders);
+    return res.send(traders);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
@@ -68,7 +68,7 @@ const referrers = async (req, res) => {
 
     const address = getQueryProperty(req, "address");
 
-    if (!networkId) return res.status(400);
+    if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.Referrers, [networkId, address]));
 
@@ -81,12 +81,12 @@ const referrers = async (req, res) => {
 
     cache.set(getCacheKey(PREFIX_KEYS.Referrers, [networkId, address]), referrers, TTL.REFERRAL);
 
-    if (!referrers) return res.status(204);
+    if (!referrers) return res.sendStatus(204);
 
-    return res.status(200).send(referrers);
+    return res.send(referrers);
   } catch (e) {
     console.log("Error ", e);
-    return res.send(500);
+    return res.sendStatus(500);
   }
 };
 
