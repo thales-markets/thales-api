@@ -1804,6 +1804,10 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             );
             const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
 
+            if (gameTimeOpticOddsResponseData == undefined) {
+              return null;
+            }
+
             const currentScoreHome = gameTimeOpticOddsResponseData.score_home_total;
             const currentScoreAway = gameTimeOpticOddsResponseData.score_away_total;
             const currentClock = gameTimeOpticOddsResponseData.clock;
