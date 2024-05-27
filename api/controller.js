@@ -241,6 +241,18 @@ app.get(ENDPOINTS.BANNERS_IMAGE, (req, res) => {
   request.get(url).pipe(res);
 });
 
+app.get(ENDPOINTS.BANNERS_V2, async (req, res) => {
+  const network = req.params.networkParam;
+  var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner-v2/${network}.json`;
+  request.get(banners).pipe(res);
+});
+
+app.get(ENDPOINTS.BANNERS_V2_IMAGE, (req, res) => {
+  const imageName = req.params.imageName;
+  var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner-v2/${imageName}`;
+  request.get(url).pipe(res);
+});
+
 app.get(ENDPOINTS.THALES_BANNERS, async (req, res) => {
   const network = req.params.networkParam;
   var banners = `https://raw.githubusercontent.com/thales-markets/thales-dapp/dev/src/assets/images/banner/${network}.json`;
@@ -1745,12 +1757,13 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
         }
 
         const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
-          return axios.get(
-            `https://api.opticodds.com/api/v2/game-odds?game_id=${game.id}&market_name=Moneyline&sportsbook=${liveOddsProviders[0]}&sportsbook=${liveOddsProviders[1]}&sportsbook=${liveOddsProviders[2]}&odds_format=Decimal`,
-            {
-              headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-            },
-          );
+          const url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.id}&market_name=Moneyline&odds_format=Decimal`;
+          liveOddsProviders.forEach((liveOddsProvider) => {
+            url = url.concat(`&sportsbook=${liveOddsProvider}`);
+          });
+          return axios.get(url, {
+            headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+          });
         });
 
         const responsesOddsPerGame = await Promise.all(urlsGamesOdds);
@@ -1791,6 +1804,10 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
               },
             );
             const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
+
+            if (gameTimeOpticOddsResponseData == undefined) {
+              return null;
+            }
 
             const currentScoreHome = gameTimeOpticOddsResponseData.score_home_total;
             const currentScoreAway = gameTimeOpticOddsResponseData.score_away_total;
