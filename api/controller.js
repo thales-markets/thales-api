@@ -1757,12 +1757,13 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
         }
 
         const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
-          return axios.get(
-            `https://api.opticodds.com/api/v2/game-odds?game_id=${game.id}&market_name=Moneyline&sportsbook=${liveOddsProviders[0]}&sportsbook=${liveOddsProviders[1]}&sportsbook=${liveOddsProviders[2]}&odds_format=Decimal`,
-            {
-              headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-            },
-          );
+          const url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.id}&market_name=Moneyline&odds_format=Decimal`;
+          liveOddsProviders.forEach((liveOddsProvider) => {
+            url = url.concat(`&sportsbook=${liveOddsProvider}`);
+          });
+          return axios.get(url, {
+            headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+          });
         });
 
         const responsesOddsPerGame = await Promise.all(urlsGamesOdds);
