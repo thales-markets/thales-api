@@ -66,20 +66,22 @@ const vaultTransactions = async (req, res) => {
   try {
     const networkId = getQueryParam(req, "networkId");
 
-    const vault = getQueryProperty("vault");
+    const vault = getQueryProperty(req, "vault");
+    const round = getQueryProperty(req, "round");
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault]));
+    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault, round]));
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const transactions = await thalesData.binaryOptions.vaultTransactions({
       network: networkId,
       vault: vault ? vault : undefined,
+      round: round ? round : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault]), transactions, TTL.VAULT);
+    cache.set(getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault, round]), transactions, TTL.VAULT);
 
     if (!transactions) return res.sendStatus(204);
 

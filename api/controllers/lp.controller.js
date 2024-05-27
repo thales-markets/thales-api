@@ -34,18 +34,20 @@ const lpTransactions = async (req, res) => {
     const networkId = getQueryParam(req, "networkId");
 
     const account = getQueryProperty(req, "account");
+    const round = getQueryProperty(req, "round");
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.LiquidityPoolTransactions, [networkId, account]));
+    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.LiquidityPoolTransactions, [networkId, account, round]));
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const transactions = await thalesData.binaryOptions.liquidityPoolUserTransactions({
       network: networkId,
       account: account ? account : undefined,
+      round: round ? round : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.LiquidityPoolTransactions, [networkId, account]), transactions, TTL.LP);
+    cache.set(getCacheKey(PREFIX_KEYS.LiquidityPoolTransactions, [networkId, account, round]), transactions, TTL.LP);
 
     if (!transactions) return res.sendStatus(204);
 
