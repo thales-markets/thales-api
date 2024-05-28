@@ -19,6 +19,7 @@ const { SPORTS_MAP } = require("../constants/tags");
 const { ODDS_TYPE, STATUS, MarketTypeMap } = require("../constants/markets");
 const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { NETWORK } = require("../constants/networks");
 
 const awsS3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -40,8 +41,14 @@ async function processMarkets() {
       while (true) {
         try {
           const startTime = new Date().getTime();
+          const markets = await loadAndMapMarkets();
           console.log("Markets: process markets");
-          await processAllMarkets();
+          await Promise.all([
+            processAllMarkets(markets, NETWORK.Optimism),
+            processAllMarkets(markets, NETWORK.Arbitrum),
+            processAllMarkets(markets, NETWORK.Base),
+            processAllMarkets(markets, NETWORK.OptimismSepolia),
+          ]);
           const endTime = new Date().getTime();
           console.log(`Markets: === Seconds for processing markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
         } catch (error) {
@@ -83,7 +90,7 @@ const packMarket = (market) => {
     status: market.status,
     isOpen: market.status === STATUS.Open,
     isResolved: market.status === STATUS.Resolved,
-    isCanceled: market.status === STATUS.Canceled,
+    isCancelled: market.status === STATUS.Cancelled,
     isPaused: market.status === STATUS.Paused,
     isOneSideMarket: getIsOneSideMarket(leagueId),
     line: Number(market.line) / 100,
@@ -193,8 +200,8 @@ const mapMarket = (market) => {
   // if (packedMarket.isResolved) {
   //   packedMarket.statusCode = "resolved";
   // }
-  // if (packedMarket.isCanceled) {
-  //   packedMarket.statusCode = "canceled";
+  // if (packedMarket.isCancelled) {
+  //   packedMarket.statusCode = "cancelled";
   // }
   if (packedMarket.isPaused) {
     packedMarket.statusCode = "paused";
@@ -203,45 +210,44 @@ const mapMarket = (market) => {
   return packedMarket;
 };
 
-function getClosedMarketsMap() {
+function getClosedMarketsMap(network) {
   return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS, function (err, obj) {
+    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
       const closedMarketsMap = new Map(JSON.parse(obj));
       resolve(closedMarketsMap);
     });
   });
 }
 
-const mapMarkets = async () => {
-  const openMarketsMap = new Map();
-  const markets = await loadMarkets();
-
-  const closedMarketsMap = await getClosedMarketsMap();
-
-  markets.forEach((market) => {
-    const isMarketClosed = !!closedMarketsMap.get(market.gameId);
-    if (!isMarketClosed) {
-      const mappedMarket = mapMarket(market);
-      if (
-        mappedMarket.statusCode === "open" ||
-        mappedMarket.statusCode === "ongoing" ||
-        mappedMarket.statusCode === "paused"
-      ) {
-        openMarketsMap.set(mappedMarket.gameId, mappedMarket);
-      }
-    }
-  });
-
-  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS, JSON.stringify([...openMarketsMap]), function () {});
-};
-
-function getOpenMarketsMap() {
+function getOpenMarketsMap(network) {
   return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS, function (err, obj) {
+    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
       const openMarketsMap = new Map(JSON.parse(obj));
       resolve(openMarketsMap);
     });
   });
+}
+
+async function loadAndMapMarkets() {
+  const markets = await loadMarkets();
+  return markets.map((market) => mapMarket(market));
+}
+
+async function processAllMarkets(markets, network) {
+  const openMarketsMap = new Map();
+
+  const closedMarketsMap = await getClosedMarketsMap(network);
+
+  markets.forEach((market) => {
+    const isMarketClosed = !!closedMarketsMap.get(market.gameId);
+    if (!isMarketClosed) {
+      if (market.statusCode === "open" || market.statusCode === "ongoing" || market.statusCode === "paused") {
+        openMarketsMap.set(market.gameId, market);
+      }
+    }
+  });
+
+  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[network], JSON.stringify([...openMarketsMap]), function () {});
 }
 
 async function updateMerkleTree(gameIds) {
@@ -251,7 +257,11 @@ async function updateMerkleTree(gameIds) {
   const bucketName = process.env.AWS_BUCKET_NAME;
   const merkleTreesFolderName = process.env.AWS_FOLDER_NAME_MERKLES;
 
-  const openMarketsMap = await getOpenMarketsMap();
+  const opOpenMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
+  const arbOpenMarketsMap = await getOpenMarketsMap(NETWORK.Arbitrum);
+  const baseOpenMarketsMap = await getOpenMarketsMap(NETWORK.Base);
+  const opSepoliaOpenMarketsMap = await getOpenMarketsMap(NETWORK.OptimismSepolia);
+
   for (let i = 0; i < gameIds.length; i++) {
     const gameIdString = convertFromBytes32(gameIds[i]);
     const marketFile = `${merkleTreesFolderName}/${gameIdString}.json`;
@@ -260,19 +270,35 @@ async function updateMerkleTree(gameIds) {
       const market = JSON.parse(marketFileContent)[0];
 
       const mappedMarket = mapMarket(market);
-      openMarketsMap.set(mappedMarket.gameId, mappedMarket);
+
+      opOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
+      arbOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
+      baseOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
+      opSepoliaOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
     } catch (e) {
       console.log(`Markets: Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
     }
   }
-  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS, JSON.stringify([...openMarketsMap]), function () {});
+
+  redisClient.set(
+    KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism],
+    JSON.stringify([...opOpenMarketsMap]),
+    function () {},
+  );
+  redisClient.set(
+    KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum],
+    JSON.stringify([...arbOpenMarketsMap]),
+    function () {},
+  );
+  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Base], JSON.stringify([...baseOpenMarketsMap]), function () {});
+  redisClient.set(
+    KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.OptimismSepolia],
+    JSON.stringify([...opSepoliaOpenMarketsMap]),
+    function () {},
+  );
 
   const endTime = new Date().getTime();
   console.log(`Markets: Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);
-}
-
-async function processAllMarkets() {
-  await mapMarkets();
 }
 
 module.exports = {

@@ -1001,7 +1001,7 @@ const STATUS = {
   Open: 0,
   Paused: 1,
   Resolved: 10,
-  Canceled: 255,
+  Cancelled: 255,
 };
 
 const MAX_PERCENTAGE_DIFF_BETWEEN_ODDS = 10;

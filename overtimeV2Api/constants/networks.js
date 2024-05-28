@@ -7,7 +7,7 @@ const NETWORK = {
 
 const NETWORK_NAME = {
   [NETWORK.Optimism]: "optimisim",
-  [NETWORK.OptimismGoerli]: "optimisim goerli",
+  [NETWORK.OptimismSepolia]: "optimisim sepolia",
   [NETWORK.Arbitrum]: "arbitrum",
   [NETWORK.Base]: "base",
 };

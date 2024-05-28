@@ -38,8 +38,18 @@ const KEYS = {
     42161: "thalesArbMarketsLastUpdate",
     8453: "thalesBaseMarketsLastUpdate",
   },
-  OVERTIME_V2_OPEN_MARKETS: "overtimeV2OpenMarkets",
-  OVERTIME_V2_CLOSED_MARKETS: "overtimeV2ClosedMarkets",
+  OVERTIME_V2_OPEN_MARKETS: {
+    10: "overtimeV2OpOpenMarkets",
+    11155420: "overtimeV2OpSepoliaOpenMarkets",
+    42161: "overtimeV2ArbOpenMarkets",
+    8453: "overtimeV2BaseOpenMarkets",
+  },
+  OVERTIME_V2_CLOSED_MARKETS: {
+    10: "overtimeV2OpClosedMarkets",
+    11155420: "overtimeV2OpSepoliaClosedMarkets",
+    42161: "overtimeV2ArbClosedMarkets",
+    8453: "overtimeV2BaseClosedMarkets",
+  },
   OVERTIME_V2_GAMES_INFO: "overtimeV2GamesInfo",
   OVERTIME_V2_PLAYERS_INFO: "overtimeV2PlayersInfo",
 };

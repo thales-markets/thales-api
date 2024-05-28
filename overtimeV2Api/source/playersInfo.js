@@ -12,6 +12,7 @@ const {
   getIsPlayerPropsMarket,
   convertFromBytes32,
 } = require("../utils/markets");
+const { NETWORK } = require("../constants/networks");
 
 async function processPlayersInfo() {
   if (process.env.REDIS_URL) {
@@ -50,9 +51,9 @@ function getPlayersInfoMap() {
   });
 }
 
-function getOpenMarketsMap() {
+function getOpenMarketsMap(network) {
   return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS, function (err, obj) {
+    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
       const openMarketsMap = new Map(JSON.parse(obj));
       resolve(openMarketsMap);
     });
@@ -61,7 +62,8 @@ function getOpenMarketsMap() {
 
 async function processAllPlayersInfo() {
   let playersInfoMap = await getPlayersInfoMap();
-  let openMarketsMap = await getOpenMarketsMap();
+  // TODO: take from OP for now
+  let openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
 
   let allOpenMarketsMap = Array.from(openMarketsMap.values());
 

@@ -2,7 +2,7 @@ const { NETWORK } = require("../constants/networks");
 
 const parlayMarketDataContract = {
   addresses: {
-    [NETWORK.Optimism]: "",
+    [NETWORK.Optimism]: "0x71CE219942FFD9C1d8B67d6C35C39Ae04C4F647B",
     [NETWORK.OptimismSepolia]: "0xe4d8d605874443f952fBdc03Dd1C69761230A7f0",
     [NETWORK.Arbitrum]: "",
     [NETWORK.Base]: "",
@@ -54,7 +54,7 @@ const parlayMarketDataContract = {
       inputs: [
         { internalType: "bytes32[]", name: "_gameIds", type: "bytes32[]" },
         { internalType: "uint16[]", name: "_typeIds", type: "uint16[]" },
-        { internalType: "uint16[]", name: "_playerIds", type: "uint16[]" },
+        { internalType: "uint24[]", name: "_playerIds", type: "uint24[]" },
         { internalType: "int24[]", name: "_lines", type: "int24[]" },
       ],
       name: "areMarketsResolved",
@@ -76,7 +76,7 @@ const parlayMarketDataContract = {
                 { internalType: "uint16", name: "typeId", type: "uint16" },
                 { internalType: "uint256", name: "maturity", type: "uint256" },
                 { internalType: "int24", name: "line", type: "int24" },
-                { internalType: "uint16", name: "playerId", type: "uint16" },
+                { internalType: "uint24", name: "playerId", type: "uint24" },
                 { internalType: "uint8", name: "position", type: "uint8" },
                 { internalType: "uint256", name: "odd", type: "uint256" },
                 {
@@ -129,7 +129,34 @@ const parlayMarketDataContract = {
       type: "function",
     },
     {
-      inputs: [{ internalType: "bytes32[]", name: "_gameIds", type: "bytes32[]" }],
+      inputs: [
+        { internalType: "bytes32[]", name: "_gameIds", type: "bytes32[]" },
+        { internalType: "uint256", name: "_startIndex", type: "uint256" },
+        { internalType: "uint256", name: "_pageSize", type: "uint256" },
+      ],
+      name: "getAllActiveGameIdsTypeIdsPlayerIdsLinesForGameIds",
+      outputs: [
+        {
+          components: [
+            { internalType: "bytes32", name: "gameId", type: "bytes32" },
+            { internalType: "uint16", name: "typeId", type: "uint16" },
+            { internalType: "uint24", name: "playerId", type: "uint24" },
+            { internalType: "int24", name: "line", type: "int24" },
+          ],
+          internalType: "struct SportsAMMV2Data.TicketMarketInfo[]",
+          name: "finalTicketsInfo",
+          type: "tuple[]",
+        },
+      ],
+      stateMutability: "view",
+      type: "function",
+    },
+    {
+      inputs: [
+        { internalType: "bytes32[]", name: "_gameIds", type: "bytes32[]" },
+        { internalType: "uint256", name: "_startIndex", type: "uint256" },
+        { internalType: "uint256", name: "_pageSize", type: "uint256" },
+      ],
       name: "getOnlyActiveGameIdsAndTicketsOf",
       outputs: [
         { internalType: "bytes32[]", name: "activeGameIds", type: "bytes32[]" },
@@ -153,7 +180,7 @@ const parlayMarketDataContract = {
                 { internalType: "uint16", name: "typeId", type: "uint16" },
                 { internalType: "uint256", name: "maturity", type: "uint256" },
                 { internalType: "int24", name: "line", type: "int24" },
-                { internalType: "uint16", name: "playerId", type: "uint16" },
+                { internalType: "uint24", name: "playerId", type: "uint24" },
                 { internalType: "uint8", name: "position", type: "uint8" },
                 { internalType: "uint256", name: "odd", type: "uint256" },
                 {
@@ -209,7 +236,7 @@ const parlayMarketDataContract = {
       inputs: [
         { internalType: "bytes32[]", name: "_gameIds", type: "bytes32[]" },
         { internalType: "uint16[]", name: "_typeIds", type: "uint16[]" },
-        { internalType: "uint16[]", name: "_playerIds", type: "uint16[]" },
+        { internalType: "uint24[]", name: "_playerIds", type: "uint24[]" },
       ],
       name: "getResultsForMarkets",
       outputs: [{ internalType: "int24[][]", name: "resultsForMarkets", type: "int24[][]" }],
@@ -251,7 +278,7 @@ const parlayMarketDataContract = {
                 { internalType: "uint16", name: "typeId", type: "uint16" },
                 { internalType: "uint256", name: "maturity", type: "uint256" },
                 { internalType: "int24", name: "line", type: "int24" },
-                { internalType: "uint16", name: "playerId", type: "uint16" },
+                { internalType: "uint24", name: "playerId", type: "uint24" },
                 { internalType: "uint8", name: "position", type: "uint8" },
                 { internalType: "uint256", name: "odd", type: "uint256" },
                 {
@@ -317,7 +344,7 @@ const parlayMarketDataContract = {
                 { internalType: "uint16", name: "typeId", type: "uint16" },
                 { internalType: "uint256", name: "maturity", type: "uint256" },
                 { internalType: "int24", name: "line", type: "int24" },
-                { internalType: "uint16", name: "playerId", type: "uint16" },
+                { internalType: "uint24", name: "playerId", type: "uint24" },
                 { internalType: "uint8", name: "position", type: "uint8" },
                 { internalType: "uint256", name: "odd", type: "uint256" },
                 {
