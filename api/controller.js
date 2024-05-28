@@ -1749,6 +1749,14 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
             const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
             const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
 
+            const hasUndefinedName = [homeTeamOpticOdds, awayTeamOpticOdds, gameHomeTeam, gameAwayTeam].some(
+              (name) => name == undefined,
+            );
+
+            if (hasUndefinedName) {
+              return false;
+            }
+
             let homeTeamsMatch;
             let awayTeamsMatch;
             if (SPORTS_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
@@ -1794,6 +1802,14 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
             const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
             const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
+
+            const hasUndefinedName = [homeTeamOpticOdds, awayTeamOpticOdds, gameHomeTeam, gameAwayTeam].some(
+              (name) => name == undefined,
+            );
+
+            if (hasUndefinedName) {
+              return false;
+            }
 
             let homeTeamsMatch;
             let awayTeamsMatch;
