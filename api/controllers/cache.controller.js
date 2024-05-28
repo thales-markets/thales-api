@@ -1,5 +1,16 @@
 const cache = require("../services/cache");
 
+const cacheStats = (req, res) => {
+  try {
+    const cacheStats = cache.getStats();
+
+    return res.send(cacheStats);
+  } catch (e) {
+    console.log("Error ", e);
+    return res.sendStatus(500);
+  }
+};
+
 const flushSpecificCacheKey = (req, res) => {
   try {
     const reqBody = req.body;
@@ -20,4 +31,5 @@ const flushSpecificCacheKey = (req, res) => {
 
 module.exports = {
   flushSpecificCacheKey,
+  cacheStats,
 };
