@@ -56,7 +56,7 @@
   {
     "id": 7,
     "name": "UFC",
-    "sport": "MMA",
+    "sport": "Fighting",
     "supportedTypes": ["moneyline", "total"]
   },
   {
@@ -266,13 +266,13 @@
   {
     "id": 9196,
     "name": "Boxing",
-    "sport": "MMA",
+    "sport": "Fighting",
     "supportedTypes": ["moneyline", "total"]
   },
   {
     "id": 10595,
     "name": "Boxing",
-    "sport": "MMA",
+    "sport": "Fighting",
     "supportedTypes": ["moneyline", "total"]
   },
   {
