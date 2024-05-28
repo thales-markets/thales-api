@@ -1757,7 +1757,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
         }
 
         const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
-          const url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.id}&market_name=Moneyline&odds_format=Decimal`;
+          let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.id}&market_name=Moneyline&odds_format=Decimal`;
           liveOddsProviders.forEach((liveOddsProvider) => {
             url = url.concat(`&sportsbook=${liveOddsProvider}`);
           });
