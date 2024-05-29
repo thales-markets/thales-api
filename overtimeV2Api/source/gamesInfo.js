@@ -8,6 +8,7 @@ const { format, addDays, subDays } = require("date-fns");
 const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
 const { getIsEnetpulseSportV2, getIsJsonOddsSport } = require("../utils/markets");
+const { EnetpulseRounds } = require("../constants/markets");
 
 const AMERICAN_SPORTS = [1, 2, 3, 4, 5, 6, 8, 10, 20, 21];
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
@@ -52,30 +53,73 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
     const response = await axios.get(apiUrl);
 
     response.data.events.forEach((event) => {
-      if (event.event_id && event.teams_normalized) {
+      if (event.event_id) {
         const gameId = bytes32({ input: event.event_id });
-        gamesInfoMap.set(
-          gameId,
-          event.teams_normalized.map((team) => ({
-            name: AMERICAN_SPORTS.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
-            isHome: team.is_home,
-            score: team.is_home ? event.score.score_home : event.score.score_away,
-            scoreByPeriod: team.is_home ? event.score.score_home_by_period : event.score.score_away_by_period,
-          })),
-        );
+        gamesInfoMap.set(gameId, {
+          status: event.score.event_status,
+          isGameFinished:
+            event.score.event_status === "STATUS_FINAL" || event.score.event_status === "STATUS_FULL_TIME",
+          tournamentName: "",
+          tournamentRound: "",
+          teams: event.teams_normalized
+            ? event.teams_normalized.map((team) => ({
+                name: AMERICAN_SPORTS.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
+                isHome: team.is_home,
+                score: team.is_home ? event.score.score_home : event.score.score_away,
+                scoreByPeriod: team.is_home ? event.score.score_home_by_period : event.score.score_away_by_period,
+              }))
+            : [],
+        });
       }
     });
 
-    await delay(1 * 1000);
+    // await delay(1 * 1000);
   }
 };
 
-const getEnetpulseScore = (results, resultCode) => {
+const getEnetpulseScoreByCode = (results, resultCode) => {
   const finalScore = results.find((result) => result.result_code == resultCode);
   if (finalScore) {
     return Number(finalScore.value);
   }
-  return 0;
+  return undefined;
+};
+
+const getEnetpulseScore = (results, sport) => {
+  let score = undefined;
+  const scoreByPeriod = [];
+
+  if (sport === 399) {
+    score = getEnetpulseScoreByCode(Object.values(results), "finalresult");
+    for (let i = 1; i <= 4; i++) {
+      const code = `quarter${i}`;
+      const periodScore = getEnetpulseScoreByCode(Object.values(results), code);
+      if (periodScore !== undefined) {
+        scoreByPeriod.push(periodScore);
+      }
+    }
+  } else if (sport === 153 || sport === 156) {
+    score = getEnetpulseScoreByCode(Object.values(results), "setswon");
+    for (let i = 1; i <= 7; i++) {
+      const code = `set${i}`;
+      const periodScore = getEnetpulseScoreByCode(Object.values(results), code);
+      if (periodScore !== undefined) {
+        scoreByPeriod.push(periodScore);
+      }
+    }
+  } else if (sport === 9977 || sport === 9983 || sport === 10138) {
+    score = getEnetpulseScoreByCode(Object.values(results), "finalresult");
+  } else {
+    score = getEnetpulseScoreByCode(Object.values(results), "ordinarytime");
+    const periodScore = getEnetpulseScoreByCode(Object.values(results), "halftime");
+    if (periodScore !== undefined) {
+      scoreByPeriod.push(periodScore);
+    }
+  }
+  return {
+    score,
+    scoreByPeriod,
+  };
 };
 
 const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap) => {
@@ -89,22 +133,30 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
     const response = await axios.get(apiUrl);
 
     Object.values(response.data.events).forEach((event) => {
-      if (event.id && event.event_participants) {
+      if (event.id) {
         const gameId = bytes32({ input: event.id });
-        gamesInfoMap.set(
-          gameId,
-          Object.values(event.event_participants).map((team) => ({
-            name: team.participant.name,
-            isHome: team.number === "1",
-            score: team.result ? getEnetpulseScore(Object.values(team.result), "ordinarytime") : 0,
-            // TODO: add logic for other sports
-            scoreByPeriod: [team.result ? getEnetpulseScore(Object.values(team.result), "halftime") : 0],
-          })),
-        );
+        gamesInfoMap.set(gameId, {
+          status: event.status_type,
+          isGameFinished: event.status_type === "finished",
+          tournamentName: event.tournament_stage_name,
+          tournamentRound: EnetpulseRounds[Number(event.round_typeFK)],
+          teams: event.event_participants
+            ? Object.values(event.event_participants).map((team) => ({
+                name: team.participant.name,
+                isHome: team.number === "1",
+                ...(team.result
+                  ? getEnetpulseScore(Object.values(team.result), sport)
+                  : {
+                      score: undefined,
+                      scoreByPeriod: [],
+                    }),
+              }))
+            : [],
+        });
       }
     });
 
-    await delay(1 * 1000);
+    await delay(5);
   }
 };
 

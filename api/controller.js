@@ -1732,6 +1732,17 @@ app.get(ENDPOINTS.OVERTIME_V2_PLAYERS_INFO, (req, res) => {
   });
 });
 
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORES, (req, res) => {
+  redisClient.get(KEYS.OVERTIME_V2_LIVE_SCORES, function (err, obj) {
+    const liveScores = new Map(JSON.parse(obj));
+    try {
+      res.send(Object.fromEntries(liveScores));
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
 // V1 API with caching
 app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/liquidity-providing", lpRoutes);

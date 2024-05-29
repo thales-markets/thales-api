@@ -1008,6 +1008,19 @@ const MAX_PERCENTAGE_DIFF_BETWEEN_ODDS = 10;
 const MIN_ODDS_FOR_DIFF_CHECKING = 0.2;
 const MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL = 85;
 
+const EnetpulseRounds = {
+  [0]: "",
+  [1]: "no round",
+  [2]: "Semi-finals",
+  [3]: "Quarter-finals",
+  [4]: "1/8",
+  [5]: "1/16",
+  [6]: "1/32",
+  [7]: "1/64",
+  [8]: "1/128",
+  [9]: "Final",
+};
+
 module.exports = {
   ResultType,
   MarketType,
@@ -1023,4 +1036,5 @@ module.exports = {
   MIN_ODDS_FOR_DIFF_CHECKING,
   MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
   COMBINED_POSITIONS_MARKET_TYPES,
+  EnetpulseRounds,
 };
