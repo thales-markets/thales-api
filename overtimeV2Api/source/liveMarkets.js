@@ -206,6 +206,22 @@ async function processAllMarkets(network) {
             const currentClock = gameTimeOpticOddsResponseData.clock;
             const currentPeriod = gameTimeOpticOddsResponseData.period;
 
+            if (SPORTS_TAGS_MAP["Baseball"].includes(Number(market.leagueId))) {
+              if (responseOpticOddsScores.data.data.length == 0) {
+                console.log(
+                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
+                );
+                return null;
+              }
+
+              if (Number(currentPeriod) >= INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL) {
+                console.log(
+                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to period: ${currentPeriod}. inning`,
+                );
+                return null;
+              }
+            }
+
             if (SPORTS_TAGS_MAP["Soccer"].includes(Number(market.leagueId))) {
               if (responseOpticOddsScores.data.data.length == 0) {
                 console.log(
