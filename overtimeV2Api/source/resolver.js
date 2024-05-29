@@ -126,10 +126,10 @@ async function resolveMarkets(network) {
 
         const gameInfo = gamesInfoMap.get(ongoingMarket.gameId);
 
-        const homeTeam = !!gameInfo && gameInfo.find((team) => team.isHome);
+        const homeTeam = !!gameInfo && gameInfo.teams.find((team) => team.isHome);
         const homeScore = homeTeam ? homeTeam.score : 0;
         const homeScoreByPeriod = homeTeam ? homeTeam.scoreByPeriod : [];
-        const awayTeam = !!gameInfo && gameInfo.find((team) => !team.isHome);
+        const awayTeam = !!gameInfo && gameInfo.teams.find((team) => !team.isHome);
         const awayScore = awayTeam ? awayTeam.score : 0;
         const awayScoreByPeriod = awayTeam ? awayTeam.scoreByPeriod : [];
 
