@@ -22,6 +22,8 @@ const flushSpecificCacheKey = (req, res) => {
     return res.send({
       status: "ok",
       keys,
+      receivedKeysCount: reqBody.cacheKeys.length,
+      receivedKeys: reqBody.cacheKeys,
     });
   } catch (e) {
     console.log("Error ", e);
