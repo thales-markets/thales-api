@@ -78,7 +78,7 @@ const rangedMarkets = async (req, res) => {
       network: networkId,
       minMaturity: minMaturity ? minMaturity : undefined,
       maxMaturity: maxMaturity ? maxMaturity : undefined,
-      currencyKey: currencyKey ? ethers.utils.formatBytes32String(currencyKey) : undefined,
+      currencyKey: currencyKey ? currencyKey : undefined,
       marketIds: marketsIdsArr.length ? marketsIdsArr : undefined,
     });
 
