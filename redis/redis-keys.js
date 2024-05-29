@@ -52,6 +52,12 @@ const KEYS = {
   },
   OVERTIME_V2_GAMES_INFO: "overtimeV2GamesInfo",
   OVERTIME_V2_PLAYERS_INFO: "overtimeV2PlayersInfo",
+  OVERTIME_V2_LIVE_MARKETS: {
+    10: "overtimeV2OpLiveMarkets",
+    11155420: "overtimeV2OpSepoliaLiveMarkets",
+    42161: "overtimeV2ArbLiveMarkets",
+    8453: "overtimeV2BaseLiveMarkets",
+  },
 };
 
 module.exports = KEYS;
