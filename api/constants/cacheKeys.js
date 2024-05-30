@@ -22,10 +22,14 @@ const PREFIX_KEYS = {
     VaultPnl: "digital-options-vault-pnl",
     VaultTransactions: "digital-options-vault-transactions",
   },
+  SportsMarkets: {
+    LiquidityPoolPnl: "sports-markets-liquidity-pool-pnl-",
+    LiquidityPoolTransactions: "sports-markets-liquidity-pool-tx-",
 
-  VaultUserTransactions: "vault-user-transactions",
-  VaultPnl: "vault-pnl",
-  VaultTransactions: "vault-transactions",
+    ReferralTransactions: "sports-markets-referral-transactions",
+    ReferredTraders: "sports-markets-referred-traders",
+    Referrers: "sports-markets-referrers",
+  },
 };
 
 module.exports = {
