@@ -58,6 +58,7 @@ const KEYS = {
     42161: "overtimeV2ArbLiveMarkets",
     8453: "overtimeV2BaseLiveMarkets",
   },
+  OVERTIME_V2_LIVE_SCORES: "overtimeV2LiveScores",
 };
 
 module.exports = KEYS;

@@ -1721,11 +1721,67 @@ app.get(ENDPOINTS.OVERTIME_V2_GAMES_INFO, (req, res) => {
   });
 });
 
+app.get(ENDPOINTS.OVERTIME_V2_GAME_INFO, (req, res) => {
+  const gameId = req.params.gameId;
+
+  redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, async function (err, obj) {
+    const gamesInfo = new Map(JSON.parse(obj));
+
+    try {
+      const gameInfo = gamesInfo.get(gameId);
+      return res.send(gameInfo);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
 app.get(ENDPOINTS.OVERTIME_V2_PLAYERS_INFO, (req, res) => {
   redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO, function (err, obj) {
     const playersInfo = new Map(JSON.parse(obj));
     try {
       res.send(Object.fromEntries(playersInfo));
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_PLAYER_INFO, (req, res) => {
+  const playerId = req.params.playerId;
+
+  redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO, async function (err, obj) {
+    const playersInfo = new Map(JSON.parse(obj));
+
+    try {
+      const playerInfo = playersInfo.get(playerId);
+      return res.send(playerInfo);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORES, (req, res) => {
+  redisClient.get(KEYS.OVERTIME_V2_LIVE_SCORES, function (err, obj) {
+    const liveScores = new Map(JSON.parse(obj));
+    try {
+      res.send(Object.fromEntries(liveScores));
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORE, (req, res) => {
+  const gameId = req.params.gameId;
+
+  redisClient.get(KEYS.OVERTIME_V2_LIVE_SCORES, async function (err, obj) {
+    const liveScores = new Map(JSON.parse(obj));
+
+    try {
+      const liveScore = liveScores.get(gameId);
+      return res.send(liveScore);
     } catch (e) {
       console.log(e);
     }
