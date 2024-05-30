@@ -108,6 +108,8 @@ async function processAllMarkets(network) {
             const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
             const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
 
+            console.log(1, opticOddsGame.home_team, opticOddsGame.away_team, market.homeTeam, market.awayTeam);
+            console.log(2, homeTeamOpticOdds, awayTeamOpticOdds, gameHomeTeam, gameAwayTeam);
             const hasUndefinedName = [homeTeamOpticOdds, awayTeamOpticOdds, gameHomeTeam, gameAwayTeam].some(
               (name) => name == undefined,
             );
