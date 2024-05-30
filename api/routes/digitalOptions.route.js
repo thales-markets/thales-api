@@ -10,7 +10,7 @@ const vaultRoutes = require("./digitalOptions/vaults.route");
 router.use("/liquidity-providing", lpRoutes);
 router.use("/markets", marketsRoutes);
 router.use("/trades", tradesRoutes);
-router.use("/v1/referral", referralRoutes);
-router.use("/v1/vaults", vaultRoutes);
+router.use("/referral", referralRoutes);
+router.use("/vaults", vaultRoutes);
 
 module.exports = router;

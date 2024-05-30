@@ -6,6 +6,7 @@ const app = express();
 const stakersRoutes = require("./routes/stakers.route");
 const cacheControlRoutes = require("./routes/cache.route");
 const digitalOptionsRoutes = require("./routes/digitalOptions.route");
+const sportMarketsRoutes = require("./routes/sportMarkets.route");
 
 var cors = require("cors");
 app.use(cors());
@@ -1787,6 +1788,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORE, (req, res) => {
 // V1 API with caching
 app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/digital-options", digitalOptionsRoutes);
+app.use("/v1/sport-markets", sportMarketsRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
 
 app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, (req, res) => {
