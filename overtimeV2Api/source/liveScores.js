@@ -80,7 +80,7 @@ async function processAllLiveScores() {
 
             liveScoresMap.set(gameId, {
               period: event.score.game_period,
-              status: event.score.event_status,
+              gameStatus: event.score.event_status,
               displayClock: event.score.display_clock,
               homeScore: event.score.score_home,
               awayScore: event.score.score_away,

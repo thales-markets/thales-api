@@ -56,7 +56,7 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
       if (event.event_id) {
         const gameId = bytes32({ input: event.event_id });
         gamesInfoMap.set(gameId, {
-          status: event.score.event_status,
+          gameStatus: event.score.event_status,
           isGameFinished:
             event.score.event_status === "STATUS_FINAL" || event.score.event_status === "STATUS_FULL_TIME",
           tournamentName: "",
@@ -136,7 +136,7 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
       if (event.id) {
         const gameId = bytes32({ input: event.id });
         gamesInfoMap.set(gameId, {
-          status: event.status_type,
+          gameStatus: event.status_type,
           isGameFinished: event.status_type === "finished",
           tournamentName: event.tournament_stage_name,
           tournamentRound: EnetpulseRounds[Number(event.round_typeFK)],
