@@ -1,5 +1,5 @@
 const express = require("express");
-const { markets, rangedMarkets } = require("../controllers/markets.controller");
+const { markets, rangedMarkets } = require("../../controllers/digitalOptions/markets.controller");
 
 const router = express.Router();
 

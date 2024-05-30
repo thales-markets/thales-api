@@ -5,11 +5,7 @@ const app = express();
 
 const stakersRoutes = require("./routes/stakers.route");
 const cacheControlRoutes = require("./routes/cache.route");
-const lpRoutes = require("./routes/lp.route");
-const marketsRoutes = require("./routes/markets.route");
-const tradesRoutes = require("./routes/trades.route");
-const referralRoutes = require("./routes/referral.route");
-const vaultRoutes = require("./routes/vaults.route");
+const digitalOptionsRoutes = require("./routes/digitalOptions.route");
 
 var cors = require("cors");
 app.use(cors());
@@ -1790,11 +1786,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORE, (req, res) => {
 
 // V1 API with caching
 app.use("/v1/stakers", stakersRoutes);
-app.use("/v1/liquidity-providing", lpRoutes);
-app.use("/v1/markets", marketsRoutes);
-app.use("/v1/trades", tradesRoutes);
-app.use("/v1/referral", referralRoutes);
-app.use("/v1/vaults", vaultRoutes);
+app.use("/v1/digital-options", digitalOptionsRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
 
 app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, (req, res) => {
