@@ -23,7 +23,11 @@ const userTransactions = async (req, res) => {
       account: account ? account : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.VaultUserTransactions, [networkId, vault, account]), transactions, TTL.VAULT);
+    cache.set(
+      getCacheKey(PREFIX_KEYS.VaultUserTransactions, [networkId, vault, account]),
+      transactions,
+      TTL.VAULT_USER_TRANSACTIONS,
+    );
 
     if (!transactions) return res.sendStatus(204);
 
@@ -51,7 +55,7 @@ const vaultPnl = async (req, res) => {
       vault: vault ? vault : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.VaultPnl, [networkId, vault]), pnls, TTL.VAULT);
+    cache.set(getCacheKey(PREFIX_KEYS.VaultPnl, [networkId, vault]), pnls, TTL.VAULT_PNL);
 
     if (!pnls) return res.sendStatus(204);
 
@@ -81,7 +85,11 @@ const vaultTransactions = async (req, res) => {
       round: round ? round : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault, round]), transactions, TTL.VAULT);
+    cache.set(
+      getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault, round]),
+      transactions,
+      TTL.VAULT_TRANSACTIONS,
+    );
 
     if (!transactions) return res.sendStatus(204);
 

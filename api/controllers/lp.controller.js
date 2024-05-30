@@ -18,7 +18,7 @@ const lpPnl = async (req, res) => {
       network: networkId,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.LiquidityPoolPnl, [networkId]), lpPnls, TTL.LP);
+    cache.set(getCacheKey(PREFIX_KEYS.LiquidityPoolPnl, [networkId]), lpPnls, TTL.LP_PNL);
 
     if (!lpPnls) return res.sendStatus(204);
 
@@ -47,7 +47,11 @@ const lpTransactions = async (req, res) => {
       round: round ? round : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.LiquidityPoolTransactions, [networkId, account, round]), transactions, TTL.LP);
+    cache.set(
+      getCacheKey(PREFIX_KEYS.LiquidityPoolTransactions, [networkId, account, round]),
+      transactions,
+      TTL.LP_TRANSACTIONS,
+    );
 
     if (!transactions) return res.sendStatus(204);
 
