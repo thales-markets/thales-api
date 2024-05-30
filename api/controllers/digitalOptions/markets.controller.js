@@ -15,7 +15,9 @@ const markets = async (req, res) => {
     if (!networkId) return res.sendStatus(400);
     if (!minMaturity) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.Markets, [networkId, minMaturity, maxMaturity]));
+    const cachedResponse = cache.get(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.Markets, [networkId, minMaturity, maxMaturity]),
+    );
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
@@ -26,7 +28,11 @@ const markets = async (req, res) => {
       maxMaturity: maxMaturity ? maxMaturity : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.Markets, [networkId, minMaturity, maxMaturity]), markets, TTL.MARKETS);
+    cache.set(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.Markets, [networkId, minMaturity, maxMaturity]),
+      markets,
+      TTL.MARKETS,
+    );
 
     if (!markets) return res.sendStatus(204);
 
@@ -62,7 +68,7 @@ const rangedMarkets = async (req, res) => {
     if (!minMaturity) return res.sendStatus(400);
 
     const cachedResponse = cache.get(
-      getCacheKey(PREFIX_KEYS.RangedMarkets, [
+      getCacheKey(PREFIX_KEYS.DigitalOptions.RangedMarkets, [
         networkId,
         minMaturity,
         maxMaturity,
@@ -83,7 +89,7 @@ const rangedMarkets = async (req, res) => {
     });
 
     cache.set(
-      getCacheKey(PREFIX_KEYS.RangedMarkets, [
+      getCacheKey(PREFIX_KEYS.DigitalOptions.RangedMarkets, [
         networkId,
         minMaturity,
         maxMaturity,

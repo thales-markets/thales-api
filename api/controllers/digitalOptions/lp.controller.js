@@ -10,7 +10,7 @@ const lpPnl = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedLpPnls = cache.get(getCacheKey(PREFIX_KEYS.LiquidityPoolPnl, [networkId]));
+    const cachedLpPnls = cache.get(getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [networkId]));
 
     if (cachedLpPnls !== undefined) return res.send(cachedLpPnls);
 
@@ -18,7 +18,7 @@ const lpPnl = async (req, res) => {
       network: networkId,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.LiquidityPoolPnl, [networkId]), lpPnls, TTL.LP_PNL);
+    cache.set(getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [networkId]), lpPnls, TTL.LP_PNL);
 
     if (!lpPnls) return res.sendStatus(204);
 
@@ -38,7 +38,9 @@ const lpTransactions = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.LiquidityPoolTransactions, [networkId, account, round]));
+    const cachedResponse = cache.get(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolTransactions, [networkId, account, round]),
+    );
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const transactions = await thalesData.binaryOptions.liquidityPoolUserTransactions({
@@ -48,7 +50,7 @@ const lpTransactions = async (req, res) => {
     });
 
     cache.set(
-      getCacheKey(PREFIX_KEYS.LiquidityPoolTransactions, [networkId, account, round]),
+      getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolTransactions, [networkId, account, round]),
       transactions,
       TTL.LP_TRANSACTIONS,
     );
