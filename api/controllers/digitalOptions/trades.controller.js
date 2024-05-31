@@ -1,8 +1,8 @@
 const thalesData = require("thales-data");
-const { PREFIX_KEYS } = require("../constants/cacheKeys");
-const cache = require("../services/cache");
-const TTL = require("../constants/ttl");
-const { getCacheKey, getQueryProperty, getQueryParam } = require("../utils/getters");
+const { PREFIX_KEYS } = require("../../constants/cacheKeys");
+const cache = require("../../services/cache");
+const TTL = require("../../constants/ttl");
+const { getCacheKey, getQueryProperty, getQueryParam } = require("../../utils/getters");
 
 const optionTransactions = async (req, res) => {
   try {
@@ -13,7 +13,9 @@ const optionTransactions = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.OptionTransactions, [networkId, market, account]));
+    const cachedResponse = cache.get(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.OptionTransactions, [networkId, market, account]),
+    );
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
@@ -25,7 +27,7 @@ const optionTransactions = async (req, res) => {
     });
 
     cache.set(
-      getCacheKey(PREFIX_KEYS.OptionTransactions, [networkId, market, account]),
+      getCacheKey(PREFIX_KEYS.DigitalOptions.OptionTransactions, [networkId, market, account]),
       transactions,
       TTL.OPTION_TRANSACTIONS,
     );
@@ -52,7 +54,7 @@ const trades = async (req, res) => {
     if (!networkId && (!makerToken || !takerToken || !maker || !taker)) return res.sendStatus(400);
 
     const cachedResponse = cache.get(
-      getCacheKey(PREFIX_KEYS.Trades, [networkId, takerToken, makerToken, taker, maker]),
+      getCacheKey(PREFIX_KEYS.DigitalOptions.Trades, [networkId, takerToken, makerToken, taker, maker]),
     );
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
@@ -65,7 +67,11 @@ const trades = async (req, res) => {
       taker: taker ? taker : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.Trades, [networkId, takerToken, makerToken, taker, maker]), trades, TTL.MARKETS);
+    cache.set(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.Trades, [networkId, takerToken, makerToken, taker, maker]),
+      trades,
+      TTL.MARKETS,
+    );
 
     if (!trades) return res.sendStatus(204);
 
@@ -84,7 +90,7 @@ const positionBalance = async (req, res) => {
 
     if (!networkId && !account) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.PositionBalance, [networkId, account]));
+    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.DigitalOptions.PositionBalance, [networkId, account]));
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
@@ -93,7 +99,11 @@ const positionBalance = async (req, res) => {
       account: account ? account : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.PositionBalance, [networkId, account]), positionBalances, TTL.POSITION_BALANCE);
+    cache.set(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.PositionBalance, [networkId, account]),
+      positionBalances,
+      TTL.POSITION_BALANCE,
+    );
 
     if (!positionBalances) return res.sendStatus(204);
 
@@ -112,7 +122,9 @@ const rangePositionBalance = async (req, res) => {
 
     if (!networkId && !account) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.RangePositionBalance, [networkId, account]));
+    const cachedResponse = cache.get(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.RangePositionBalance, [networkId, account]),
+    );
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
@@ -122,7 +134,7 @@ const rangePositionBalance = async (req, res) => {
     });
 
     cache.set(
-      getCacheKey(PREFIX_KEYS.RangePositionBalance, [networkId, account]),
+      getCacheKey(PREFIX_KEYS.DigitalOptions.RangePositionBalance, [networkId, account]),
       positionBalances,
       TTL.POSITION_BALANCE,
     );

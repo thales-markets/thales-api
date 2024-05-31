@@ -4,7 +4,7 @@ const {
   trades,
   positionBalance,
   rangePositionBalance,
-} = require("../controllers/trades.controller");
+} = require("../../controllers/digitalOptions/trades.controller");
 
 const router = express.Router();
 

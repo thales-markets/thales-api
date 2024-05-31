@@ -5,6 +5,8 @@ const { flushSpecificCacheKey, cacheStats } = require("../controllers/cache.cont
 const router = express.Router();
 
 router.get("/stats", cacheStats);
-router.post("/", cors({ origin: ["https://thalesmarkets.io"] }), flushSpecificCacheKey);
+
+router.post("/", flushSpecificCacheKey);
+// router.post("/", cors({ origin: ["https://thalesmarkets.io"] }), flushSpecificCacheKey);
 
 module.exports = router;

@@ -1,8 +1,8 @@
 const thalesData = require("thales-data");
-const { PREFIX_KEYS } = require("../constants/cacheKeys");
-const cache = require("../services/cache");
-const TTL = require("../constants/ttl");
-const { getCacheKey, getQueryParam, getQueryProperty } = require("../utils/getters");
+const { PREFIX_KEYS } = require("../../constants/cacheKeys");
+const cache = require("../../services/cache");
+const TTL = require("../../constants/ttl");
+const { getCacheKey, getQueryParam, getQueryProperty } = require("../../utils/getters");
 
 const userTransactions = async (req, res) => {
   try {
@@ -13,7 +13,9 @@ const userTransactions = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultUserTransactions, [networkId, vault, account]));
+    const cachedResponse = cache.get(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.VaultUserTransactions, [networkId, vault, account]),
+    );
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
@@ -24,7 +26,7 @@ const userTransactions = async (req, res) => {
     });
 
     cache.set(
-      getCacheKey(PREFIX_KEYS.VaultUserTransactions, [networkId, vault, account]),
+      getCacheKey(PREFIX_KEYS.DigitalOptions.VaultUserTransactions, [networkId, vault, account]),
       transactions,
       TTL.VAULT_USER_TRANSACTIONS,
     );
@@ -46,7 +48,7 @@ const vaultPnl = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultPnl, [networkId, vault]));
+    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.DigitalOptions.VaultPnl, [networkId, vault]));
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
@@ -55,7 +57,7 @@ const vaultPnl = async (req, res) => {
       vault: vault ? vault : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.VaultPnl, [networkId, vault]), pnls, TTL.VAULT_PNL);
+    cache.set(getCacheKey(PREFIX_KEYS.DigitalOptions.VaultPnl, [networkId, vault]), pnls, TTL.VAULT_PNL);
 
     if (!pnls) return res.sendStatus(204);
 
@@ -75,7 +77,9 @@ const vaultTransactions = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault, round]));
+    const cachedResponse = cache.get(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.VaultTransactions, [networkId, vault, round]),
+    );
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
@@ -86,7 +90,7 @@ const vaultTransactions = async (req, res) => {
     });
 
     cache.set(
-      getCacheKey(PREFIX_KEYS.VaultTransactions, [networkId, vault, round]),
+      getCacheKey(PREFIX_KEYS.DigitalOptions.VaultTransactions, [networkId, vault, round]),
       transactions,
       TTL.VAULT_TRANSACTIONS,
     );

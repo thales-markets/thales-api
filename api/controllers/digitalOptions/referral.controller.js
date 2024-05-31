@@ -1,8 +1,8 @@
 const thalesData = require("thales-data");
-const { PREFIX_KEYS } = require("../constants/cacheKeys");
-const cache = require("../services/cache");
-const TTL = require("../constants/ttl");
-const { getCacheKey, getQueryProperty, getQueryParam } = require("../utils/getters");
+const { PREFIX_KEYS } = require("../../constants/cacheKeys");
+const cache = require("../../services/cache");
+const TTL = require("../../constants/ttl");
+const { getCacheKey, getQueryProperty, getQueryParam } = require("../../utils/getters");
 
 const referralTransactions = async (req, res) => {
   try {
@@ -13,7 +13,9 @@ const referralTransactions = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.ReferralTransactions, [networkId, trader, referrer]));
+    const cachedResponse = cache.get(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.ReferralTransactions, [networkId, trader, referrer]),
+    );
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
@@ -23,7 +25,11 @@ const referralTransactions = async (req, res) => {
       referrer: referrer ? referrer : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.ReferralTransactions, [networkId, trader, referrer]), transactions, TTL.REFERRAL);
+    cache.set(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.ReferralTransactions, [networkId, trader, referrer]),
+      transactions,
+      TTL.REFERRAL,
+    );
 
     if (!transactions) return res.sendStatus(204);
 
@@ -42,7 +48,7 @@ const referredTraders = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.ReferredTraders, [networkId, referrer]));
+    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.DigitalOptions.ReferredTraders, [networkId, referrer]));
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
@@ -51,7 +57,7 @@ const referredTraders = async (req, res) => {
       referrer: referrer ? referrer : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.ReferredTraders, [networkId, referrer]), traders, TTL.REFERRAL);
+    cache.set(getCacheKey(PREFIX_KEYS.DigitalOptions.ReferredTraders, [networkId, referrer]), traders, TTL.REFERRAL);
 
     if (!traders) return res.sendStatus(204);
 
@@ -70,7 +76,7 @@ const referrers = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.Referrers, [networkId, address]));
+    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.DigitalOptions.Referrers, [networkId, address]));
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
@@ -79,7 +85,7 @@ const referrers = async (req, res) => {
       address: address ? address : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.Referrers, [networkId, address]), referrers, TTL.REFERRAL);
+    cache.set(getCacheKey(PREFIX_KEYS.DigitalOptions.Referrers, [networkId, address]), referrers, TTL.REFERRAL);
 
     if (!referrers) return res.sendStatus(204);
 

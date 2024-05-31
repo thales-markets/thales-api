@@ -1,5 +1,5 @@
 const express = require("express");
-const { userTransactions, vaultPnl, vaultTransactions } = require("../controllers/vaults.controller");
+const { userTransactions, vaultPnl, vaultTransactions } = require("../../controllers/digitalOptions/vaults.controller");
 
 const router = express.Router();
 

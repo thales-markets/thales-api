@@ -1,5 +1,5 @@
 const express = require("express");
-const { lpPnl, lpTransactions } = require("../controllers/lp.controller");
+const { lpPnl, lpTransactions } = require("../../controllers/sportMarkets/lp.controller");
 
 const router = express.Router();
 
