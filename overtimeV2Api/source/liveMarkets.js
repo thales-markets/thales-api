@@ -13,9 +13,11 @@ const {
   LIVE_SUPPORTED_LEAGUES,
   SPORTS_TAGS_MAP,
   SPORTS_NO_FORMAL_HOME_AWAY,
-  INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
 } = require("../constants/tags");
-const { MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL } = require("../constants/markets");
+const {
+  MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
+  INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
+} = require("../constants/markets");
 const teamsMapping = require("../utils/teamsMapping.json");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
