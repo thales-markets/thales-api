@@ -17,6 +17,7 @@ const {
 const {
   MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
   INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
+  TEN_MINUTES_DIFFERENCE_TENNIS_COMPARISON,
 } = require("../constants/markets");
 const teamsMapping = require("../utils/teamsMapping.json");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
@@ -111,8 +112,6 @@ async function processAllMarkets(network) {
             const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
             const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
 
-            console.log(1, opticOddsGame.home_team, opticOddsGame.away_team, market.homeTeam, market.awayTeam);
-            console.log(2, homeTeamOpticOdds, awayTeamOpticOdds, gameHomeTeam, gameAwayTeam);
             const hasUndefinedName = [homeTeamOpticOdds, awayTeamOpticOdds, gameHomeTeam, gameAwayTeam].some(
               (name) => name == undefined,
             );
@@ -130,8 +129,19 @@ async function processAllMarkets(network) {
               homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
               awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
             }
-            const datesMatch =
-              new Date(opticOddsGame.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
+            let datesMatch;
+
+            if (SPORTS_TAGS_MAP["Tennis"].includes(market.leagueId)) {
+              const opticOddsTimestamp = new Date(opticOddsGame.start_date).getTime();
+              const differenceBetweenDates = Math.abs(market.maturity - opticOddsTimestamp);
+              if (differenceBetweenDates <= TEN_MINUTES_DIFFERENCE_TENNIS_COMPARISON) {
+                datesMatch = true;
+              } else {
+                datesMatch = false;
+              }
+            } else {
+              datesMatch = new Date(response.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
+            }
 
             return homeTeamsMatch && awayTeamsMatch && datesMatch;
           });
@@ -185,8 +195,19 @@ async function processAllMarkets(network) {
               awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
             }
 
-            const datesMatch =
-              new Date(response.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
+            let datesMatch;
+
+            if (SPORTS_TAGS_MAP["Tennis"].includes(market.leagueId)) {
+              const opticOddsTimestamp = new Date(response.start_date).getTime();
+              const differenceBetweenDates = Math.abs(market.maturity - opticOddsTimestamp);
+              if (differenceBetweenDates <= TEN_MINUTES_DIFFERENCE_TENNIS_COMPARISON) {
+                datesMatch = true;
+              } else {
+                datesMatch = false;
+              }
+            } else {
+              datesMatch = new Date(response.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
+            }
 
             return homeTeamsMatch && awayTeamsMatch && datesMatch;
           });
