@@ -64,7 +64,7 @@ async function processAllMarkets(network) {
   redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
 
-    const enabledDummyMarkets = Number(process.env.LIVE_DUMMY_MARKETS_ENABLED);
+    const enabledDummyMarkets = Number(network) !== 11155420 ? 0 : Number(process.env.LIVE_DUMMY_MARKETS_ENABLED);
     try {
       let allMarkets = Array.from(markets.values());
       const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
@@ -90,11 +90,14 @@ async function processAllMarkets(network) {
         for (const leagueId of availableLeagueIds) {
           const leagueName = getOpticOddsLeagueNameById(leagueId);
 
-          const responseOptiOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?league=${leagueName}`, {
-            headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-          });
+          const responseOpticOddsGames = await axios.get(
+            `https://api.opticodds.com/api/v2/games?league=${leagueName}`,
+            {
+              headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+            },
+          );
 
-          const opticOddsResponseDataForLeague = responseOptiOddsGames.data.data;
+          const opticOddsResponseDataForLeague = responseOpticOddsGames.data.data;
 
           if (opticOddsResponseDataForLeague.length == 0) {
             errors.push(`Could not find any games on the provider side for the given league ${leagueName}`);
@@ -130,10 +133,10 @@ async function processAllMarkets(network) {
               awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
             }
             let datesMatch;
-
             if (SPORTS_TAGS_MAP["Tennis"].includes(market.leagueId)) {
               const opticOddsTimestamp = new Date(opticOddsGame.start_date).getTime();
-              const differenceBetweenDates = Math.abs(market.maturity - opticOddsTimestamp);
+              const marketTimestamp = new Date(market.maturityDate).getTime();
+              const differenceBetweenDates = Math.abs(marketTimestamp - opticOddsTimestamp);
               if (differenceBetweenDates <= TEN_MINUTES_DIFFERENCE_TENNIS_COMPARISON) {
                 datesMatch = true;
               } else {
@@ -188,6 +191,7 @@ async function processAllMarkets(network) {
 
             let homeTeamsMatch;
             let awayTeamsMatch;
+
             if (SPORTS_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
               homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
               awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
@@ -197,10 +201,11 @@ async function processAllMarkets(network) {
             }
 
             let datesMatch;
-
-            if (SPORTS_TAGS_MAP["Tennis"].includes(market.leagueId)) {
+            if (SPORTS_TAGS_MAP["Tennis"].includes(Number(market.leagueId))) {
               const opticOddsTimestamp = new Date(response.start_date).getTime();
-              const differenceBetweenDates = Math.abs(market.maturity - opticOddsTimestamp);
+              const marketTimestamp = new Date(market.maturityDate).getTime();
+
+              const differenceBetweenDates = Math.abs(marketTimestamp - opticOddsTimestamp);
               if (differenceBetweenDates <= TEN_MINUTES_DIFFERENCE_TENNIS_COMPARISON) {
                 datesMatch = true;
               } else {
