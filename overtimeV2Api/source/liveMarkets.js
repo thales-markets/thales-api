@@ -140,7 +140,8 @@ async function processAllMarkets(network) {
                 datesMatch = false;
               }
             } else {
-              datesMatch = new Date(response.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
+              datesMatch =
+                new Date(opticOddsGame.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
             }
 
             return homeTeamsMatch && awayTeamsMatch && datesMatch;
