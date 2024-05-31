@@ -388,7 +388,10 @@ async function processAllMarkets(network) {
         let filteredMarketsWithLiveOddsAndDummyMarkets;
         const resolvedMarketPromises = await Promise.all(filteredMarketsWithLiveOdds);
 
-        const dummyMarkets = [...dummyMarketsLive];
+        let dummyMarkets = [];
+        if (Number(network) == 11155420) {
+          dummyMarkets = [...dummyMarketsLive];
+        }
         filteredMarketsWithLiveOddsAndDummyMarkets = resolvedMarketPromises.concat(dummyMarkets);
 
         redisClient.set(
