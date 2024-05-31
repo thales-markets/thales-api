@@ -7,7 +7,8 @@ const liveScores = require("./source/liveScores");
 
 require("dotenv").config();
 
-markets.processMarkets();
+markets.processMarkets(true);
+markets.processMarkets(false);
 liveMarkets.processLiveMarkets();
 gamesInfo.processGamesInfo();
 playersInfo.processPlayersInfo();
