@@ -69,6 +69,7 @@ function getGamesInfoMap() {
 async function resolveMarkets(network) {
   const openMarketsMap = await getOpenMarketsMap(network);
   const closedMarketsMap = await getClosedMarketsMap(network);
+  const forceResolve = process.env.FORCE_RESOLVE === "true";
 
   const provider = getProvider(network);
   const sportsAmmData = new ethers.Contract(
@@ -145,7 +146,7 @@ async function resolveMarkets(network) {
 
   // get all unresolved closed markets - has some child markets unresolved
   const allUnresolvedClosedMarkets = Array.from(closedMarketsMap.values()).filter(
-    (market) => !market.isWholeGameResolved,
+    (market) => !market.isWholeGameResolved || forceResolve,
   );
 
   console.log(`Resolver ${NETWORK_NAME[network]}: Total unresolved markets: ${allUnresolvedClosedMarkets.length}`);
@@ -153,8 +154,8 @@ async function resolveMarkets(network) {
   for (let i = 0; i < allUnresolvedClosedMarkets.length; i++) {
     // get all unresolved child markets (except combined positions)
     const unresolvedChildMarkets = allUnresolvedClosedMarkets[i].childMarkets.filter(
-      // TODO: remove condition once uint24 for playerId is deployed
-      (market) => !market.isResolved && !market.isCancelled && !getIsCombinedPositionsMarket(market.typeId),
+      (market) =>
+        ((!market.isResolved && !market.isCancelled) || forceResolve) && !getIsCombinedPositionsMarket(market.typeId),
     );
 
     if (unresolvedChildMarkets.length > 0) {
@@ -192,7 +193,7 @@ async function resolveMarkets(network) {
             const resultType = MarketTypeMap[unresolvedChildMarket.typeId].resultType;
             if (resultType === ResultType.EXACT_POSITION) {
               unresolvedChildMarket.winningPositions = resultsForMarkets[j];
-            } else if (resultType === ResultType.OVER_UNDER) {
+            } else if (resultType === ResultType.OVER_UNDER || resultType === ResultType.SPREAD) {
               const resultLine = Number(resultsForMarkets[j][0]) / 100;
               if (resultLine == unresolvedChildMarket.line) {
                 unresolvedChildMarket.status === STATUS.Cancelled;
@@ -202,7 +203,7 @@ async function resolveMarkets(network) {
                 unresolvedChildMarket.winningPositions = [];
               } else {
                 const winningPosition =
-                  unresolvedChildMarket.typeId === MarketType.SPREAD
+                  resultType === ResultType.SPREAD
                     ? resultLine < unresolvedChildMarket.line
                       ? OverUnderType.Over
                       : OverUnderType.Under
@@ -227,7 +228,8 @@ async function resolveMarkets(network) {
 
     // get all unresolvded combined positions child markets
     const cpUnresolvedChildMarkets = allUnresolvedClosedMarkets[i].childMarkets.filter(
-      (market) => !market.isResolved && !market.isCancelled && getIsCombinedPositionsMarket(market.typeId),
+      (market) =>
+        ((!market.isResolved && !market.isCancelled) || forceResolve) && getIsCombinedPositionsMarket(market.typeId),
     );
     for (let j = 0; j < cpUnresolvedChildMarkets.length; j++) {
       const cpUnresolvdeCildMarket = cpUnresolvedChildMarkets[j];
