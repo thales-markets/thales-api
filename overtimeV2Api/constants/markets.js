@@ -1,8 +1,8 @@
 const ResultType = {
   EXACT_POSITION: 1,
   OVER_UNDER: 2,
-  SPREAD: 3,
-  COMBINED_POSITIONS: 4,
+  COMBINED_POSITIONS: 3,
+  SPREAD: 4,
 };
 
 const MarketType = {
