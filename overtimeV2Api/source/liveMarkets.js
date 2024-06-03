@@ -17,7 +17,7 @@ const {
 const {
   MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
   INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
-  TEN_MINUTES_DIFFERENCE_TENNIS_COMPARISON,
+  MATCH_TIME_DIFFERENCE_TENNIS_COMPARISON,
 } = require("../constants/markets");
 const teamsMapping = require("../utils/teamsMapping.json");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
@@ -90,12 +90,16 @@ async function processAllMarkets(network) {
         for (const leagueId of availableLeagueIds) {
           const leagueName = getOpticOddsLeagueNameById(leagueId);
 
-          const responseOpticOddsGames = await axios.get(
-            `https://api.opticodds.com/api/v2/games?league=${leagueName}`,
-            {
+          let responseOpticOddsGames;
+          if (SPORTS_TAGS_MAP["Tennis"].includes(Number(leagueId))) {
+            responseOpticOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?sport=tennis`, {
               headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-            },
-          );
+            });
+          } else {
+            responseOpticOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?league=${leagueName}`, {
+              headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+            });
+          }
 
           const opticOddsResponseDataForLeague = responseOpticOddsGames.data.data;
 
@@ -137,7 +141,7 @@ async function processAllMarkets(network) {
               const opticOddsTimestamp = new Date(opticOddsGame.start_date).getTime();
               const marketTimestamp = new Date(market.maturityDate).getTime();
               const differenceBetweenDates = Math.abs(marketTimestamp - opticOddsTimestamp);
-              if (differenceBetweenDates <= TEN_MINUTES_DIFFERENCE_TENNIS_COMPARISON) {
+              if (differenceBetweenDates <= MATCH_TIME_DIFFERENCE_TENNIS_COMPARISON) {
                 datesMatch = true;
               } else {
                 datesMatch = false;
@@ -206,7 +210,7 @@ async function processAllMarkets(network) {
               const marketTimestamp = new Date(market.maturityDate).getTime();
 
               const differenceBetweenDates = Math.abs(marketTimestamp - opticOddsTimestamp);
-              if (differenceBetweenDates <= TEN_MINUTES_DIFFERENCE_TENNIS_COMPARISON) {
+              if (differenceBetweenDates <= MATCH_TIME_DIFFERENCE_TENNIS_COMPARISON) {
                 datesMatch = true;
               } else {
                 datesMatch = false;
