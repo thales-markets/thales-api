@@ -7,7 +7,6 @@ const {
   YES_NO_PLAYER_PROPS_MARKET_TYPES,
   COMBINED_POSITIONS_MARKET_TYPES,
 } = require("../constants/markets");
-const overtimeSportsList = require("../assets/overtime-sports.json");
 const bytes32 = require("bytes32");
 
 const fixDuplicatedTeamName = (name, isEnetpulseSport) => {
@@ -48,11 +47,6 @@ const formatMarketOdds = (odds, oddsType) => {
     default:
       return odds;
   }
-};
-
-const getOpticOddsLeagueNameById = (id) => {
-  const league = overtimeSportsList.find((sport) => Number(sport.id) === Number(id));
-  return league ? league.opticOddsName : undefined;
 };
 
 const isOneSideMarket = (league) => getLeagueSport(league) === Sport.MOTOSPORT || league == League.GOLF_WINNER;
@@ -156,7 +150,6 @@ const convertFromBytes32 = (value) => {
 module.exports = {
   fixDuplicatedTeamName,
   formatMarketOdds,
-  getOpticOddsLeagueNameById,
   isOneSideMarket,
   isPlayerPropsMarket,
   isOneSidePlayerPropsMarket,

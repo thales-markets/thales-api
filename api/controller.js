@@ -51,6 +51,8 @@ const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters")
 
 const overtimeMarketsV2 = require("../overtimeV2Api/source/markets");
 const { isLiveSupportedForLeague, getLiveSupportedLeagues } = require("../overtimeV2Api/utils/sports");
+const { LeagueMap } = require("../overtimeV2Api/constants/sports");
+const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -1449,6 +1451,22 @@ app.get(ENDPOINTS.THALES_IO_WEEKLY_STATS, async (req, res) => {
       console.log(e);
     }
   });
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_SPORTS, (req, res) => {
+  try {
+    res.send(LeagueMap);
+  } catch (e) {
+    console.log(e);
+  }
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_MARKET_TYPES, (req, res) => {
+  try {
+    res.send(MarketTypeMap);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {

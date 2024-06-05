@@ -5,7 +5,7 @@ const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const oddslib = require("oddslib");
 const axios = require("axios");
-const { checkOddsFromMultipleBookmakersV2, getAverageOdds, getOpticOddsLeagueNameById } = require("../utils/markets");
+const { checkOddsFromMultipleBookmakersV2, getAverageOdds } = require("../utils/markets");
 const {
   MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
   INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
@@ -15,7 +15,12 @@ const teamsMapping = require("../assets/teamsMapping.json");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const { groupBy } = require("lodash");
-const { getLeagueIsDrawAvailable, getLeagueSport, getLiveSupportedLeagues } = require("../utils/sports");
+const {
+  getLeagueIsDrawAvailable,
+  getLeagueSport,
+  getLiveSupportedLeagues,
+  getLeagueOpticOddsName,
+} = require("../utils/sports");
 const { Sport, LEAGUES_NO_FORMAL_HOME_AWAY } = require("../constants/sports");
 
 async function processLiveMarkets() {
@@ -82,7 +87,7 @@ async function processAllMarkets(network) {
         let opticOddsResponseData = [];
 
         for (const leagueId of availableLeagueIds) {
-          const leagueName = getOpticOddsLeagueNameById(leagueId);
+          const leagueName = getLeagueOpticOddsName(leagueId);
 
           let responseOpticOddsGames;
           if (getLeagueSport(Number(leagueId)) === Sport.TENNIS) {

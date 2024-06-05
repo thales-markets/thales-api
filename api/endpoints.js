@@ -57,6 +57,9 @@ const ENDPOINTS = {
   THALES_IO_WEEKLY_STATS: "/thales/thales-io/weekly-stats",
   THALES_IO_ECOSYSTEM_APPS: "/thales/thales-io/ecosystem-apps",
   THALES_IO_TIMELINE: "/thales/thales-io/timeline",
+
+  OVERTIME_V2_SPORTS: "/overtime-v2/sports",
+  OVERTIME_V2_MARKET_TYPES: "/overtime-v2/market-types",
   OVERTIME_V2_MARKETS: "/overtime-v2/networks/:networkParam/markets",
   OVERTIME_V2_LIVE_MARKETS: "/overtime-v2/networks/:networkParam/live-markets",
   OVERTIME_V2_MARKET: "/overtime-v2/networks/:networkParam/markets/:marketAddress",

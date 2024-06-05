@@ -30,6 +30,11 @@ const isLiveSupportedForLeague = (league) => {
   return leagueInfo ? leagueInfo.live : false;
 };
 
+const getLeagueOpticOddsName = (league) => {
+  const leagueInfo = LeagueMap[league];
+  return leagueInfo ? leagueInfo.opticOddsName : undefined;
+};
+
 module.exports = {
   getLeagueSport,
   getLeagueProvider,
@@ -37,4 +42,5 @@ module.exports = {
   getLiveSupportedLeagues,
   getLeagueLabel,
   isLiveSupportedForLeague,
+  getLeagueOpticOddsName,
 };
