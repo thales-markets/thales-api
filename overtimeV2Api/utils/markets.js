@@ -1,3 +1,5 @@
+const { League, Sport } = require("../constants/sports");
+const { getLeagueSport } = require("./sports");
 const {
   ODDS_TYPE,
   PLAYER_PROPS_MARKET_TYPES,
@@ -6,13 +8,6 @@ const {
   COMBINED_POSITIONS_MARKET_TYPES,
 } = require("../constants/markets");
 const overtimeSportsList = require("../assets/overtime-sports.json");
-const {
-  SPORTS_TAGS_MAP,
-  GOLF_TOURNAMENT_WINNER_TAG,
-  ENETPULSE_SPORTS,
-  JSON_ODDS_SPORTS,
-  SPORT_ID_MAP_ENETPULSE,
-} = require("../constants/tags");
 const bytes32 = require("bytes32");
 
 const fixDuplicatedTeamName = (name, isEnetpulseSport) => {
@@ -64,24 +59,17 @@ const getOpticOddsLeagueNameById = (id) => {
   return league ? league.opticOddsName : undefined;
 };
 
-const getIsOneSideMarket = (tag) =>
-  SPORTS_TAGS_MAP["Motosport"].includes(Number(tag)) || Number(tag) == GOLF_TOURNAMENT_WINNER_TAG;
+const isOneSideMarket = (league) => getLeagueSport(league) === Sport.MOTOSPORT || league == League.GOLF_WINNER;
 
-const getIsPlayerPropsMarket = (betType) => PLAYER_PROPS_MARKET_TYPES.includes(betType);
+const isPlayerPropsMarket = (marketType) => PLAYER_PROPS_MARKET_TYPES.includes(marketType);
 
-const getIsOneSidePlayerPropsMarket = (betType) => ONE_SIDE_PLAYER_PROPS_MARKET_TYPES.includes(betType);
+const isOneSidePlayerPropsMarket = (marketType) => ONE_SIDE_PLAYER_PROPS_MARKET_TYPES.includes(marketType);
 
-const getIsYesNoPlayerPropsMarket = (betType) => YES_NO_PLAYER_PROPS_MARKET_TYPES.includes(betType);
+const isYesNoPlayerPropsMarket = (marketType) => YES_NO_PLAYER_PROPS_MARKET_TYPES.includes(marketType);
 
-const getIsCombinedPositionsMarket = (betType) => {
-  return COMBINED_POSITIONS_MARKET_TYPES.includes(betType);
+const getIsCombinedPositionsMarket = (marketType) => {
+  return COMBINED_POSITIONS_MARKET_TYPES.includes(marketType);
 };
-
-const getIsEnetpulseSport = (sportId) => ENETPULSE_SPORTS.includes(Number(sportId));
-
-const getIsEnetpulseSportV2 = (sportId) => SPORT_ID_MAP_ENETPULSE[Number(sportId)] !== undefined;
-
-const getIsJsonOddsSport = (sportId) => JSON_ODDS_SPORTS.includes(Number(sportId));
 
 const getAverageOdds = (multipleOddsFromProviders) => {
   let homeOdds;
@@ -101,12 +89,12 @@ const getAverageOdds = (multipleOddsFromProviders) => {
   return { homeOdds: homeOdds, awayOdds: awayOdds, drawOdds: drawOdds };
 };
 
-const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPositionalSport) => {
+const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isDrawAvailable) => {
   // Check if any bookmaker has odds of 0 or 0.0001
   const hasZeroOdds = arrayOfBookmakers.some((bookmakerId) => {
     const line = oddsMap.get(bookmakerId);
     if (line) {
-      return line.homeOdds === 0 || line.awayOdds === 0 || (!isTwoPositionalSport && line.drawOdds === 0);
+      return line.homeOdds === 0 || line.awayOdds === 0 || (isDrawAvailable && line.drawOdds === 0);
     }
     return false;
   });
@@ -174,15 +162,12 @@ module.exports = {
   formatMarketOdds,
   getLeagueNameById,
   getOpticOddsLeagueNameById,
-  getIsOneSideMarket,
-  getIsPlayerPropsMarket,
-  getIsOneSidePlayerPropsMarket,
-  getIsYesNoPlayerPropsMarket,
-  getIsEnetpulseSport,
-  getIsJsonOddsSport,
+  isOneSideMarket,
+  isPlayerPropsMarket,
+  isOneSidePlayerPropsMarket,
+  isYesNoPlayerPropsMarket,
   getAverageOdds,
   checkOddsFromMultipleBookmakersV2,
-  getIsEnetpulseSportV2,
   convertFromBytes32,
   getIsCombinedPositionsMarket,
 };

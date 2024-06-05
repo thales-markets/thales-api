@@ -5,6 +5,11 @@ const ResultType = {
   SPREAD: 4,
 };
 
+const OverUnderType = {
+  Over: 0,
+  Under: 1,
+};
+
 const MarketType = {
   // Winner
   WINNER: 0,
@@ -161,11 +166,6 @@ const MarketType = {
   PLAYER_PROPS_FIRST_TOUCHDOWN: 11049,
   PLAYER_PROPS_LAST_TOUCHDOWN: 11056,
   PLAYER_PROPS_3PTS_MADE: 11038,
-};
-
-const OverUnderType = {
-  Over: 0,
-  Under: 1,
 };
 
 const MarketTypeMap = {

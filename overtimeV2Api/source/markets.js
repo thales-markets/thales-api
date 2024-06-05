@@ -6,20 +6,19 @@ const { bigNumberFormatter } = require("../utils/formatters");
 // const markets = require("./treeMarketsAndHashes.json");
 const {
   fixDuplicatedTeamName,
-  getLeagueNameById,
-  getIsOneSideMarket,
-  getIsOneSidePlayerPropsMarket,
+  isOneSideMarket,
+  isOneSidePlayerPropsMarket,
   formatMarketOdds,
-  getIsYesNoPlayerPropsMarket,
-  getIsEnetpulseSport,
-  getIsPlayerPropsMarket,
+  isYesNoPlayerPropsMarket,
+  isPlayerPropsMarket,
   convertFromBytes32,
 } = require("../utils/markets");
-const { SPORTS_MAP } = require("../constants/tags");
 const { ODDS_TYPE, STATUS, MarketTypeMap } = require("../constants/markets");
 const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { NETWORK } = require("../constants/networks");
+const { getLeagueSport, getLeagueLabel, getLeagueProvider } = require("../utils/sports");
+const { Provider } = require("../constants/sports");
 
 const awsS3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -73,14 +72,14 @@ const packMarket = (market) => {
     : market.sportId === 701 || market.sportId == 702
     ? 7
     : market.sportId;
-  const isEnetpulseSport = getIsEnetpulseSport(leagueId);
-  const type = MarketTypeMap[market.typeId];
+  const isEnetpulseSport = getLeagueProvider(leagueId) === Provider.ENETPULSE;
+  const type = MarketTypeMap[market.typeId]?.key;
 
   return {
     gameId: market.gameId,
-    sport: SPORTS_MAP[leagueId],
+    sport: getLeagueSport(leagueId),
     leagueId: leagueId,
-    leagueName: getLeagueNameById(leagueId),
+    leagueName: getLeagueLabel(leagueId),
     subLeagueId: market.sportId,
     typeId: market.typeId,
     type,
@@ -88,19 +87,16 @@ const packMarket = (market) => {
     maturityDate: new Date(market.maturity * 1000),
     homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
     awayTeam: fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
-    homeScore: market.homeScore || 0,
-    awayScore: market.awayScore || 0,
-    finalResult: market.finalResult || 0,
     status: market.status,
     isOpen: market.status === STATUS.Open,
     isResolved: market.status === STATUS.Resolved,
     isCancelled: market.status === STATUS.Cancelled,
     isPaused: market.status === STATUS.Paused,
-    isOneSideMarket: getIsOneSideMarket(leagueId),
+    isOneSideMarket: isOneSideMarket(leagueId),
     line: Number(market.line) / 100,
-    isPlayerPropsMarket: getIsPlayerPropsMarket(market.typeId),
-    isOneSidePlayerPropsMarket: getIsOneSidePlayerPropsMarket(market.typeId),
-    isYesNoPlayerPropsMarket: getIsYesNoPlayerPropsMarket(market.typeId),
+    isPlayerPropsMarket: isPlayerPropsMarket(market.typeId),
+    isOneSidePlayerPropsMarket: isOneSidePlayerPropsMarket(market.typeId),
+    isYesNoPlayerPropsMarket: isYesNoPlayerPropsMarket(market.typeId),
     playerProps: {
       playerId: market.playerProps.playerId,
       playerName: market.playerProps.playerName,

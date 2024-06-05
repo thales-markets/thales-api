@@ -38,7 +38,6 @@ const {
 const overtimeSportsList = require("../overtimeApi/assets/overtime-sports.json");
 const { isRangedPosition } = require("../thalesApi/utils/markets");
 const { isNumeric } = require("../services/utils");
-const { LIVE_SUPPORTED_LEAGUES } = require("../overtimeV2Api/constants/tags");
 
 const { BigNumber } = require("ethers");
 const thalesSpeedLimits = require("../thalesSpeedApi/source/limits");
@@ -51,6 +50,7 @@ const thalesSpeedUtilsNetworks = require("../thalesSpeedApi/utils/networks");
 const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters");
 
 const overtimeMarketsV2 = require("../overtimeV2Api/source/markets");
+const { isLiveSupportedForLeague, getLiveSupportedLeagues } = require("../overtimeV2Api/utils/sports");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -1638,15 +1638,17 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
     return;
   }
 
+  const liveSupporetedLeagues = getLiveSupportedLeagues();
+
   const errors = [];
   let availableLeagueIds = leagueIds
     ? leagueIds
         .split(",")
         .map((id) => Number(id))
         .filter((id) => {
-          if (!allLeagueIds.includes(Number(id)) && !LIVE_SUPPORTED_LEAGUES.includes(Number(id))) {
+          if (!allLeagueIds.includes(Number(id)) && !isLiveSupportedForLeague(Number(id))) {
             errors.push(
-              `Unsupported live league ID ${id}. Supported live league IDs: ${LIVE_SUPPORTED_LEAGUES.join(
+              `Unsupported live league ID ${id}. Supported live league IDs: ${liveSupporetedLeagues.join(
                 ", ",
               )}. See details on: /overtime/sports.`,
             );
@@ -1658,7 +1660,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
   if (leagueIds && !availableLeagueIds.length) {
     res.send(
-      `Unsupported live league IDs. Supported live league IDs: ${LIVE_SUPPORTED_LEAGUES.join(
+      `Unsupported live league IDs. Supported live league IDs: ${liveSupporetedLeagues.join(
         ", ",
       )}. See details on: /overtime/sports.`,
     );

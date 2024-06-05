@@ -2,17 +2,12 @@ require("dotenv").config();
 
 const redis = require("redis");
 const { delay } = require("../utils/general");
-const { SPORT_ID_MAP_RUNDOWN } = require("../constants/tags");
 const axios = require("axios");
-const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
-const {
-  getIsEnetpulseSportV2,
-  getIsJsonOddsSport,
-  getIsPlayerPropsMarket,
-  convertFromBytes32,
-} = require("../utils/markets");
+const { isPlayerPropsMarket, convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
+const { getLeagueProvider } = require("../utils/sports");
+const { Provider } = require("../constants/sports");
 
 async function processPlayersInfo() {
   if (process.env.REDIS_URL) {
@@ -71,10 +66,8 @@ async function processAllPlayersInfo() {
     const market = allOpenMarketsMap[i];
     const leagueId = market.leagueId;
 
-    if (!getIsEnetpulseSportV2(leagueId) && !getIsJsonOddsSport(leagueId)) {
-      const hasPlayerPropsMarkets = market.childMarkets.some((childMarket) =>
-        getIsPlayerPropsMarket(childMarket.typeId),
-      );
+    if (getLeagueProvider(leagueId) === Provider.RUNDOWN) {
+      const hasPlayerPropsMarkets = market.childMarkets.some((childMarket) => isPlayerPropsMarket(childMarket.typeId));
 
       if (hasPlayerPropsMarkets) {
         // console.log(
@@ -98,7 +91,7 @@ async function processAllPlayersInfo() {
 
           if (responseData !== null) {
             const playerPropsChildMarkets = market.childMarkets.filter((childMarket) =>
-              getIsPlayerPropsMarket(childMarket.typeId),
+              isPlayerPropsMarket(childMarket.typeId),
             );
             for (let j = 0; j < playerPropsChildMarkets.length; j++) {
               const playerId = Number(playerPropsChildMarkets[j].playerProps.playerId);

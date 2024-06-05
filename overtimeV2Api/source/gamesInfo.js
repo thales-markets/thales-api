@@ -2,13 +2,13 @@ require("dotenv").config();
 
 const redis = require("redis");
 const { delay } = require("../utils/general");
-const { SPORTS_MAP, SPORT_ID_MAP_ENETPULSE, SPORT_ID_MAP_RUNDOWN } = require("../constants/tags");
+const { SPORT_ID_MAP_ENETPULSE, SPORT_ID_MAP_RUNDOWN } = require("../constants/tags");
 const axios = require("axios");
 const { format, addDays, subDays } = require("date-fns");
 const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
-const { getIsEnetpulseSportV2, getIsJsonOddsSport } = require("../utils/markets");
 const { EnetpulseRounds } = require("../constants/markets");
+const { LeagueMap, Provider } = require("../constants/sports");
 
 const AMERICAN_SPORTS = [1, 2, 3, 4, 5, 6, 8, 10, 20, 21];
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
@@ -177,13 +177,17 @@ async function processAllGamesInfo() {
     const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
     console.log(`Games info: Getting games info for date: ${formattedDate}`);
 
-    const allSports = Object.keys(SPORTS_MAP);
-    const rundownSports = allSports.filter((sport) => !getIsEnetpulseSportV2(sport) && !getIsJsonOddsSport(sport));
-    const enetpulseSports = allSports.filter((sport) => getIsEnetpulseSportV2(sport));
+    const allLeagues = Object.values(LeagueMap);
+    const rundownLeagues = allLeagues
+      .filter((league) => league.provider === Provider.RUNDOWN)
+      .map((league) => league.id);
+    const enetpulseLeagues = allLeagues
+      .filter((league) => league.provider === Provider.ENETPULSE)
+      .map((league) => league.id);
 
     await Promise.all([
-      procesRundownGamesInfoPerDate(rundownSports, formattedDate, gamesInfoMap),
-      procesEnetpulseGamesInfoPerDate(enetpulseSports, formattedDate, gamesInfoMap),
+      procesRundownGamesInfoPerDate(rundownLeagues, formattedDate, gamesInfoMap),
+      procesEnetpulseGamesInfoPerDate(enetpulseLeagues, formattedDate, gamesInfoMap),
     ]);
   }
 

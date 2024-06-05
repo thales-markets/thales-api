@@ -5,8 +5,10 @@ const { delay } = require("../utils/general");
 const axios = require("axios");
 const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
-const { getIsEnetpulseSportV2, getIsJsonOddsSport, convertFromBytes32 } = require("../utils/markets");
+const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
+const { getLeagueProvider } = require("../utils/sports");
+const { Provider } = require("../constants/sports");
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {
@@ -65,7 +67,7 @@ async function processAllLiveScores() {
     const market = allOngoingMarketsMap[i];
     const leagueId = market.leagueId;
 
-    if (!getIsEnetpulseSportV2(leagueId) && !getIsJsonOddsSport(leagueId)) {
+    if (getLeagueProvider(leagueId) === Provider.RUNDOWN) {
       const eventApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(market.gameId)}?key=${
         process.env.RUNDOWN_API_KEY
       }`;

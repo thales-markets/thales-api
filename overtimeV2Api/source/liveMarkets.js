@@ -8,12 +8,7 @@ const oddslib = require("oddslib");
 const axios = require("axios");
 
 const { checkOddsFromMultipleBookmakersV2, getAverageOdds, getOpticOddsLeagueNameById } = require("../utils/markets");
-const {
-  TWO_POSITIONAL_SPORTS,
-  LIVE_SUPPORTED_LEAGUES,
-  SPORTS_TAGS_MAP,
-  SPORTS_NO_FORMAL_HOME_AWAY,
-} = require("../constants/tags");
+const { SPORTS_NO_FORMAL_HOME_AWAY } = require("../constants/tags");
 const {
   MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
   INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
@@ -23,6 +18,8 @@ const teamsMapping = require("../utils/teamsMapping.json");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const { groupBy } = require("lodash");
+const { getLeagueIsDrawAvailable, getLeagueSport, getLiveSupportedLeagues } = require("../utils/sports");
+const { Sport } = require("../constants/sports");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
@@ -52,7 +49,7 @@ async function processLiveMarkets() {
 
 async function processAllMarkets(network) {
   const errors = [];
-  let availableLeagueIds = LIVE_SUPPORTED_LEAGUES;
+  let availableLeagueIds = getLiveSupportedLeagues();
 
   const liveOddsProviders = process.env.LIVE_ODDS_PROVIDERS.split(",");
 
@@ -91,7 +88,7 @@ async function processAllMarkets(network) {
           const leagueName = getOpticOddsLeagueNameById(leagueId);
 
           let responseOpticOddsGames;
-          if (SPORTS_TAGS_MAP["Tennis"].includes(Number(leagueId))) {
+          if (getLeagueSport(Number(leagueId)) === Sport.TENNIS) {
             responseOpticOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?sport=tennis`, {
               headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
             });
@@ -137,7 +134,7 @@ async function processAllMarkets(network) {
               awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
             }
             let datesMatch;
-            if (SPORTS_TAGS_MAP["Tennis"].includes(market.leagueId)) {
+            if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
               const opticOddsTimestamp = new Date(opticOddsGame.start_date).getTime();
               const marketTimestamp = new Date(market.maturityDate).getTime();
               const differenceBetweenDates = Math.abs(marketTimestamp - opticOddsTimestamp);
@@ -205,7 +202,7 @@ async function processAllMarkets(network) {
             }
 
             let datesMatch;
-            if (SPORTS_TAGS_MAP["Tennis"].includes(Number(market.leagueId))) {
+            if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
               const opticOddsTimestamp = new Date(response.start_date).getTime();
               const marketTimestamp = new Date(market.maturityDate).getTime();
 
@@ -242,7 +239,7 @@ async function processAllMarkets(network) {
             const currentClock = gameTimeOpticOddsResponseData.clock;
             const currentPeriod = gameTimeOpticOddsResponseData.period;
 
-            if (SPORTS_TAGS_MAP["Baseball"].includes(Number(market.leagueId))) {
+            if (getLeagueSport(Number(market.leagueId)) === Sport.BASEBALL) {
               if (responseOpticOddsScores.data.data.length == 0) {
                 console.log(
                   `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
@@ -258,7 +255,7 @@ async function processAllMarkets(network) {
               }
             }
 
-            if (SPORTS_TAGS_MAP["Soccer"].includes(Number(market.leagueId))) {
+            if (getLeagueSport(Number(market.leagueId)) === Sport.SOCCER) {
               if (responseOpticOddsScores.data.data.length == 0) {
                 console.log(
                   `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
@@ -301,7 +298,7 @@ async function processAllMarkets(network) {
               }
 
               let drawOdds = 0;
-              if (!TWO_POSITIONAL_SPORTS.includes(Number(market.leagueId))) {
+              if (getLeagueIsDrawAvailable(Number(market.leagueId))) {
                 const drawOddsObject = providerOddsObjects.find(
                   (oddsObject) => oddsObject.name.toLowerCase() == "draw",
                 );
@@ -323,7 +320,7 @@ async function processAllMarkets(network) {
             const oddsList = checkOddsFromMultipleBookmakersV2(
               linesMap,
               liveOddsProviders,
-              TWO_POSITIONAL_SPORTS.includes(Number(market.leagueId)),
+              getLeagueIsDrawAvailable(Number(market.leagueId)),
             );
 
             const isThere100PercentOdd = oddsList.some(
