@@ -1,7 +1,7 @@
 const { League, Sport } = require("../constants/sports");
 const { getLeagueSport } = require("./sports");
 const {
-  ODDS_TYPE,
+  OddsType,
   PLAYER_PROPS_MARKET_TYPES,
   ONE_SIDE_PLAYER_PROPS_MARKET_TYPES,
   YES_NO_PLAYER_PROPS_MARKET_TYPES,
@@ -35,25 +35,21 @@ const formatMarketOdds = (odds, oddsType) => {
     return undefined;
   }
   switch (oddsType) {
-    case ODDS_TYPE.Decimal:
+    case OddsType.DECIMAL:
       return 1 / odds;
-    case ODDS_TYPE.American:
+    case OddsType.AMERICAN:
       const decimal = 1 / odds;
       if (decimal >= 2) {
         return (decimal - 1) * 100;
       } else {
         return -100 / (decimal - 1);
       }
-    case ODDS_TYPE.AMM:
+    case OddsType.AMM:
     default:
       return odds;
   }
 };
 
-const getLeagueNameById = (id) => {
-  const league = overtimeSportsList.find((sport) => Number(sport.id) === Number(id));
-  return league ? league.name : undefined;
-};
 const getOpticOddsLeagueNameById = (id) => {
   const league = overtimeSportsList.find((sport) => Number(sport.id) === Number(id));
   return league ? league.opticOddsName : undefined;
@@ -116,7 +112,7 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isDrawAva
       {
         homeOdds: firstLine.homeOdds,
         awayOdds: firstLine.awayOdds,
-        drawOdds: isTwoPositionalSport ? 0 : firstLine.drawOdds,
+        drawOdds: isDrawAvailable ? firstLine.drawOdds : 0,
       },
     ];
   }
@@ -160,7 +156,6 @@ const convertFromBytes32 = (value) => {
 module.exports = {
   fixDuplicatedTeamName,
   formatMarketOdds,
-  getLeagueNameById,
   getOpticOddsLeagueNameById,
   isOneSideMarket,
   isPlayerPropsMarket,

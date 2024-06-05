@@ -20,11 +20,6 @@ const getLeagueIsDrawAvailable = (league) => {
   return leagueInfo ? leagueInfo.isDrawAvailable : false;
 };
 
-const getSportLeagueIds = (sport) => {
-  const allLeagues = Object.values(LeagueMap);
-  return allLeagues.filter((league) => league.sport === sport).map((league) => league.id);
-};
-
 const getLiveSupportedLeagues = () => {
   const allLeagues = Object.values(LeagueMap);
   return allLeagues.filter((league) => league.live).map((league) => league.id);
@@ -39,7 +34,6 @@ module.exports = {
   getLeagueSport,
   getLeagueProvider,
   getLeagueIsDrawAvailable,
-  getSportLeagueIds,
   getLiveSupportedLeagues,
   getLeagueLabel,
   isLiveSupportedForLeague,

@@ -13,7 +13,7 @@ const {
   isPlayerPropsMarket,
   convertFromBytes32,
 } = require("../utils/markets");
-const { ODDS_TYPE, STATUS, MarketTypeMap } = require("../constants/markets");
+const { OddsType, Status, MarketTypeMap } = require("../constants/markets");
 const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { NETWORK } = require("../constants/networks");
@@ -88,10 +88,10 @@ const packMarket = (market) => {
     homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
     awayTeam: fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
     status: market.status,
-    isOpen: market.status === STATUS.Open,
-    isResolved: market.status === STATUS.Resolved,
-    isCancelled: market.status === STATUS.Cancelled,
-    isPaused: market.status === STATUS.Paused,
+    isOpen: market.status === Status.OPEN,
+    isResolved: market.status === Status.RESOLVED,
+    isCancelled: market.status === Status.CANCELLED,
+    isPaused: market.status === Status.PAUSED,
     isOneSideMarket: isOneSideMarket(leagueId),
     line: Number(market.line) / 100,
     isPlayerPropsMarket: isPlayerPropsMarket(market.typeId),
@@ -114,9 +114,9 @@ const packMarket = (market) => {
     odds: market.odds.map((odd) => {
       const formattedOdds = Number(odd) > 0 ? bigNumberFormatter(odd) : 0;
       return {
-        american: formattedOdds ? formatMarketOdds(formattedOdds, ODDS_TYPE.American) : 0,
-        decimal: formattedOdds ? formatMarketOdds(formattedOdds, ODDS_TYPE.Decimal) : 0,
-        normalizedImplied: formattedOdds ? formatMarketOdds(formattedOdds, ODDS_TYPE.AMM) : 0,
+        american: formattedOdds ? formatMarketOdds(formattedOdds, OddsType.AMERICAN) : 0,
+        decimal: formattedOdds ? formatMarketOdds(formattedOdds, OddsType.DECIMAL) : 0,
+        normalizedImplied: formattedOdds ? formatMarketOdds(formattedOdds, OddsType.AMM) : 0,
       };
     }),
     proof: market.proof,
@@ -198,12 +198,6 @@ const mapMarket = (market) => {
   if ((packedMarket.isOpen || packedMarket.isPaused) && isStarted) {
     packedMarket.statusCode = "ongoing";
   }
-  // if (packedMarket.isResolved) {
-  //   packedMarket.statusCode = "resolved";
-  // }
-  // if (packedMarket.isCancelled) {
-  //   packedMarket.statusCode = "cancelled";
-  // }
   if (packedMarket.isPaused) {
     packedMarket.statusCode = "paused";
   }
@@ -241,10 +235,11 @@ async function processAllMarkets(markets, network) {
 
   markets.forEach((market) => {
     const isMarketClosed = !!closedMarketsMap.get(market.gameId);
-    if (!isMarketClosed) {
-      if (market.statusCode === "open" || market.statusCode === "ongoing" || market.statusCode === "paused") {
-        openMarketsMap.set(market.gameId, market);
-      }
+    if (
+      !isMarketClosed &&
+      (market.statusCode === "open" || market.statusCode === "ongoing" || market.statusCode === "paused")
+    ) {
+      openMarketsMap.set(market.gameId, market);
     }
   });
 

@@ -2,15 +2,19 @@ require("dotenv").config();
 
 const redis = require("redis");
 const { delay } = require("../utils/general");
-const { SPORT_ID_MAP_ENETPULSE, SPORT_ID_MAP_RUNDOWN } = require("../constants/tags");
 const axios = require("axios");
 const { format, addDays, subDays } = require("date-fns");
 const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
 const { EnetpulseRounds } = require("../constants/markets");
-const { LeagueMap, Provider } = require("../constants/sports");
+const {
+  LeagueMap,
+  Provider,
+  SportIdMapEnetpulse,
+  SportIdMapRundown,
+  AMERICAN_LEAGUES,
+} = require("../constants/sports");
 
-const AMERICAN_SPORTS = [1, 2, 3, 4, 5, 6, 8, 10, 20, 21];
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_FUTURE);
 
@@ -46,7 +50,7 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
     const sport = sportId;
-    const rundownSport = SPORT_ID_MAP_RUNDOWN[sport];
+    const rundownSport = SportIdMapRundown[sport];
 
     // console.log(`Getting games info for Rundown sport: ${rundownSport}, ${sport} and date ${formattedDate}`);
     const apiUrl = `https://therundown.io/api/v1/sports/${rundownSport}/events/${formattedDate}?key=${process.env.RUNDOWN_API_KEY}`;
@@ -63,7 +67,7 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
           tournamentRound: "",
           teams: event.teams_normalized
             ? event.teams_normalized.map((team) => ({
-                name: AMERICAN_SPORTS.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
+                name: AMERICAN_LEAGUES.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
                 isHome: team.is_home,
                 score: team.is_home ? event.score.score_home : event.score.score_away,
                 scoreByPeriod: team.is_home ? event.score.score_home_by_period : event.score.score_away_by_period,
@@ -126,7 +130,7 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
     const sport = sportId;
-    const enetpulseSport = SPORT_ID_MAP_ENETPULSE[sport];
+    const enetpulseSport = SportIdMapEnetpulse[sport];
 
     // console.log(`Getting games info for Enetpulse sport: ${enetpulseSport}, ${sport} and date ${formattedDate}`);
     const apiUrl = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${enetpulseSport}&date=${formattedDate}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&includeEventProperties=no`;

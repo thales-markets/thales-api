@@ -990,19 +990,19 @@ const COMBINED_POSITIONS_MARKET_TYPES = [
   MarketType.HALFTIME_FULLTIME_GOALS,
 ];
 
-const ODDS_TYPE = {
-  American: "american-odds",
-  Decimal: "decimal-odds",
+const OddsType = {
+  AMERICAN: "american-odds",
+  DECIMAL: "decimal-odds",
   AMM: "normalized-implied-odds",
 };
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-const STATUS = {
-  Open: 0,
-  Paused: 1,
-  Resolved: 10,
-  Cancelled: 255,
+const Status = {
+  OPEN: 0,
+  PAUSED: 1,
+  RESOLVED: 10,
+  CANCELLED: 255,
 };
 
 const MAX_PERCENTAGE_DIFF_BETWEEN_ODDS = 10;
@@ -1032,9 +1032,9 @@ module.exports = {
   PLAYER_PROPS_MARKET_TYPES,
   ONE_SIDE_PLAYER_PROPS_MARKET_TYPES,
   YES_NO_PLAYER_PROPS_MARKET_TYPES,
-  ODDS_TYPE,
+  OddsType,
   ZERO_ADDRESS,
-  STATUS,
+  Status,
   MAX_PERCENTAGE_DIFF_BETWEEN_ODDS,
   MIN_ODDS_FOR_DIFF_CHECKING,
   MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,

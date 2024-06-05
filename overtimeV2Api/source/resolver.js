@@ -7,8 +7,13 @@ const { getProvider } = require("../utils/provider");
 const KEYS = require("../../redis/redis-keys");
 const { NETWORK, NETWORK_NAME } = require("../constants/networks");
 const { ethers } = require("ethers");
-const { STATUS, ResultType, OverUnderType, MarketType, MarketTypeMap } = require("../constants/markets");
-const { getIsCombinedPositionsMarket } = require("../utils/markets");
+const { Status, ResultType, OverUnderType, MarketType, MarketTypeMap } = require("../constants/markets");
+const {
+  getIsCombinedPositionsMarket,
+  isPlayerPropsMarket,
+  isOneSidePlayerPropsMarket,
+  isYesNoPlayerPropsMarket,
+} = require("../utils/markets");
 
 async function processResolve() {
   if (process.env.REDIS_URL) {
@@ -111,12 +116,12 @@ async function resolveMarkets(network) {
         const ongoingMarket = openMarketsMap.get(readyForResolveGameId);
 
         if (resultsForMarkets[i].length > 0) {
-          ongoingMarket.status === STATUS.Resolved;
+          ongoingMarket.status === Status.RESOLVED;
           ongoingMarket.isResolved = true;
           ongoingMarket.isCancelled = false;
           ongoingMarket.statusCode = "resolved";
         } else {
-          ongoingMarket.status === STATUS.Cancelled;
+          ongoingMarket.status === Status.CANCELLED;
           ongoingMarket.isResolved = false;
           ongoingMarket.isCancelled = true;
           ongoingMarket.statusCode = "cancelled";
@@ -127,11 +132,12 @@ async function resolveMarkets(network) {
 
         const gameInfo = gamesInfoMap.get(ongoingMarket.gameId);
 
-        const homeTeam = !!gameInfo && gameInfo.teams.find((team) => team.isHome);
-        const homeScore = homeTeam ? homeTeam.score : 0;
+        const homeTeam = !!gameInfo && gameInfo.teams && gameInfo.teams.find((team) => team.isHome);
+        const homeScore = homeTeam?.score;
         const homeScoreByPeriod = homeTeam ? homeTeam.scoreByPeriod : [];
-        const awayTeam = !!gameInfo && gameInfo.teams.find((team) => !team.isHome);
-        const awayScore = awayTeam ? awayTeam.score : 0;
+
+        const awayTeam = !!gameInfo && gameInfo.teams && gameInfo.teams.find((team) => !team.isHome);
+        const awayScore = awayTeam?.score;
         const awayScoreByPeriod = awayTeam ? awayTeam.scoreByPeriod : [];
 
         ongoingMarket.homeScore = homeScore;
@@ -183,9 +189,11 @@ async function resolveMarkets(network) {
       // resolve child markets (except combined positions)
       for (let j = 0; j < unresolvedChildMarkets.length; j++) {
         const unresolvedChildMarket = unresolvedChildMarkets[j];
+        const typeId = unresolvedChildMarket.typeId;
+
         if (areMarketsResolved[j]) {
           if (resultsForMarkets[j].length > 0) {
-            unresolvedChildMarket.status === STATUS.Resolved;
+            unresolvedChildMarket.status === Status.RESOLVED;
             unresolvedChildMarket.isResolved = true;
             unresolvedChildMarket.isCancelled = false;
             unresolvedChildMarket.statusCode = "resolved";
@@ -196,7 +204,7 @@ async function resolveMarkets(network) {
             } else if (resultType === ResultType.OVER_UNDER || resultType === ResultType.SPREAD) {
               const resultLine = Number(resultsForMarkets[j][0]) / 100;
               if (resultLine == unresolvedChildMarket.line) {
-                unresolvedChildMarket.status === STATUS.Cancelled;
+                unresolvedChildMarket.status === Status.CANCELLED;
                 unresolvedChildMarket.isResolved = false;
                 unresolvedChildMarket.isCancelled = true;
                 unresolvedChildMarket.statusCode = "cancelled";
@@ -213,8 +221,17 @@ async function resolveMarkets(network) {
                 unresolvedChildMarket.winningPositions = [winningPosition];
               }
             }
+
+            if (isPlayerPropsMarket(typeId)) {
+              unresolvedChildMarket.playerProps.playerScore =
+                isOneSidePlayerPropsMarket(typeId) || isYesNoPlayerPropsMarket(typeId)
+                  ? Number(resultsForMarkets[j][0]) / 100 === 1
+                    ? "Yes"
+                    : "No"
+                  : Number(resultsForMarkets[j][0]) / 100;
+            }
           } else {
-            unresolvedChildMarket.status === STATUS.Cancelled;
+            unresolvedChildMarket.status === Status.CANCELLED;
             unresolvedChildMarket.isResolved = false;
             unresolvedChildMarket.isCancelled = true;
             unresolvedChildMarket.statusCode = "cancelled";
@@ -235,7 +252,7 @@ async function resolveMarkets(network) {
       const cpUnresolvdeCildMarket = cpUnresolvedChildMarkets[j];
 
       const winningPositions = [];
-      let status = STATUS.Cancelled;
+      let status = Status.CANCELLED;
       for (let j = 0; j < cpUnresolvdeCildMarket.combinedPositions.length; j++) {
         const combinedPositions = cpUnresolvdeCildMarket.combinedPositions[j];
 
@@ -258,30 +275,30 @@ async function resolveMarkets(network) {
 
         // TODO: check logic with multiple (or zero) winning positions
         if (hasLosingPosition) {
-          status = STATUS.Resolved;
+          status = Status.RESOLVED;
         } else {
           if (!hasCancelledPosition) {
             if (hasOpenPosition) {
-              status = STATUS.Open;
+              status = Status.OPEN;
               break;
             } else {
-              status = STATUS.Resolved;
+              status = Status.RESOLVED;
               winningPositions.push(j);
             }
           }
         }
       }
 
-      if (status === STATUS.Resolved) {
-        cpUnresolvdeCildMarket.status === STATUS.Resolved;
+      if (status === Status.RESOLVED) {
+        cpUnresolvdeCildMarket.status === Status.RESOLVED;
         cpUnresolvdeCildMarket.isResolved = true;
         cpUnresolvdeCildMarket.isCancelled = false;
         cpUnresolvdeCildMarket.statusCode = "resolved";
         cpUnresolvdeCildMarket.isPaused = false;
         cpUnresolvdeCildMarket.isOpen = false;
         cpUnresolvdeCildMarket.winningPositions = winningPositions;
-      } else if (status === STATUS.Cancelled) {
-        cpUnresolvdeCildMarket.status === STATUS.Cancelled;
+      } else if (status === Status.CANCELLED) {
+        cpUnresolvdeCildMarket.status === Status.CANCELLED;
         cpUnresolvdeCildMarket.isResolved = false;
         cpUnresolvdeCildMarket.isCancelled = true;
         cpUnresolvdeCildMarket.isPaused = false;

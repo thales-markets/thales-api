@@ -3,23 +3,20 @@ require("dotenv").config();
 const redis = require("redis");
 const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
-
 const oddslib = require("oddslib");
 const axios = require("axios");
-
 const { checkOddsFromMultipleBookmakersV2, getAverageOdds, getOpticOddsLeagueNameById } = require("../utils/markets");
-const { SPORTS_NO_FORMAL_HOME_AWAY } = require("../constants/tags");
 const {
   MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
   INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
   MATCH_TIME_DIFFERENCE_TENNIS_COMPARISON,
 } = require("../constants/markets");
-const teamsMapping = require("../utils/teamsMapping.json");
+const teamsMapping = require("../assets/teamsMapping.json");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const { groupBy } = require("lodash");
 const { getLeagueIsDrawAvailable, getLeagueSport, getLiveSupportedLeagues } = require("../utils/sports");
-const { Sport } = require("../constants/sports");
+const { Sport, LEAGUES_NO_FORMAL_HOME_AWAY } = require("../constants/sports");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
@@ -126,7 +123,7 @@ async function processAllMarkets(network) {
 
             let homeTeamsMatch;
             let awayTeamsMatch;
-            if (SPORTS_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
+            if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
               homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
               awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
             } else {
@@ -193,7 +190,7 @@ async function processAllMarkets(network) {
             let homeTeamsMatch;
             let awayTeamsMatch;
 
-            if (SPORTS_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
+            if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
               homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
               awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
             } else {

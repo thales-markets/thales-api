@@ -4,7 +4,6 @@ const thalesData = require("thales-data");
 const redis = require("redis");
 const { ethers } = require("ethers");
 const { orderBy, groupBy } = require("lodash");
-
 const sportPositionalMarketDataContract = require("../contracts/sportPositionalMarketDataContract");
 const sportPositionalMarketManagerContract = require("../contracts/sportPositionalMarketManagerContract");
 const { BET_TYPE } = require("../constants/markets");
@@ -187,51 +186,6 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
   let packedMarkets = mappedMarkets.map((market) => packMarket(market));
 
   let finalMarkets = groupMarkets(packedMarkets);
-  // if (mapOnlyOpenedMarkets && mappedMarkets.length > 0) {
-  //   try {
-  //     const { sportPositionalMarketDataContract } = networkConnector;
-
-  //     const tmpOpenMarkets = groupMarkets(mappedMarkets);
-  //     const sgpFees: SGPItem[] | undefined = localStore.get(LOCAL_STORAGE_KEYS.SGP_FEES);
-  //     const tmpTags: number[] = [];
-
-  //     if (sgpFees) sgpFees.forEach((sgpItem) => tmpTags.push(...sgpItem.tags));
-
-  //     const marketsFilteredByTags = filterMarketsByTagsArray(tmpOpenMarkets, tmpTags);
-  //     const marketAddresses = getMarketAddressesFromSportMarketArray(marketsFilteredByTags);
-
-  //     if (marketAddresses) {
-  //       const promises: CombinedMarketsContractData[] = [];
-  //       const numberOfBatches = Math.trunc(marketAddresses.length / BATCH_SIZE_FOR_COMBINED_MARKETS_QUERY) + 1;
-
-  //       for (let i = 0; i < numberOfBatches; i++) {
-  //         const arraySlice = marketAddresses.slice(
-  //           i * BATCH_SIZE_FOR_COMBINED_MARKETS_QUERY,
-  //           i * BATCH_SIZE_FOR_COMBINED_MARKETS_QUERY + BATCH_SIZE_FOR_COMBINED_MARKETS_QUERY,
-  //         );
-  //         promises.push(sportPositionalMarketDataContract?.getCombinedOddsForBatchOfMarkets(arraySlice));
-  //       }
-
-  //       const promisesResult = await Promise.all(promises);
-
-  //       const combinedMarketsData: CombinedMarketsContractData = [];
-
-  //       promisesResult.forEach((promiseData) => {
-  //         promiseData.forEach((_combinedMarketData: any) => {
-  //           combinedMarketsData.push(_combinedMarketData);
-  //         });
-  //       });
-
-  //       if (combinedMarketsData) {
-  //         const newMarkets = insertCombinedMarketsIntoArrayOFMarkets(tmpOpenMarkets, combinedMarketsData);
-  //         finalMarkets = newMarkets;
-  //       }
-  //     }
-  //   } catch (e) {
-  //     console.log("Error ", e);
-  //   }
-  // }
-
   return finalMarkets;
 };
 
@@ -295,8 +249,6 @@ async function processMarketsPerNetwork(network) {
   });
   mappedMarkets = await mapMarkets(markets, false, network);
   marketsMap.set("ongoing", mappedMarkets);
-
-  // console.log(marketsMap);
 
   redisClient.set(KEYS.OVERTIME_MARKETS[network], JSON.stringify([...marketsMap]), function () {});
 }
