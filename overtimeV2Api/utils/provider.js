@@ -22,9 +22,21 @@ const BLAST_URL = {
   [NETWORK.Base]: "https://base-mainnet.blastapi.io/",
 };
 
+const LLAMA_URL = {
+  [NETWORK.Optimism]: "https://optimism.llamarpc.com/sk_llama_",
+  [NETWORK.Arbitrum]: "https://arbitrum.llamarpc.com/sk_llama_",
+  [NETWORK.Base]: "https://base.llamarpc.com/sk_llama_",
+};
+
 const getProvider = (network) => {
   let rpcUrl = "";
   switch (process.env.RPC_PROVIDER) {
+    case "llama":
+      rpcUrl =
+        Number(network) === NETWORK.OptimismSepolia
+          ? `${BLAST_URL[network]}${process.env.BLAST_ID}`
+          : `${LLAMA_URL[network]}${process.env.LLAMA_ID}`;
+      break;
     case "ankr":
       rpcUrl = `${ANKR_URL[network]}${process.env.ANKR_ID}`;
       break;
