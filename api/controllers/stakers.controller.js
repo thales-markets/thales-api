@@ -66,6 +66,10 @@ const tokenTransaction = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
+    const splittedTypeIn = typeIn ? typeIn.split(",") : undefined;
+
+    const typeInGraphFormat = splittedTypeIn && splittedTypeIn.length ? `[${splittedTypeIn.join(",")}]` : undefined;
+
     const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.TokenTransactions, [networkId, account, typeIn]));
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
@@ -73,7 +77,7 @@ const tokenTransaction = async (req, res) => {
     const tokenTransactions = await thalesData.binaryOptions.tokenTransactions({
       network: networkId,
       account: account ? account : undefined,
-      typeIn: typeIn ? typeIn : undefined,
+      type_in: typeInGraphFormat,
     });
 
     cache.set(getCacheKey(PREFIX_KEYS.TokenTransactions, [networkId, account, typeIn]), tokenTransactions, TTL.Stakers);
