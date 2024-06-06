@@ -166,6 +166,7 @@ const MarketType = {
   PLAYER_PROPS_FIRST_TOUCHDOWN: 11049,
   PLAYER_PROPS_LAST_TOUCHDOWN: 11056,
   PLAYER_PROPS_3PTS_MADE: 11038,
+  PLAYER_PROPS_BLOCKS: 11098,
 };
 
 const MarketTypeMap = {
@@ -948,6 +949,12 @@ const MarketTypeMap = {
     name: "3-points made",
     resultType: ResultType.OVER_UNDER,
   },
+  [MarketType.PLAYER_PROPS_BLOCKS]: {
+    id: MarketType.PLAYER_PROPS_BLOCKS,
+    key: "blocks",
+    name: "Blcoks",
+    resultType: ResultType.OVER_UNDER,
+  },
 };
 
 const PLAYER_PROPS_MARKET_TYPES = [
@@ -972,6 +979,7 @@ const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_FIRST_TOUCHDOWN,
   MarketType.PLAYER_PROPS_LAST_TOUCHDOWN,
   MarketType.PLAYER_PROPS_3PTS_MADE,
+  MarketType.PLAYER_PROPS_BLOCKS,
 ];
 
 const ONE_SIDE_PLAYER_PROPS_MARKET_TYPES = [
