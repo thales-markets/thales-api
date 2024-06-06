@@ -9,11 +9,12 @@ const { checkOddsFromMultipleBookmakersV2, getAverageOdds } = require("../utils/
 const {
   MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
   INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
-  MATCH_TIME_DIFFERENCE_TENNIS_COMPARISON,
+  LIVE_TYPE_ID_BASE,
 } = require("../constants/markets");
 const teamsMapping = require("../assets/teamsMapping.json");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
+const { readCsvFromUrl } = require("../utils/csvReader");
 const { groupBy } = require("lodash");
 const {
   getLeagueIsDrawAvailable,
@@ -54,6 +55,8 @@ async function processAllMarkets(network) {
   let availableLeagueIds = getLiveSupportedLeagues();
 
   const liveOddsProviders = process.env.LIVE_ODDS_PROVIDERS.split(",");
+
+  const spreadData = await readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV);
 
   if (liveOddsProviders.length == 0) {
     console.log(`No supported live odds providers found in the config`);
@@ -140,7 +143,7 @@ async function processAllMarkets(network) {
               const opticOddsTimestamp = new Date(opticOddsGame.start_date).getTime();
               const marketTimestamp = new Date(market.maturityDate).getTime();
               const differenceBetweenDates = Math.abs(marketTimestamp - opticOddsTimestamp);
-              if (differenceBetweenDates <= MATCH_TIME_DIFFERENCE_TENNIS_COMPARISON) {
+              if (differenceBetweenDates <= Number(process.env.TENNIS_MATCH_TIME_DIFFERENCE_MINUTES * 60 * 1000)) {
                 datesMatch = true;
               } else {
                 datesMatch = false;
@@ -209,7 +212,7 @@ async function processAllMarkets(network) {
               const marketTimestamp = new Date(market.maturityDate).getTime();
 
               const differenceBetweenDates = Math.abs(marketTimestamp - opticOddsTimestamp);
-              if (differenceBetweenDates <= MATCH_TIME_DIFFERENCE_TENNIS_COMPARISON) {
+              if (differenceBetweenDates <= Number(process.env.TENNIS_MATCH_TIME_DIFFERENCE_MINUTES * 60 * 1000)) {
                 datesMatch = true;
               } else {
                 datesMatch = false;
@@ -339,42 +342,93 @@ async function processAllMarkets(network) {
               const aggregationEnabled = Number(process.env.ODDS_AGGREGATION_ENABLED);
               if (aggregationEnabled > 0) {
                 const aggregatedOdds = getAverageOdds(oddsList);
+
+                // CURRENTLY ONLY SUPPORTING MONEYLINE
+                const spreadForSport = spreadData.find(
+                  (data) => data.sportId == leagueId && data.typeId == LIVE_TYPE_ID_BASE,
+                );
+
+                console.log(spreadForSport);
+
+                const oddsArrayWithSpread = getLeagueIsDrawAvailable(Number(market.leagueId))
+                  ? adjustSpreadOnOdds(
+                      [
+                        oddslib.from("decimal", aggregatedOdds.homeOdds).to("impliedProbability"),
+                        oddslib.from("decimal", aggregatedOdds.awayOdds).to("impliedProbability"),
+                        oddslib.from("decimal", aggregatedOdds.drawOdds).to("impliedProbability"),
+                      ],
+                      spreadForSport.spreadPercentage,
+                    )
+                  : adjustSpreadOnOdds(
+                      [
+                        oddslib.from("decimal", aggregatedOdds.homeOdds).to("impliedProbability"),
+                        oddslib.from("decimal", aggregatedOdds.awayOdds).to("impliedProbability"),
+                      ],
+                      spreadForSport.spreadPercentage,
+                    );
+
                 market.odds = market.odds.map((_odd, index) => {
                   let positionOdds;
                   switch (index) {
                     case 0:
-                      positionOdds = aggregatedOdds.homeOdds;
+                      positionOdds = oddsArrayWithSpread[0];
                     case 1:
-                      positionOdds = aggregatedOdds.awayOdds;
+                      positionOdds = oddsArrayWithSpread[1];
                     case 2:
-                      positionOdds = aggregatedOdds.drawOdds;
+                      positionOdds = oddsArrayWithSpread[2];
                   }
                   return {
-                    american: oddslib.from("decimal", positionOdds).to("moneyline"),
-                    decimal: positionOdds,
-                    normalizedImplied: oddslib.from("decimal", positionOdds).to("impliedProbability"),
+                    american: oddslib.from("impliedProbability", positionOdds).to("moneyline"),
+                    decimal: oddslib.from("impliedProbability", positionOdds).to("decimal"),
+                    normalizedImplied: positionOdds,
                   };
                 });
                 return market;
               } else {
                 const primaryBookmakerOdds = oddsList[0];
+
+                // CURRENTLY ONLY SUPPORTING MONEYLINE
+                const spreadForSport = spreadData.find(
+                  (data) => data.sportId == leagueId && data.typeId == LIVE_TYPE_ID_BASE,
+                );
+
+                console.log(spreadForSport);
+
+                const oddsArrayWithSpread = getLeagueIsDrawAvailable(Number(market.leagueId))
+                  ? adjustSpreadOnOdds(
+                      [
+                        oddslib.from("decimal", primaryBookmakerOdds.homeOdds).to("impliedProbability"),
+                        oddslib.from("decimal", primaryBookmakerOdds.awayOdds).to("impliedProbability"),
+                        oddslib.from("decimal", primaryBookmakerOdds.drawOdds).to("impliedProbability"),
+                      ],
+                      spreadForSport.spreadPercentage,
+                    )
+                  : adjustSpreadOnOdds(
+                      [
+                        oddslib.from("decimal", primaryBookmakerOdds.homeOdds).to("impliedProbability"),
+                        oddslib.from("decimal", primaryBookmakerOdds.awayOdds).to("impliedProbability"),
+                      ],
+                      spreadForSport.spreadPercentage,
+                    );
+
                 market.odds = market.odds.map((_odd, index) => {
                   let positionOdds;
                   switch (index) {
                     case 0:
-                      positionOdds = primaryBookmakerOdds.homeOdds;
+                      positionOdds = oddsArrayWithSpread[0];
                       break;
                     case 1:
-                      positionOdds = primaryBookmakerOdds.awayOdds;
+                      positionOdds = oddsArrayWithSpread[1];
                       break;
                     case 2:
-                      positionOdds = primaryBookmakerOdds.drawOdds;
+                      positionOdds = oddsArrayWithSpread[2];
                       break;
                   }
+
                   return {
-                    american: oddslib.from("decimal", positionOdds).to("moneyline"),
-                    decimal: positionOdds,
-                    normalizedImplied: oddslib.from("decimal", positionOdds).to("impliedProbability"),
+                    american: oddslib.from("impliedProbability", positionOdds).to("moneyline"),
+                    decimal: oddslib.from("impliedProbability", positionOdds).to("decimal"),
+                    normalizedImplied: positionOdds,
                   };
                 });
                 market.homeScore = currentScoreHome;
