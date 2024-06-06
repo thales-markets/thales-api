@@ -458,7 +458,7 @@ const LeagueMap = {
     scoringType: ScoringType.SETS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
-    isDrawAvailable: true,
+    isDrawAvailable: false,
     live: true,
   },
   [League.TENNIS_MASTERS]: {
@@ -469,7 +469,7 @@ const LeagueMap = {
     scoringType: ScoringType.SETS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
-    isDrawAvailable: true,
+    isDrawAvailable: false,
     live: true,
   },
   [League.GERMANY_CUP]: {

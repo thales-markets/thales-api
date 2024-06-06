@@ -5,7 +5,7 @@ const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const oddslib = require("oddslib");
 const axios = require("axios");
-const { checkOddsFromMultipleBookmakersV2, getAverageOdds } = require("../utils/markets");
+const { checkOddsFromMultipleBookmakersV2, getAverageOdds, adjustSpreadOnOdds } = require("../utils/markets");
 const {
   MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
   INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
@@ -328,6 +328,9 @@ async function processAllMarkets(network) {
               getLeagueIsDrawAvailable(Number(market.leagueId)),
             );
 
+            console.log("ODDS AFTER CHECKING BOOKMAKERS:");
+            console.log(oddsList);
+
             const isThere100PercentOdd = oddsList.some(
               (oddsObject) => oddsObject.homeOdds == 1 || oddsObject.awayOdds == 1 || oddsObject.drawOdds == 1,
             );
@@ -386,10 +389,10 @@ async function processAllMarkets(network) {
                 return market;
               } else {
                 const primaryBookmakerOdds = oddsList[0];
-
+                console.log("Finding spread:");
                 // CURRENTLY ONLY SUPPORTING MONEYLINE
                 const spreadForSport = spreadData.find(
-                  (data) => data.sportId == leagueId && data.typeId == LIVE_TYPE_ID_BASE,
+                  (data) => data.sportId == market.leagueId && data.typeId == LIVE_TYPE_ID_BASE,
                 );
 
                 console.log(spreadForSport);

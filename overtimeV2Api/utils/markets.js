@@ -96,6 +96,8 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isDrawAva
   });
 
   if (arrayOfBookmakers.length == 1) {
+    console.log("ARRAY OF BOOKMAKERS LENGTH: ", arrayOfBookmakers.length);
+    console.log("HAS ZERO ODDS: ", hasZeroOdds);
     if (hasZeroOdds) {
       return [
         {
@@ -131,7 +133,7 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isDrawAva
     const maxImpliedPercentageDifference = Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS);
 
     // Main bookmaker odds
-    const firstBookmakerOdds = oddsMap[arrayOfBookmakers[0]];
+    const firstBookmakerOdds = oddsMap.get(arrayOfBookmakers[0]);
     const homeOdd = firstBookmakerOdds.homeOdds;
     const awayOdd = firstBookmakerOdds.awayOdds;
     const drawOdd = firstBookmakerOdds.drawOdds;
