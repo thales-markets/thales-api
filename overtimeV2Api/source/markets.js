@@ -286,11 +286,6 @@ async function updateMerkleTree(gameIds) {
     function () {},
   );
   redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Base], JSON.stringify([...baseOpenMarketsMap]), function () {});
-  redisClient.set(
-    KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.OptimismSepolia],
-    JSON.stringify([...opSepoliaOpenMarketsMap]),
-    function () {},
-  );
 
   const endTime = new Date().getTime();
   console.log(`Markets mainnets: Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);
