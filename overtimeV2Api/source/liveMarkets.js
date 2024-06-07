@@ -360,14 +360,14 @@ async function processAllMarkets(network) {
                         oddslib.from("decimal", aggregatedOdds.awayOdds).to("impliedProbability"),
                         oddslib.from("decimal", aggregatedOdds.drawOdds).to("impliedProbability"),
                       ],
-                      spreadForSport.targetPercentage,
+                      spreadForSport.targetSpread,
                     )
                   : adjustSpreadOnOdds(
                       [
                         oddslib.from("decimal", aggregatedOdds.homeOdds).to("impliedProbability"),
                         oddslib.from("decimal", aggregatedOdds.awayOdds).to("impliedProbability"),
                       ],
-                      spreadForSport.targetPercentage,
+                      spreadForSport.targetSpread,
                     );
 
                 market.odds = market.odds.map((_odd, index) => {
@@ -404,14 +404,14 @@ async function processAllMarkets(network) {
                         oddslib.from("decimal", primaryBookmakerOdds.awayOdds).to("impliedProbability"),
                         oddslib.from("decimal", primaryBookmakerOdds.drawOdds).to("impliedProbability"),
                       ],
-                      spreadForSport.targetPercentage,
+                      spreadForSport.targetSpread,
                     )
                   : adjustSpreadOnOdds(
                       [
                         oddslib.from("decimal", primaryBookmakerOdds.homeOdds).to("impliedProbability"),
                         oddslib.from("decimal", primaryBookmakerOdds.awayOdds).to("impliedProbability"),
                       ],
-                      spreadForSport.targetPercentage,
+                      spreadForSport.targetSpread,
                     );
 
                 market.odds = market.odds.map((_odd, index) => {
