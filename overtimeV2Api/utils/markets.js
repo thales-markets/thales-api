@@ -284,13 +284,13 @@ const adjustSpreadOnOdds = (impliedProbs, minSpread, targetSpread) => {
 };
 
 const getSpreadData = (spreadData, sportId, typeId) => {
-  const spreadData = sportSpreadData.find(
+  const sportSpreadData = spreadData.find(
     (data) => Number(data.typeId) === Number(typeId) && Number(data.sportId) === Number(sportId),
   );
-  if (spreadData) {
+  if (sportSpreadData) {
     return {
-      minSpread: spreadData.minSpread ? Number(spreadData.minSpread) : DEFAULT_SPREAD_FOR_LIVE_MARKETS,
-      targetSpread: spreadData.targetSpread ? Number(spreadData.targetSpread) : 0,
+      minSpread: sportSpreadData.minSpread ? Number(sportSpreadData.minSpread) : DEFAULT_SPREAD_FOR_LIVE_MARKETS,
+      targetSpread: sportSpreadData.targetSpread ? Number(sportSpreadData.targetSpread) : 0,
     };
   }
   return null;
