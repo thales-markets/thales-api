@@ -86,12 +86,12 @@ const calculateImpliedOddsDifference = (impliedOddsA, impliedOddsB) => {
   return percentageDifference;
 };
 
-const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isDrawAvailable) => {
+const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPositionalSport) => {
   // Check if any bookmaker has odds of 0 or 0.0001
   const hasZeroOdds = arrayOfBookmakers.some((bookmakerId) => {
     const line = oddsMap.get(bookmakerId);
     if (line) {
-      return line.homeOdds === 0 || line.awayOdds === 0 || (isDrawAvailable && line.drawOdds === 0);
+      return line.homeOdds === 0 || line.awayOdds === 0 || (isTwoPositionalSport && line.drawOdds === 0);
     }
     return false;
   });
@@ -115,7 +115,7 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isDrawAva
       {
         homeOdds: firstLine.homeOdds,
         awayOdds: firstLine.awayOdds,
-        drawOdds: isDrawAvailable ? firstLine.drawOdds : 0,
+        drawOdds: isTwoPositionalSport ? firstLine.drawOdds : 0,
       },
     ];
   }
