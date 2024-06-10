@@ -86,12 +86,12 @@ const calculateImpliedOddsDifference = (impliedOddsA, impliedOddsB) => {
   return percentageDifference;
 };
 
-const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPositionalSport) => {
+const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isDrawAvailable) => {
   // Check if any bookmaker has odds of 0 or 0.0001
   const hasZeroOdds = arrayOfBookmakers.some((bookmakerId) => {
     const line = oddsMap.get(bookmakerId);
     if (line) {
-      return line.homeOdds === 0 || line.awayOdds === 0 || (isTwoPositionalSport && line.drawOdds === 0);
+      return line.homeOdds === 0 || line.awayOdds === 0 || (isDrawAvailable && line.drawOdds === 0);
     }
     return false;
   });
@@ -115,7 +115,7 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPosi
       {
         homeOdds: firstLine.homeOdds,
         awayOdds: firstLine.awayOdds,
-        drawOdds: isTwoPositionalSport ? firstLine.drawOdds : 0,
+        drawOdds: isDrawAvailable ? firstLine.drawOdds : 0,
       },
     ];
   }
@@ -152,14 +152,14 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPosi
         const awayOddsImplied = oddslib.from("decimal", awayOdd).to("impliedProbability");
 
         // Calculate implied odds for the "draw" if it's not a two-positions sport
-        const drawOddsImplied = isTwoPositionalSport ? 0 : oddslib.from("decimal", drawOdd).to("impliedProbability");
+        const drawOddsImplied = !isDrawAvailable ? 0 : oddslib.from("decimal", drawOdd).to("impliedProbability");
 
         const otherHomeOddImplied = oddslib.from("decimal", otherHomeOdd).to("impliedProbability");
 
         const otherAwayOddImplied = oddslib.from("decimal", otherAwayOdd).to("impliedProbability");
 
         // Calculate implied odds for the "draw" if it's not a two-positions sport
-        const otherDrawOddImplied = isTwoPositionalSport
+        const otherDrawOddImplied = !isDrawAvailable
           ? 0
           : oddslib.from("decimal", otherDrawOdd).to("impliedProbability");
 
@@ -169,7 +169,7 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPosi
         const awayOddsDifference = calculateImpliedOddsDifference(awayOddsImplied, otherAwayOddImplied);
 
         // Check implied odds difference for the "draw" only if it's not a two-positions sport
-        const drawOddsDifference = isTwoPositionalSport
+        const drawOddsDifference = !isDrawAvailable
           ? 0
           : calculateImpliedOddsDifference(drawOddsImplied, otherDrawOddImplied);
 
@@ -181,7 +181,7 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPosi
           (awayOddsDifference > maxImpliedPercentageDifference &&
             awayOddsImplied > MIN_ODDS_FOR_DIFF_CHECKING &&
             otherAwayOddImplied > MIN_ODDS_FOR_DIFF_CHECKING) ||
-          (!isTwoPositionalSport &&
+          (!isDrawAvailable &&
             drawOddsDifference > maxImpliedPercentageDifference &&
             drawOddsImplied > MIN_ODDS_FOR_DIFF_CHECKING &&
             otherDrawOddImplied > MIN_ODDS_FOR_DIFF_CHECKING)
@@ -208,7 +208,7 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isTwoPosi
 
     if (lines[0] != undefined) {
       return lines.map((line) => {
-        return { homeOdds: line.homeOdds, awayOdds: line.awayOdds, drawOdds: isTwoPositionalSport ? 0 : line.drawOdds };
+        return { homeOdds: line.homeOdds, awayOdds: line.awayOdds, drawOdds: isDrawAvailable ? 0 : line.drawOdds };
       });
     }
   }
