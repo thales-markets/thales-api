@@ -293,7 +293,7 @@ const getSpreadData = (spreadData, sportId, typeId) => {
       targetSpread: sportSpreadData.targetSpread ? Number(sportSpreadData.targetSpread) : 0,
     };
   }
-  return null;
+  return { minSpread: DEFAULT_SPREAD_FOR_LIVE_MARKETS, targetSpread: 0 };
 };
 
 module.exports = {
