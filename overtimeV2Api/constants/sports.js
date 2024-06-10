@@ -35,8 +35,9 @@ const League = {
   IPL: 20,
   T20_BLAST: 21,
   IIHF_WORLD_CHAMPIONSHIP: 33,
+  COPA_AMERICA: 44,
   COPA_LIBERTADORES: 45,
-  UEFA_EURO_QUALIFICATIONS: 50,
+  UEFA_EURO: 50,
   EREDIVISIE: 57,
   PRIMEIRA_LIGA: 61,
   FIFA_WC_WOMEN: 76,
@@ -345,6 +346,17 @@ const LeagueMap = {
     isDrawAvailable: true,
     live: false,
   },
+  [League.COPA_AMERICA]: {
+    sport: Sport.SOCCER,
+    id: League.COPA_AMERICA,
+    label: "Copa America",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+  },
   [League.COPA_LIBERTADORES]: {
     sport: Sport.SOCCER,
     id: League.COPA_LIBERTADORES,
@@ -357,9 +369,9 @@ const LeagueMap = {
     isDrawAvailable: true,
     live: false,
   },
-  [League.UEFA_EURO_QUALIFICATIONS]: {
+  [League.UEFA_EURO]: {
     sport: Sport.SOCCER,
-    id: League.UEFA_EURO_QUALIFICATIONS,
+    id: League.UEFA_EURO,
     label: "UEFA EURO 2024",
     opticOddsName: "UEFA - European Championship",
     provider: Provider.ENETPULSE,
@@ -744,9 +756,10 @@ const SportIdMapEnetpulse = {
   6: 24, // NHL
   33: 33, // Hockey World Championship
   16: 42, // Champions League
+  44: 44, // Copa America
   45: 45, // Copa Libertadores
   11: 47, // EPL
-  50: 50, // EURO Qualification
+  50: 50, // UEFA EURO
   12: 53, // France League 1
   13: 54, // Bundesliga
   15: 55, // Seria A
