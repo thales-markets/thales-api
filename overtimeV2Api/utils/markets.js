@@ -6,6 +6,7 @@ const {
   ONE_SIDE_PLAYER_PROPS_MARKET_TYPES,
   YES_NO_PLAYER_PROPS_MARKET_TYPES,
   COMBINED_POSITIONS_MARKET_TYPES,
+  DEFAULT_SPREAD_FOR_LIVE_MARKETS,
 } = require("../constants/markets");
 const bytes32 = require("bytes32");
 
@@ -228,34 +229,71 @@ const convertFromBytes32 = (value) => {
   return result.replace(/\0/g, "");
 };
 
-const adjustSpreadOnOdds = (impliedProbs, targetVigPercentage) => {
+const adjustSpreadOnOdds = (impliedProbs, minSpread, targetSpread) => {
   // Step 1: Check if any implied probability is zero
   if (impliedProbs.some((prob) => prob === 0)) {
     return impliedProbs;
   }
+
   // Step 2: Calculate the current total implied probabilities
   const totalImpliedProbs = impliedProbs.reduce((sum, prob) => sum + prob, 0);
 
-  // Step 3: Calculate the target total implied probabilities
-  const targetTotalImpliedProbs = 1 + targetVigPercentage / 100;
+  // Step 3: Check if the sum of implied probabilities is greater than 1
+  if (totalImpliedProbs <= 1) {
+    return Array(impliedProbs.length).fill(0);
+  }
 
-  // Step 4: Calculate the adjustment factor
+  // Step 4: Check if targetSpread is zero
+  if (targetSpread === 0) {
+    const currentSpread = (totalImpliedProbs - 1) * 100;
+    // If minSpread is set and greater than current spread, use minSpread
+    if (minSpread > currentSpread) {
+      targetSpread = minSpread;
+    } else {
+      // If minSpread is less than current spread, return odds as they are
+      return impliedProbs;
+    }
+  }
+
+  // Step 5: Calculate the target total implied probabilities
+  const targetTotalImpliedProbs = 1 + targetSpread / 100;
+
+  // Step 6: Calculate the adjustment factor
   const adjustmentFactor = targetTotalImpliedProbs / totalImpliedProbs;
 
-  // Step 5: Adjust the probabilities to reflect the target vig
+  // Step 7: Adjust the probabilities to reflect the target spread
   let adjustedImpliedProbs = impliedProbs.map((prob) => prob * adjustmentFactor);
 
-  // Step 6: Check if any adjusted probability equals or exceeds 1
+  // Step 8: Check if any adjusted probability equals or exceeds 1
   if (adjustedImpliedProbs.some((prob) => prob >= 1)) {
     return Array(impliedProbs.length).fill(0);
   }
 
-  // Step 7: Ensure the sum of the adjusted probabilities equals the target total implied probabilities
+  // Step 9: Ensure the sum of the adjusted probabilities equals the target total implied probabilities
   const sumAdjustedProbs = adjustedImpliedProbs.reduce((sum, prob) => sum + prob, 0);
+
+  // Step 10: If the sum of the adjusted probabilities is less than 1, return zeros
+  if (sumAdjustedProbs < 1) {
+    return Array(impliedProbs.length).fill(0);
+  }
+
   const normalizationFactor = targetTotalImpliedProbs / sumAdjustedProbs;
   adjustedImpliedProbs = adjustedImpliedProbs.map((prob) => prob * normalizationFactor);
 
   return adjustedImpliedProbs;
+};
+
+const getSpreadData = (spreadData, sportId, typeId) => {
+  const spreadData = sportSpreadData.find(
+    (data) => Number(data.typeId) === Number(typeId) && Number(data.sportId) === Number(sportId),
+  );
+  if (spreadData) {
+    return {
+      minSpread: spreadData.minSpread ? Number(spreadData.minSpread) : DEFAULT_SPREAD_FOR_LIVE_MARKETS,
+      targetSpread: spreadData.targetSpread ? Number(spreadData.targetSpread) : 0,
+    };
+  }
+  return null;
 };
 
 module.exports = {
@@ -271,4 +309,5 @@ module.exports = {
   convertFromBytes32,
   getIsCombinedPositionsMarket,
   adjustSpreadOnOdds,
+  getSpreadData,
 };

@@ -5,7 +5,12 @@ const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const oddslib = require("oddslib");
 const axios = require("axios");
-const { checkOddsFromMultipleBookmakersV2, getAverageOdds, adjustSpreadOnOdds } = require("../utils/markets");
+const {
+  checkOddsFromMultipleBookmakersV2,
+  getAverageOdds,
+  adjustSpreadOnOdds,
+  getSpreadData,
+} = require("../utils/markets");
 const {
   MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
   INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
@@ -347,11 +352,10 @@ async function processAllMarkets(network) {
                 const aggregatedOdds = getAverageOdds(oddsList);
 
                 // CURRENTLY ONLY SUPPORTING MONEYLINE
-                const spreadForSport = spreadData.find(
-                  (data) => data.sportId == leagueId && data.typeId == LIVE_TYPE_ID_BASE,
-                );
+                const spreadDataForSport = getSpreadData(spreadData, market.leagueId, LIVE_TYPE_ID_BASE);
 
-                console.log(spreadForSport);
+                console.log(market.leagueId);
+                console.log(spreadDataForSport);
 
                 const oddsArrayWithSpread = getLeagueIsDrawAvailable(Number(market.leagueId))
                   ? adjustSpreadOnOdds(
@@ -360,14 +364,16 @@ async function processAllMarkets(network) {
                         oddslib.from("decimal", aggregatedOdds.awayOdds).to("impliedProbability"),
                         oddslib.from("decimal", aggregatedOdds.drawOdds).to("impliedProbability"),
                       ],
-                      spreadForSport.targetSpread,
+                      spreadDataForSport.minSpread,
+                      spreadDataForSport.targetSpread,
                     )
                   : adjustSpreadOnOdds(
                       [
                         oddslib.from("decimal", aggregatedOdds.homeOdds).to("impliedProbability"),
                         oddslib.from("decimal", aggregatedOdds.awayOdds).to("impliedProbability"),
                       ],
-                      spreadForSport.targetSpread,
+                      spreadDataForSport.minSpread,
+                      spreadDataForSport.targetSpread,
                     );
 
                 market.odds = market.odds.map((_odd, index) => {
@@ -391,11 +397,10 @@ async function processAllMarkets(network) {
                 const primaryBookmakerOdds = oddsList[0];
                 console.log("Finding spread:");
                 // CURRENTLY ONLY SUPPORTING MONEYLINE
-                const spreadForSport = spreadData.find(
-                  (data) => data.sportId == market.leagueId && data.typeId == LIVE_TYPE_ID_BASE,
-                );
+                const spreadDataForSport = getSpreadData(spreadData, market.leagueId, LIVE_TYPE_ID_BASE);
 
-                console.log(spreadForSport);
+                console.log(market.leagueId);
+                console.log(spreadDataForSport);
 
                 const oddsArrayWithSpread = getLeagueIsDrawAvailable(Number(market.leagueId))
                   ? adjustSpreadOnOdds(
@@ -404,14 +409,16 @@ async function processAllMarkets(network) {
                         oddslib.from("decimal", primaryBookmakerOdds.awayOdds).to("impliedProbability"),
                         oddslib.from("decimal", primaryBookmakerOdds.drawOdds).to("impliedProbability"),
                       ],
-                      spreadForSport.targetSpread,
+                      spreadDataForSport.minSpread,
+                      spreadDataForSport.targetSpread,
                     )
                   : adjustSpreadOnOdds(
                       [
                         oddslib.from("decimal", primaryBookmakerOdds.homeOdds).to("impliedProbability"),
                         oddslib.from("decimal", primaryBookmakerOdds.awayOdds).to("impliedProbability"),
                       ],
-                      spreadForSport.targetSpread,
+                      spreadDataForSport.minSpread,
+                      spreadDataForSport.targetSpread,
                     );
 
                 market.odds = market.odds.map((_odd, index) => {
