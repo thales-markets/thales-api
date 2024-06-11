@@ -180,7 +180,7 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isDrawAva
           (awayOddsDifference > maxImpliedPercentageDifference &&
             awayOddsImplied > MIN_ODDS_FOR_DIFF_CHECKING &&
             otherAwayOddImplied > MIN_ODDS_FOR_DIFF_CHECKING) ||
-          (!isDrawAvailable &&
+          (isDrawAvailable &&
             drawOddsDifference > maxImpliedPercentageDifference &&
             drawOddsImplied > MIN_ODDS_FOR_DIFF_CHECKING &&
             otherDrawOddImplied > MIN_ODDS_FOR_DIFF_CHECKING)
@@ -207,7 +207,7 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isDrawAva
 
     if (lines[0] != undefined) {
       return lines.map((line) => {
-        return { homeOdds: line.homeOdds, awayOdds: line.awayOdds, drawOdds: isDrawAvailable ? 0 : line.drawOdds };
+        return { homeOdds: line.homeOdds, awayOdds: line.awayOdds, drawOdds: !isDrawAvailable ? 0 : line.drawOdds };
       });
     }
   }
