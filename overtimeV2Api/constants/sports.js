@@ -543,7 +543,7 @@ const LeagueMap = {
     live: true,
   },
   [League.FIBA_WORLD_CUP]: {
-    sport: Sport.SOCCER,
+    sport: Sport.BASKETBALL,
     id: League.FIBA_WORLD_CUP,
     label: "FIBA World Cup",
     provider: Provider.ENETPULSE,
