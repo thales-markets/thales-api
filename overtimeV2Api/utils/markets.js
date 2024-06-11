@@ -6,7 +6,6 @@ const {
   ONE_SIDE_PLAYER_PROPS_MARKET_TYPES,
   YES_NO_PLAYER_PROPS_MARKET_TYPES,
   COMBINED_POSITIONS_MARKET_TYPES,
-  DEFAULT_SPREAD_FOR_LIVE_MARKETS,
 } = require("../constants/markets");
 const bytes32 = require("bytes32");
 
@@ -284,16 +283,17 @@ const adjustSpreadOnOdds = (impliedProbs, minSpread, targetSpread) => {
 };
 
 const getSpreadData = (spreadData, sportId, typeId) => {
+  const defaultSpreadForLiveMarkets = Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS);
   const sportSpreadData = spreadData.find(
     (data) => Number(data.typeId) === Number(typeId) && Number(data.sportId) === Number(sportId),
   );
   if (sportSpreadData) {
     return {
-      minSpread: sportSpreadData.minSpread ? Number(sportSpreadData.minSpread) : DEFAULT_SPREAD_FOR_LIVE_MARKETS,
+      minSpread: sportSpreadData.minSpread ? Number(sportSpreadData.minSpread) : defaultSpreadForLiveMarkets,
       targetSpread: sportSpreadData.targetSpread ? Number(sportSpreadData.targetSpread) : 0,
     };
   }
-  return { minSpread: DEFAULT_SPREAD_FOR_LIVE_MARKETS, targetSpread: 0 };
+  return { minSpread: defaultSpreadForLiveMarkets, targetSpread: 0 };
 };
 
 module.exports = {

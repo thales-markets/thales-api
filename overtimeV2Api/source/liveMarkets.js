@@ -11,11 +11,7 @@ const {
   adjustSpreadOnOdds,
   getSpreadData,
 } = require("../utils/markets");
-const {
-  MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL,
-  INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL,
-  LIVE_TYPE_ID_BASE,
-} = require("../constants/markets");
+const { LIVE_TYPE_ID_BASE } = require("../constants/markets");
 const teamsMapping = require("../assets/teamsMapping.json");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
@@ -257,7 +253,8 @@ async function processAllMarkets(network) {
                 return null;
               }
 
-              if (Number(currentPeriod) >= INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL) {
+              const inningLimitForLiveTradingBaseball = Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL);
+              if (Number(currentPeriod) >= inningLimitForLiveTradingBaseball) {
                 console.log(
                   `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to period: ${currentPeriod}. inning`,
                 );
@@ -273,7 +270,8 @@ async function processAllMarkets(network) {
                 return null;
               }
 
-              if (currentClock != null && Number(currentClock) >= MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL) {
+              const minuteLimitForLiveTradingFootball = Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL);
+              if (currentClock != null && Number(currentClock) >= minuteLimitForLiveTradingFootball) {
                 console.log(
                   `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to clock: ${currentClock}min`,
                 );
