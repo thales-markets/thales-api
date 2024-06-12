@@ -69,7 +69,7 @@ const packMarket = (market) => {
     ? 153
     : `${market.sportId}`.startsWith("156")
     ? 156
-    : market.sportId === 701 || market.sportId == 702
+    : market.sportId === 701 || market.sportId == 702 || market.sportId == 703
     ? 7
     : market.sportId;
   const isEnetpulseSport = getLeagueProvider(leagueId) === Provider.ENETPULSE;

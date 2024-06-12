@@ -88,15 +88,17 @@ async function resolveMarkets(network) {
 
   if (allOpenGameIds.length > 0) {
     let emptyArrays = Array(allOpenGameIds.length).fill(0);
+    const gamesInfoMap = await getGamesInfoMap();
 
     // check are there any unresolved open markets
-    const areMarketsResolved = await sportsAmmData.areMarketsResolved(
-      allOpenGameIds,
-      emptyArrays,
-      emptyArrays,
-      emptyArrays,
-    );
+    const [areMarketsResolved, onlyActiveGameIds] = await Promise.all([
+      sportsAmmData.areMarketsResolved(allOpenGameIds, emptyArrays, emptyArrays, emptyArrays),
+      sportsAmmData.getOnlyActiveGameIdsAndTicketsOf(allOpenGameIds, 0, allOpenGameIds.length),
+    ]);
     const readyForResolveGameIds = allOpenGameIds.filter((_, index) => areMarketsResolved[index]);
+    const activeGameIdsWithoutTickets = allOpenGameIds.filter(
+      (gameId) => !onlyActiveGameIds.activeGameIds.includes(gameId),
+    );
 
     if (readyForResolveGameIds.length > 0) {
       emptyArrays = Array(readyForResolveGameIds.length).fill(0);
@@ -106,8 +108,6 @@ async function resolveMarkets(network) {
         emptyArrays,
         emptyArrays,
       );
-
-      const gamesInfoMap = await getGamesInfoMap();
 
       console.log(`Resolver ${NETWORK_NAME[network]}: Total ready for resolve: ${readyForResolveGameIds.length}`);
       // resolve parent markets - update status and move under closed markets map
@@ -146,6 +146,21 @@ async function resolveMarkets(network) {
         ongoingMarket.awayScoreByPeriod = awayScoreByPeriod;
 
         closedMarketsMap.set(readyForResolveGameId, ongoingMarket);
+      }
+    }
+
+    if (activeGameIdsWithoutTickets.length > 0) {
+      for (let i = 0; i < activeGameIdsWithoutTickets.length; i++) {
+        const activeGameIdWithoutTickets = activeGameIdsWithoutTickets[i];
+
+        const gameInfo = gamesInfoMap.get(activeGameIdWithoutTickets);
+        if (gameInfo && gameInfo.isGameFinished) {
+          const ongoingMarket = openMarketsMap.get(activeGameIdWithoutTickets);
+          ongoingMarket.isWholeGameResolved = true;
+          ongoingMarket.noTickets = true;
+
+          closedMarketsMap.set(activeGameIdWithoutTickets, ongoingMarket);
+        }
       }
     }
   }
