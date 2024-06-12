@@ -236,7 +236,10 @@ async function processAllMarkets(network) {
             );
             const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
 
-            if (gameTimeOpticOddsResponseData == undefined) {
+            if (gameTimeOpticOddsResponseData == undefined || responseOpticOddsScores.data.data.length == 0) {
+              console.log(
+                `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
+              );
               return null;
             }
 
@@ -245,14 +248,29 @@ async function processAllMarkets(network) {
             const currentClock = gameTimeOpticOddsResponseData.clock;
             const currentPeriod = gameTimeOpticOddsResponseData.period;
 
-            if (getLeagueSport(Number(market.leagueId)) === Sport.BASEBALL) {
-              if (responseOpticOddsScores.data.data.length == 0) {
+            if (getLeagueSport(Number(market.leagueId)) === Sport.BASKETBALL) {
+              const quarterLimitForLiveTradingBasketball = Number(
+                process.env.QUARTER_LIMIT_FOR_LIVE_TRADING_BASKETBALL,
+              );
+              if (Number(currentPeriod) >= quarterLimitForLiveTradingBasketball) {
                 console.log(
-                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
+                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to period: ${currentPeriod}. quarter`,
                 );
                 return null;
               }
+            }
 
+            if (getLeagueSport(Number(market.leagueId)) === Sport.HOCKEY) {
+              const periodLimitForLiveTradingHockey = Number(process.env.PERIOD_LIMIT_FOR_LIVE_TRADING_HOCKEY);
+              if (Number(currentPeriod) >= periodLimitForLiveTradingHockey) {
+                console.log(
+                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to period: ${currentPeriod}. period`,
+                );
+                return null;
+              }
+            }
+
+            if (getLeagueSport(Number(market.leagueId)) === Sport.BASEBALL) {
               const inningLimitForLiveTradingBaseball = Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL);
               if (Number(currentPeriod) >= inningLimitForLiveTradingBaseball) {
                 console.log(
@@ -263,13 +281,6 @@ async function processAllMarkets(network) {
             }
 
             if (getLeagueSport(Number(market.leagueId)) === Sport.SOCCER) {
-              if (responseOpticOddsScores.data.data.length == 0) {
-                console.log(
-                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
-                );
-                return null;
-              }
-
               const minuteLimitForLiveTradingFootball = Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL);
               if (currentClock != null && Number(currentClock) >= minuteLimitForLiveTradingFootball) {
                 console.log(
