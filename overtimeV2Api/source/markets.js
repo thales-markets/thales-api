@@ -58,7 +58,7 @@ async function processMarkets(isTestNetwork) {
           console.log(`Markets ${network}: markets error: `, error);
         }
 
-        await delay(5 * 1000);
+        await delay(1000);
       }
     }, 3000);
   }
