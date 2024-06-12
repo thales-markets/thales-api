@@ -26,9 +26,21 @@ const PREFIX_KEYS = {
     LiquidityPoolPnl: "sports-markets-liquidity-pool-pnl-",
     LiquidityPoolTransactions: "sports-markets-liquidity-pool-tx-",
 
+    Markets: "sports-markets-market-list",
+
     ReferralTransactions: "sports-markets-referral-transactions",
     ReferredTraders: "sports-markets-referred-traders",
     Referrers: "sports-markets-referrers",
+
+    PositionBalance: "sports-markets-position-balance",
+    Transactions: "sports-markets-transactions",
+    Parlay: "sport-markets-parlays",
+    ClaimTxs: "sport-markets-claim-transactions",
+
+    VaultUserTransactions: "sports-markets-vault-user-transactions",
+    VaultPnl: "sports-markets-vault-pnl",
+    VaultTransactions: "sports-markets-vault-transactions",
+    ParlayVaultTransactions: "sports-markets-vault-transactions",
   },
 };
 
