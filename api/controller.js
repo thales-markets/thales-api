@@ -248,6 +248,18 @@ app.get(ENDPOINTS.THALES_BANNERS_IMAGE, (req, res) => {
   request.get(url).pipe(res);
 });
 
+app.get(ENDPOINTS.SPEED_BANNERS, async (req, res) => {
+  const network = req.params.networkParam;
+  var banners = `https://raw.githubusercontent.com/thales-markets/thales-speed-markets/dev/src/assets/images/banner/${network}.json`;
+  request.get(banners).pipe(res);
+});
+
+app.get(ENDPOINTS.SPEED_BANNERS_IMAGE, (req, res) => {
+  const imageName = req.params.imageName;
+  var url = `https://raw.githubusercontent.com/thales-markets/thales-speed-markets/dev/src/assets/images/banner/${imageName}`;
+  request.get(url).pipe(res);
+});
+
 app.get(ENDPOINTS.PROMOTIONS, async (req, res) => {
   const branchName = req.query["branch-name"];
   var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/${

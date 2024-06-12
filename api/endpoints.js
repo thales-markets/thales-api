@@ -19,6 +19,8 @@ const ENDPOINTS = {
   PROMOTIONS: "/promotions",
   THALES_BANNERS: "/thales-banners/:networkParam",
   THALES_BANNERS_IMAGE: "/thales-banners/image/:imageName",
+  SPEED_BANNERS: "/speed-banners/:networkParam",
+  SPEED_BANNERS_IMAGE: "/speed-banners/image/:imageName",
   LIVE_RESULT: "/live-result/:gameId",
   UPDATE_REFFERER_ID: "/update-refferer-id",
   GET_REFFERER_ID_ADDRESS: "/get-refferer-id-address/:reffererID",
