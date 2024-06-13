@@ -349,12 +349,22 @@ async function processAllMarkets(network) {
               (oddsObject) => oddsObject.homeOdds == 1 || oddsObject.awayOdds == 1 || oddsObject.drawOdds == 1,
             );
 
-            if (isThere100PercentOdd) {
-              return null;
-            }
-
-            if (oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0) {
-              return null;
+            if (
+              isThere100PercentOdd ||
+              (oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0)
+            ) {
+              market.odds = market.odds.map((_odd) => {
+                return {
+                  american: 0,
+                  decimal: 0,
+                  normalizedImplied: 0,
+                };
+              });
+              market.homeScore = currentScoreHome;
+              market.awayScore = currentScoreAway;
+              market.gameClock = currentClock;
+              market.gamePeriod = currentPeriod;
+              return market;
             } else {
               const aggregationEnabled = Number(process.env.ODDS_AGGREGATION_ENABLED);
               if (aggregationEnabled > 0) {
@@ -401,6 +411,10 @@ async function processAllMarkets(network) {
                     normalizedImplied: positionOdds,
                   };
                 });
+                market.homeScore = currentScoreHome;
+                market.awayScore = currentScoreAway;
+                market.gameClock = currentClock;
+                market.gamePeriod = currentPeriod;
                 return market;
               } else {
                 const primaryBookmakerOdds = oddsList[0];

@@ -33,19 +33,19 @@
     "combinedPositions": [[], [], []],
     "odds": [
       {
-        "american": 188.000000000184,
-        "decimal": 2.88000000000184,
-        "normalizedImplied": 0.347222222222
+        "american": 0,
+        "decimal": 0,
+        "normalizedImplied": 0
       },
       {
-        "american": 147.999999999762,
-        "decimal": 2.47999999999762,
-        "normalizedImplied": 0.403225806452
+        "american": 0,
+        "decimal": 0,
+        "normalizedImplied": 0
       },
       {
-        "american": 248.000000000097,
-        "decimal": 3.48000000000097,
-        "normalizedImplied": 0.287356321839
+        "american": 0,
+        "decimal": 0,
+        "normalizedImplied": 0
       }
     ],
     "proof": [
