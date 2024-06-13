@@ -41,6 +41,10 @@ const PREFIX_KEYS = {
     VaultPnl: "sports-markets-vault-pnl",
     VaultTransactions: "sports-markets-vault-transactions",
     ParlayVaultTransactions: "sports-markets-vault-transactions",
+
+    Vouchers: "sport-markets-vouchers",
+
+    UserStats: "sport-markets-user-stats",
   },
 };
 

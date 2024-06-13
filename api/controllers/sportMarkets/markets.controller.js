@@ -17,8 +17,8 @@ const markets = async (req, res) => {
     const includeMarkets = getQueryProperty(req, "include");
     const excludeMarkets = getQueryProperty(req, "exclude");
 
-    const includeProperties = includeMarkets.split(",");
-    const excludeProperties = excludeMarkets.split(",");
+    const includeProperties = includeMarkets ? includeMarkets.split(",") : [];
+    const excludeProperties = excludeMarkets ? excludeMarkets.split(",") : [];
 
     const isOpen = includeProperties.find((item) => item == "open")
       ? true
