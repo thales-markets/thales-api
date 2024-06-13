@@ -114,19 +114,19 @@ const parlayVaultTransactions = async (req, res) => {
     if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(
-      getCacheKey(PREFIX_KEYS.SportsMarkets.VaultTransactions, [networkId, vault, round]),
+      getCacheKey(PREFIX_KEYS.SportsMarkets.ParlayVaultTransactions, [networkId, vault, round]),
     );
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
-    const transactions = await thalesData.sportMarkets.vaultTransactions({
+    const transactions = await thalesData.sportMarkets.parlayVaultTransactions({
       network: networkId,
       vault: vault ? vault : undefined,
       round: round ? round : undefined,
     });
 
     cache.set(
-      getCacheKey(PREFIX_KEYS.SportsMarkets.VaultTransactions, [networkId, vault, round]),
+      getCacheKey(PREFIX_KEYS.SportsMarkets.ParlayVaultTransactions, [networkId, vault, round]),
       transactions,
       TTL.VAULT_TRANSACTIONS,
     );
@@ -144,4 +144,5 @@ module.exports = {
   userTransactions,
   vaultPnl,
   vaultTransactions,
+  parlayVaultTransactions,
 };
