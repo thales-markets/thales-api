@@ -158,7 +158,6 @@ const claimTransactions = async (req, res) => {
 
 module.exports = {
   transactions,
-  trades,
   positionBalance,
   parlays,
   claimTransactions,
