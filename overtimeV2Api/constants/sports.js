@@ -355,7 +355,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
   },
   [League.COPA_LIBERTADORES]: {
     sport: Sport.SOCCER,
@@ -379,7 +379,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
   },
   [League.EREDIVISIE]: {
     sport: Sport.SOCCER,
