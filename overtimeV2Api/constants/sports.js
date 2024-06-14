@@ -350,6 +350,7 @@ const LeagueMap = {
     sport: Sport.SOCCER,
     id: League.COPA_AMERICA,
     label: "Copa America",
+    opticOddsName: "CONMEBOL - Copa America",
     provider: Provider.ENETPULSE,
     scoringType: ScoringType.GOALS,
     matchResolveType: MatchResolveType.REGULAR,
