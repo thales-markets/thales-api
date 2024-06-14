@@ -350,12 +350,13 @@ const LeagueMap = {
     sport: Sport.SOCCER,
     id: League.COPA_AMERICA,
     label: "Copa America",
+    opticOddsName: "CONMEBOL - Copa America",
     provider: Provider.ENETPULSE,
     scoringType: ScoringType.GOALS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
   },
   [League.COPA_LIBERTADORES]: {
     sport: Sport.SOCCER,
@@ -379,7 +380,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
   },
   [League.EREDIVISIE]: {
     sport: Sport.SOCCER,

@@ -116,29 +116,45 @@ async function processAllMarkets(network) {
         const providerMarketsMatchingOffer = [];
         filteredMarkets.forEach((market) => {
           const opticOddsGameEvent = opticOddsResponseData.find((opticOddsGame) => {
-            const homeTeamOpticOdds = teamsMap.get(opticOddsGame.home_team.toLowerCase());
-            const awayTeamOpticOdds = teamsMap.get(opticOddsGame.away_team.toLowerCase());
-
-            const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
-            const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
-
-            const hasUndefinedName = [homeTeamOpticOdds, awayTeamOpticOdds, gameHomeTeam, gameAwayTeam].some(
-              (name) => name == undefined,
-            );
-
-            if (hasUndefinedName) {
-              return false;
-            }
-
             let homeTeamsMatch;
             let awayTeamsMatch;
+
             if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
-              homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
-              awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
+              homeTeamsMatch =
+                opticOddsGame.home_team.toLowerCase() == market.homeTeam.toLowerCase() ||
+                opticOddsGame.home_team.toLowerCase() == market.awayTeam.toLowerCase();
+              awayTeamsMatch =
+                opticOddsGame.away_team.toLowerCase() == market.homeTeam.toLowerCase() ||
+                opticOddsGame.away_team.toLowerCase() == market.awayTeam.toLowerCase();
             } else {
               homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
               awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
             }
+
+            if (homeTeamsMatch !== true && awayTeamsMatch !== true) {
+              const homeTeamOpticOdds = teamsMap.get(opticOddsGame.home_team.toLowerCase());
+              const awayTeamOpticOdds = teamsMap.get(opticOddsGame.away_team.toLowerCase());
+
+              const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
+              const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
+
+              const hasUndefinedName = [homeTeamOpticOdds, awayTeamOpticOdds, gameHomeTeam, gameAwayTeam].some(
+                (name) => name == undefined,
+              );
+
+              if (hasUndefinedName) {
+                return false;
+              }
+
+              if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
+                homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
+                awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
+              } else {
+                homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
+                awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
+              }
+            }
+
             let datesMatch;
             if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
               const opticOddsTimestamp = new Date(opticOddsGame.start_date).getTime();
@@ -181,30 +197,43 @@ async function processAllMarkets(network) {
         const filteredMarketsWithLiveOdds = filteredMarkets.map(async (market) => {
           const responseObject = responsesOddsPerGame.find((responseObject) => {
             const response = responseObject.data.data[0];
-
-            const homeTeamOpticOdds = teamsMap.get(response.home_team.toLowerCase());
-            const awayTeamOpticOdds = teamsMap.get(response.away_team.toLowerCase());
-
-            const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
-            const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
-
-            const hasUndefinedName = [homeTeamOpticOdds, awayTeamOpticOdds, gameHomeTeam, gameAwayTeam].some(
-              (name) => name == undefined,
-            );
-
-            if (hasUndefinedName) {
-              return false;
-            }
-
             let homeTeamsMatch;
             let awayTeamsMatch;
 
             if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
-              homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
-              awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
+              homeTeamsMatch =
+                response.home_team.toLowerCase() == market.homeTeam.toLowerCase() ||
+                response.home_team.toLowerCase() == market.awayTeam.toLowerCase();
+              awayTeamsMatch =
+                response.away_team.toLowerCase() == market.homeTeam.toLowerCase() ||
+                response.away_team.toLowerCase() == market.awayTeam.toLowerCase();
             } else {
-              homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
-              awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
+              homeTeamsMatch = response.home_team.toLowerCase() == market.homeTeam.toLowerCase();
+              awayTeamsMatch = response.away_team.toLowerCase() == market.awayTeam.toLowerCase();
+            }
+
+            if (homeTeamsMatch !== true && awayTeamsMatch !== true) {
+              const homeTeamOpticOdds = teamsMap.get(response.home_team.toLowerCase());
+              const awayTeamOpticOdds = teamsMap.get(response.away_team.toLowerCase());
+
+              const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
+              const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
+
+              const hasUndefinedName = [homeTeamOpticOdds, awayTeamOpticOdds, gameHomeTeam, gameAwayTeam].some(
+                (name) => name == undefined,
+              );
+
+              if (hasUndefinedName) {
+                return false;
+              }
+
+              if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
+                homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
+                awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
+              } else {
+                homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
+                awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
+              }
             }
 
             let datesMatch;
