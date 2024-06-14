@@ -127,8 +127,8 @@ async function processAllMarkets(network) {
                 opticOddsGame.away_team.toLowerCase() == market.homeTeam.toLowerCase() ||
                 opticOddsGame.away_team.toLowerCase() == market.awayTeam.toLowerCase();
             } else {
-              homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
-              awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
+              homeTeamsMatch = opticOddsGame.home_team.toLowerCase() == market.homeTeam.toLowerCase();
+              awayTeamsMatch = opticOddsGame.away_team.toLowerCase() == market.awayTeam.toLowerCase();
             }
 
             if (homeTeamsMatch !== true && awayTeamsMatch !== true) {
