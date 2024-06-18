@@ -144,7 +144,7 @@ const getEnetpulseScore = (results, sport) => {
         scoreByPeriod.push(periodScore);
       }
     }
-  } else if (sport === League.CSGO || League.DOTA2 || League.LOL) {
+  } else if (sport === League.CSGO || sport === League.DOTA2 || sport === League.LOL) {
     score = getEnetpulseScoreByCode(Object.values(results), "finalresult");
   } else {
     score = getEnetpulseScoreByCode(Object.values(results), "ordinarytime");
