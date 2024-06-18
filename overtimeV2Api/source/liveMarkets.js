@@ -326,21 +326,61 @@ async function processAllMarkets(network) {
                 (oddsObject) => oddsObject.sports_book_name.toLowerCase() == oddsProvider.toLowerCase(),
               );
 
-              const homeOddsObject = providerOddsObjects.find(
-                (oddsObject) =>
-                  teamsMap.get(oddsObject.name.toLowerCase()) == teamsMap.get(market.homeTeam.toLowerCase()),
-              );
+              const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
+              const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
+
+              let homeOddsObject;
+              if (gameHomeTeam == undefined) {
+                homeOddsObject = providerOddsObjects.find((oddsObject) => {
+                  const opticOddsTeamName = teamsMap.get(oddsObject.name.toLowerCase());
+
+                  if (opticOddsTeamName == undefined) {
+                    return oddsObject.name.toLowerCase() == market.homeTeam.toLowerCase();
+                  } else {
+                    return opticOddsTeamName == market.homeTeam.toLowerCase();
+                  }
+                });
+              } else {
+                homeOddsObject = providerOddsObjects.find((oddsObject) => {
+                  const opticOddsTeamName = teamsMap.get(oddsObject.name.toLowerCase());
+
+                  if (opticOddsTeamName == undefined) {
+                    return oddsObject.name.toLowerCase() == gameHomeTeam;
+                  } else {
+                    return opticOddsTeamName == gameHomeTeam;
+                  }
+                });
+              }
 
               let homeOdds = 0;
               if (homeOddsObject != undefined) {
                 homeOdds = homeOddsObject.price;
               }
 
+              let awayOddsObject;
+              if (gameAwayTeam == undefined) {
+                awayOddsObject = providerOddsObjects.find((oddsObject) => {
+                  const opticOddsTeamName = teamsMap.get(oddsObject.name.toLowerCase());
+
+                  if (opticOddsTeamName == undefined) {
+                    return oddsObject.name.toLowerCase() == market.awayTeam.toLowerCase();
+                  } else {
+                    return opticOddsTeamName == market.awayTeam.toLowerCase();
+                  }
+                });
+              } else {
+                awayOddsObject = providerOddsObjects.find((oddsObject) => {
+                  const opticOddsTeamName = teamsMap.get(oddsObject.name.toLowerCase());
+
+                  if (opticOddsTeamName == undefined) {
+                    return oddsObject.name.toLowerCase() == gameAwayTeam;
+                  } else {
+                    return opticOddsTeamName == gameAwayTeam;
+                  }
+                });
+              }
+
               let awayOdds = 0;
-              const awayOddsObject = providerOddsObjects.find(
-                (oddsObject) =>
-                  teamsMap.get(oddsObject.name.toLowerCase()) == teamsMap.get(market.awayTeam.toLowerCase()),
-              );
               if (awayOddsObject != undefined) {
                 awayOdds = awayOddsObject.price;
               }
