@@ -47,7 +47,7 @@ async function processGamesInfo() {
   }
 }
 
-const getRundowScore = (team, event, sport) => {
+const getRundownScore = (team, event, sport) => {
   let score = undefined;
 
   if (sport === League.UFC) {
@@ -102,7 +102,7 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
             ? event.teams_normalized.map((team) => ({
                 name: AMERICAN_LEAGUES.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
                 isHome: team.is_home,
-                score: getRundowScore(team, event, sport),
+                score: getRundownScore(team, event, sport),
                 scoreByPeriod: team.is_home ? event.score.score_home_by_period : event.score.score_away_by_period,
               }))
             : [],
