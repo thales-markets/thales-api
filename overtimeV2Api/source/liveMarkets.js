@@ -326,21 +326,40 @@ async function processAllMarkets(network) {
                 (oddsObject) => oddsObject.sports_book_name.toLowerCase() == oddsProvider.toLowerCase(),
               );
 
-              const homeOddsObject = providerOddsObjects.find(
-                (oddsObject) =>
-                  teamsMap.get(oddsObject.name.toLowerCase()) == teamsMap.get(market.homeTeam.toLowerCase()),
-              );
+              const opticOddsTeamName = teamsMap.get(oddsObject.name.toLowerCase());
+              const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
+              const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
+
+              let homeOddsObject;
+              if (opticOddsTeamName == undefined || gameHomeTeam == undefined) {
+                homeOddsObject = providerOddsObjects.find(
+                  (oddsObject) => oddsObject.name.toLowerCase() == market.homeTeam.toLowerCase(),
+                );
+              } else {
+                homeOddsObject = providerOddsObjects.find(
+                  (oddsObject) =>
+                    teamsMap.get(oddsObject.name.toLowerCase()) == teamsMap.get(market.homeTeam.toLowerCase()),
+                );
+              }
 
               let homeOdds = 0;
               if (homeOddsObject != undefined) {
                 homeOdds = homeOddsObject.price;
               }
 
+              let awayOddsObject;
+              if (opticOddsTeamName == undefined || gameAwayTeam == undefined) {
+                awayOddsObject = providerOddsObjects.find(
+                  (oddsObject) => oddsObject.name.toLowerCase() == market.awayTeam.toLowerCase(),
+                );
+              } else {
+                awayOddsObject = providerOddsObjects.find(
+                  (oddsObject) =>
+                    teamsMap.get(oddsObject.name.toLowerCase()) == teamsMap.get(market.awayTeam.toLowerCase()),
+                );
+              }
+
               let awayOdds = 0;
-              const awayOddsObject = providerOddsObjects.find(
-                (oddsObject) =>
-                  teamsMap.get(oddsObject.name.toLowerCase()) == teamsMap.get(market.awayTeam.toLowerCase()),
-              );
               if (awayOddsObject != undefined) {
                 awayOdds = awayOddsObject.price;
               }
