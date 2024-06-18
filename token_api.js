@@ -30,7 +30,6 @@ app.get("/token/price", (_, res) => res.send(tokenMap.get("price") + ""));
 app.get("/token/circulatingsupply", (_, res) => res.send(tokenMap.get("circulatingsupply") + ""));
 app.get("/token/marketcap", (_, res) => res.send(tokenMap.get("marketcap") + ""));
 app.get("/token/totalsupply", (_, res) => res.send(tokenMap.get("totalsupply") + ""));
-app.get("/token/ethburned", (_, res) => res.send(JSON.parse(tokenMap.get("ethburned"))));
 
 app.get("/", (_, res) => {
   res.sendStatus(200);
@@ -54,13 +53,6 @@ if (process.env.REDIS_URL) {
 }
 
 async function processToken() {
-  try {
-    const ethburned = await getEthBurned();
-    tokenMap.set("ethburned", JSON.stringify(ethburned));
-  } catch (e) {
-    tokenMap.set("ethburned", undefined);
-  }
-
   try {
     const price = await getPrice();
     tokenMap.set("price", price);
@@ -135,29 +127,4 @@ async function getTotalSupply() {
   } catch (e) {
     console.log(e);
   }
-}
-
-async function getEthBurned() {
-  try {
-    const ethBurnedResponse = await fetch("https://ethburned.info/api/v1/burned");
-
-    const ethBurnedJson = await ethBurnedResponse.json();
-    const ethBurned = {
-      total: ethBurnedJson.total,
-      totalUsd: ethBurnedJson.totalUSD,
-      yesterday: ethBurnedJson.yesterday,
-      yesterdayUsd: ethBurnedJson.yesterdayUSD,
-    };
-
-    return ethBurned;
-  } catch (e) {
-    console.log(e);
-  }
-
-  return {
-    total: 0,
-    totalUsd: 0,
-    yesterday: 0,
-    yesterdayUsd: 0,
-  };
 }
