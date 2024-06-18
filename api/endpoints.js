@@ -3,7 +3,6 @@ const ENDPOINTS = {
   TOKEN_PRICE: "/token/price",
   TOKEN_SUPLY: "/token/circulatingsupply",
   TOKEN_CAP: "/token/marketcap",
-  ETH_BURNED: "/utils/ethburned",
   GAME_STARTED: "/game-started",
   GAME_ENDED: "/game-ended",
   GAME_FINISHERS: "/game-finishers",

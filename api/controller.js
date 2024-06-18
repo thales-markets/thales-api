@@ -157,13 +157,6 @@ app.get(ENDPOINTS.TOKEN_CAP, (req, res) => {
   });
 });
 
-app.get(ENDPOINTS.ETH_BURNED, (req, res) => {
-  redisClient.get(KEYS.TOKEN, function (err, obj) {
-    const tokenMap = new Map(JSON.parse(obj));
-    res.send(JSON.parse(tokenMap.get("ethburned")));
-  });
-});
-
 app.post(ENDPOINTS.GAME_STARTED, (req, res) => {
   const walletAddress = req.body.walletAddress;
   let gameStartedCount = gameFinishersMap.get("gameStartedCount") || 0;

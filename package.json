@@ -28,7 +28,7 @@
     "node-fetch": "^2.6.1",
     "oddslib": "^2.1.1",
     "redis": "^3.0.2",
-    "thales-data": "^2.0.1",
+    "thales-data": "^3.0.3",
     "twitter-api-v2": "^1.4.1",
     "web3": "^1.5.2"
   }
