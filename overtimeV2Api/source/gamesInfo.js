@@ -13,6 +13,7 @@ const {
   SportIdMapEnetpulse,
   SportIdMapRundown,
   AMERICAN_LEAGUES,
+  League,
 } = require("../constants/sports");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
@@ -46,6 +47,35 @@ async function processGamesInfo() {
   }
 }
 
+const getRundowScore = (team, event, sport) => {
+  let score = undefined;
+
+  if (sport === League.UFC) {
+    const numberOfRounds = Number(event.score?.game_period);
+    const lastRoundEndTimeInfo = event.score?.event_status_detail.split(",");
+
+    if (lastRoundEndTimeInfo.length > 0) {
+      const lastRoundEndTimeNumber = Number(
+        lastRoundEndTimeInfo[lastRoundEndTimeInfo.length - 1].trim().replace(":", "."),
+      );
+      let numberOfRoundsResult;
+      if (lastRoundEndTimeNumber >= 2.3) {
+        numberOfRoundsResult = numberOfRounds;
+      } else {
+        numberOfRoundsResult = Number(numberOfRounds) == 1 ? numberOfRounds : numberOfRounds - 1;
+      }
+
+      score =
+        (team.is_home ? Number(event.score?.winner_home) : Number(event.score?.winner_away)) == 1
+          ? numberOfRoundsResult
+          : 0;
+    }
+  } else {
+    score = team.is_home ? event.score?.score_home : event.score?.score_away;
+  }
+  return score;
+};
+
 const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap) => {
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
@@ -63,14 +93,16 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
           lastUpdate: new Date().getTime(),
           gameStatus: event.score.event_status,
           isGameFinished:
-            event.score.event_status === "STATUS_FINAL" || event.score.event_status === "STATUS_FULL_TIME",
+            event.score.event_status === "STATUS_FINAL" ||
+            event.score.event_status === "STATUS_FULL_TIME" ||
+            event.score.event_status === "STATUS_CANCELED",
           tournamentName: "",
           tournamentRound: "",
           teams: event.teams_normalized
             ? event.teams_normalized.map((team) => ({
                 name: AMERICAN_LEAGUES.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
                 isHome: team.is_home,
-                score: team.is_home ? event.score.score_home : event.score.score_away,
+                score: getRundowScore(team, event, sport),
                 scoreByPeriod: team.is_home ? event.score.score_home_by_period : event.score.score_away_by_period,
               }))
             : [],
@@ -94,7 +126,7 @@ const getEnetpulseScore = (results, sport) => {
   let score = undefined;
   const scoreByPeriod = [];
 
-  if (sport === 399) {
+  if (sport === League.EUROLEAGUE) {
     score = getEnetpulseScoreByCode(Object.values(results), "finalresult");
     for (let i = 1; i <= 4; i++) {
       const code = `quarter${i}`;
@@ -103,7 +135,7 @@ const getEnetpulseScore = (results, sport) => {
         scoreByPeriod.push(periodScore);
       }
     }
-  } else if (sport === 153 || sport === 156) {
+  } else if (sport === League.TENNIS_GS || sport === League.TENNIS_MASTERS) {
     score = getEnetpulseScoreByCode(Object.values(results), "setswon");
     for (let i = 1; i <= 7; i++) {
       const code = `set${i}`;
@@ -112,7 +144,7 @@ const getEnetpulseScore = (results, sport) => {
         scoreByPeriod.push(periodScore);
       }
     }
-  } else if (sport === 9977 || sport === 9983 || sport === 10138) {
+  } else if (sport === League.CSGO || League.DOTA2 || League.LOL) {
     score = getEnetpulseScoreByCode(Object.values(results), "finalresult");
   } else {
     score = getEnetpulseScoreByCode(Object.values(results), "ordinarytime");
@@ -143,7 +175,7 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
         gamesInfoMap.set(gameId, {
           lastUpdate: new Date().getTime(),
           gameStatus: event.status_type,
-          isGameFinished: event.status_type === "finished",
+          isGameFinished: event.status_type === "finished" || event.status_type === "cancelled",
           tournamentName: event.tournament_stage_name,
           tournamentRound: EnetpulseRounds[Number(event.round_typeFK)],
           teams: event.event_participants
