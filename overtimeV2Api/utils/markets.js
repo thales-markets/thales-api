@@ -6,6 +6,7 @@ const {
   ONE_SIDE_PLAYER_PROPS_MARKET_TYPES,
   YES_NO_PLAYER_PROPS_MARKET_TYPES,
   COMBINED_POSITIONS_MARKET_TYPES,
+  MIN_ODDS_FOR_DIFF_CHECKING,
 } = require("../constants/markets");
 const bytes32 = require("bytes32");
 
