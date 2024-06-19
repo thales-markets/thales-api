@@ -52,7 +52,6 @@ async function processLiveMarkets() {
 }
 
 async function processAllMarkets(network) {
-  const errors = [];
   let availableLeagueIds = getLiveSupportedLeagues();
 
   const liveOddsProviders = process.env.LIVE_ODDS_PROVIDERS.split(",");
@@ -107,7 +106,7 @@ async function processAllMarkets(network) {
           const opticOddsResponseDataForLeague = responseOpticOddsGames.data.data;
 
           if (opticOddsResponseDataForLeague.length == 0) {
-            errors.push(`Could not find any games on the provider side for the given league ${leagueName}`);
+            console.log(`Could not find any games on the provider side for the given league ${leagueName}`);
           } else {
             opticOddsResponseData = [...opticOddsResponseData, ...opticOddsResponseDataForLeague];
           }
@@ -190,7 +189,7 @@ async function processAllMarkets(network) {
         });
 
         if (providerMarketsMatchingOffer.length == 0 && enabledDummyMarkets == 0) {
-          errors.push(`Could not find any matches on the provider side for the given leagues`);
+          console.log(`Could not find any matches on the provider side for the given leagues`);
           return;
         }
 
