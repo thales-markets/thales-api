@@ -71,6 +71,7 @@ const ENDPOINTS = {
   OVERTIME_V2_PLAYER_INFO: "/overtime-v2/players-info/:playerId",
   OVERTIME_V2_LIVE_SCORE: "/overtime-v2/live-scores/:gameId",
   OVERTIME_V2_UPDATE_MERKLE_TREE: "/overtime-v2/update-merkle-tree",
+  OVERTIME_V2_USER_HISTORY: "/overtime-v2/networks/:networkParam/users/:userAddress/history",
 };
 
 module.exports = ENDPOINTS;

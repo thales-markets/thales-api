@@ -49,7 +49,8 @@ const thalesSpeedUtilsMarkets = require("../thalesSpeedApi/utils/markets");
 const thalesSpeedUtilsNetworks = require("../thalesSpeedApi/utils/networks");
 const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters");
 
-const overtimeMarketsV2 = require("../overtimeV2Api/source/markets");
+const overtimeV2Markets = require("../overtimeV2Api/source/markets");
+const overtimeV2Users = require("../overtimeV2Api/source/users");
 const { isLiveSupportedForLeague, getLiveSupportedLeagues } = require("../overtimeV2Api/utils/sports");
 const { LeagueMap } = require("../overtimeV2Api/constants/sports");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
@@ -1810,6 +1811,26 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORE, (req, res) => {
   });
 });
 
+app.get(ENDPOINTS.OVERTIME_V2_USER_HISTORY, async (req, res) => {
+  const network = req.params.networkParam;
+  const userAddress = req.params.userAddress;
+  const status = req.query.status;
+
+  if (![10].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism).");
+    return;
+  }
+  if (status && !["open", "claimable", "closed"].includes(status.toLowerCase())) {
+    res.send("Unsupported status. Supported statuses: open, claimable, closed.");
+    return;
+  }
+
+  const userHistory = await overtimeV2Users.processUserHistory(network, userAddress.toLowerCase());
+  const history = status ? userHistory[status.toLowerCase()] : userHistory;
+
+  return res.send(history);
+});
+
 // V1 Digital Options and Sport Markets API with cache response logic
 app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/digital-options", digitalOptionsRoutes);
@@ -1828,6 +1849,6 @@ app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, (req, res) => {
     res.send("Invalid value for game IDs. The game IDs must be an array.");
     return;
   }
-  overtimeMarketsV2.updateMerkleTree(gameIdsArray);
+  overtimeV2Markets.updateMerkleTree(gameIdsArray);
   res.send();
 });
