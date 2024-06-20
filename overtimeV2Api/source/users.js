@@ -13,7 +13,7 @@ const { ethers } = require("ethers");
 const KEYS = require("../../redis/redis-keys");
 const { League } = require("../constants/sports");
 const { getCollateralDecimals, getCollateralSymbolByAddress } = require("../utils/collaterals");
-const { getLeagueSport } = require("../utils/sports");
+const { getLeagueSport, getLeagueLabel } = require("../utils/sports");
 const { orderBy } = require("lodash");
 
 function getPlayersInfoMap() {
@@ -98,7 +98,7 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
         sport: getLeagueSport(leagueId),
         leagueId: leagueId,
         subLeagueId: Number(market.sportId),
-        leagueName: "",
+        leagueName: getLeagueLabel(leagueId),
         typeId: typeId,
         type: type.key,
         maturity: Number(market.maturity) * 1000,

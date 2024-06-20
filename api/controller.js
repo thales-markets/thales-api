@@ -52,6 +52,7 @@ const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters")
 
 const overtimeV2Markets = require("../overtimeV2Api/source/markets");
 const overtimeV2Users = require("../overtimeV2Api/source/users");
+const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
 const { LeagueMap } = require("../overtimeV2Api/constants/sports");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
 
@@ -1777,13 +1778,7 @@ app.get(ENDPOINTS.OVERTIME_V2_USER_HISTORY, async (req, res) => {
   return res.send(history);
 });
 
-// V1 Digital Options and Sport Markets API with cache response logic
-app.use("/v1/stakers", stakersRoutes);
-app.use("/v1/digital-options", digitalOptionsRoutes);
-app.use("/v1/sport-markets", sportMarketsRoutes);
-app.use("/v1/cache-control", cacheControlRoutes);
-
-app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, (req, res) => {
+app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, async (req, res) => {
   const gameIds = req.body.gameIds;
 
   if (!gameIds) {
@@ -1795,6 +1790,51 @@ app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, (req, res) => {
     res.send("Invalid value for game IDs. The game IDs must be an array.");
     return;
   }
-  overtimeV2Markets.updateMerkleTree(gameIdsArray);
+  await overtimeV2Markets.updateMerkleTree(gameIdsArray);
   res.send();
 });
+
+app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
+  const network = req.params.networkParam;
+  const tradeData = req.body.tradeData;
+  const buyInAmount = req.body.buyInAmount;
+  const collateral = req.body.collateral;
+
+  if (![10, 11155420].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 11155420 (optimism sepolia).");
+    return;
+  }
+
+  if (!tradeData) {
+    res.send("Trade data is required.");
+    return;
+  }
+  if (!Array.isArray(tradeData)) {
+    res.send("Invalid value for trade data. Trade data must be an array.");
+    return;
+  }
+
+  if (!buyInAmount) {
+    res.send("Buy-in amount is required.");
+    return;
+  }
+  if (!isNumeric(buyInAmount.toString()) || Number(buyInAmount) === 0) {
+    res.send("Invalid value for buy-in amount. The buy-in amount must be a number greater than 0.");
+    return;
+  }
+
+  const supportedCollaterals = OVERTIME_V2_COLLATERALS[Number(network)].map((collateral) => collateral.symbol);
+  if (collateral && !supportedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase())) {
+    res.send(`Unsupported collateral. Supported collaterals: ${supportedCollaterals.join(", ")}`);
+    return;
+  }
+
+  const quote = await overtimeV2Quotes.getAmmQuote(Number(network), tradeData, Number(buyInAmount), collateral);
+  res.send(quote);
+});
+
+// V1 Digital Options and Sport Markets API with cache response logic
+app.use("/v1/stakers", stakersRoutes);
+app.use("/v1/digital-options", digitalOptionsRoutes);
+app.use("/v1/sport-markets", sportMarketsRoutes);
+app.use("/v1/cache-control", cacheControlRoutes);

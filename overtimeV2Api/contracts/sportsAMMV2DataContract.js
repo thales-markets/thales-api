@@ -1,6 +1,6 @@
 const { NETWORK } = require("../constants/networks");
 
-const parlayMarketDataContract = {
+const sportsAMMV2DataContract = {
   addresses: {
     [NETWORK.Optimism]: "0x71CE219942FFD9C1d8B67d6C35C39Ae04C4F647B",
     [NETWORK.OptimismSepolia]: "0xe4d8d605874443f952fBdc03Dd1C69761230A7f0",
@@ -522,4 +522,4 @@ const parlayMarketDataContract = {
   ],
 };
 
-module.exports = parlayMarketDataContract;
+module.exports = sportsAMMV2DataContract;

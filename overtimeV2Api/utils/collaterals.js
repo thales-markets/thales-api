@@ -22,6 +22,20 @@ const getCollateralSymbolByAddress = (network, collateralAddress) => {
   return collateral ? collateral.symbol : "";
 };
 
+const isLpSupported = (collateral) => {
+  return (
+    !collateral ||
+    collateral.toUpperCase() === "USDC" ||
+    collateral.toUpperCase() === "WETH" ||
+    collateral.toUpperCase() === "ETH" ||
+    collateral.toUpperCase() === "THALES"
+  );
+};
+
+const isThales = (collateral) => {
+  return !!collateral && collateral.toUpperCase() === "THALES";
+};
+
 module.exports = {
   getDefaultCollateral,
   getNonDefaultCollateralSymbols,
@@ -29,4 +43,6 @@ module.exports = {
   getCollateralAddress,
   getCollateralDecimals,
   getCollateralSymbolByAddress,
+  isLpSupported,
+  isThales,
 };
