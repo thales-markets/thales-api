@@ -48,28 +48,44 @@ const positionBalance = async (req, res) => {
     const networkId = getQueryParam(req, "networkId");
 
     const account = getQueryProperty(req, "account");
-    const filter = getQueryProperty(req, "filter");
 
-    const filters = filter ? filter.split(",") : [];
+    const includeMarkets = getQueryProperty(req, "include");
+    const excludeMarkets = getQueryProperty(req, "exclude");
 
-    const filterIsClaimable = filters.find((item) => item.trim().toLowerCase() == "claimable");
-    const filterIsClaimed = filters.find((item) => item.trim().toLowerCase() == "claimed");
+    const includeProperties = includeMarkets ? includeMarkets.split(",") : [];
+    const excludeProperties = excludeMarkets ? excludeMarkets.split(",") : [];
+
+    const isClaimable = includeProperties.find((item) => item == "claimable")
+      ? true
+      : excludeProperties.find((item) => item == "claimable")
+      ? false
+      : undefined;
+
+    const isClaimed = includeProperties.find((item) => item == "claimed")
+      ? true
+      : excludeProperties.find((item) => item == "claimed")
+      ? false
+      : undefined;
+
+    const filterKey = (isClaimable ? "f1" : "") + (isClaimed ? "f2" : "");
 
     if (!networkId && !account) return res.sendStatus(400);
 
-    const cachedResponse = cache.get(getCacheKey(PREFIX_KEYS.SportsMarkets.PositionBalance, [networkId, account]));
+    const cachedResponse = cache.get(
+      getCacheKey(PREFIX_KEYS.SportsMarkets.PositionBalance, [networkId, account, filterKey]),
+    );
 
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const positionBalances = await thalesData.sportMarkets.positionBalances({
       network: networkId,
       account: account ? account : undefined,
-      isClaimable: filterIsClaimable ? true : false,
-      isClaimed: filterIsClaimed ? true : false,
+      isClaimable: isClaimable,
+      isClaimed: isClaimed,
     });
 
     cache.set(
-      getCacheKey(PREFIX_KEYS.SportsMarkets.PositionBalance, [networkId, account]),
+      getCacheKey(PREFIX_KEYS.SportsMarkets.PositionBalance, [networkId, account, filterKey]),
       positionBalances,
       TTL.POSITION_BALANCE,
     );
