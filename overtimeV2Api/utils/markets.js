@@ -297,6 +297,23 @@ const getSpreadData = (spreadData, sportId, typeId) => {
   return { minSpread: defaultSpreadForLiveMarkets, targetSpread: 0 };
 };
 
+const getBookmakersArray = (bookmakersData, sportId) => {
+  const sportBookmakersData = bookmakersData.find((data) => Number(data.sportId) === Number(sportId));
+  if (sportBookmakersData != undefined) {
+    if (sportBookmakersData.primaryBookmaker == "" || sportBookmakersData.secondaryBookmaker == "") {
+      return process.env.LIVE_ODDS_PROVIDERS.split(",");
+    }
+    const bookmakersArray = [];
+
+    sportBookmakersData.primaryBookmaker ? bookmakersArray.push(sportBookmakersData.primaryBookmaker) : "";
+    sportBookmakersData.secondaryBookmaker ? bookmakersArray.push(sportBookmakersData.secondaryBookmaker) : "";
+    sportBookmakersData.tertiaryBookmaker ? bookmakersArray.push(sportBookmakersData.tertiaryBookmaker) : "";
+
+    return bookmakersArray;
+  }
+  return process.env.LIVE_ODDS_PROVIDERS.split(",");
+};
+
 module.exports = {
   fixDuplicatedTeamName,
   formatMarketOdds,
@@ -311,4 +328,5 @@ module.exports = {
   getIsCombinedPositionsMarket,
   adjustSpreadOnOdds,
   getSpreadData,
+  getBookmakersArray,
 };

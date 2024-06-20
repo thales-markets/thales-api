@@ -10,6 +10,7 @@ const {
   getAverageOdds,
   adjustSpreadOnOdds,
   getSpreadData,
+  getBookmakersArray,
 } = require("../utils/markets");
 const { LIVE_TYPE_ID_BASE } = require("../constants/markets");
 const teamsMapping = require("../assets/teamsMapping.json");
@@ -54,14 +55,11 @@ async function processLiveMarkets() {
 async function processAllMarkets(network) {
   let availableLeagueIds = getLiveSupportedLeagues();
 
-  const liveOddsProviders = process.env.LIVE_ODDS_PROVIDERS.split(",");
+  const liveOddsProvidersPerSport = new Map();
+
+  const bookmakersData = await readCsvFromUrl(process.env.GITHUB_URL_LIVE_BOOKMAKERS_CSV);
 
   const spreadData = await readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV);
-
-  if (liveOddsProviders.length == 0) {
-    console.log(`No supported live odds providers found in the config`);
-    return;
-  }
 
   redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
@@ -91,6 +89,10 @@ async function processAllMarkets(network) {
 
         for (const leagueId of availableLeagueIds) {
           const leagueName = getLeagueOpticOddsName(leagueId);
+
+          const oddsProvidersForSport = getBookmakersArray(bookmakersData, Number(leagueId));
+
+          liveOddsProvidersPerSport.set(Number(leagueId), oddsProvidersForSport);
 
           let responseOpticOddsGames;
           if (getLeagueSport(Number(leagueId)) === Sport.TENNIS) {
@@ -184,7 +186,10 @@ async function processAllMarkets(network) {
           });
 
           if (opticOddsGameEvent != undefined) {
-            providerMarketsMatchingOffer.push(opticOddsGameEvent);
+            providerMarketsMatchingOffer.push({
+              opticOddsGameEvent: opticOddsGameEvent,
+              leagueId: Number(market.leagueId),
+            });
           }
         });
 
@@ -194,7 +199,8 @@ async function processAllMarkets(network) {
         }
 
         const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
-          let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.id}&market_name=Moneyline&odds_format=Decimal`;
+          let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.opticOddsGameEvent.id}&market_name=Moneyline&odds_format=Decimal`;
+          const liveOddsProviders = liveOddsProvidersPerSport.get(game.leagueId);
           liveOddsProviders.forEach((liveOddsProvider) => {
             url = url.concat(`&sportsbook=${liveOddsProvider}`);
           });
@@ -343,6 +349,8 @@ async function processAllMarkets(network) {
             }
 
             let linesMap = new Map();
+
+            const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
 
             liveOddsProviders.forEach((oddsProvider) => {
               const providerOddsObjects = gameWithOdds.odds.filter(
