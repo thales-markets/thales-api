@@ -8,6 +8,7 @@ const {
 const { TicketMarketStatus, MarketTypeMap } = require("../constants/markets");
 const { bigNumberFormatter } = require("../utils/formatters");
 const sportsAMMV2DataContract = require("../contracts/sportsAMMV2DataContract");
+const sportsAMMV2ManagerContract = require("../contracts/sportsAMMV2ManagerContract");
 const { getProvider } = require("../utils/provider");
 const { ethers } = require("ethers");
 const KEYS = require("../../redis/redis-keys");
@@ -180,15 +181,33 @@ async function processUserHistory(network, walletAddress) {
     sportsAMMV2DataContract.abi,
     provider,
   );
+  const sportsAMMV2Manager = new ethers.Contract(
+    sportsAMMV2ManagerContract.addresses[network],
+    sportsAMMV2ManagerContract.abi,
+    provider,
+  );
 
-  const BATCH_SIZE = 100;
+  const batchSize = process.env.BATCH_SIZE_V2;
 
-  const [activeTickets, resolvedTickets] = await Promise.all([
-    sportsAmmData.getActiveTicketsDataPerUser(walletAddress, 0, BATCH_SIZE),
-    sportsAmmData.getResolvedTicketsDataPerUser(walletAddress, 0, BATCH_SIZE),
+  const [numOfActiveTicketsPerUser, numOfResolvedTicketsPerUser] = await Promise.all([
+    sportsAMMV2Manager.numOfActiveTicketsPerUser(walletAddress),
+    sportsAMMV2Manager.numOfResolvedTicketsPerUser(walletAddress),
   ]);
 
-  const tickets = [...activeTickets, ...resolvedTickets];
+  const numberOfActiveBatches = Math.trunc(Number(numOfActiveTicketsPerUser) / batchSize) + 1;
+  const numberOfResolvedBatches = Math.trunc(Number(numOfResolvedTicketsPerUser) / batchSize) + 1;
+
+  const promises = [];
+  for (let i = 0; i < numberOfActiveBatches; i++) {
+    promises.push(sportsAmmData.getActiveTicketsDataPerUser(walletAddress, i * batchSize, batchSize));
+  }
+  for (let i = 0; i < numberOfResolvedBatches; i++) {
+    promises.push(sportsAmmData.getResolvedTicketsDataPerUser(walletAddress, i * batchSize, batchSize));
+  }
+
+  const promisesResult = await Promise.all(promises);
+
+  const tickets = promisesResult.flat(1);
 
   const mappedTickets = tickets.map((ticket) => mapTicket(ticket, network, gamesInfoMap, playersInfoMap));
 
