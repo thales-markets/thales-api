@@ -281,9 +281,22 @@ async function getLiquidityData(network, tradeData, provider) {
 
 async function getAmmQuote(network, tradeData, buyInAmount, collateral) {
   const provider = getProvider(network);
+
+  const mappedTradeData = tradeData.map((data) => ({
+    ...data,
+    line: data.line * 100,
+    odds: data.odds.map((odd) => bigNumberParser(odd.toString()).toString()),
+    combinedPositions: data.combinedPositions.map((combinedPositions) =>
+      combinedPositions.map((combinedPosition) => ({
+        ...combinedPosition,
+        line: combinedPosition.line * 100,
+      })),
+    ),
+  }));
+
   const [quoteDataResponse, liquidityDataResponse] = await Promise.all([
-    getQuoteData(network, tradeData, buyInAmount, collateral, provider),
-    getLiquidityData(network, tradeData, provider),
+    getQuoteData(network, mappedTradeData, buyInAmount, collateral, provider),
+    getLiquidityData(network, mappedTradeData, provider),
   ]);
 
   const quoteData = quoteDataResponse.error
