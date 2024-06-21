@@ -53,6 +53,7 @@ const overtimeMarketsV2 = require("../overtimeV2Api/source/markets");
 const { isLiveSupportedForLeague, getLiveSupportedLeagues } = require("../overtimeV2Api/utils/sports");
 const { LeagueMap } = require("../overtimeV2Api/constants/sports");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
+const { initializeSportsAMMBuyListener, initializeParlayAMMBuyListener } = require("./services/contractEventListener");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -1815,6 +1816,10 @@ app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/digital-options", digitalOptionsRoutes);
 app.use("/v1/sport-markets", sportMarketsRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
+
+// Initilize contract listeners for cache invalidation
+initializeSportsAMMBuyListener();
+initializeParlayAMMBuyListener();
 
 app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, (req, res) => {
   const gameIds = req.body.gameIds;

@@ -5,7 +5,10 @@ const getCacheKey = (prefixKey, keys) => {
 
   return keys
     .filter((item) => item)
-    .map((item) => item && item.toLowerCase())
+    .map((item) => {
+      if (typeof item == "number") return item.toString();
+      return item && item.toLowerCase();
+    })
     .join("-");
 };
 
