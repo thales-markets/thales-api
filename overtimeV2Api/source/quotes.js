@@ -30,12 +30,15 @@ async function fetchMultiCollateralData(
   defaultCollateralDecimals,
   collateralHasLp,
   isDefaultCollateral,
-  collateralRate,
+  collateral,
+  network,
+  provider,
 ) {
   try {
     const [minimumNeededForMinBuyInAmountInDefaultCollateral] = await Promise.all([
       collateralHasLp
-        ? minBuyInAmountInDefaultCollateral / (isDefaultCollateral ? 1 : collateralRate)
+        ? minBuyInAmountInDefaultCollateral /
+          (isDefaultCollateral ? 1 : await getCollateralRate(network, provider, collateral))
         : multiCollateralOnOffRamp.getMinimumNeeded(
             collateralAddress,
             bigNumberParser(minBuyInAmountInDefaultCollateral.toString(), defaultCollateralDecimals),
@@ -85,16 +88,26 @@ async function fetchTicketAmmQuote(
   }
 }
 
-function getRates(network, provider) {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.TOKEN, async function (err, obj) {
-      const tokenMap = new Map(JSON.parse(obj));
-      const thalesRate = Number(tokenMap.get("price"));
-
+function getCollateralRate(network, provider, collateral) {
+  return new Promise(async function (resolve) {
+    if (
+      !collateral ||
+      (collateral.toUpperCase() !== "ETH" &&
+        collateral.toUpperCase() !== "WETH" &&
+        collateral.toUpperCase() !== "THALES")
+    ) {
+      resolve(1);
+    } else if (collateral.toUpperCase() === "ETH" || collateral.toUpperCase() === "WETH") {
       const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
       const ethRate = bigNumberFormatter(await priceFeed.rateForCurrency(formatBytes32String("ETH")));
-      resolve({ thalesRate, ethRate });
-    });
+      resolve(ethRate);
+    } else {
+      redisClient.get(KEYS.TOKEN, async function (err, obj) {
+        const tokenMap = new Map(JSON.parse(obj));
+        const thalesRate = Number(tokenMap.get("price"));
+        resolve(thalesRate);
+      });
+    }
   });
 }
 
@@ -111,10 +124,6 @@ async function getQuoteData(network, tradeData, buyInAmount, collateral, provide
   const collateralHasLp = isLpSupported(collateral);
 
   try {
-    const rates = await getRates(network, provider);
-    const collateralRate =
-      collateral === "WETH" || collateral === "ETH" ? rates.ethRate : collateral === "THALES" ? rates.thalesRate : 1;
-
     const sportsAmmData = new ethers.Contract(
       sportsAMMV2DataContract.addresses[network],
       sportsAMMV2DataContract.abi,
@@ -135,24 +144,37 @@ async function getQuoteData(network, tradeData, buyInAmount, collateral, provide
     const maxSupportedAmount = bigNumberFormatter(sportsAmmParameters.maxSupportedAmount, defaultCollateral.decimals);
     const maxTicketSize = Number(sportsAmmParameters.maxTicketSize);
 
-    const minBuyInAmount = await fetchMultiCollateralData(
-      multiCollateralOnOffRamp,
-      minBuyInAmountInDefaultCollateral,
-      collateralAddress,
-      collateralDecimals,
-      defaultCollateral.decimals,
-      collateralHasLp,
-      isDefaultCollateral,
-      collateralRate,
-    );
-
-    if (minBuyInAmount.error) {
-      return { error: minBuyInAmount.error };
-    }
-
     if (maxTicketSize < tradeData.length) {
       return { error: `The maximum number of positions on the ticket is ${maxTicketSize}.` };
     }
+
+    const [minBuyInAmount, sportAmmQuote] = await Promise.all([
+      fetchMultiCollateralData(
+        multiCollateralOnOffRamp,
+        minBuyInAmountInDefaultCollateral,
+        collateralAddress,
+        collateralDecimals,
+        defaultCollateral.decimals,
+        collateralHasLp,
+        isDefaultCollateral,
+        collateral,
+        network,
+        provider,
+      ),
+      fetchTicketAmmQuote(
+        sportsAmm,
+        tradeData,
+        buyInAmount,
+        collateralAddress,
+        collateralDecimals,
+        isDefaultCollateral,
+      ),
+    ]);
+
+    if (minBuyInAmount.error) {
+      return minBuyInAmount;
+    }
+
     const decimals = getPrecision(minBuyInAmount);
     if (minBuyInAmount > buyInAmount) {
       return {
@@ -166,18 +188,10 @@ async function getQuoteData(network, tradeData, buyInAmount, collateral, provide
       };
     }
 
-    const sportAmmQuote = await fetchTicketAmmQuote(
-      sportsAmm,
-      tradeData,
-      buyInAmount,
-      collateralAddress,
-      collateralDecimals,
-      isDefaultCollateral,
-    );
-
     if (sportAmmQuote.error) {
-      return { error: sportAmmQuote.error };
+      return sportAmmQuote;
     }
+
     const amountsToBuy = (sportAmmQuote.amountsToBuy || []).map((quote) =>
       bigNumberFormatter(quote, collateralHasLp ? collateralDecimals : defaultCollateral.decimals),
     );
@@ -192,7 +206,7 @@ async function getQuoteData(network, tradeData, buyInAmount, collateral, provide
       collateralHasLp ? collateralDecimals : defaultCollateral.decimals,
     );
     buyInAmountInDefaultCollateral = isThales(collateral)
-      ? Number(buyInAmount) * collateralRate
+      ? Number(buyInAmount) * (await getCollateralRate(network, provider, collateral))
       : bigNumberFormatter(sportAmmQuote.buyInAmountInDefaultCollateral, defaultCollateral.decimals);
     payoutInDefaultCollateral = buyInAmountInDefaultCollateral / totalQuote;
 
