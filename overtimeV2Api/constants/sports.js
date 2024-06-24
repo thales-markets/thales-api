@@ -110,6 +110,7 @@ const LeagueMap = {
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.NFL]: {
     sport: Sport.FOOTBALL,
@@ -122,6 +123,7 @@ const LeagueMap = {
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.MLB]: {
     sport: Sport.BASEBALL,
@@ -134,6 +136,7 @@ const LeagueMap = {
     periodType: PeriodType.INNING,
     isDrawAvailable: false,
     live: true,
+    isLiveTestnet: true,
   },
   [League.NBA]: {
     sport: Sport.BASKETBALL,
@@ -146,6 +149,7 @@ const LeagueMap = {
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
     live: true,
+    isLiveTestnet: true,
   },
   [League.NCAAB]: {
     sport: Sport.BASKETBALL,
@@ -157,6 +161,7 @@ const LeagueMap = {
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.NHL]: {
     sport: Sport.HOCKEY,
@@ -169,6 +174,7 @@ const LeagueMap = {
     periodType: PeriodType.PERIOD,
     isDrawAvailable: false,
     live: true,
+    isLiveTestnet: true,
   },
   [League.UFC]: {
     sport: Sport.FIGHTING,
@@ -180,6 +186,7 @@ const LeagueMap = {
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.WNBA]: {
     sport: Sport.BASKETBALL,
@@ -192,6 +199,7 @@ const LeagueMap = {
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.MLS]: {
     sport: Sport.SOCCER,
@@ -204,6 +212,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.EPL]: {
     sport: Sport.SOCCER,
@@ -216,6 +225,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.LIGUE_ONE]: {
     sport: Sport.SOCCER,
@@ -228,6 +238,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
 
   [League.BUNDESLIGA]: {
@@ -241,6 +252,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.LA_LIGA]: {
     sport: Sport.SOCCER,
@@ -253,6 +265,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.SERIE_A]: {
     sport: Sport.SOCCER,
@@ -265,6 +278,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.UEFA_CL]: {
     sport: Sport.SOCCER,
@@ -277,6 +291,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.UEFA_EL]: {
     sport: Sport.SOCCER,
@@ -289,6 +304,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.FIFA_WC]: {
     sport: Sport.SOCCER,
@@ -300,6 +316,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.J1_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -312,6 +329,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.IPL]: {
     sport: Sport.CRICKET,
@@ -323,6 +341,7 @@ const LeagueMap = {
     periodType: PeriodType.INNING,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.T20_BLAST]: {
     sport: Sport.CRICKET,
@@ -334,6 +353,7 @@ const LeagueMap = {
     periodType: PeriodType.INNING,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.IIHF_WORLD_CHAMPIONSHIP]: {
     sport: Sport.HOCKEY,
@@ -345,6 +365,7 @@ const LeagueMap = {
     periodType: PeriodType.PERIOD,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.COPA_AMERICA]: {
     sport: Sport.SOCCER,
@@ -357,6 +378,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.COPA_LIBERTADORES]: {
     sport: Sport.SOCCER,
@@ -369,6 +391,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.UEFA_EURO]: {
     sport: Sport.SOCCER,
@@ -381,6 +404,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.EREDIVISIE]: {
     sport: Sport.SOCCER,
@@ -393,6 +417,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.PRIMEIRA_LIGA]: {
     sport: Sport.SOCCER,
@@ -405,6 +430,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.FIFA_WC_WOMEN]: {
     sport: Sport.SOCCER,
@@ -416,6 +442,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.ENGLAND_CUP]: {
     sport: Sport.SOCCER,
@@ -428,6 +455,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.FRANCE_CUP]: {
     sport: Sport.SOCCER,
@@ -439,6 +467,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.SPAIN_CUP]: {
     sport: Sport.SOCCER,
@@ -450,6 +479,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.ITALY_CUP]: {
     sport: Sport.SOCCER,
@@ -461,6 +491,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.TENNIS_GS]: {
     sport: Sport.TENNIS,
@@ -473,6 +504,7 @@ const LeagueMap = {
     periodType: PeriodType.SET,
     isDrawAvailable: false,
     live: true,
+    isLiveTestnet: true,
   },
   [League.TENNIS_MASTERS]: {
     sport: Sport.TENNIS,
@@ -484,6 +516,7 @@ const LeagueMap = {
     periodType: PeriodType.SET,
     isDrawAvailable: false,
     live: true,
+    isLiveTestnet: true,
   },
   [League.GERMANY_CUP]: {
     sport: Sport.SOCCER,
@@ -495,6 +528,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.BRAZIL_1]: {
     sport: Sport.SOCCER,
@@ -507,6 +541,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.UEFA_EURO_U21]: {
     sport: Sport.SOCCER,
@@ -518,6 +553,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
     tooltipKey: "common.football-tooltip",
   },
   [League.FIFA_WORLD_CUP_U20]: {
@@ -530,6 +566,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.EUROLEAGUE]: {
     sport: Sport.BASKETBALL,
@@ -542,6 +579,7 @@ const LeagueMap = {
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
     live: true,
+    isLiveTestnet: true,
   },
   [League.FIBA_WORLD_CUP]: {
     sport: Sport.BASKETBALL,
@@ -553,6 +591,7 @@ const LeagueMap = {
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.FORMULA1]: {
     sport: Sport.MOTOSPORT,
@@ -564,6 +603,7 @@ const LeagueMap = {
     periodType: PeriodType.EMPTY,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.MOTOGP]: {
     sport: Sport.MOTOSPORT,
@@ -575,6 +615,7 @@ const LeagueMap = {
     periodType: PeriodType.EMPTY,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.SAUDI_PROFESSIONAL_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -587,6 +628,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: true,
+    isLiveTestnet: true,
   },
   [League.BOXING]: {
     sport: Sport.FIGHTING,
@@ -598,6 +640,7 @@ const LeagueMap = {
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.UEFA_NATIONS_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -609,6 +652,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.CONCACAF_NATIONS_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -620,6 +664,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.CSGO]: {
     sport: Sport.ESPORTS,
@@ -632,6 +677,7 @@ const LeagueMap = {
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
     live: true,
+    isLiveTestnet: true,
   },
   [League.DOTA2]: {
     sport: Sport.ESPORTS,
@@ -644,6 +690,7 @@ const LeagueMap = {
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
     live: true,
+    isLiveTestnet: true,
   },
   [League.LOL]: {
     sport: Sport.ESPORTS,
@@ -656,6 +703,7 @@ const LeagueMap = {
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
     live: true,
+    isLiveTestnet: true,
   },
   [League.CONMEBOL_WC_QUALIFICATIONS]: {
     sport: Sport.SOCCER,
@@ -667,6 +715,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.UEFA_CONFERENCE_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -679,6 +728,7 @@ const LeagueMap = {
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
     live: false,
+    isLiveTestnet: false,
   },
   [League.NON_TITLE_BOXING]: {
     sport: Sport.FIGHTING,
@@ -690,6 +740,7 @@ const LeagueMap = {
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.GOLF_H2H]: {
     sport: Sport.GOLF,
@@ -701,6 +752,7 @@ const LeagueMap = {
     periodType: PeriodType.EMPTY,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
   [League.GOLF_WINNER]: {
     sport: Sport.GOLF,
@@ -712,6 +764,7 @@ const LeagueMap = {
     periodType: PeriodType.EMPTY,
     isDrawAvailable: false,
     live: false,
+    isLiveTestnet: false,
   },
 };
 

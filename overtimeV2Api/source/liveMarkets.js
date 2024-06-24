@@ -22,6 +22,7 @@ const {
   getLeagueIsDrawAvailable,
   getLeagueSport,
   getLiveSupportedLeagues,
+  getTestnetLiveSupportedLeagues,
   getLeagueOpticOddsName,
 } = require("../utils/sports");
 const { Sport, LEAGUES_NO_FORMAL_HOME_AWAY } = require("../constants/sports");
@@ -53,7 +54,8 @@ async function processLiveMarkets() {
 }
 
 async function processAllMarkets(network) {
-  let availableLeagueIds = getLiveSupportedLeagues();
+  let availableLeagueIds =
+    Number(network) == NETWORK.OptimismSepolia ? getTestnetLiveSupportedLeagues() : getLiveSupportedLeagues();
 
   const liveOddsProvidersPerSport = new Map();
 
@@ -64,7 +66,8 @@ async function processAllMarkets(network) {
   redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
 
-    const enabledDummyMarkets = Number(network) !== 11155420 ? 0 : Number(process.env.LIVE_DUMMY_MARKETS_ENABLED);
+    const enabledDummyMarkets =
+      Number(network) !== NETWORK.OptimismSepolia ? 0 : Number(process.env.LIVE_DUMMY_MARKETS_ENABLED);
     try {
       let allMarkets = Array.from(markets.values());
       const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
@@ -280,7 +283,9 @@ async function processAllMarkets(network) {
               datesMatch = new Date(response.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
             }
 
-            return homeTeamsMatch && awayTeamsMatch && datesMatch;
+            const isMatchLiveFlag = response.is_live == true;
+
+            return homeTeamsMatch && awayTeamsMatch && datesMatch && isMatchLiveFlag;
           });
 
           if (responseObject != undefined) {

@@ -1615,7 +1615,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
     return;
   }
 
-  const allLiveLeagues = Object.values(LeagueMap).filter((league) => league.live);
+  const allLiveLeagues = Object.values(LeagueMap).filter((league) =>
+    Number(network) == 11155420 ? league.isLiveTestnet : league.live,
+  );
   const allLiveLeagueIds = allLiveLeagues.map((league) => league.id);
   const allLiveSports = uniqBy(allLiveLeagues.map((league) => league.sport.toLowerCase()));
 
