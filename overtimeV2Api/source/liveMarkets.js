@@ -283,9 +283,6 @@ async function processAllMarkets(network) {
 
             const isMatchLiveFlag = response.is_live == true;
 
-            console.log(response.is_live);
-            console.log(isMatchLiveFlag);
-
             return homeTeamsMatch && awayTeamsMatch && datesMatch && isMatchLiveFlag;
           });
 
