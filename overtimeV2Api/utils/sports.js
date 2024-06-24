@@ -25,6 +25,11 @@ const getLiveSupportedLeagues = () => {
   return allLeagues.filter((league) => league.live).map((league) => league.id);
 };
 
+const getTestnetLiveSupportedLeagues = () => {
+  const allLeagues = Object.values(LeagueMap);
+  return allLeagues.filter((league) => league.isLiveTestnet).map((league) => league.id);
+};
+
 const isLiveSupportedForLeague = (league) => {
   const leagueInfo = LeagueMap[league];
   return leagueInfo ? leagueInfo.live : false;
@@ -40,6 +45,7 @@ module.exports = {
   getLeagueProvider,
   getLeagueIsDrawAvailable,
   getLiveSupportedLeagues,
+  getTestnetLiveSupportedLeagues,
   getLeagueLabel,
   isLiveSupportedForLeague,
   getLeagueOpticOddsName,

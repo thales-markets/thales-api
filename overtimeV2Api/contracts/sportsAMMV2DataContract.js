@@ -1,6 +1,6 @@
 const { NETWORK } = require("../constants/networks");
 
-const parlayMarketDataContract = {
+const sportsAMMV2DataContract = {
   addresses: {
     [NETWORK.Optimism]: "0x71CE219942FFD9C1d8B67d6C35C39Ae04C4F647B",
     [NETWORK.OptimismSepolia]: "0xe4d8d605874443f952fBdc03Dd1C69761230A7f0",
@@ -63,7 +63,11 @@ const parlayMarketDataContract = {
       type: "function",
     },
     {
-      inputs: [{ internalType: "address", name: "user", type: "address" }],
+      inputs: [
+        { internalType: "address", name: "user", type: "address" },
+        { internalType: "uint256", name: "_startIndex", type: "uint256" },
+        { internalType: "uint256", name: "_pageSize", type: "uint256" },
+      ],
       name: "getActiveTicketsDataPerUser",
       outputs: [
         {
@@ -96,7 +100,11 @@ const parlayMarketDataContract = {
             },
             {
               components: [
-                { internalType: "enum ISportsAMMV2ResultManager.MarketPositionStatus", name: "status", type: "uint8" },
+                {
+                  internalType: "enum ISportsAMMV2ResultManager.MarketPositionStatus",
+                  name: "status",
+                  type: "uint8",
+                },
                 { internalType: "int24[]", name: "results", type: "int24[]" },
               ],
               internalType: "struct SportsAMMV2Data.MarketResult[]",
@@ -167,7 +175,11 @@ const parlayMarketDataContract = {
       type: "function",
     },
     {
-      inputs: [{ internalType: "address", name: "user", type: "address" }],
+      inputs: [
+        { internalType: "address", name: "user", type: "address" },
+        { internalType: "uint256", name: "_startIndex", type: "uint256" },
+        { internalType: "uint256", name: "_pageSize", type: "uint256" },
+      ],
       name: "getResolvedTicketsDataPerUser",
       outputs: [
         {
@@ -200,7 +212,11 @@ const parlayMarketDataContract = {
             },
             {
               components: [
-                { internalType: "enum ISportsAMMV2ResultManager.MarketPositionStatus", name: "status", type: "uint8" },
+                {
+                  internalType: "enum ISportsAMMV2ResultManager.MarketPositionStatus",
+                  name: "status",
+                  type: "uint8",
+                },
                 { internalType: "int24[]", name: "results", type: "int24[]" },
               ],
               internalType: "struct SportsAMMV2Data.MarketResult[]",
@@ -298,7 +314,11 @@ const parlayMarketDataContract = {
             },
             {
               components: [
-                { internalType: "enum ISportsAMMV2ResultManager.MarketPositionStatus", name: "status", type: "uint8" },
+                {
+                  internalType: "enum ISportsAMMV2ResultManager.MarketPositionStatus",
+                  name: "status",
+                  type: "uint8",
+                },
                 { internalType: "int24[]", name: "results", type: "int24[]" },
               ],
               internalType: "struct SportsAMMV2Data.MarketResult[]",
@@ -331,7 +351,11 @@ const parlayMarketDataContract = {
       type: "function",
     },
     {
-      inputs: [{ internalType: "bytes32", name: "gameId", type: "bytes32" }],
+      inputs: [
+        { internalType: "bytes32", name: "gameId", type: "bytes32" },
+        { internalType: "uint256", name: "_startIndex", type: "uint256" },
+        { internalType: "uint256", name: "_pageSize", type: "uint256" },
+      ],
       name: "getTicketsDataPerGame",
       outputs: [
         {
@@ -364,7 +388,11 @@ const parlayMarketDataContract = {
             },
             {
               components: [
-                { internalType: "enum ISportsAMMV2ResultManager.MarketPositionStatus", name: "status", type: "uint8" },
+                {
+                  internalType: "enum ISportsAMMV2ResultManager.MarketPositionStatus",
+                  name: "status",
+                  type: "uint8",
+                },
                 { internalType: "int24[]", name: "results", type: "int24[]" },
               ],
               internalType: "struct SportsAMMV2Data.MarketResult[]",
@@ -494,4 +522,4 @@ const parlayMarketDataContract = {
   ],
 };
 
-module.exports = parlayMarketDataContract;
+module.exports = sportsAMMV2DataContract;
