@@ -16,4 +16,4 @@ const TTL = {
   VAULT_USER_TRANSACTIONS: ONE_MINUTE * 10,
 };
 
-module.export = TTL;
+module.exports = TTL;
