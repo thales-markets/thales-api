@@ -22,6 +22,7 @@ const {
   getLeagueIsDrawAvailable,
   getLeagueSport,
   getLiveSupportedLeagues,
+  getTestnetLiveSupportedLeagues,
   getLeagueOpticOddsName,
 } = require("../utils/sports");
 const { Sport, LEAGUES_NO_FORMAL_HOME_AWAY } = require("../constants/sports");
@@ -53,7 +54,7 @@ async function processLiveMarkets() {
 }
 
 async function processAllMarkets(network) {
-  let availableLeagueIds = getLiveSupportedLeagues();
+  let availableLeagueIds = Number(network) == 11155420 ? getTestnetLiveSupportedLeagues() : getLiveSupportedLeagues();
 
   const liveOddsProvidersPerSport = new Map();
 
@@ -280,7 +281,12 @@ async function processAllMarkets(network) {
               datesMatch = new Date(response.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
             }
 
-            return homeTeamsMatch && awayTeamsMatch && datesMatch;
+            const isMatchLiveFlag = response.is_live == true;
+
+            console.log(response.is_live);
+            console.log(isMatchLiveFlag);
+
+            return homeTeamsMatch && awayTeamsMatch && datesMatch && isMatchLiveFlag;
           });
 
           if (responseObject != undefined) {
