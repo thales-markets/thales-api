@@ -61,6 +61,7 @@ const ENDPOINTS = {
 
   OVERTIME_V2_SPORTS: "/overtime-v2/sports",
   OVERTIME_V2_MARKET_TYPES: "/overtime-v2/market-types",
+  OVERTIME_V2_COLLATERALS: "/overtime-v2/networks/:networkParam/collaterals",
   OVERTIME_V2_MARKETS: "/overtime-v2/networks/:networkParam/markets",
   OVERTIME_V2_LIVE_MARKETS: "/overtime-v2/networks/:networkParam/live-markets",
   OVERTIME_V2_MARKET: "/overtime-v2/networks/:networkParam/markets/:marketAddress",
@@ -71,6 +72,8 @@ const ENDPOINTS = {
   OVERTIME_V2_PLAYER_INFO: "/overtime-v2/players-info/:playerId",
   OVERTIME_V2_LIVE_SCORE: "/overtime-v2/live-scores/:gameId",
   OVERTIME_V2_UPDATE_MERKLE_TREE: "/overtime-v2/update-merkle-tree",
+  OVERTIME_V2_USER_HISTORY: "/overtime-v2/networks/:networkParam/users/:userAddress/history",
+  OVERTIME_V2_QUOTE: "/overtime-v2/networks/:networkParam/quote",
 };
 
 module.exports = ENDPOINTS;

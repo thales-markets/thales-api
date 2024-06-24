@@ -18,7 +18,7 @@ const { getDefaultCollateral } = require("../utils/collaterals");
 let marketsMap = new Map();
 let errorOnOddsFetching = false;
 
-const BATCH_SIZE = 100;
+const BATCH_SIZE = 50;
 const BASE_BATCH_SIZE = 50;
 
 async function processMarkets() {

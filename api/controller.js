@@ -28,6 +28,7 @@ const thalesUsers = require("../thalesApi/source/users");
 const overtimeQuotes = require("../overtimeApi/source/quotes");
 const thalesQuotes = require("../thalesApi/source/quotes");
 const { COLLATERALS: OVERTIME_COLLATERALS } = require("../overtimeApi/constants/collaterals");
+const { COLLATERALS: OVERTIME_V2_COLLATERALS } = require("../overtimeV2Api/constants/collaterals");
 const { COLLATERALS: THALES_COLLATERALS } = require("../thalesApi/constants/collaterals");
 const {
   getNonDefaultCollateralSymbols: getNonDefaultCollateralSymbolsOvertime,
@@ -49,8 +50,9 @@ const thalesSpeedUtilsMarkets = require("../thalesSpeedApi/utils/markets");
 const thalesSpeedUtilsNetworks = require("../thalesSpeedApi/utils/networks");
 const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters");
 
-const overtimeMarketsV2 = require("../overtimeV2Api/source/markets");
-const { isLiveSupportedForLeague, getLiveSupportedLeagues } = require("../overtimeV2Api/utils/sports");
+const overtimeV2Markets = require("../overtimeV2Api/source/markets");
+const overtimeV2Users = require("../overtimeV2Api/source/users");
+const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
 const { LeagueMap } = require("../overtimeV2Api/constants/sports");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
 
@@ -1474,83 +1476,68 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET_TYPES, (req, res) => {
   }
 });
 
+app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
+  const network = req.params.networkParam;
+  if ([10, 11155420].includes(Number(network))) {
+    try {
+      res.send(OVERTIME_V2_COLLATERALS[Number(network)]);
+    } catch (e) {
+      console.log(e);
+    }
+  } else {
+    res.send("Unsupported network. upported networks: 10 (optimism), 11155420 (optimism sepolia).");
+  }
+});
+
 app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const network = req.params.networkParam;
   let status = req.query.status;
-  let type = req.query.type;
+  let typeId = req.query.typeId;
   let sport = req.query.sport;
   let leagueId = req.query.leagueid;
   let ungroup = req.query.ungroup;
-  let live = req.query.live;
 
   if (!status) {
     status = "open";
   }
   status = status.toLowerCase();
 
-  if (![10, 11155420, 8453, 42161].includes(Number(network))) {
-    res.send(
-      "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 11155420 (optimism sepolia).",
-    );
+  if (![10, 11155420].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 11155420 (optimism sepolia).");
     return;
   }
+
   if (!["open", "resolved", "cancelled", "paused", "ongoing"].includes(status)) {
     res.send("Unsupported status. Supported statuses: open, resolved, cancelled, paused, ongoing.");
     return;
   }
-  if (
-    type &&
-    ![
-      "moneyline",
-      "spread",
-      "total",
-      "doublechance",
-      "homeruns",
-      "strikeouts",
-      "passingyards",
-      "rushingyards",
-      "pasingtouchdowns",
-      "receivingyards",
-      "scoringtouchdowns",
-      "fieldgoalsmade",
-      "pitcherhitsallowed",
-      "points",
-      "shots",
-      "goals",
-      "hitsrecorded",
-      "rebounds",
-      "assists",
-      "doubledouble",
-      "tripledouble",
-      "receptions",
-    ].includes(type.toLowerCase())
-  ) {
+
+  const allTypes = Object.values(MarketTypeMap);
+  const allTypeIds = allTypes.map((type) => type.id);
+
+  if (typeId && !allTypeIds.includes(Number(typeId))) {
     res.send(
-      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, homeruns, strikeouts, passingYards, rushingYards, pasingTouchdowns, receivingYards, scoringTouchdowns, fieldGoalsMade, pitcherHitsAllowed, points, shots, goals, hitsRecorded, rebounds, assists, doubleDouble, tripleDouble, receptions.",
+      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: /overtime-v2/market-types.`,
     );
     return;
   }
+
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
     res.send("Invalid value for ungroup. Possible values: true or false.");
     return;
   }
 
-  if (live && !["true", "false"].includes(live.toLowerCase())) {
-    res.send("Invalid value for live. Possible values: true or false.");
-    return;
-  }
-
-  const sports = overtimeSportsList;
-  const allLeagueIds = sports.map((sport) => Number(sport.id));
-  const allSports = uniqBy(sports.map((sport) => sport.sport.toLowerCase()));
+  const allLeagues = Object.values(LeagueMap);
+  const allLeagueIds = allLeagues.map((league) => league.id);
+  const allSports = uniqBy(allLeagues.map((league) => league.sport.toLowerCase()));
 
   if (sport && !allSports.includes(sport.toLowerCase())) {
-    res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime/sports.`);
+    res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime-v2/sports.`);
     return;
   }
   if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
     res.send(
-      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime/sports.`,
+      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime-v2/sports.`,
     );
     return;
   }
@@ -1569,7 +1556,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
       const marketsByStatus = groupMarketsByStatus[status] || [];
       let marketsByType = marketsByStatus;
-      if (type) {
+      if (typeId) {
         marketsByType = [];
         marketsByStatus.forEach((market) => {
           marketsByType.push(market);
@@ -1581,7 +1568,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
         (market) =>
           (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
           (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
-          (!type || market.type.toLowerCase() === type.toLowerCase()),
+          (!typeId || Number(market.typeId) === Number(typeId)),
       );
 
       if (ungroup && ungroup.toLowerCase() === "true") {
@@ -1603,93 +1590,53 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
 app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
   const network = req.params.networkParam;
-  let type = req.query.type;
+  let typeId = req.query.typeId;
   let sport = req.query.sport;
   let ungroup = req.query.ungroup;
-  let leagueIds = req.query.leagueids;
+  let leagueId = req.query.leagueId;
 
-  if (![10, 11155420, 8453, 42161].includes(Number(network))) {
+  if (![10, 11155420].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 11155420 (optimism sepolia).");
+    return;
+  }
+
+  const allTypes = Object.values(MarketTypeMap);
+  const allTypeIds = allTypes.map((type) => type.id);
+
+  if (typeId && !allTypeIds.includes(Number(typeId))) {
     res.send(
-      "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 8453 (base), 11155420 (optimism sepolia).",
+      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: /overtime-v2/market-types.`,
     );
     return;
   }
 
-  if (
-    type &&
-    ![
-      "moneyline",
-      "spread",
-      "total",
-      "doublechance",
-      "homeruns",
-      "strikeouts",
-      "passingyards",
-      "rushingyards",
-      "pasingtouchdowns",
-      "receivingyards",
-      "scoringtouchdowns",
-      "fieldgoalsmade",
-      "pitcherhitsallowed",
-      "points",
-      "shots",
-      "goals",
-      "hitsrecorded",
-      "rebounds",
-      "assists",
-      "doubledouble",
-      "tripledouble",
-      "receptions",
-    ].includes(type.toLowerCase())
-  ) {
-    res.send(
-      "Unsupported type. Supported types: moneyline, spread, total, doubleChance, homeruns, strikeouts, passingYards, rushingYards, pasingTouchdowns, receivingYards, scoringTouchdowns, fieldGoalsMade, pitcherHitsAllowed, points, shots, goals, hitsRecorded, rebounds, assists, doubleDouble, tripleDouble, receptions.",
-    );
-    return;
-  }
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
     res.send("Invalid value for ungroup. Possible values: true or false.");
     return;
   }
 
-  const sports = overtimeSportsList;
-  const allLeagueIds = sports.map((sport) => Number(sport.id));
-  const allSports = uniqBy(sports.map((sport) => sport.sport.toLowerCase()));
+  const allLiveLeagues = Object.values(LeagueMap).filter((league) => league.live);
+  const allLiveLeagueIds = allLiveLeagues.map((league) => league.id);
+  const allLiveSports = uniqBy(allLiveLeagues.map((league) => league.sport.toLowerCase()));
 
-  if (sport && !allSports.includes(sport.toLowerCase())) {
-    res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime/sports.`);
+  if (sport && !allLiveSports.includes(sport.toLowerCase())) {
+    res.send(
+      `Unsupported live sport. Supported live sports: ${allLiveSports.join(
+        ", ",
+      )}. See details on: /overtime-v2/sports.`,
+    );
     return;
   }
-
-  const liveSupporetedLeagues = getLiveSupportedLeagues();
-
-  const errors = [];
-  let availableLeagueIds = leagueIds
-    ? leagueIds
-        .split(",")
-        .map((id) => Number(id))
-        .filter((id) => {
-          if (!allLeagueIds.includes(Number(id)) && !isLiveSupportedForLeague(Number(id))) {
-            errors.push(
-              `Unsupported live league ID ${id}. Supported live league IDs: ${liveSupporetedLeagues.join(
-                ", ",
-              )}. See details on: /overtime/sports.`,
-            );
-            return false;
-          }
-          return true;
-        })
-    : [];
-
-  if (leagueIds && !availableLeagueIds.length) {
+  if (leagueId && !allLiveLeagueIds.includes(Number(leagueId))) {
     res.send(
-      `Unsupported live league IDs. Supported live league IDs: ${liveSupporetedLeagues.join(
+      `Unsupported live league ID. Supported live league IDs: ${allLiveLeagueIds.join(
         ", ",
-      )}. See details on: /overtime/sports.`,
+      )}. See details on: /overtime-v2/sports.`,
     );
     return;
   }
 
+  const errors = [];
   redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], async function (err, obj) {
     const markets = JSON.parse(obj);
 
@@ -1697,8 +1644,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
       const filteredMarkets = markets.filter(
         (market) =>
           (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
-          (!leagueIds || availableLeagueIds.includes(market.leagueId)) &&
-          (!type || market.type.toLowerCase() === type.toLowerCase()),
+          (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
+          (!typeId || Number(market.typeId) === Number(typeId)),
       );
 
       res.send({
@@ -1810,13 +1757,28 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORE, (req, res) => {
   });
 });
 
-// V1 Digital Options and Sport Markets API with cache response logic
-app.use("/v1/stakers", stakersRoutes);
-app.use("/v1/digital-options", digitalOptionsRoutes);
-app.use("/v1/sport-markets", sportMarketsRoutes);
-app.use("/v1/cache-control", cacheControlRoutes);
+app.get(ENDPOINTS.OVERTIME_V2_USER_HISTORY, async (req, res) => {
+  const network = req.params.networkParam;
+  const userAddress = req.params.userAddress;
+  const status = req.query.status;
 
-app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, (req, res) => {
+  if (![10, 11155420].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 11155420 (optimism sepolia).");
+    return;
+  }
+
+  if (status && !["open", "claimable", "closed"].includes(status.toLowerCase())) {
+    res.send("Unsupported status. Supported statuses: open, claimable, closed.");
+    return;
+  }
+
+  const userHistory = await overtimeV2Users.processUserHistory(network, userAddress.toLowerCase());
+  const history = status ? userHistory[status.toLowerCase()] : userHistory;
+
+  return res.send(history);
+});
+
+app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, async (req, res) => {
   const gameIds = req.body.gameIds;
 
   if (!gameIds) {
@@ -1828,6 +1790,51 @@ app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, (req, res) => {
     res.send("Invalid value for game IDs. The game IDs must be an array.");
     return;
   }
-  overtimeMarketsV2.updateMerkleTree(gameIdsArray);
+  await overtimeV2Markets.updateMerkleTree(gameIdsArray);
   res.send();
 });
+
+app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
+  const network = req.params.networkParam;
+  const tradeData = req.body.tradeData;
+  const buyInAmount = req.body.buyInAmount;
+  const collateral = req.body.collateral;
+
+  if (![10, 11155420].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 11155420 (optimism sepolia).");
+    return;
+  }
+
+  if (!tradeData) {
+    res.send("Trade data is required.");
+    return;
+  }
+  if (!Array.isArray(tradeData)) {
+    res.send("Invalid value for trade data. Trade data must be an array.");
+    return;
+  }
+
+  if (!buyInAmount) {
+    res.send("Buy-in amount is required.");
+    return;
+  }
+  if (!isNumeric(buyInAmount.toString()) || Number(buyInAmount) === 0) {
+    res.send("Invalid value for buy-in amount. The buy-in amount must be a number greater than 0.");
+    return;
+  }
+
+  const supportedCollaterals = OVERTIME_V2_COLLATERALS[Number(network)].map((collateral) => collateral.symbol);
+  if (collateral && !supportedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase())) {
+    res.send(`Unsupported collateral. Supported collaterals: ${supportedCollaterals.join(", ")}`);
+    return;
+  }
+
+  const quote = await overtimeV2Quotes.getAmmQuote(Number(network), tradeData, Number(buyInAmount), collateral);
+  res.send(quote);
+});
+
+// V1 Digital Options and Sport Markets API with cache response logic
+app.use("/v1/stakers", stakersRoutes);
+app.use("/v1/digital-options", digitalOptionsRoutes);
+app.use("/v1/sport-markets", sportMarketsRoutes);
+app.use("/v1/cache-control", cacheControlRoutes);

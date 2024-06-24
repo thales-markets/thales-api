@@ -1013,6 +1013,13 @@ const Status = {
   CANCELLED: 255,
 };
 
+const TicketMarketStatus = {
+  OPEN: 0,
+  CANCELLED: 1,
+  WINNING: 2,
+  LOSING: 3,
+};
+
 const MIN_ODDS_FOR_DIFF_CHECKING = 0.2;
 const LIVE_TYPE_ID_BASE = 100000;
 
@@ -1044,4 +1051,5 @@ module.exports = {
   COMBINED_POSITIONS_MARKET_TYPES,
   EnetpulseRounds,
   LIVE_TYPE_ID_BASE,
+  TicketMarketStatus,
 };
