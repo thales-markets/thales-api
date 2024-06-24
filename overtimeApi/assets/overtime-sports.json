@@ -160,6 +160,12 @@
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
   {
+    "id": 9044,
+    "name": "Copa America",
+    "sport": "Soccer",
+    "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
+  },
+  {
     "id": 9045,
     "name": "Copa Libertadores",
     "opticOddsName": "CONMEBOL - Copa Libertadores",
@@ -168,7 +174,7 @@
   },
   {
     "id": 9050,
-    "name": "UEFA EURO Qualifications",
+    "name": "UEFA EURO",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
