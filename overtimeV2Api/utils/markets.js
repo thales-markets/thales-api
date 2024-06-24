@@ -300,7 +300,7 @@ const getSpreadData = (spreadData, sportId, typeId) => {
 const getBookmakersArray = (bookmakersData, sportId) => {
   const sportBookmakersData = bookmakersData.find((data) => Number(data.sportId) === Number(sportId));
   if (sportBookmakersData != undefined) {
-    if (sportBookmakersData.primaryBookmaker == "" || sportBookmakersData.secondaryBookmaker == "") {
+    if (sportBookmakersData.primaryBookmaker == "") {
       return process.env.LIVE_ODDS_PROVIDERS.split(",");
     }
     const bookmakersArray = [];
