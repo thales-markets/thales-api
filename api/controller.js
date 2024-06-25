@@ -1841,3 +1841,7 @@ app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/digital-options", digitalOptionsRoutes);
 app.use("/v1/sport-markets", sportMarketsRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
+
+// Contract listeners
+initializeSportsAMMBuyListener();
+initializeParlayAMMBuyListener();
