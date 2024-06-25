@@ -8,25 +8,11 @@ const CHAINNODES_URL = {
   [NETWORK.Base]: "https://base-mainnet.chainnodes.org/",
 };
 
-const CHAINNODES_WS_URL = {
-  [NETWORK.Optimism]: "wss://optimism-mainnet.chainnodes.org/",
-  [NETWORK.OptimismSepolia]: "",
-  [NETWORK.Arbitrum]: "wss://arbitrum-one.chainnodes.org/",
-  [NETWORK.Base]: "wss://base-mainnet.chainnodes.org/",
-};
-
 const ANKR_URL = {
   [NETWORK.Optimism]: "https://rpc.ankr.com/optimism/",
   [NETWORK.OptimismSepolia]: "https://rpc.ankr.com/optimism_sepolia/",
   [NETWORK.Arbitrum]: "https://rpc.ankr.com/arbitrum/",
   [NETWORK.Base]: "https://rpc.ankr.com/base/",
-};
-
-const ANKR_WS_URL = {
-  [NETWORK.Optimism]: "wss://rpc.ankr.com/optimism/",
-  [NETWORK.OptimismSepolia]: "wss://rpc.ankr.com/optimism_sepolia/",
-  [NETWORK.Arbitrum]: "wss://rpc.ankr.com/arbitrum/",
-  [NETWORK.Base]: "wss://rpc.ankr.com/base/",
 };
 
 const BLAST_URL = {
@@ -36,23 +22,10 @@ const BLAST_URL = {
   [NETWORK.Base]: "https://base-mainnet.blastapi.io/",
 };
 
-const BLAST_WS_URL = {
-  [NETWORK.Optimism]: "wss://optimism-mainnet.blastapi.io/",
-  [NETWORK.OptimismSepolia]: "wss://optimism-sepolia.blastapi.io/",
-  [NETWORK.Arbitrum]: "wss://arbitrum-one.blastapi.io/",
-  [NETWORK.Base]: "wss://base-mainnet.blastapi.io/",
-};
-
 const LLAMA_URL = {
   [NETWORK.Optimism]: "https://optimism.llamarpc.com/sk_llama_",
   [NETWORK.Arbitrum]: "https://arbitrum.llamarpc.com/sk_llama_",
   [NETWORK.Base]: "https://base.llamarpc.com/sk_llama_",
-};
-
-const LLAMA_WS_URL = {
-  [NETWORK.Optimism]: "wss://optimism.llamarpc.com/sk_llama_",
-  [NETWORK.Arbitrum]: "wss://arbitrum.llamarpc.com/sk_llama_",
-  [NETWORK.Base]: "wss://base.llamarpc.com/sk_llama_",
 };
 
 const getProvider = (network) => {
@@ -81,33 +54,6 @@ const getProvider = (network) => {
   return new ethers.providers.JsonRpcProvider(rpcUrl);
 };
 
-const getWSProvider = (network) => {
-  let rpcUrl = "";
-  switch (process.env.RPC_PROVIDER) {
-    case "llama":
-      rpcUrl =
-        Number(network) === NETWORK.OptimismSepolia
-          ? `${BLAST_WS_URL[network]}${process.env.BLAST_ID}`
-          : `${LLAMA_WS_URL[network]}${process.env.LLAMA_ID}`;
-      break;
-    case "ankr":
-      rpcUrl = `${ANKR_WS_URL[network]}${process.env.ANKR_ID}`;
-      break;
-    case "blast":
-      rpcUrl = `${BLAST_WS_URL[network]}${process.env.BLAST_ID}`;
-      break;
-    default:
-      rpcUrl =
-        Number(network) === NETWORK.OptimismSepolia
-          ? `${BLAST_WS_URL[network]}${process.env.BLAST_ID}`
-          : `${CHAINNODES_WS_URL[network]}${process.env.CHAINNODES_ID}`;
-      break;
-  }
-
-  return new ethers.providers.WebSocketProvider(rpcUrl);
-};
-
 module.exports = {
   getProvider,
-  getWSProvider,
 };
