@@ -515,7 +515,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: true,
+    live: false,
     isLiveTestnet: true,
   },
   [League.GERMANY_CUP]: {
