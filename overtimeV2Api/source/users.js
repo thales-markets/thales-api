@@ -4,8 +4,9 @@ const {
   isOneSidePlayerPropsMarket,
   isYesNoPlayerPropsMarket,
   isOneSideMarket,
+  formatMarketOdds,
 } = require("../utils/markets");
-const { TicketMarketStatus, MarketTypeMap } = require("../constants/markets");
+const { TicketMarketStatus, MarketTypeMap, OddsType } = require("../constants/markets");
 const { bigNumberFormatter } = require("../utils/formatters");
 const sportsAMMV2DataContract = require("../contracts/sportsAMMV2DataContract");
 const sportsAMMV2ManagerContract = require("../contracts/sportsAMMV2ManagerContract");
@@ -94,6 +95,8 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
       const marketResult = ticket.marketsResult[index];
       const marketStatus = Number(marketResult.status);
 
+      const formattedOdds = bigNumberFormatter(market.odd);
+
       return {
         gameId: market.gameId,
         sport: getLeagueSport(leagueId),
@@ -135,7 +138,11 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
           line: combinedPosition.line / 100,
         })),
         position: Number(market.position),
-        odd: bigNumberFormatter(market.odd),
+        odd: {
+          american: formatMarketOdds(formattedOdds, OddsType.AMERICAN),
+          decimal: formatMarketOdds(formattedOdds, OddsType.DECIMAL),
+          normalizedImplied: formatMarketOdds(formattedOdds, OddsType.AMM),
+        },
         isGameFinished: gameInfo?.isGameFinished,
         gameStatus: gameInfo?.gameStatus,
       };
