@@ -3,7 +3,6 @@ const { PREFIX_KEYS } = require("../../constants/cacheKeys");
 const cache = require("../../services/cache");
 const TTL = require("../../constants/ttl");
 const { getCacheKey, getQueryProperty, getQueryParam } = require("../../utils/getters");
-const { maxTime, minTime } = require("date-fns");
 
 const transactions = async (req, res) => {
   try {

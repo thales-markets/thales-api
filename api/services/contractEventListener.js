@@ -8,6 +8,24 @@ const cache = require("./cache");
 const { wait } = require("../utils/helpers");
 const { parlayMarketsAMMContract } = require("../../abi/parlayMarketsAMMContract");
 
+const invalidationMechanism = async (cacheKeys) => {
+  try {
+    await wait(BUFFER_PERIOD_FOR_INVALIDATION_IN_SECONDS);
+
+    const deletedKeysCount = cache.del(cacheKeys);
+    console.log("Successfully deleted cache keys -> ", deletedKeysCount);
+
+    await wait(BUFFER_PERIOD_FOR_INVALIDATION_IN_SECONDS);
+
+    const retryDeletion = cache.del(cacheKeys);
+    console.log("Repeat deletion ", retryDeletion);
+    return;
+  } catch (e) {
+    console.log("Error ", e);
+    return;
+  }
+};
+
 const initSportsAMMEventListenerByNetwork = (networkId) => {
   try {
     console.log("initSportsAMMEventListenerByNetwork ", networkId);
@@ -21,15 +39,11 @@ const initSportsAMMEventListenerByNetwork = (networkId) => {
 
     sportsAMMContractInstance.on("BoughtFromAmm", async (buyer, market) => {
       console.log("Event sportsAMMContractInstance");
-      await wait(BUFFER_PERIOD_FOR_INVALIDATION_IN_SECONDS);
 
-      const deletedKeysCount = cache.del([
+      await invalidationMechanism([
         getCacheKey(PREFIX_KEYS.SportsMarkets.PositionBalance, [networkId, buyer]),
         getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]),
       ]);
-      console.log("Cache key -> ", getCacheKey(PREFIX_KEYS.SportsMarkets.PositionBalance, [networkId, buyer]));
-      console.log("Cache key -> ", getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]));
-      console.log("Successfully deleted cache keys -> ", deletedKeysCount);
     });
   } catch (e) {
     console.log("Error while trying to initialize sportsAMM contract listener");
@@ -51,29 +65,20 @@ const initParlayAMMEventListenerByNetwork = (networkId) => {
     // ParlayMarketCreated event listener - When user buys parlay
     parlayAMMContractInstance.on("ParlayMarketCreated", async (parlayAddress, buyer) => {
       console.log("Event ParlayMarketCreated");
-      await wait(BUFFER_PERIOD_FOR_INVALIDATION_IN_SECONDS);
 
-      const deletedKeysCount = cache.del([
+      await invalidationMechanism([
         getCacheKey(PREFIX_KEYS.SportsMarkets.Parlay, [networkId, buyer]),
         getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]),
       ]);
-      console.log("Cache key -> ", getCacheKey(PREFIX_KEYS.SportsMarkets.Parlay, [networkId, buyer]));
-      console.log("Cache key -> ", getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]));
-      console.log("Successfully deleted cache keys -> ", deletedKeysCount);
     });
 
     // ParlayResolved event listener - When user exercise parlay
     parlayAMMContractInstance.on("ParlayResolved", async (parlayAddress, buyer) => {
       console.log("Event ParlayResolved");
-      await wait(BUFFER_PERIOD_FOR_INVALIDATION_IN_SECONDS);
-
-      const deletedKeysCount = cache.del([
+      await invalidationMechanism([
         getCacheKey(PREFIX_KEYS.SportsMarkets.Parlay, [networkId, buyer]),
         getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]),
       ]);
-      console.log("Cache key -> ", getCacheKey(PREFIX_KEYS.SportsMarkets.Parlay, [networkId, buyer]));
-      console.log("Cache key -> ", getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]));
-      console.log("Successfully deleted cache keys -> ", deletedKeysCount);
     });
   } catch (e) {
     console.log("Error while trying to initialize sportsAMM contract listener");
