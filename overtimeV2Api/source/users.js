@@ -131,6 +131,13 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
         playerProps: {
           playerId: Number(market.playerId),
           playerName: playerName,
+          playerScore: isPlayerProps
+            ? isOneSidePlayerPropsMarket(typeId) || isYesNoPlayerPropsMarket(typeId)
+              ? Number(marketResult.results[0]) / 100 === 1
+                ? "Yes"
+                : "No"
+              : Number(marketResult.results[0]) / 100
+            : 0,
         },
         selectedCombinedPositions: market.combinedPositions.map((combinedPosition) => ({
           typeId: combinedPosition.typeId,
