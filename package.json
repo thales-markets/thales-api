@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node integrationV2/index.js",
+    "start": "node integrationV2/buyLivePosition.js",
     "dev": "nodemon overtimeApi.js"
   },
   "keywords": [],

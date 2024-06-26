@@ -2,7 +2,7 @@ import axios from "axios";
 import dotenv from "dotenv";
 import { ethers } from "ethers";
 import w3utils from "web3-utils";
-import sportsAMMV2ContractAbi from "./sportsAMMV2ContractAbi.js"; // SportsAMMV2 contract ABI
+import sportsAMMV2ContractAbi from "./sportsAMMV2ContractAbi.js"; // Sports AMM V2 contract ABI
 
 dotenv.config();
 
@@ -10,7 +10,7 @@ const API_URL = "https://api.thalesmarket.io"; // base API URL
 
 const NETWORK_ID = 10; // Optimism network ID
 const NETWORK = "optimism"; // Optimism network
-const SPORTS_AMM_V2_CONTRACT_ADDRESS = "0xFb4e4811C7A811E098A556bD79B64c20b479E431"; // SportsAMMV2 contract address on Optimism
+const SPORTS_AMM_V2_CONTRACT_ADDRESS = "0xFb4e4811C7A811E098A556bD79B64c20b479E431"; // Sports AMM V2 contract address on Optimism
 
 const BUY_IN = 20; // 20 THALES
 const COLLATERAL = "THALES"; // THALES
@@ -75,8 +75,10 @@ const trade = async () => {
 
     // get a Slovakia - Romania child handicap market with line -1.5
     const slovakiaRomaniaHandicapMarket = markets[0].childMarkets[2];
+    console.log(`Game: ${slovakiaRomaniaHandicapMarket.homeTeam} - ${slovakiaRomaniaHandicapMarket.awayTeam}`);
     // get a Ukraine - Belgium parent winner market
     const ukraineBelgiumWinnerMarket = markets[1];
+    console.log(`Game: ${ukraineBelgiumWinnerMarket.homeTeam} - ${ukraineBelgiumWinnerMarket.awayTeam}`);
 
     // get a quote from Overtime V2 API for provided trade data (markets and positions), buy-in amount and collateral on Optimism network
     const quoteTradeData = [
@@ -137,12 +139,12 @@ const trade = async () => {
     );
     // wait for the result
     const txResult = await tx.wait();
-    console.log(`Successfully bought from Sports AMM V2. Transaction hash: ${txResult.transactionHash}`);
+    console.log(`Successfully bought a ticket from Sports AMM V2. Transaction hash: ${txResult.transactionHash}`);
     /*
-    Successfully bought from Sports AMM V2. Transaction hash: 0xe65638720344cc110b77f14f4276be61e7cd767f490927c195f11813c6d39901
+    Successfully bought a ticket from Sports AMM V2. Transaction hash: 0xe65638720344cc110b77f14f4276be61e7cd767f490927c195f11813c6d39901
     */
   } catch (e) {
-    console.log("Failed to buy from Sports AMM V2", e);
+    console.log("Failed to buy a ticket from Sports AMM V2", e);
   }
 };
 
