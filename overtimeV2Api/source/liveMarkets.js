@@ -25,7 +25,7 @@ const {
   getTestnetLiveSupportedLeagues,
   getLeagueOpticOddsName,
 } = require("../utils/sports");
-const { Sport, LEAGUES_NO_FORMAL_HOME_AWAY } = require("../constants/sports");
+const { Sport, LEAGUES_NO_FORMAL_HOME_AWAY, League } = require("../constants/sports");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
@@ -310,6 +310,15 @@ async function processAllMarkets(network) {
             const currentScoreAway = gameTimeOpticOddsResponseData.score_away_total;
             const currentClock = gameTimeOpticOddsResponseData.clock;
             const currentPeriod = gameTimeOpticOddsResponseData.period;
+            const isLive = gameTimeOpticOddsResponseData.is_live;
+            const currentGameStatus = gameTimeOpticOddsResponseData.status;
+
+            if (isLive == false || currentGameStatus.toLowerCase() == "completed") {
+              console.log(
+                `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} because it is no longer live.`,
+              );
+              return null;
+            }
 
             if (getLeagueSport(Number(market.leagueId)) === Sport.BASKETBALL) {
               const quarterLimitForLiveTradingBasketball = Number(
@@ -350,6 +359,73 @@ async function processAllMarkets(network) {
                   `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to clock: ${currentClock}min`,
                 );
                 return null;
+              }
+            }
+
+            if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
+              const atpGrandSlamMatch = gameTimeOpticOddsResponseData.league.toLowerCase() == "atp";
+              if (Number(market.leagueId) == League.TENNIS_GS && atpGrandSlamMatch) {
+                if (Number(currentScoreHome) == 2 || Number(currentScoreAway) == 2) {
+                  const currentSet = Number(gameTimeOpticOddsResponseData.period);
+                  let currentHomeGameScore;
+                  let currentAwayGameScore;
+                  switch (currentSet) {
+                    case 3:
+                      currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_3);
+                      currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_3);
+                      break;
+                    case 4:
+                      currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_4);
+                      currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_4);
+                      break;
+                    case 5:
+                      currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_5);
+                      currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_5);
+                      break;
+                  }
+                  if (Number(currentScoreHome) == 2 && currentHomeGameScore >= 5) {
+                    console.log(
+                      `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to current result: ${currentScoreHome} - ${currentScoreAway} (${currentHomeGameScore} - ${currentAwayGameScore})`,
+                    );
+                    return null;
+                  }
+
+                  if (Number(currentScoreAway) == 2 && currentAwayGameScore >= 5) {
+                    console.log(
+                      `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to current result: ${currentScoreHome} - ${currentScoreAway} (${currentHomeGameScore} - ${currentAwayGameScore})`,
+                    );
+                    return null;
+                  }
+                }
+              } else {
+                if (Number(currentScoreHome) == 1 || Number(currentScoreAway) == 1) {
+                  const currentSet = Number(gameTimeOpticOddsResponseData.period);
+                  let currentHomeGameScore;
+                  let currentAwayGameScore;
+                  switch (currentSet) {
+                    case 2:
+                      currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_2);
+                      currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_2);
+                      break;
+                    case 3:
+                      currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_3);
+                      currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_3);
+                      break;
+                  }
+                  if (Number(currentScoreHome) == 1 && currentHomeGameScore >= 5) {
+                    console.log(
+                      `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to current result: ${currentScoreHome} - ${currentScoreAway} (${currentHomeGameScore} - ${currentAwayGameScore})`,
+                    );
+                    return null;
+                  }
+
+                  if (Number(currentScoreAway) == 1 && currentAwayGameScore >= 5) {
+                    console.log(
+                      `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to current result: ${currentScoreHome} - ${currentScoreAway} (${currentHomeGameScore} - ${currentAwayGameScore})`,
+                    );
+                    return null;
+                  }
+                }
               }
             }
 
@@ -507,10 +583,13 @@ async function processAllMarkets(network) {
                   switch (index) {
                     case 0:
                       positionOdds = oddsArrayWithSpread[0];
+                      break;
                     case 1:
                       positionOdds = oddsArrayWithSpread[1];
+                      break;
                     case 2:
                       positionOdds = oddsArrayWithSpread[2];
+                      break;
                   }
                   return {
                     american: oddslib.from("impliedProbability", positionOdds).to("moneyline"),
