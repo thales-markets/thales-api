@@ -112,6 +112,7 @@ async function processAllMarkets(network) {
 
           if (opticOddsResponseDataForLeague.length == 0) {
             console.log(`Could not find any games on the provider side for the given league ${leagueName}`);
+            return;
           } else {
             opticOddsResponseData = [...opticOddsResponseData, ...opticOddsResponseDataForLeague];
           }
