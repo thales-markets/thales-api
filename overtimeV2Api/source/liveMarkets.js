@@ -186,7 +186,9 @@ async function processAllMarkets(network) {
                 new Date(opticOddsGame.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
             }
 
-            return homeTeamsMatch && awayTeamsMatch && datesMatch;
+            const isMatchLiveFlag = opticOddsGame.is_live == true;
+
+            return homeTeamsMatch && awayTeamsMatch && datesMatch && isMatchLiveFlag;
           });
 
           if (opticOddsGameEvent != undefined) {
