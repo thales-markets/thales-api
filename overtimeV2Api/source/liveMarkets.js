@@ -469,6 +469,8 @@ async function processAllMarkets(network) {
               market.awayScore = currentScoreAway;
               market.gameClock = currentClock;
               market.gamePeriod = currentPeriod;
+              market.childMarkets = [];
+              market.proof = [];
               return market;
             } else {
               const aggregationEnabled = Number(process.env.ODDS_AGGREGATION_ENABLED);
@@ -520,6 +522,8 @@ async function processAllMarkets(network) {
                 market.awayScore = currentScoreAway;
                 market.gameClock = currentClock;
                 market.gamePeriod = currentPeriod;
+                market.childMarkets = [];
+                market.proof = [];
                 return market;
               } else {
                 const primaryBookmakerOdds = oddsList[0];
@@ -573,6 +577,8 @@ async function processAllMarkets(network) {
                 market.awayScore = currentScoreAway;
                 market.gameClock = currentClock;
                 market.gamePeriod = currentPeriod;
+                market.childMarkets = [];
+                market.proof = [];
                 return market;
               }
             }
