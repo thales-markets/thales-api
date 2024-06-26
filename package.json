@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "node overtimeApi/s3test.js",
+    "start": "node integrationV2/index.js",
     "dev": "nodemon overtimeApi.js"
   },
   "keywords": [],
@@ -30,6 +31,7 @@
     "redis": "^3.0.2",
     "thales-data": "^3.0.3",
     "twitter-api-v2": "^1.4.1",
-    "web3": "^1.5.2"
+    "web3": "^1.5.2",
+    "web3-utils": "^1.10.0"
   }
 }
