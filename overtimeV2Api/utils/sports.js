@@ -1,4 +1,4 @@
-const { LeagueMap } = require("../constants/sports");
+const { LeagueMap, Sport } = require("../constants/sports");
 
 const getLeagueSport = (league) => {
   const leagueInfo = LeagueMap[league];
