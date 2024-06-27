@@ -61,6 +61,7 @@ const League = {
   CONCACAF_NATIONS_LEAGUE: 9821,
   CSGO: 9977,
   DOTA2: 9983,
+  SUMMER_OLYMPICS_QUALIFICATION: 10502,
   LOL: 10138,
   CONMEBOL_WC_QUALIFICATIONS: 10199,
   UEFA_CONFERENCE_LEAGUE: 10216,
@@ -692,6 +693,18 @@ const LeagueMap = {
     live: true,
     isLiveTestnet: true,
   },
+  [League.SUMMER_OLYMPICS_QUALIFICATION]: {
+    sport: Sport.BASKETBALL,
+    id: League.SUMMER_OLYMPICS_QUALIFICATION,
+    label: "Summer Olympics Qualification",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.POINTS,
+    matchResolveType: MatchResolveType.OVERTIME,
+    periodType: PeriodType.QUARTER,
+    isDrawAvailable: false,
+    live: false,
+    isLiveTestnet: false,
+  },
   [League.LOL]: {
     sport: Sport.ESPORTS,
     id: League.LOL,
@@ -847,6 +860,7 @@ const SportIdMapEnetpulse = {
   9821: 9821, // CONCACAF League of Nations
   9977: 9977, // CsGo
   9983: 9983, // Dota
+  10502: 10502, // Summer Olympics Qualification
   10138: 10138, // LOL
   10199: 10199, // World Cup Qualifications CONMBOL
   10216: 10216, // Europa Conference League
