@@ -63,6 +63,14 @@ async function processAllMarkets(network) {
 
   const spreadData = await readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV);
 
+  const enabledTennisMasters = Number(process.env.ENABLED_TENNIS_MASTERS);
+
+  const tennisMastersIndex = availableLeagueIds.indexOf(League.TENNIS_MASTERS);
+
+  if (tennisMastersIndex == -1 && enabledTennisMasters == 1) {
+    availableLeagueIds.push(League.TENNIS_MASTERS);
+  }
+
   redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
 
@@ -76,7 +84,7 @@ async function processAllMarkets(network) {
       let marketsByType = marketsByStatus;
 
       const filteredMarkets = marketsByType.filter((market) => availableLeagueIds.includes(Number(market.leagueId)));
-      if (filteredMarkets && filteredMarkets.length > 0) {
+      if (filteredMarkets.length > 0) {
         const leagueIdsMap = {};
 
         filteredMarkets.forEach((market) => (leagueIdsMap[market.leagueId] = true));
