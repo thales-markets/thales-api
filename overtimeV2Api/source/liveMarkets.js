@@ -64,11 +64,17 @@ async function processAllMarkets(network) {
   const spreadData = await readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV);
 
   const enabledTennisMasters = Number(process.env.ENABLED_TENNIS_MASTERS);
+  const enabledTennisGrandSlam = Number(process.env.ENABLED_TENNIS_GRAND_SLAM);
 
   const tennisMastersIndex = availableLeagueIds.indexOf(League.TENNIS_MASTERS);
+  const tennisGrandSlamIndex = availableLeagueIds.indexOf(League.TENNIS_GS);
 
   if (tennisMastersIndex == -1 && enabledTennisMasters == 1) {
     availableLeagueIds.push(League.TENNIS_MASTERS);
+  }
+
+  if (tennisGrandSlamIndex == -1 && enabledTennisGrandSlam == 1) {
+    availableLeagueIds.push(League.TENNIS_GS);
   }
 
   redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], async function (err, obj) {
