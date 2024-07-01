@@ -98,7 +98,7 @@ async function processAllMarkets(network) {
 
         const teamsMap = new Map();
 
-        const teamsMappingJson = await axios.get(process.env.GITHUB_URL_LIVE_TEAMS_MAPPING).data;
+        let teamsMappingJson = await axios.get(process.env.GITHUB_URL_LIVE_TEAMS_MAPPING).data;
 
         if (teamsMappingJson == undefined) {
           teamsMappingJson = teamsMapping;
