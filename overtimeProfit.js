@@ -249,7 +249,7 @@ async function processParlayLeaderboard(network) {
       ? new ethers.Contract(sportsAMMV2DataContract.addresses[network], sportsAMMV2DataContract.abi, provider)
       : undefined;
 
-  for (let period = 0; period <= latestPeriodWeekly; period++) {
+  for (let period = latestPeriodWeekly - 4; period <= latestPeriodWeekly; period++) {
     const startPeriod = Math.trunc(addDays(PARLAY_LEADERBOARD_WEEKLY_START_DATE_UTC, period * 7).getTime() / 1000);
     const endPeriod = Math.trunc(
       subMilliseconds(addDays(PARLAY_LEADERBOARD_WEEKLY_START_DATE_UTC, (period + 1) * 7), 1).getTime() / 1000,
