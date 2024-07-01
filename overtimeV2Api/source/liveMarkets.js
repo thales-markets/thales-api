@@ -98,8 +98,14 @@ async function processAllMarkets(network) {
 
         const teamsMap = new Map();
 
-        Object.keys(teamsMapping).forEach(function (key) {
-          teamsMap.set(key, teamsMapping[key]);
+        const teamsMappingJson = await axios.get(process.env.GITHUB_URL_LIVE_TEAMS_MAPPING).data;
+
+        if (teamsMappingJson == undefined) {
+          teamsMappingJson = teamsMapping;
+        }
+
+        Object.keys(teamsMappingJson).forEach(function (key) {
+          teamsMap.set(key, teamsMappingJson[key]);
         });
 
         let opticOddsResponseData = [];
