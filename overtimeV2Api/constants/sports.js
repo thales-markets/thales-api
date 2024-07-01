@@ -702,8 +702,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
+    live: true,
+    isLiveTestnet: true,
   },
   [League.LOL]: {
     sport: Sport.ESPORTS,
