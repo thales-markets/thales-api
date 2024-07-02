@@ -13,6 +13,8 @@ const OverUnderType = {
 const MarketType = {
   // Winner
   WINNER: 0,
+  // Winner without draw
+  DRAW_NO_BET: 10010,
   // Winner with draw - for hockey
   WINNER2: 10011,
   // Winner (placeholder)
@@ -37,6 +39,11 @@ const MarketType = {
   SEVENTH_PERIOD_WINNER2: 10057,
   EIGHTH_PERIOD_WINNER2: 10058,
   NINTH_PERIOD_WINNER2: 10059,
+  // Winner without draw period - half for soccer, quarter for basketball
+  FIRST_PERIOD_DRAW_NO_BET: 10121,
+  SECOND_PERIOD_DRAW_NO_BET: 10122,
+  THIRD_PERIOD_DRAW_NO_BET: 10123,
+  FOURTH_PERIOD_DRAW_NO_BET: 10124,
 
   // Spread (handicap)
   SPREAD: 10001,
@@ -177,6 +184,13 @@ const MarketTypeMap = {
     name: "Winner",
     resultType: ResultType.EXACT_POSITION,
   },
+  // Winner without draw
+  [MarketType.DRAW_NO_BET]: {
+    id: MarketType.DRAW_NO_BET,
+    key: "drawNoBet",
+    name: "Draw no bet",
+    resultType: ResultType.SPREAD,
+  },
   // Winner with draw - for hockey
   [MarketType.WINNER2]: {
     id: MarketType.WINNER2,
@@ -300,6 +314,31 @@ const MarketTypeMap = {
     key: "ninthPeriodWinner2",
     name: "Winner 9th",
     resultType: ResultType.EXACT_POSITION,
+  },
+  // Winner without draw period - half for soccer, quarter for basketball
+  [MarketType.FIRST_PERIOD_DRAW_NO_BET]: {
+    id: MarketType.FIRST_PERIOD_DRAW_NO_BET,
+    key: "firstPeriodDrawNoBet",
+    name: "Draw no bet 1st",
+    resultType: ResultType.SPREAD,
+  },
+  [MarketType.SECOND_PERIOD_DRAW_NO_BET]: {
+    id: MarketType.SECOND_PERIOD_DRAW_NO_BET,
+    key: "secondPeriodDrawNoBet",
+    name: "Draw no bet 2nd",
+    resultType: ResultType.SPREAD,
+  },
+  [MarketType.THIRD_PERIOD_DRAW_NO_BET]: {
+    id: MarketType.THIRD_PERIOD_DRAW_NO_BET,
+    key: "thirdPeriodDrawNoBet",
+    name: "Draw no bet 3rd",
+    resultType: ResultType.SPREAD,
+  },
+  [MarketType.FOURTH_PERIOD_DRAW_NO_BET]: {
+    id: MarketType.FOURTH_PERIOD_DRAW_NO_BET,
+    key: "fourthPeriodDrawNoBet",
+    name: "Draw no bet 4th",
+    resultType: ResultType.SPREAD,
   },
 
   // Spread (handicap)
