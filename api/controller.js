@@ -55,7 +55,12 @@ const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
 const { LeagueMap } = require("../overtimeV2Api/constants/sports");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
-const { initializeSportsAMMBuyListener, initializeParlayAMMBuyListener } = require("./services/contractEventListener");
+const {
+  initializeSportsAMMBuyListener,
+  initializeParlayAMMBuyListener,
+  initializeSportsAMMLPListener,
+  initializeParlayAMMLPListener,
+} = require("./services/contractEventListener");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -1845,3 +1850,5 @@ app.use("/v1/cache-control", cacheControlRoutes);
 // Contract listeners
 initializeSportsAMMBuyListener();
 initializeParlayAMMBuyListener();
+initializeSportsAMMLPListener();
+initializeParlayAMMLPListener();
