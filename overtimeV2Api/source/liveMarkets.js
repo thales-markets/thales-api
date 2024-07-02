@@ -98,14 +98,16 @@ async function processAllMarkets(network) {
 
         const teamsMap = new Map();
 
-        let teamsMappingJson = await axios.get(process.env.GITHUB_URL_LIVE_TEAMS_MAPPING).data;
+        let teamsMappingJsonResponse = await axios.get(process.env.GITHUB_URL_LIVE_TEAMS_MAPPING);
 
-        if (teamsMappingJson == undefined) {
+        let teamsMappingJson = teamsMappingJsonResponse.data;
+
+        if (teamsMappingJson == undefined || Object.keys(teamsMappingJson).length == 0) {
           teamsMappingJson = teamsMapping;
         }
 
         Object.keys(teamsMappingJson).forEach(function (key) {
-          teamsMap.set(key, teamsMappingJson[key]);
+          teamsMap.set(key.toString(), teamsMappingJson[key].toString());
         });
 
         let opticOddsResponseData = [];
@@ -132,7 +134,6 @@ async function processAllMarkets(network) {
 
           if (opticOddsResponseDataForLeague.length == 0) {
             console.log(`Could not find any games on the provider side for the given league ${leagueName}`);
-            return;
           } else {
             opticOddsResponseData = [...opticOddsResponseData, ...opticOddsResponseDataForLeague];
           }
