@@ -1841,18 +1841,19 @@ app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
   res.send(quote);
 });
 
-app.put(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_ERROR_WRITE, (req, res) => {
+app.put(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_WRITE, (req, res) => {
   const requestId = req.body.requestId;
   const message = req.body.message;
+  const allow = req.body.allow;
   const networkId = req.body.networkId;
   const apiKey = req.body.key;
 
   if (apiKey == process.env.LIVE_TRADING_MESSAGE_API_KEY) {
-    redisClient.get(KEYS.OVERTIME_V2_LIVE_TRADE_ERROR_MESSAGES[networkId], function (err, obj) {
+    redisClient.get(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId], function (err, obj) {
       const messagesMap = new Map(JSON.parse(obj));
-      messagesMap.set(requestId, message);
+      messagesMap.set(requestId, { message: message, allow: allow });
       redisClient.set(
-        KEYS.OVERTIME_V2_LIVE_TRADE_ERROR_MESSAGES[networkId],
+        KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId],
         JSON.stringify([...messagesMap]),
         function () {},
       );
@@ -1867,11 +1868,11 @@ app.put(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_ERROR_WRITE, (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_ERROR_READ, (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ, (req, res) => {
   const requestId = req.params.requestId;
   const networkId = req.params.networkParam;
 
-  redisClient.get(KEYS.OVERTIME_V2_LIVE_TRADE_ERROR_MESSAGES[networkId], function (err, obj) {
+  redisClient.get(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId], function (err, obj) {
     const messagesMap = new Map(JSON.parse(obj));
     const message = messagesMap.get(requestId);
     try {
