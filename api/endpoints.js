@@ -74,9 +74,9 @@ const ENDPOINTS = {
   OVERTIME_V2_UPDATE_MERKLE_TREE: "/overtime-v2/update-merkle-tree",
   OVERTIME_V2_USER_HISTORY: "/overtime-v2/networks/:networkParam/users/:userAddress/history",
   OVERTIME_V2_QUOTE: "/overtime-v2/networks/:networkParam/quote",
-  OVERTIME_V2_LIVE_TRADING_ADAPTER_ERROR_WRITE: "/overtime-v2/live-trading/write-error",
-  OVERTIME_V2_LIVE_TRADING_ADAPTER_ERROR_READ:
-    "/overtime-v2/live-trading/networks/:networkParam/read-error/request/:requestId",
+  OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_WRITE: "/overtime-v2/live-trading/write-message",
+  OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ:
+    "/overtime-v2/live-trading/networks/:networkParam/read-message/request/:requestId",
 };
 
 module.exports = ENDPOINTS;
