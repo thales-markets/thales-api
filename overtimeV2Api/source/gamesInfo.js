@@ -126,7 +126,7 @@ const getEnetpulseScore = (results, sport) => {
   let score = undefined;
   const scoreByPeriod = [];
 
-  if (sport === League.EUROLEAGUE) {
+  if (sport === League.EUROLEAGUE || sport === League.SUMMER_OLYMPICS_QUALIFICATION) {
     score = getEnetpulseScoreByCode(Object.values(results), "finalresult");
     for (let i = 1; i <= 4; i++) {
       const code = `quarter${i}`;
