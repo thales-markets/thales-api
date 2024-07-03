@@ -59,6 +59,12 @@ const KEYS = {
     8453: "overtimeV2BaseLiveMarkets",
   },
   OVERTIME_V2_LIVE_SCORES: "overtimeV2LiveScores",
+  OVERTIME_V2_LIVE_TRADE_ERROR_MESSAGES: {
+    10: "overtimeV2OpLiveTradeErrorMessages",
+    11155420: "overtimeV2SepoliaLiveTradeErrorMessages",
+    42161: "overtimeV2ArbLiveTradeErrorMessages",
+    8453: "overtimeV2BaseLiveTradeErrorMessages",
+  },
 };
 
 module.exports = KEYS;
