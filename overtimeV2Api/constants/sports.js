@@ -790,7 +790,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
 };
