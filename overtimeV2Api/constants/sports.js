@@ -48,6 +48,7 @@ const League = {
   TENNIS_GS: 153,
   TENNIS_MASTERS: 156,
   GERMANY_CUP: 209,
+  LIGA_MX: 230,
   BRAZIL_1: 268,
   UEFA_EURO_U21: 288,
   FIFA_WORLD_CUP_U20: 296,
@@ -779,6 +780,19 @@ const LeagueMap = {
     live: false,
     isLiveTestnet: false,
   },
+  [League.LIGA_MX]: {
+    sport: Sport.SOCCER,
+    id: League.LIGA_MX,
+    label: "Liga MX",
+    opticOddsName: "Mexico - Liga MX",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: true,
+  },
 };
 
 const LEAGUES_NO_FORMAL_HOME_AWAY = [League.CSGO, League.DOTA2, League.LOL, League.TENNIS_GS, League.TENNIS_MASTERS];
@@ -843,6 +857,7 @@ const SportIdMapEnetpulse = {
   138: 138, // Copa del Rey
   141: 141, // Coppa Italia
   209: 209, // DFB Pokal
+  230: 230, // LIGA MX
   268: 268, // Brazil Football League
   288: 288, // EURO U21
   296: 296, // FIFA WC U20
