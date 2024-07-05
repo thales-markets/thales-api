@@ -1502,6 +1502,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   let sport = req.query.sport;
   let leagueId = req.query.leagueid;
   let ungroup = req.query.ungroup;
+  let minMaturity = req.query.minMaturity;
 
   if (!status) {
     status = "open";
@@ -1530,6 +1531,11 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
     res.send("Invalid value for ungroup. Possible values: true or false.");
+    return;
+  }
+
+  if (!!minMaturity && !isNumeric(minMaturity.toString())) {
+    res.send("Invalid value for min maturity. The min maturity must be a number");
     return;
   }
 
@@ -1574,7 +1580,8 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
         (market) =>
           (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
           (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
-          (!typeId || Number(market.typeId) === Number(typeId)),
+          (!typeId || Number(market.typeId) === Number(typeId)) &&
+          (!minMaturity || Number(market.maturity) >= Number(minMaturity)),
       );
 
       if (ungroup && ungroup.toLowerCase() === "true") {

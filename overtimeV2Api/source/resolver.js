@@ -75,6 +75,7 @@ async function resolveMarkets(network) {
   const openMarketsMap = await getOpenMarketsMap(network);
   const closedMarketsMap = await getClosedMarketsMap(network);
   const forceResolve = process.env.FORCE_RESOLVE === "true";
+  const resolverNumberOfDaysInPast = Number(process.env.RESOLVER_NUMBER_OF_DAYS_IN_PAST);
 
   const provider = getProvider(network);
   const sportsAmmData = new ethers.Contract(
@@ -165,9 +166,15 @@ async function resolveMarkets(network) {
     }
   }
 
+  const today = new Date();
+  // APU takes timestamp argument in seconds
+  const minMaturity = Math.round(
+    new Date(new Date().setDate(today.getDate() - resolverNumberOfDaysInPast)).getTime() / 1000,
+  );
+
   // get all unresolved closed markets - has some child markets unresolved
   const allUnresolvedClosedMarkets = Array.from(closedMarketsMap.values()).filter(
-    (market) => !market.isWholeGameResolved || forceResolve,
+    (market) => (!market.isWholeGameResolved && Number(market.maturity) >= Number(minMaturity)) || forceResolve,
   );
 
   console.log(`Resolver ${NETWORK_NAME[network]}: Total unresolved markets: ${allUnresolvedClosedMarkets.length}`);
