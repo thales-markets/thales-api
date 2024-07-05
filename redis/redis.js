@@ -11,7 +11,6 @@ if (process.env.REDIS_URL) {
 
   redisClient.get(KEYS.GAME_FINISHERS, function (err, obj) {
     const gameFinishersMapRaw = obj;
-    // console.log("gameFinishersMap:" + gameFinishersMapRaw);
     if (gameFinishersMapRaw) {
       gameFinishersMap = new Map(JSON.parse(gameFinishersMapRaw));
     }
@@ -19,9 +18,15 @@ if (process.env.REDIS_URL) {
 
   redisClient.get(KEYS.USER_REFFERER_IDS, function (err, obj) {
     const userReffererIDsMapRaw = obj;
-    // console.log("userReffererIDsMapRaw:" + userReffererIDsMapRaw);
     if (userReffererIDsMapRaw) {
       userReffererIDsMap = new Map(JSON.parse(userReffererIDsMapRaw));
+    }
+  });
+
+  redisClient.get(KEYS.SOLANA_ADDRESSES, function (err, obj) {
+    const solanaAddressesMapRaw = obj;
+    if (solanaAddressesMapRaw) {
+      solanaAddressesMap = new Map(JSON.parse(solanaAddressesMapRaw));
     }
   });
 }

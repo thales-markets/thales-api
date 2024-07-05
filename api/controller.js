@@ -329,6 +329,36 @@ app.get(ENDPOINTS.GET_ADDRESS_REFFERER_ID, (req, res) => {
   }
 });
 
+app.post(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, (req, res) => {
+  const walletAddress = req.body.walletAddress;
+  const solanaAddress = req.body.solanaAddress;
+  const smartAccountAddress = req.body.smartAccountAddress;
+
+  const signature = req.body.signature;
+  const recovered = sigUtil.recoverPersonalSignature({
+    data: solanaAddress,
+    sig: signature,
+  });
+
+  if (walletAddress && solanaAddress && recovered.toLowerCase() === walletAddress.toLowerCase()) {
+    solanaAddressesMap.set(smartAccountAddress ?? walletAddress, solanaAddress);
+  }
+
+  redisClient.set(KEYS.SOLANA_ADDRESSES, JSON.stringify([...solanaAddressesMap]), function () {});
+  res.send(JSON.stringify({ error: false }));
+});
+
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS_FOR_ADDRESS, (req, res) => {
+  const walletAddress = req.params.walletAddress;
+  const solanaAddress = solanaAddressesMap.get(walletAddress);
+  if (walletAddress) {
+    res.setHeader("content-type", "application/json");
+    res.send(solanaAddress);
+  } else {
+    res.send();
+  }
+});
+
 app.get(ENDPOINTS.ENETPULSE_RESULT, (req, res) => {
   const sportId = req.params.sportId;
   const date = req.params.date;
