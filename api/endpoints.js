@@ -51,6 +51,8 @@ const ENDPOINTS = {
   THALES_SPEED_MARKETS_RESOLVE_PARAMS: "/speed-markets/networks/:networkParam/resolve",
   THALES_SPEED_MARKETS_RESOLVE_OFFRAMP_PARAMS:
     "/speed-markets/networks/:networkParam/markets/:marketAddress/resolve-offramp",
+  THALES_SPEED_MARKETS_SOLANA_ADDRESS: "/speed-markets/solana-address",
+  THALES_SPEED_MARKETS_SOLANA_ADDRESS_FOR_ADDRESS: "/speed-markets/solana-address/:walletAddress",
 
   THALES_IO_VOLUME_DATA: "/thales/thales-io/volume-data",
   THALES_IO_USERS_DATA: "/thales/thales-io/users-data",
