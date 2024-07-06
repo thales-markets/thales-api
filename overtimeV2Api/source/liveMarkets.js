@@ -379,8 +379,12 @@ async function processAllMarkets(network) {
             }
 
             if (getLeagueSport(Number(market.leagueId)) === Sport.SOCCER) {
+              const currentClockNumber = Number(currentClock);
               const minuteLimitForLiveTradingFootball = Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL);
-              if (currentClock != null && Number(currentClock) >= minuteLimitForLiveTradingFootball) {
+              if (
+                (!Number.isNaN(currentClockNumber) && currentClockNumber >= minuteLimitForLiveTradingFootball) ||
+                (Number.isNaN(currentClockNumber) && currentClock != "HALF")
+              ) {
                 console.log(
                   `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to clock: ${currentClock}min`,
                 );
