@@ -1,6 +1,6 @@
 const { ethers } = require("ethers");
 const { NETWORK } = require("../constants/networks");
-const { getWSProvider, getProvider } = require("../utils/provider");
+const { getProvider } = require("../utils/provider");
 const sportsAMMContract = require("../../abi/sportsAMMContract");
 const { getCacheKey } = require("../utils/getters");
 const { PREFIX_KEYS, BUFFER_PERIOD_FOR_INVALIDATION_IN_SECONDS } = require("../constants/cacheKeys");
@@ -22,10 +22,8 @@ const invalidationMechanism = async (cacheKeys) => {
 
     const retryDeletion = cache.del(cacheKeys);
     console.log("Repeat deletion ", retryDeletion);
-    return;
   } catch (e) {
     console.log("Error ", e);
-    return;
   }
 };
 
@@ -40,7 +38,7 @@ const initSportsAMMEventListenerByNetwork = (networkId) => {
       provider,
     );
 
-    sportsAMMContractInstance.on("BoughtFromAmm", async (buyer, market) => {
+    sportsAMMContractInstance.on("BoughtFromAmm", async (buyer) => {
       console.log("Event sportsAMMContractInstance");
 
       await invalidationMechanism([
@@ -48,7 +46,7 @@ const initSportsAMMEventListenerByNetwork = (networkId) => {
         getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]),
       ]);
     });
-  } catch (e) {
+  } catch {
     console.log("Error while trying to initialize sportsAMM contract listener");
   }
 };
@@ -66,7 +64,7 @@ const initParlayAMMEventListenerByNetwork = (networkId) => {
     );
 
     // ParlayMarketCreated event listener - When user buys parlay
-    parlayAMMContractInstance.on("ParlayMarketCreated", async (parlayAddress, buyer) => {
+    parlayAMMContractInstance.on("ParlayMarketCreated", async (_parlayAddress, buyer) => {
       console.log("Event ParlayMarketCreated ");
 
       await invalidationMechanism([
@@ -76,14 +74,14 @@ const initParlayAMMEventListenerByNetwork = (networkId) => {
     });
 
     // ParlayResolved event listener - When user exercise parlay
-    parlayAMMContractInstance.on("ParlayResolved", async (parlayAddress, buyer) => {
+    parlayAMMContractInstance.on("ParlayResolved", async (_parlayAddress, buyer) => {
       console.log("Event ParlayResolved");
       await invalidationMechanism([
         getCacheKey(PREFIX_KEYS.SportsMarkets.Parlay, [networkId, buyer]),
         getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]),
       ]);
     });
-  } catch (e) {
+  } catch {
     console.log("Error while trying to initialize sportsAMM contract listener");
   }
 };
@@ -122,7 +120,7 @@ const initSportAMMLPListeners = (networkId) => {
       console.log("Event SportsAMMLP RoundClosed");
       await invalidationMechanism([getCacheKey(PREFIX_KEYS.SportsMarkets.LiquidityPoolPnl, [networkId, "single"])]);
     });
-  } catch (e) {
+  } catch {
     console.log("Error while trying to initialize lp contract listeners");
   }
 };
@@ -161,7 +159,7 @@ const initParlayAMMLPListeners = (networkId) => {
       console.log("Event ParlayAMMLP RoundClosed");
       await invalidationMechanism([getCacheKey(PREFIX_KEYS.SportsMarkets.LiquidityPoolPnl, [networkId, "parlay"])]);
     });
-  } catch (e) {
+  } catch {
     console.log("Error while trying to initialize parlay lp contract listeners");
   }
 };

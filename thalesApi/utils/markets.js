@@ -45,7 +45,7 @@ const packPosition = (position, network) => {
   const defaultCollateralDecimals = getDefaultCollateral(network).decimals;
   const packedMarket = packPositionMarket(position.position.market, isRangedMarket);
 
-  let packedPosition = {
+  const packedPosition = {
     account: position.account,
     amount: bigNumberFormatter(position.amount),
     paid: bigNumberFormatter(position.paid, defaultCollateralDecimals),

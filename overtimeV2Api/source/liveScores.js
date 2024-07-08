@@ -1,6 +1,6 @@
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
-const redis = require("redis");
 const { delay } = require("../utils/general");
 const axios = require("axios");
 const bytes32 = require("bytes32");
@@ -12,7 +12,6 @@ const { Provider } = require("../constants/sports");
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {
-    redisClient = redis.createClient(process.env.REDIS_URL);
     console.log("Lives scores: create client from index");
 
     redisClient.on("error", function (error) {
@@ -57,11 +56,11 @@ function getOpenMarketsMap(network) {
 }
 
 async function processAllLiveScores() {
-  let liveScoresMap = await getLiveScoresMap();
+  const liveScoresMap = await getLiveScoresMap();
   // TODO: take from OP for now
-  let openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
+  const openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
 
-  let allOngoingMarketsMap = Array.from(openMarketsMap.values()).filter((market) => market.statusCode === "ongoing");
+  const allOngoingMarketsMap = Array.from(openMarketsMap.values()).filter((market) => market.statusCode === "ongoing");
 
   for (let i = 0; i < allOngoingMarketsMap.length; i++) {
     const market = allOngoingMarketsMap[i];

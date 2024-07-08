@@ -1,9 +1,10 @@
+const { redisClient } = require("./client");
+// eslint-disable-next-line no-unused-vars
+let { gameFinishersMap, userReffererIDsMap } = require("./maps");
 require("dotenv").config();
-const redis = require("redis");
 const KEYS = require("./redis-keys");
 
 if (process.env.REDIS_URL) {
-  redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
   redisClient.on("error", function (error) {
     console.error(error);

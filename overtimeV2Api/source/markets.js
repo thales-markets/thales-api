@@ -1,6 +1,6 @@
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
-const redis = require("redis");
 const { delay } = require("../utils/general");
 const { bigNumberFormatter } = require("../utils/formatters");
 // const markets = require("./treeMarketsAndHashes.json");
@@ -31,7 +31,6 @@ const awsS3Client = new S3Client({
 async function processMarkets(isTestNetwork) {
   if (process.env.REDIS_URL) {
     const network = isTestNetwork ? "test" : "mainnets";
-    redisClient = redis.createClient(process.env.REDIS_URL);
     console.log(`Markets ${network}: create client from index`);
 
     redisClient.on("error", function (error) {
@@ -186,7 +185,7 @@ const mapMarket = (market) => {
   const packedMarket = packMarket(market);
   packedMarket.childMarkets = [];
   market.childMarkets.forEach((childMarket) => {
-    let packedChildMarket = packMarket(childMarket);
+    const packedChildMarket = packMarket(childMarket);
     packedMarket.childMarkets.push(packedChildMarket);
   });
 

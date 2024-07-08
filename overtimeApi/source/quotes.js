@@ -64,7 +64,7 @@ async function getAmmQuote(network, marketAddress, position, collateralAmount, c
   try {
     const today = new Date();
     const todaysDate = Math.round(today.getTime() / 1000);
-    let openMarkets = await thalesData.sportMarkets.markets({
+    const openMarkets = await thalesData.sportMarkets.markets({
       isOpen: true,
       isCanceled: false,
       isPaused: false,
@@ -281,7 +281,7 @@ async function getParlayAmmQuote(network, markets, positions, collateralAmount, 
   try {
     const today = new Date();
     const todaysDate = Math.round(today.getTime() / 1000);
-    let openMarkets = await thalesData.sportMarkets.markets({
+    const openMarkets = await thalesData.sportMarkets.markets({
       isOpen: true,
       isCanceled: false,
       isPaused: false,

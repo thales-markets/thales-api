@@ -1,6 +1,6 @@
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
-const redis = require("redis");
 const { delay } = require("../utils/general");
 const axios = require("axios");
 const KEYS = require("../../redis/redis-keys");
@@ -11,7 +11,6 @@ const { Provider } = require("../constants/sports");
 
 async function processPlayersInfo() {
   if (process.env.REDIS_URL) {
-    redisClient = redis.createClient(process.env.REDIS_URL);
     console.log("Players info: create client from index");
 
     redisClient.on("error", function (error) {
@@ -56,11 +55,11 @@ function getOpenMarketsMap(network) {
 }
 
 async function processAllPlayersInfo() {
-  let playersInfoMap = await getPlayersInfoMap();
+  const playersInfoMap = await getPlayersInfoMap();
   // TODO: take from OP for now
-  let openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
+  const openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
 
-  let allOpenMarketsMap = Array.from(openMarketsMap.values());
+  const allOpenMarketsMap = Array.from(openMarketsMap.values());
 
   for (let i = 0; i < allOpenMarketsMap.length; i++) {
     const market = allOpenMarketsMap[i];

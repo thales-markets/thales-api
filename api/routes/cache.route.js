@@ -1,5 +1,4 @@
 const express = require("express");
-var cors = require("cors");
 const { flushSpecificCacheKey, cacheStats } = require("../controllers/cache.controller");
 
 const router = express.Router();

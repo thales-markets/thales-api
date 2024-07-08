@@ -1,6 +1,7 @@
+const { redisClient } = require("../../redis/client");
+
 require("dotenv").config();
 
-const redis = require("redis");
 const { ethers } = require("ethers");
 const { uniq } = require("lodash");
 
@@ -12,9 +13,7 @@ const { parseBytes32String, formatBytes32String } = require("ethers/lib/utils");
 const {
   ZERO_ADDRESS,
   POSITION_TYPE,
-  POSITION_NAME,
   RANGED_POSITION_TYPE,
-  RANGED_POSITION_NAME,
   RANGED_POSITION_TYPE_NAME_MAP,
   POSITION_TYPE_NAME_MAP,
 } = require("../constants/markets");
@@ -26,7 +25,6 @@ const thalesData = require("thales-data");
 
 async function processMarkets() {
   if (process.env.REDIS_URL) {
-    redisClient = redis.createClient(process.env.REDIS_URL);
     console.log("create client from index");
 
     redisClient.on("error", function (error) {
@@ -130,9 +128,7 @@ const mapMarketsInfo = (marketsInfo, positionType, isRangedMarket, asset, maturi
     let filterFlag = false;
     finalData = dataToFilter
       .filter((marketInfo) => {
-        if (filterFlag) {
-          return;
-        } else {
+        if (!filterFlag) {
           if (marketInfo.price < 0.1) {
             filterFlag = true;
           }

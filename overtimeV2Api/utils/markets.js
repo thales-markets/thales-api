@@ -9,6 +9,7 @@ const {
   MIN_ODDS_FOR_DIFF_CHECKING,
 } = require("../constants/markets");
 const bytes32 = require("bytes32");
+const oddslib = require("oddslib");
 
 const fixDuplicatedTeamName = (name, isEnetpulseSport) => {
   if (isEnetpulseSport) return name;
@@ -37,13 +38,14 @@ const formatMarketOdds = (odds, oddsType) => {
   switch (oddsType) {
     case OddsType.DECIMAL:
       return 1 / odds;
-    case OddsType.AMERICAN:
+    case OddsType.AMERICAN: {
       const decimal = 1 / odds;
       if (decimal >= 2) {
         return (decimal - 1) * 100;
       } else {
         return -100 / (decimal - 1);
       }
+    }
     case OddsType.AMM:
     default:
       return odds;
@@ -203,7 +205,7 @@ const checkOddsFromMultipleBookmakersV2 = (oddsMap, arrayOfBookmakers, isDrawAva
       ];
     }
 
-    let lines = [];
+    const lines = [];
     arrayOfBookmakers.forEach((bookmaker) => lines.push(oddsMap.get(bookmaker)));
 
     if (lines[0] != undefined) {
@@ -305,9 +307,15 @@ const getBookmakersArray = (bookmakersData, sportId) => {
     }
     const bookmakersArray = [];
 
-    sportBookmakersData.primaryBookmaker ? bookmakersArray.push(sportBookmakersData.primaryBookmaker) : "";
-    sportBookmakersData.secondaryBookmaker ? bookmakersArray.push(sportBookmakersData.secondaryBookmaker) : "";
-    sportBookmakersData.tertiaryBookmaker ? bookmakersArray.push(sportBookmakersData.tertiaryBookmaker) : "";
+    if (sportBookmakersData.primaryBookmaker) {
+      bookmakersArray.push(sportBookmakersData.primaryBookmaker);
+    }
+    if (sportBookmakersData.secondaryBookmaker) {
+      bookmakersArray.push(sportBookmakersData.secondaryBookmaker);
+    }
+    if (sportBookmakersData.tertiaryBookmaker) {
+      bookmakersArray.push(sportBookmakersData.tertiaryBookmaker);
+    }
 
     return bookmakersArray;
   }

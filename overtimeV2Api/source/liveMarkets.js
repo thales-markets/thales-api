@@ -1,6 +1,6 @@
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
-const redis = require("redis");
 const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const oddslib = require("oddslib");
@@ -29,7 +29,6 @@ const { Sport, LEAGUES_NO_FORMAL_HOME_AWAY, League } = require("../constants/spo
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
-    redisClient = redis.createClient(process.env.REDIS_URL);
     console.log("create client from index");
 
     redisClient.on("error", function (error) {
@@ -83,11 +82,11 @@ async function processAllMarkets(network) {
     const enabledDummyMarkets =
       Number(network) !== NETWORK.OptimismSepolia ? 0 : Number(process.env.LIVE_DUMMY_MARKETS_ENABLED);
     try {
-      let allMarkets = Array.from(markets.values());
+      const allMarkets = Array.from(markets.values());
       const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
 
       const marketsByStatus = groupMarketsByStatus["ongoing"] || [];
-      let marketsByType = marketsByStatus;
+      const marketsByType = marketsByStatus;
 
       const filteredMarkets = marketsByType.filter((market) => availableLeagueIds.includes(Number(market.leagueId)));
       if (filteredMarkets.length > 0) {
@@ -98,7 +97,7 @@ async function processAllMarkets(network) {
 
         const teamsMap = new Map();
 
-        let teamsMappingJsonResponse = await axios.get(process.env.GITHUB_URL_LIVE_TEAMS_MAPPING);
+        const teamsMappingJsonResponse = await axios.get(process.env.GITHUB_URL_LIVE_TEAMS_MAPPING);
 
         let teamsMappingJson = teamsMappingJsonResponse.data;
 
@@ -511,7 +510,7 @@ async function processAllMarkets(network) {
               }
             }
 
-            let linesMap = new Map();
+            const linesMap = new Map();
 
             const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
 
@@ -616,7 +615,7 @@ async function processAllMarkets(network) {
               isThere100PercentOdd ||
               (oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0)
             ) {
-              market.odds = market.odds.map((_odd) => {
+              market.odds = market.odds.map(() => {
                 return {
                   american: 0,
                   decimal: 0,
@@ -753,14 +752,14 @@ async function processAllMarkets(network) {
             return null;
           }
         });
-        let filteredMarketsWithLiveOddsAndDummyMarkets;
+
         const resolvedMarketPromises = await Promise.all(filteredMarketsWithLiveOdds);
 
         let dummyMarkets = [];
         if (Number(network) == 11155420) {
           dummyMarkets = [...dummyMarketsLive];
         }
-        filteredMarketsWithLiveOddsAndDummyMarkets = resolvedMarketPromises.concat(dummyMarkets);
+        const filteredMarketsWithLiveOddsAndDummyMarkets = resolvedMarketPromises.concat(dummyMarkets);
 
         redisClient.set(
           KEYS.OVERTIME_V2_LIVE_MARKETS[network],

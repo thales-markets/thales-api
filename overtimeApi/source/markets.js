@@ -1,7 +1,7 @@
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
 const thalesData = require("thales-data");
-const redis = require("redis");
 const { ethers } = require("ethers");
 const { orderBy, groupBy } = require("lodash");
 const sportPositionalMarketDataContract = require("../contracts/sportPositionalMarketDataContract");
@@ -15,7 +15,7 @@ const { delay } = require("../utils/general");
 const { bigNumberFormatter } = require("../utils/formatters");
 const { getDefaultCollateral } = require("../utils/collaterals");
 
-let marketsMap = new Map();
+const marketsMap = new Map();
 let errorOnOddsFetching = false;
 
 const BATCH_SIZE = 50;
@@ -23,7 +23,6 @@ const BASE_BATCH_SIZE = 50;
 
 async function processMarkets() {
   if (process.env.REDIS_URL) {
-    redisClient = redis.createClient(process.env.REDIS_URL);
     console.log("create client from index");
 
     redisClient.on("error", function (error) {
@@ -183,9 +182,9 @@ const mapMarkets = async (allMarkets, mapOnlyOpenedMarkets, network) => {
     }
   });
 
-  let packedMarkets = mappedMarkets.map((market) => packMarket(market));
+  const packedMarkets = mappedMarkets.map((market) => packMarket(market));
 
-  let finalMarkets = groupMarkets(packedMarkets);
+  const finalMarkets = groupMarkets(packedMarkets);
   return finalMarkets;
 };
 
