@@ -65,6 +65,7 @@ const KEYS = {
     42161: "overtimeV2ArbLiveTradeAdapterMessages",
     8453: "overtimeV2BaseLiveTradeAdapterMessages",
   },
+  SOLANA_ADDRESSES: "solanaAddresses",
 };
 
 module.exports = KEYS;

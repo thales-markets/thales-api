@@ -18,7 +18,7 @@ const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { NETWORK } = require("../constants/networks");
 const { getLeagueSport, getLeagueLabel, getLeagueProvider } = require("../utils/sports");
-const { Provider } = require("../constants/sports");
+const { Provider, League } = require("../constants/sports");
 
 const awsS3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -65,11 +65,11 @@ async function processMarkets(isTestNetwork) {
 
 const packMarket = (market) => {
   const leagueId = `${market.sportId}`.startsWith("153")
-    ? 153
+    ? League.TENNIS_GS
     : `${market.sportId}`.startsWith("156")
-    ? 156
+    ? League.TENNIS_MASTERS
     : market.sportId === 701 || market.sportId == 702 || market.sportId == 703
-    ? 7
+    ? League.UFC
     : market.sportId;
   const isEnetpulseSport = getLeagueProvider(leagueId) === Provider.ENETPULSE;
   const type = MarketTypeMap[market.typeId]?.key;
@@ -88,7 +88,7 @@ const packMarket = (market) => {
     homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
     awayTeam: fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
     status: market.status,
-    isOpen: market.status === Status.OPEN,
+    isOpen: market.status === Status.OPEN || market.status === Status.IN_PROGRESS,
     isResolved: market.status === Status.RESOLVED,
     isCancelled: market.status === Status.CANCELLED,
     isPaused: market.status === Status.PAUSED,

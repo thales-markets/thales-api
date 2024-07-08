@@ -62,7 +62,7 @@ const {
   initializeSportsAMMLPListener,
   initializeParlayAMMLPListener,
 } = require("./services/contractEventListener");
-const { gameFinishersMap, userReffererIDsMap } = require("../redis/maps");
+const { gameFinishersMap, userReffererIDsMap, solanaAddressesMap } = require("../redis/maps");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -326,6 +326,36 @@ app.get(ENDPOINTS.GET_ADDRESS_REFFERER_ID, (req, res) => {
   if (reffererID && walletAddress) {
     res.setHeader("content-type", "application/json");
     res.send(reffererID[0]);
+  } else {
+    res.send();
+  }
+});
+
+app.post(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, (req, res) => {
+  const walletAddress = req.body.walletAddress;
+  const solanaAddress = req.body.solanaAddress;
+  const smartAccountAddress = req.body.smartAccountAddress;
+
+  const signature = req.body.signature;
+  const recovered = sigUtil.recoverPersonalSignature({
+    data: solanaAddress,
+    sig: signature,
+  });
+
+  if (walletAddress && solanaAddress && recovered.toLowerCase() === walletAddress.toLowerCase()) {
+    solanaAddressesMap.set(smartAccountAddress ?? walletAddress, solanaAddress);
+  }
+
+  redisClient.set(KEYS.SOLANA_ADDRESSES, JSON.stringify([...solanaAddressesMap]), function () {});
+  res.send(JSON.stringify({ error: false }));
+});
+
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS_FOR_ADDRESS, (req, res) => {
+  const walletAddress = req.params.walletAddress;
+  const solanaAddress = solanaAddressesMap.get(walletAddress);
+  if (walletAddress) {
+    res.setHeader("content-type", "application/json");
+    res.send(solanaAddress);
   } else {
     res.send();
   }
@@ -1504,6 +1534,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const sport = req.query.sport;
   const leagueId = req.query.leagueid;
   const ungroup = req.query.ungroup;
+  const minMaturity = req.query.minMaturity;
 
   if (!status) {
     status = "open";
@@ -1532,6 +1563,11 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
     res.send("Invalid value for ungroup. Possible values: true or false.");
+    return;
+  }
+
+  if (!!minMaturity && !isNumeric(minMaturity.toString())) {
+    res.send("Invalid value for min maturity. The min maturity must be a number");
     return;
   }
 
@@ -1576,7 +1612,8 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
         (market) =>
           (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
           (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
-          (!typeId || Number(market.typeId) === Number(typeId)),
+          (!typeId || Number(market.typeId) === Number(typeId)) &&
+          (!minMaturity || Number(market.maturity) >= Number(minMaturity)),
       );
 
       if (ungroup && ungroup.toLowerCase() === "true") {
