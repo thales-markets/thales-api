@@ -67,6 +67,9 @@ const League = {
   CONMEBOL_WC_QUALIFICATIONS: 10199,
   UEFA_CONFERENCE_LEAGUE: 10216,
   NON_TITLE_BOXING: 10595,
+  UEFA_CHAMPIONS_LEAGUE_QUALIFICATION: 10611,
+  UEFA_EUROPA_LEAGUE_QUALIFICATION: 10613,
+  UEFA_CONFERENCE_LEAGUE_QUALIFICATION: 10615,
   GOLF_H2H: 100021,
   GOLF_WINNER: 100121,
 };
@@ -756,6 +759,42 @@ const LeagueMap = {
     live: false,
     isLiveTestnet: false,
   },
+  [League.UEFA_CHAMPIONS_LEAGUE_QUALIFICATION]: {
+    sport: Sport.SOCCER,
+    id: League.UEFA_CHAMPIONS_LEAGUE_QUALIFICATION,
+    label: "UEFA Champions League Qualification",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.UEFA_EUROPA_LEAGUE_QUALIFICATION]: {
+    sport: Sport.SOCCER,
+    id: League.UEFA_EUROPA_LEAGUE_QUALIFICATION,
+    label: "UEFA Europa League Qualification",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.UEFA_CONFERENCE_LEAGUE_QUALIFICATION]: {
+    sport: Sport.SOCCER,
+    id: League.UEFA_CONFERENCE_LEAGUE_QUALIFICATION,
+    label: "UEFA Conference League Qualification",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
   [League.GOLF_H2H]: {
     sport: Sport.GOLF,
     id: League.GOLF_H2H,
@@ -880,6 +919,9 @@ const SportIdMapEnetpulse = {
   10199: 10199, // World Cup Qualifications CONMBOL
   10216: 10216, // Europa Conference League
   10595: 10595, // Non-Title Boxing
+  10611: 10611, // Champions League Qualification
+  10613: 10613, // Europa League Qualification
+  10615: 10615, // Conference League Qualification
 };
 
 module.exports = {
