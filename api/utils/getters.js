@@ -13,14 +13,14 @@ const getCacheKey = (prefixKey, keys) => {
 };
 
 const getQueryProperty = (req, propertyName) => {
-  if (!req.hasOwnProperty("query")) return;
-  if (!req.query.hasOwnProperty(propertyName) || !req.query[propertyName]) return;
+  if (!Object.prototype.hasOwnProperty.call(req, "query")) return;
+  if (!Object.prototype.hasOwnProperty.call(req.query, propertyName) || !req.query[propertyName]) return;
   return req.query[propertyName];
 };
 
 const getQueryParam = (req, queryParamName) => {
-  if (!req.hasOwnProperty("params")) return;
-  if (!req.params.hasOwnProperty(queryParamName) || !req.params[queryParamName]) return;
+  if (!Object.prototype.hasOwnProperty.call(req, "params")) return;
+  if (!Object.prototype.hasOwnProperty.call(req.params, queryParamName) || !req.params[queryParamName]) return;
   return req.params[queryParamName];
 };
 

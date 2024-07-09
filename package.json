@@ -31,5 +31,10 @@
     "thales-data": "^3.0.4",
     "twitter-api-v2": "^1.4.1",
     "web3": "^1.5.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.6.0",
+    "eslint": "^9.6.0",
+    "globals": "^15.8.0"
   }
 }

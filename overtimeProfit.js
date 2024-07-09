@@ -1,6 +1,6 @@
+const { redisClient } = require("./redis/client");
 require("dotenv").config();
 
-const redis = require("redis");
 const thalesData = require("thales-data");
 const KEYS = require("./redis/redis-keys");
 const {
@@ -27,7 +27,6 @@ const PARLAY_LEADERBOARD_MINIMUM_GAMES = 2;
 const PARLAY_LEADERBOARD_START_PERIOD_V2 = 18;
 
 if (process.env.REDIS_URL) {
-  redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
 
   redisClient.on("error", function (error) {
@@ -73,7 +72,7 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod, pe
   let filteredUserWinningTicketsModified = [];
 
   if (network === NETWORK.Optimism && period >= PARLAY_LEADERBOARD_START_PERIOD_V2) {
-    let ticketsV2 = await thalesData.sportMarketsV2.tickets({
+    const ticketsV2 = await thalesData.sportMarketsV2.tickets({
       network,
       startPeriod,
       endPeriod,
@@ -107,7 +106,7 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod, pe
     filteredUserWinningTicketsModified = filteredUserWinningTickets.map((ticket, indexTicket) => {
       let totalQuote = ticket.totalQuote;
       let totalAmount = ticket.payout;
-      let numberOfPositions = ticket.markets.length;
+      const numberOfPositions = ticket.markets.length;
 
       ticket.markets.forEach((market, indexMarket) => {
         const isCancelled = userWinningTicketsFromContract[indexTicket].marketsResult[indexMarket] === 1;
@@ -154,7 +153,7 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod, pe
     });
   }
 
-  let parlayMarkets = await thalesData.sportMarkets.parlayMarkets({
+  const parlayMarkets = await thalesData.sportMarkets.parlayMarkets({
     network,
     startPeriod,
     endPeriod,

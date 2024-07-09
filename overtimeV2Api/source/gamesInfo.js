@@ -1,6 +1,6 @@
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
-const redis = require("redis");
 const { delay } = require("../utils/general");
 const axios = require("axios");
 const { format, addDays, subDays } = require("date-fns");
@@ -21,7 +21,6 @@ const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAY
 
 async function processGamesInfo() {
   if (process.env.REDIS_URL) {
-    redisClient = redis.createClient(process.env.REDIS_URL);
     console.log("Games info: create client from index");
 
     redisClient.on("error", function (error) {
@@ -209,7 +208,7 @@ function getGamesInfoMap() {
 
 async function processAllGamesInfo() {
   const startDate = subDays(new Date(), numberOfDaysInPast);
-  let gamesInfoMap = await getGamesInfoMap();
+  const gamesInfoMap = await getGamesInfoMap();
 
   for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
     const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");

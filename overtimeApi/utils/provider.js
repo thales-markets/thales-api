@@ -39,7 +39,7 @@ const getProvider = (network) => {
       rpcUrl = `${BLAST_URL[network]}${process.env.BLAST_ID}`;
       break;
     default:
-      `${CHAINNODES_URL[network]}${process.env.CHAINNODES_ID}`;
+      rpcUrl = `${CHAINNODES_URL[network]}${process.env.CHAINNODES_ID}`;
       break;
   }
 

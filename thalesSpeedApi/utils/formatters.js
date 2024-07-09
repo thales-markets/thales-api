@@ -23,6 +23,7 @@ const floorNumberToDecimals = (value, decimals = 2) =>
   Math.floor(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
 
 const truncToDecimals = (value, decimals = 2) => {
+  // eslint-disable-next-line no-useless-escape
   const matchedValue = value.toString().match(`^-?\\\d+(?:\\\.\\\d{0,${decimals}})?`);
   return matchedValue !== null ? matchedValue[0] : "0";
 };

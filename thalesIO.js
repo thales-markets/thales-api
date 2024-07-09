@@ -1,8 +1,8 @@
+const { redisClient } = require("./redis/client");
 require("dotenv").config();
 
-const redis = require("redis");
 const KEYS = require("./redis/redis-keys");
-fetch = require("node-fetch");
+const fetch = require("node-fetch");
 const { delay } = require("./services/utils");
 
 let thalesIODuneDataMap = new Map();
@@ -12,7 +12,6 @@ let dailyStatsDisableFirstRunExecution = true;
 let weeklyStatsDisableFirstRunExecution = true;
 
 if (process.env.REDIS_URL && process.env.DUNE_API_KEY) {
-  redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
 
   redisClient.get(KEYS.THALES_IO_DAILY_STATS, function (err, obj) {

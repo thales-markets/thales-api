@@ -1,3 +1,4 @@
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 const {
   isPlayerPropsMarket,
@@ -186,8 +187,8 @@ const updateTotalQuoteAndPayout = (tickets) => {
 };
 
 async function processUserHistory(network, walletAddress) {
-  let gamesInfoMap = await getGamesInfoMap();
-  let playersInfoMap = await getPlayersInfoMap();
+  const gamesInfoMap = await getGamesInfoMap();
+  const playersInfoMap = await getPlayersInfoMap();
 
   const provider = getProvider(network);
   const sportsAmmData = new ethers.Contract(
