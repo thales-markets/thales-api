@@ -14,6 +14,7 @@ const {
   SportIdMapRundown,
   AMERICAN_LEAGUES,
   League,
+  SportIdMapOpticOdds,
 } = require("../constants/sports");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
@@ -98,6 +99,7 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
             event.score.event_status === "STATUS_CANCELED",
           tournamentName: "",
           tournamentRound: "",
+          provider: Provider.RUNDOWN,
           teams: event.teams_normalized
             ? event.teams_normalized.map((team) => ({
                 name: AMERICAN_LEAGUES.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
@@ -178,6 +180,7 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
           isGameFinished: event.status_type === "finished" || event.status_type === "cancelled",
           tournamentName: event.tournament_stage_name,
           tournamentRound: EnetpulseRounds[Number(event.round_typeFK)],
+          provider: Provider.ENETPULSE,
           teams: event.event_participants
             ? Object.values(event.event_participants).map((team) => ({
                 name: team.participant.name,
@@ -190,6 +193,64 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
                     }),
               }))
             : [],
+        });
+      }
+    });
+
+    await delay(5);
+  }
+};
+
+const procesOpticOdssGamesInfo = async (sports, startDateBefore, gamesInfoMap) => {
+  for (let j = 0; j < sports.length; j++) {
+    const sportId = Number(sports[j]);
+    const sport = sportId;
+    const opticOddsSport = SportIdMapOpticOdds[sport];
+
+    console.log(
+      `Getting games info for OpticOdds sport: ${opticOddsSport}, ${sport} and start date before ${startDateBefore}`,
+    );
+    const apiUrl = `https://api.opticodds.com/api/v2/games?start_date_before=${startDateBefore}&league=${opticOddsSport}`;
+    const response = await axios.get(apiUrl, {
+      headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+    });
+
+    response.data.data.forEach((event) => {
+      if (event.id) {
+        const gameId = bytes32({ input: event.id });
+        gamesInfoMap.set(gameId, {
+          lastUpdate: new Date().getTime(),
+          gameStatus: event.status,
+          isGameFinished: event.status_type === "completed" || event.status_type === "cancelled",
+          tournamentName: "",
+          tournamentRound: "",
+          provider: Provider.OPTICODDS,
+          teams: [
+            {
+              name: event.home_team,
+              isHome: true,
+              score: undefined,
+              scoreByPeriod: [],
+            },
+            {
+              name: event.away_team,
+              isHome: false,
+              score: undefined,
+              scoreByPeriod: [],
+            },
+          ],
+          // teams: event.event_participants
+          //   ? Object.values(event.event_participants).map((team) => ({
+          //       name: team.participant.name,
+          //       isHome: team.number === "1",
+          //       ...(team.result
+          //         ? getEnetpulseScore(Object.values(team.result), sport)
+          //         : {
+          //             score: undefined,
+          //             scoreByPeriod: [],
+          //           }),
+          //     }))
+          //   : [],
         });
       }
     });
@@ -211,23 +272,27 @@ async function processAllGamesInfo() {
   const startDate = subDays(new Date(), numberOfDaysInPast);
   let gamesInfoMap = await getGamesInfoMap();
 
-  for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
-    const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
-    console.log(`Games info: Getting games info for date: ${formattedDate}`);
+  const allLeagues = Object.values(LeagueMap);
+  const rundownLeagues = allLeagues.filter((league) => league.provider === Provider.RUNDOWN).map((league) => league.id);
+  const enetpulseLeagues = allLeagues
+    .filter((league) => league.provider === Provider.ENETPULSE)
+    .map((league) => league.id);
+  const opticOddsLeagues = allLeagues
+    .filter((league) => league.provider === Provider.OPTICODDS)
+    .map((league) => league.id);
 
-    const allLeagues = Object.values(LeagueMap);
-    const rundownLeagues = allLeagues
-      .filter((league) => league.provider === Provider.RUNDOWN)
-      .map((league) => league.id);
-    const enetpulseLeagues = allLeagues
-      .filter((league) => league.provider === Provider.ENETPULSE)
-      .map((league) => league.id);
+  // for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
+  //   const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
+  //   console.log(`Games info: Getting games info for date: ${formattedDate}`);
 
-    await Promise.all([
-      procesRundownGamesInfoPerDate(rundownLeagues, formattedDate, gamesInfoMap),
-      procesEnetpulseGamesInfoPerDate(enetpulseLeagues, formattedDate, gamesInfoMap),
-    ]);
-  }
+  //   await Promise.all([
+  //     procesRundownGamesInfoPerDate(rundownLeagues, formattedDate, gamesInfoMap),
+  //     procesEnetpulseGamesInfoPerDate(enetpulseLeagues, formattedDate, gamesInfoMap),
+  //   ]);
+  // }
+
+  const formattedDate = format(addDays(new Date(), numberOfDaysInFuture), "yyyy-MM-dd");
+  await procesOpticOdssGamesInfo(opticOddsLeagues, formattedDate, gamesInfoMap);
 
   console.log(`Games info: Number of games info: ${Array.from(gamesInfoMap.values()).length}`);
   redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});

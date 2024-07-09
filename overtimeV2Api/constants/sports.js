@@ -102,6 +102,7 @@ const Provider = {
   RUNDOWN: "rundown",
   ENETPULSE: "enetpulse",
   JSONODDS: "jsonOdds",
+  OPTICODDS: "opticOdds",
 };
 
 const LeagueMap = {
@@ -135,7 +136,7 @@ const LeagueMap = {
     id: League.MLB,
     label: "MLB",
     opticOddsName: "MLB",
-    provider: Provider.RUNDOWN,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.INNING,
@@ -198,7 +199,7 @@ const LeagueMap = {
     id: League.WNBA,
     label: "WNBA",
     opticOddsName: "WNBA",
-    provider: Provider.RUNDOWN,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
@@ -403,7 +404,7 @@ const LeagueMap = {
     id: League.UEFA_EURO,
     label: "UEFA EURO 2024",
     opticOddsName: "UEFA - European Championship",
-    provider: Provider.ENETPULSE,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.GOALS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
@@ -924,6 +925,12 @@ const SportIdMapEnetpulse = {
   10615: 10615, // Conference League Qualification
 };
 
+const SportIdMapOpticOdds = {
+  3: "MLB",
+  8: "WNBA",
+  50: "UEFA - European Championship",
+};
+
 module.exports = {
   Sport,
   League,
@@ -936,4 +943,5 @@ module.exports = {
   SportIdMapRundown,
   SportIdMapEnetpulse,
   AMERICAN_LEAGUES,
+  SportIdMapOpticOdds,
 };
