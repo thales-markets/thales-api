@@ -37,7 +37,7 @@ const getPythLatestPriceData = async (network, asset) => {
 };
 
 const getPythHistoricalPricesData = async (network, assetsAndTimes) => {
-  let pythDataArray = Array(assetsAndTimes.length).fill({ priceUpdateData: [], updateFee: 0, pythPrice: 0 });
+  const pythDataArray = Array(assetsAndTimes.length).fill({ priceUpdateData: [], updateFee: 0, pythPrice: 0 });
 
   try {
     const promises = [];

@@ -1,13 +1,13 @@
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
-const redis = require("redis");
 const { delay } = require("../utils/general");
 const sportsAMMV2DataContract = require("../contracts/sportsAMMV2DataContract");
 const { getProvider } = require("../utils/provider");
 const KEYS = require("../../redis/redis-keys");
 const { NETWORK, NETWORK_NAME } = require("../constants/networks");
 const { ethers } = require("ethers");
-const { Status, ResultType, OverUnderType, MarketType, MarketTypeMap } = require("../constants/markets");
+const { Status, ResultType, OverUnderType, MarketTypeMap } = require("../constants/markets");
 const {
   getIsCombinedPositionsMarket,
   isPlayerPropsMarket,
@@ -17,7 +17,6 @@ const {
 
 async function processResolve() {
   if (process.env.REDIS_URL) {
-    redisClient = redis.createClient(process.env.REDIS_URL);
     console.log("Resolver: create client from index");
 
     redisClient.on("error", function (error) {
@@ -117,12 +116,12 @@ async function resolveMarkets(network) {
         const ongoingMarket = openMarketsMap.get(readyForResolveGameId);
 
         if (resultsForMarkets[i].length > 0) {
-          ongoingMarket.status === Status.RESOLVED;
+          ongoingMarket.status = Status.RESOLVED;
           ongoingMarket.isResolved = true;
           ongoingMarket.isCancelled = false;
           ongoingMarket.statusCode = "resolved";
         } else {
-          ongoingMarket.status === Status.CANCELLED;
+          ongoingMarket.status = Status.CANCELLED;
           ongoingMarket.isResolved = false;
           ongoingMarket.isCancelled = true;
           ongoingMarket.statusCode = "cancelled";
@@ -215,7 +214,7 @@ async function resolveMarkets(network) {
 
         if (areMarketsResolved[j]) {
           if (resultsForMarkets[j].length > 0) {
-            unresolvedChildMarket.status === Status.RESOLVED;
+            unresolvedChildMarket.status = Status.RESOLVED;
             unresolvedChildMarket.isResolved = true;
             unresolvedChildMarket.isCancelled = false;
             unresolvedChildMarket.statusCode = "resolved";
@@ -226,7 +225,7 @@ async function resolveMarkets(network) {
             } else if (resultType === ResultType.OVER_UNDER || resultType === ResultType.SPREAD) {
               const resultLine = Number(resultsForMarkets[j][0]) / 100;
               if (resultLine == unresolvedChildMarket.line) {
-                unresolvedChildMarket.status === Status.CANCELLED;
+                unresolvedChildMarket.status = Status.CANCELLED;
                 unresolvedChildMarket.isResolved = false;
                 unresolvedChildMarket.isCancelled = true;
                 unresolvedChildMarket.statusCode = "cancelled";
@@ -253,7 +252,7 @@ async function resolveMarkets(network) {
                   : Number(resultsForMarkets[j][0]) / 100;
             }
           } else {
-            unresolvedChildMarket.status === Status.CANCELLED;
+            unresolvedChildMarket.status = Status.CANCELLED;
             unresolvedChildMarket.isResolved = false;
             unresolvedChildMarket.isCancelled = true;
             unresolvedChildMarket.statusCode = "cancelled";
@@ -312,7 +311,7 @@ async function resolveMarkets(network) {
       }
 
       if (status === Status.RESOLVED) {
-        cpUnresolvdeCildMarket.status === Status.RESOLVED;
+        cpUnresolvdeCildMarket.status = Status.RESOLVED;
         cpUnresolvdeCildMarket.isResolved = true;
         cpUnresolvdeCildMarket.isCancelled = false;
         cpUnresolvdeCildMarket.statusCode = "resolved";
@@ -320,7 +319,7 @@ async function resolveMarkets(network) {
         cpUnresolvdeCildMarket.isOpen = false;
         cpUnresolvdeCildMarket.winningPositions = winningPositions;
       } else if (status === Status.CANCELLED) {
-        cpUnresolvdeCildMarket.status === Status.CANCELLED;
+        cpUnresolvdeCildMarket.status = Status.CANCELLED;
         cpUnresolvdeCildMarket.isResolved = false;
         cpUnresolvdeCildMarket.isCancelled = true;
         cpUnresolvdeCildMarket.isPaused = false;

@@ -1,3 +1,4 @@
+const { redisClient } = require("../redis/client");
 require("dotenv").config();
 const express = require("express");
 const request = require("request");
@@ -8,11 +9,11 @@ const cacheControlRoutes = require("./routes/cache.route");
 const digitalOptionsRoutes = require("./routes/digitalOptions.route");
 const sportMarketsRoutes = require("./routes/sportMarkets.route");
 
-var cors = require("cors");
+const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 app.use(function (req, res, next) {
-  for (var key in req.query) {
+  for (const key in req.query) {
     req.query[key.toLowerCase()] = req.query[key];
   }
   next();
@@ -61,6 +62,7 @@ const {
   initializeSportsAMMLPListener,
   initializeParlayAMMLPListener,
 } = require("./services/contractEventListener");
+const { gameFinishersMap, userReffererIDsMap, solanaAddressesMap } = require("../redis/maps");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -167,7 +169,7 @@ app.get(ENDPOINTS.TOKEN_CAP, (req, res) => {
 
 app.post(ENDPOINTS.GAME_STARTED, (req, res) => {
   const walletAddress = req.body.walletAddress;
-  let gameStartedCount = gameFinishersMap.get("gameStartedCount") || 0;
+  const gameStartedCount = gameFinishersMap.get("gameStartedCount") || 0;
   gameFinishersMap.set("gameStartedCount", gameStartedCount + 1);
 
   if (walletAddress) {
@@ -181,7 +183,7 @@ app.post(ENDPOINTS.GAME_STARTED, (req, res) => {
 
 app.post(ENDPOINTS.GAME_ENDED, (req, res) => {
   const walletAddress = req.body.walletAddress;
-  let gameFinishedCount = gameFinishersMap.get("gameFinishedCount") || 0;
+  const gameFinishedCount = gameFinishersMap.get("gameFinishedCount") || 0;
   gameFinishersMap.set("gameFinishedCount", gameFinishedCount + 1);
 
   if (walletAddress) {
@@ -215,55 +217,55 @@ app.get(ENDPOINTS.MEDIUM, (req, res) => {
 
 app.get(ENDPOINTS.BANNERS, async (req, res) => {
   const network = req.params.networkParam;
-  var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${network}.json`;
+  const banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${network}.json`;
   request.get(banners).pipe(res);
 });
 
 app.get(ENDPOINTS.BANNERS_IMAGE, (req, res) => {
   const imageName = req.params.imageName;
-  var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${imageName}`;
+  const url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner/${imageName}`;
   request.get(url).pipe(res);
 });
 
 app.get(ENDPOINTS.BANNERS_V2, async (req, res) => {
   const network = req.params.networkParam;
-  var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner-v2/${network}.json`;
+  const banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner-v2/${network}.json`;
   request.get(banners).pipe(res);
 });
 
 app.get(ENDPOINTS.BANNERS_V2_IMAGE, (req, res) => {
   const imageName = req.params.imageName;
-  var url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner-v2/${imageName}`;
+  const url = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/dev/src/assets/images/banner-v2/${imageName}`;
   request.get(url).pipe(res);
 });
 
 app.get(ENDPOINTS.THALES_BANNERS, async (req, res) => {
   const network = req.params.networkParam;
-  var banners = `https://raw.githubusercontent.com/thales-markets/thales-dapp/dev/src/assets/images/banner/${network}.json`;
+  const banners = `https://raw.githubusercontent.com/thales-markets/thales-dapp/dev/src/assets/images/banner/${network}.json`;
   request.get(banners).pipe(res);
 });
 
 app.get(ENDPOINTS.THALES_BANNERS_IMAGE, (req, res) => {
   const imageName = req.params.imageName;
-  var url = `https://raw.githubusercontent.com/thales-markets/thales-dapp/dev/src/assets/images/banner/${imageName}`;
+  const url = `https://raw.githubusercontent.com/thales-markets/thales-dapp/dev/src/assets/images/banner/${imageName}`;
   request.get(url).pipe(res);
 });
 
 app.get(ENDPOINTS.SPEED_BANNERS, async (req, res) => {
   const network = req.params.networkParam;
-  var banners = `https://raw.githubusercontent.com/thales-markets/thales-speed-markets/dev/src/assets/images/banner/${network}.json`;
+  const banners = `https://raw.githubusercontent.com/thales-markets/thales-speed-markets/dev/src/assets/images/banner/${network}.json`;
   request.get(banners).pipe(res);
 });
 
 app.get(ENDPOINTS.SPEED_BANNERS_IMAGE, (req, res) => {
   const imageName = req.params.imageName;
-  var url = `https://raw.githubusercontent.com/thales-markets/thales-speed-markets/dev/src/assets/images/banner/${imageName}`;
+  const url = `https://raw.githubusercontent.com/thales-markets/thales-speed-markets/dev/src/assets/images/banner/${imageName}`;
   request.get(url).pipe(res);
 });
 
 app.get(ENDPOINTS.PROMOTIONS, async (req, res) => {
   const branchName = req.query["branch-name"];
-  var banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/${
+  const banners = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/${
     branchName ? branchName : "main"
   }/src/assets/promotions/index.json`;
   request.get(banners).pipe(res);
@@ -271,7 +273,7 @@ app.get(ENDPOINTS.PROMOTIONS, async (req, res) => {
 
 app.get(ENDPOINTS.LIVE_RESULT, (req, res) => {
   const gameId = req.params.gameId;
-  var url = `https://therundown.io/api/v2/events/${gameId}?key=${process.env.RUNDOWN_API_KEY}`;
+  const url = `https://therundown.io/api/v2/events/${gameId}?key=${process.env.RUNDOWN_API_KEY}`;
   request.get(url).pipe(res);
 });
 
@@ -320,7 +322,7 @@ app.get(ENDPOINTS.GET_REFFERER_ID_ADDRESS, (req, res) => {
 
 app.get(ENDPOINTS.GET_ADDRESS_REFFERER_ID, (req, res) => {
   const walletAddress = req.params.walletAddress;
-  const reffererID = [...userReffererIDsMap].find(([key, val]) => val == walletAddress);
+  const reffererID = [...userReffererIDsMap].find(([, val]) => val == walletAddress);
   if (reffererID && walletAddress) {
     res.setHeader("content-type", "application/json");
     res.send(reffererID[0]);
@@ -362,7 +364,7 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS_FOR_ADDRESS, (req, res) =>
 app.get(ENDPOINTS.ENETPULSE_RESULT, (req, res) => {
   const sportId = req.params.sportId;
   const date = req.params.date;
-  var url = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${sportId}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&date=${date}&includeEventProperties=no`;
+  const url = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${sportId}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&date=${date}&includeEventProperties=no`;
   request.get(url).pipe(res);
 });
 
@@ -372,7 +374,7 @@ app.get(ENDPOINTS.GET_REFFERER_MAP, (req, res) => {
 
 app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
   const sportParameter = req.params.sportParameter;
-  var url = `https://jsonodds.com/api/odds/${sportParameter}`;
+  const url = `https://jsonodds.com/api/odds/${sportParameter}`;
 
   request.get(url, { headers: { "x-api-key": process.env.JSON_ODDS_KEY.toString() } }).pipe(res);
 });
@@ -410,10 +412,10 @@ app.get(ENDPOINTS.OVERTIME_COLLATERALS, (req, res) => {
 app.get(ENDPOINTS.OVERTIME_MARKETS, (req, res) => {
   const network = req.params.networkParam;
   let status = req.query.status;
-  let type = req.query.type;
-  let sport = req.query.sport;
-  let leagueId = req.query.leagueid;
-  let ungroup = req.query.ungroup;
+  const type = req.query.type;
+  const sport = req.query.sport;
+  const leagueId = req.query.leagueid;
+  const ungroup = req.query.ungroup;
 
   if (!status) {
     status = "open";
@@ -536,7 +538,7 @@ app.get(ENDPOINTS.OVERTIME_MARKET, (req, res) => {
   redisClient.get(KEYS.OVERTIME_MARKETS[network], function (err, obj) {
     const markets = new Map(JSON.parse(obj));
     try {
-      let allMarkets = [];
+      const allMarkets = [];
 
       markets.forEach((marketsByStatus) => {
         marketsByStatus.forEach((market) => {
@@ -771,11 +773,11 @@ app.get(ENDPOINTS.THALES_COLLATERALS, (req, res) => {
 
 app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
   const network = req.params.networkParam;
-  let asset = req.query.asset;
-  let maturityDate = req.query.maturitydate;
-  let positions = req.query.positions;
-  let onlyWithBonus = req.query.onlywithbonus;
-  let ungroup = req.query.ungroup;
+  const asset = req.query.asset;
+  const maturityDate = req.query.maturitydate;
+  const positions = req.query.positions;
+  const onlyWithBonus = req.query.onlywithbonus;
+  const ungroup = req.query.ungroup;
 
   if (![10, 137, 8453, 42161].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
@@ -1528,11 +1530,11 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
 app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const network = req.params.networkParam;
   let status = req.query.status;
-  let typeId = req.query.typeId;
-  let sport = req.query.sport;
-  let leagueId = req.query.leagueid;
-  let ungroup = req.query.ungroup;
-  let minMaturity = req.query.minMaturity;
+  const typeId = req.query.typeId;
+  const sport = req.query.sport;
+  const leagueId = req.query.leagueid;
+  const ungroup = req.query.ungroup;
+  const minMaturity = req.query.minMaturity;
 
   if (!status) {
     status = "open";
@@ -1593,7 +1595,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     const markets = new Map(JSON.parse(obj));
 
     try {
-      let allMarkets = Array.from(markets.values());
+      const allMarkets = Array.from(markets.values());
       const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
 
       const marketsByStatus = groupMarketsByStatus[status] || [];
@@ -1633,10 +1635,10 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
 app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
   const network = req.params.networkParam;
-  let typeId = req.query.typeId;
-  let sport = req.query.sport;
-  let ungroup = req.query.ungroup;
-  let leagueId = req.query.leagueId;
+  const typeId = req.query.typeId;
+  const sport = req.query.sport;
+  const ungroup = req.query.ungroup;
+  const leagueId = req.query.leagueId;
 
   if (![10, 11155420].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 11155420 (optimism sepolia).");
@@ -1713,7 +1715,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
       const closedMarkets = new Map(JSON.parse(objClosed));
 
       try {
-        let allMarkets = [...Array.from(openMarkets.values()), ...Array.from(closedMarkets.values())];
+        const allMarkets = [...Array.from(openMarkets.values()), ...Array.from(closedMarkets.values())];
         const market = allMarkets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
 
         return res.send(market || `Market with gameId ${marketAddress} not found.`);

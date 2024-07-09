@@ -15,7 +15,8 @@ const flushSpecificCacheKey = (req, res) => {
   try {
     const reqBody = req.body;
 
-    if (!Array.isArray(reqBody.hasOwnProperty("cacheKeys") && reqBody.cacheKeys)) return res.sendStatus(400);
+    if (!Array.isArray(Object.prototype.hasOwnProperty.call(reqBody, "cacheKeys") && reqBody.cacheKeys))
+      return res.sendStatus(400);
 
     const keys = cache.del(reqBody.cacheKeys);
 

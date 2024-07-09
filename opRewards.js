@@ -1,9 +1,8 @@
+const { redisClient } = require("./redis/client");
 require("dotenv").config();
 
-const redis = require("redis");
-thalesData = require("thales-data");
+const thalesData = require("thales-data");
 const KEYS = require("./redis/redis-keys");
-fetch = require("node-fetch");
 const { delay } = require("./services/utils");
 
 const RANGED_AMM = "0x2d356b114cbca8deff2d8783eac2a5a5324fe1df";
@@ -14,7 +13,6 @@ const VAULT_SAFU = "0x6c7fd4321183b542e81bcc7de4dfb88f9dbca29f";
 const periodMap = new Map();
 
 if (process.env.REDIS_URL) {
-  redisClient = redis.createClient(process.env.REDIS_URL);
   console.log("create client from index");
 
   redisClient.on("error", function (error) {

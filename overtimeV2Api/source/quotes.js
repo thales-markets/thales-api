@@ -1,3 +1,4 @@
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 const { formatMarketOdds } = require("../utils/markets");
 const { getProvider } = require("../utils/provider");
@@ -7,7 +8,7 @@ const multiCollateralOnOffRampContract = require("../contracts/multiCollateralOn
 const priceFeedContract = require("../contracts/priceFeedContract");
 const sportsAMMV2RiskManagerContract = require("../contracts/sportsAMMV2RiskManagerContract");
 const { ethers } = require("ethers");
-const { ZERO_ADDRESS, PARLAY_CONTRACT_ERROR_MESSAGE, OddsType } = require("../constants/markets");
+const { ZERO_ADDRESS, OddsType } = require("../constants/markets");
 const {
   getCollateralDecimals,
   getCollateralAddress,
@@ -89,6 +90,7 @@ async function fetchTicketAmmQuote(
 }
 
 function getCollateralRate(network, provider, collateral) {
+  // eslint-disable-next-line no-async-promise-executor
   return new Promise(async function (resolve) {
     if (
       !collateral ||

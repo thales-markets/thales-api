@@ -20,8 +20,6 @@ const {
   JSON_ODDS_SPORTS,
 } = require("../constants/tags");
 const { parseBytes32String } = require("ethers/lib/utils");
-const oddslib = require("oddslib");
-const bytes32 = require("bytes32");
 
 const fixDuplicatedTeamName = (name, isEnetpulseSport) => {
   if (isEnetpulseSport) return name;
@@ -52,13 +50,14 @@ const formatMarketOdds = (odds, oddsType) => {
   switch (oddsType) {
     case ODDS_TYPE.Decimal:
       return 1 / odds;
-    case ODDS_TYPE.American:
+    case ODDS_TYPE.American: {
       const decimal = 1 / odds;
       if (decimal >= 2) {
         return (decimal - 1) * 100;
       } else {
         return -100 / (decimal - 1);
       }
+    }
     case ODDS_TYPE.AMM:
     default:
       return odds;

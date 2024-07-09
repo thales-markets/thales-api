@@ -8,7 +8,7 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 
-var cors = require("cors");
+const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 
@@ -43,7 +43,7 @@ if (process.env.REDIS_URL) {
   });
 
   redisClient.get("tokenMap", function (err, obj) {
-    tokenMapRaw = obj;
+    const tokenMapRaw = obj;
     console.log("tokenMapRaw:" + tokenMapRaw);
     if (tokenMapRaw) {
       tokenMap = new Map(JSON.parse(tokenMapRaw));
@@ -56,21 +56,21 @@ async function processToken() {
   try {
     const price = await getPrice();
     tokenMap.set("price", price);
-  } catch (e) {
+  } catch {
     tokenMap.set("price", undefined);
   }
 
   try {
     const circulatingsupply = getCirculatingSupply();
     tokenMap.set("circulatingsupply", circulatingsupply);
-  } catch (e) {
+  } catch {
     tokenMap.set("circulatingsupply", undefined);
   }
 
   try {
     const totalsupply = await getTotalSupply();
     tokenMap.set("totalsupply", totalsupply);
-  } catch (e) {
+  } catch {
     tokenMap.set("totalsupply", undefined);
   }
 
@@ -108,8 +108,8 @@ function getCirculatingSupply() {
   try {
     const startDate = new Date("2021-09-14");
     const todaysDate = new Date();
-    var dif = Math.round(todaysDate - startDate);
-    var weeks = Math.round(dif / 604800000);
+    const dif = Math.round(todaysDate - startDate);
+    const weeks = Math.round(dif / 604800000);
     const period = weeks + 1;
 
     return circulatingSupplyList[period];
