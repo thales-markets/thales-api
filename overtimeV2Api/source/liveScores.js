@@ -119,9 +119,11 @@ async function processAllLiveScores() {
             const homeScores = getOpticOddsScore(event, market.leagueId, "home");
             const awayScores = getOpticOddsScore(event, market.leagueId, "away");
 
+            const period = parseInt(event.period);
+
             liveScoresMap.set(gameId, {
-              period: event.period,
-              gameStatus: event.status,
+              period: Number.isNaN(period) ? undefined : period,
+              gameStatus: event.period === "HALF" ? "Half" : event.status,
               displayClock: event.clock,
               homeScore: homeScores.score,
               awayScore: awayScores.score,
