@@ -382,7 +382,7 @@ async function processAllMarkets(network) {
               const minuteLimitForLiveTradingFootball = Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL);
               if (
                 (!Number.isNaN(currentClockNumber) && currentClockNumber >= minuteLimitForLiveTradingFootball) ||
-                (Number.isNaN(currentClockNumber) && currentClock != "HALF")
+                (Number.isNaN(currentClockNumber) && currentPeriod != "HALF")
               ) {
                 console.log(
                   `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to clock: ${currentClock}min`,
