@@ -124,8 +124,8 @@ async function processAllLiveScores() {
               gameStatus: event.status,
               displayClock: event.clock,
               homeScore: homeScores.score,
-              awayScore: awayScores.scoreByPeriod,
-              homeScoreByPeriod: homeScores.score,
+              awayScore: awayScores.score,
+              homeScoreByPeriod: homeScores.scoreByPeriod,
               awayScoreByPeriod: awayScores.scoreByPeriod,
             });
           }
