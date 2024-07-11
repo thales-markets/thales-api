@@ -98,6 +98,7 @@ const packMarket = (market) => {
     isYesNoPlayerPropsMarket: isYesNoPlayerPropsMarket(market.typeId),
     playerProps: {
       playerId: market.playerProps.playerId,
+      originalProviderPlayerId: market.playerProps.originalProviderPlayerId,
       playerName: market.playerProps.playerName,
     },
     combinedPositions: market.combinedPositions

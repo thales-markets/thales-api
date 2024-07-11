@@ -57,16 +57,17 @@ function getOpenMarketsMap(network) {
 async function processAllPlayersInfo() {
   const playersInfoMap = await getPlayersInfoMap();
   // TODO: take from OP for now
-  const openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
+  const openMarketsMap = await getOpenMarketsMap(NETWORK.OptimismSepolia);
 
   const allOpenMarketsMap = Array.from(openMarketsMap.values());
 
   for (let i = 0; i < allOpenMarketsMap.length; i++) {
     const market = allOpenMarketsMap[i];
     const leagueId = market.leagueId;
+    const leagueProvider = getLeagueProvider(leagueId);
 
-    if (getLeagueProvider(leagueId) === Provider.RUNDOWN) {
-      const hasPlayerPropsMarkets = market.childMarkets.some((childMarket) => isPlayerPropsMarket(childMarket.typeId));
+    if (leagueProvider === Provider.RUNDOWN) {
+      const hasPlayerPropsMarkets = market.childMarkets.some((childMarket) => childMarket.isPlayerPropsMarket);
 
       if (hasPlayerPropsMarkets) {
         // console.log(
@@ -108,6 +109,14 @@ async function processAllPlayersInfo() {
           }
         }
       }
+    } else if (leagueProvider === Provider.OPTICODDS) {
+      const playerPropsMarkets = market.childMarkets.filter((childMarket) => childMarket.isPlayerPropsMarket);
+
+      playerPropsMarkets.forEach((market) => {
+        playersInfoMap.set(`${market.playerProps.playerId}`, {
+          playerName: market.playerProps.playerName,
+        });
+      });
     }
   }
 

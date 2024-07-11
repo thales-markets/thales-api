@@ -213,20 +213,10 @@ const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
   const scoreByPeriod = [];
 
   if (gameScores) {
-    if (sport === League.WNBA) {
+    if (sport === League.WNBA || sport === League.MLB) {
       score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`);
-      for (let i = 1; i <= 4; i++) {
-        const code = `score_${homeAwayType}_period_${i}`;
-        const periodScore = getOpticOddsScoreByCode(gameScores, code);
-        if (periodScore !== undefined) {
-          scoreByPeriod.push(periodScore);
-        } else {
-          break;
-        }
-      }
-    } else if (sport === League.MLB) {
-      score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`);
-      for (let i = 1; i <= 20; i++) {
+      // set 50 as max number of periods
+      for (let i = 1; i <= 50; i++) {
         const code = `score_${homeAwayType}_period_${i}`;
         const periodScore = getOpticOddsScoreByCode(gameScores, code);
         if (periodScore !== undefined) {
@@ -236,11 +226,13 @@ const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
         }
       }
     } else {
-      score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`);
-      const periodScore = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_period_1`);
-      if (periodScore !== undefined) {
-        scoreByPeriod.push(periodScore);
+      // soccer
+      const periodScore1 = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_period_1`);
+      const periodScore2 = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_period_2`);
+      if (periodScore1 !== undefined) {
+        scoreByPeriod.push(periodScore1);
       }
+      score = (periodScore1 !== undefined ? periodScore1 : 0) + (periodScore2 !== undefined ? periodScore2 : 0);
     }
   }
 
@@ -256,55 +248,66 @@ const procesOpticOdssGamesInfo = async (sports, formattedDate, gamesInfoMap) => 
     const sport = sportId;
     const opticOddsSport = SportIdMapOpticOdds[sport];
 
-    console.log(`Getting games info for OpticOdds sport: ${opticOddsSport}, ${sport} and date ${formattedDate}`);
-    const schedulesApiUrl = `https://api.opticodds.com/api/v2/schedules/list?game_date=${formattedDate}&league=${opticOddsSport}`;
-    const schedulesResponse = await axios.get(schedulesApiUrl, {
-      headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-    });
-    const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?league=${opticOddsSport}`;
-    const scoresResponse = await axios.get(scoresApiUrl, {
-      headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-    });
+    let page = 1;
+    let totalPages = 1;
 
-    schedulesResponse.data.data.forEach((event) => {
-      if (event.game_id) {
-        const gameId = bytes32({ input: event.game_id });
-        const gameScores = scoresResponse.data.data.find((score) => score.game_id === event.game_id);
+    while (page <= totalPages) {
+      console.log(
+        `Getting games info for OpticOdds sport: ${opticOddsSport}, ${sport}, date ${formattedDate} and page ${page}`,
+      );
+      const schedulesApiUrl = `https://api.opticodds.com/api/v2/schedules/list?game_date=${formattedDate}&league=${opticOddsSport}&page=${page}`;
+      const schedulesResponse = await axios.get(schedulesApiUrl, {
+        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+      });
+      page++;
+      totalPages = Number(schedulesResponse.data.total_pages);
 
-        gamesInfoMap.set(gameId, {
-          lastUpdate: new Date().getTime(),
-          gameStatus: event.status,
-          isGameFinished: event.status === "Completed" || event.status === "Cancelled",
-          tournamentName: "",
-          tournamentRound: "",
-          provider: Provider.OPTICODDS,
-          teams: [
-            {
-              name: event.home_team,
-              isHome: true,
-              ...(gameScores
-                ? getOpticOddsScore(gameScores, sport, "home")
-                : {
-                    score: undefined,
-                    scoreByPeriod: [],
-                  }),
-            },
-            {
-              name: event.away_team,
-              isHome: false,
-              ...(gameScores
-                ? getOpticOddsScore(gameScores, sport, "away")
-                : {
-                    score: undefined,
-                    scoreByPeriod: [],
-                  }),
-            },
-          ],
-        });
-      }
-    });
+      const gameIds = schedulesResponse.data.data.map((data) => `game_id=${data.game_id}`);
+      const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?${gameIds.join("&")}`;
+      const scoresResponse = await axios.get(scoresApiUrl, {
+        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+      });
 
-    await delay(5);
+      schedulesResponse.data.data.forEach((event) => {
+        if (event.game_id) {
+          const gameId = bytes32({ input: event.game_id });
+          const gameScores = scoresResponse.data.data.find((score) => score.game_id === event.game_id);
+
+          gamesInfoMap.set(gameId, {
+            lastUpdate: new Date().getTime(),
+            gameStatus: event.status,
+            isGameFinished: event.status === "Completed" || event.status === "Cancelled",
+            tournamentName: "",
+            tournamentRound: "",
+            provider: Provider.OPTICODDS,
+            teams: [
+              {
+                name: event.home_team,
+                isHome: true,
+                ...(gameScores
+                  ? getOpticOddsScore(gameScores, sport, "home")
+                  : {
+                      score: undefined,
+                      scoreByPeriod: [],
+                    }),
+              },
+              {
+                name: event.away_team,
+                isHome: false,
+                ...(gameScores
+                  ? getOpticOddsScore(gameScores, sport, "away")
+                  : {
+                      score: undefined,
+                      scoreByPeriod: [],
+                    }),
+              },
+            ],
+          });
+        }
+      });
+
+      await delay(5);
+    }
   }
 };
 
