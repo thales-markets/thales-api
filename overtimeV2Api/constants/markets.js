@@ -153,6 +153,7 @@ const MarketType = {
 
   // Player props
   PLAYER_PROPS_HOMERUNS: 11010,
+  PLAYER_PROPS_BASES: 11011,
   PLAYER_PROPS_STRIKEOUTS: 11019,
   PLAYER_PROPS_PASSING_YARDS: 11051,
   PLAYER_PROPS_PASSING_TOUCHDOWNS: 11052,
@@ -870,6 +871,12 @@ const MarketTypeMap = {
     name: "Home runs",
     resultType: ResultType.OVER_UNDER,
   },
+  [MarketType.PLAYER_PROPS_BASES]: {
+    id: MarketType.PLAYER_PROPS_BASES,
+    key: "bases",
+    name: "Bases",
+    resultType: ResultType.OVER_UNDER,
+  },
   [MarketType.PLAYER_PROPS_PASSING_YARDS]: {
     id: MarketType.PLAYER_PROPS_PASSING_YARDS,
     key: "passingYards",
@@ -998,6 +1005,7 @@ const MarketTypeMap = {
 
 const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_HOMERUNS,
+  MarketType.PLAYER_PROPS_BASES,
   MarketType.PLAYER_PROPS_STRIKEOUTS,
   MarketType.PLAYER_PROPS_PASSING_YARDS,
   MarketType.PLAYER_PROPS_PASSING_TOUCHDOWNS,
