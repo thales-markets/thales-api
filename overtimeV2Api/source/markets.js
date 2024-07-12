@@ -195,11 +195,11 @@ const mapMarket = (market) => {
   if (packedMarket.isOpen && !isStarted) {
     packedMarket.statusCode = "open";
   }
-  if ((packedMarket.isOpen || packedMarket.isPaused) && isStarted) {
-    packedMarket.statusCode = "ongoing";
-  }
   if (packedMarket.isPaused) {
     packedMarket.statusCode = "paused";
+  }
+  if (isStarted) {
+    packedMarket.statusCode = "ongoing";
   }
 
   return packedMarket;
