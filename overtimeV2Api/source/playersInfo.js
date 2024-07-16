@@ -7,7 +7,7 @@ const KEYS = require("../../redis/redis-keys");
 const { isPlayerPropsMarket, convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getLeagueProvider } = require("../utils/sports");
-const { Provider } = require("../constants/sports");
+const { Provider, League } = require("../constants/sports");
 
 async function processPlayersInfo() {
   if (process.env.REDIS_URL) {
@@ -56,10 +56,11 @@ function getOpenMarketsMap(network) {
 
 async function processAllPlayersInfo() {
   const playersInfoMap = await getPlayersInfoMap();
-  // TODO: take from OP for now
-  const openMarketsMap = await getOpenMarketsMap(NETWORK.OptimismSepolia);
+  // TODO: take from OP and OP Sepolia for now
+  const openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
+  const openSepoliaMarketsMap = await getOpenMarketsMap(NETWORK.OptimismSepolia);
 
-  const allOpenMarketsMap = Array.from(openMarketsMap.values());
+  const allOpenMarketsMap = [...Array.from(openMarketsMap.values()), ...Array.from(openSepoliaMarketsMap.values())];
 
   for (let i = 0; i < allOpenMarketsMap.length; i++) {
     const market = allOpenMarketsMap[i];
@@ -109,7 +110,9 @@ async function processAllPlayersInfo() {
           }
         }
       }
-    } else if (leagueProvider === Provider.OPTICODDS) {
+    }
+
+    if (leagueProvider === Provider.OPTICODDS || leagueId === League.MLB) {
       const playerPropsMarkets = market.childMarkets.filter((childMarket) => childMarket.isPlayerPropsMarket);
 
       playerPropsMarkets.forEach((market) => {

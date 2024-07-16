@@ -330,7 +330,8 @@ async function processAllGamesInfo() {
     .filter((league) => league.provider === Provider.ENETPULSE)
     .map((league) => league.id);
   const opticOddsLeagues = allLeagues
-    .filter((league) => league.provider === Provider.OPTICODDS)
+    // TODO: hardcore MLB for testing
+    .filter((league) => league.provider === Provider.OPTICODDS || league.id === League.MLB)
     .map((league) => league.id);
 
   for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
