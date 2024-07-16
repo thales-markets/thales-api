@@ -81,8 +81,9 @@ async function processAllLiveScores() {
     const market = allOngoingMarketsMap[i];
     const leagueId = market.leagueId;
     const leagueProvider = getLeagueProvider(leagueId);
+    const gameInfo = gamesInfoMap.get(market.gameId);
 
-    if (leagueProvider === Provider.RUNDOWN) {
+    if (leagueProvider === Provider.RUNDOWN && gameInfo && gameInfo.provider === Provider.RUNDOWN) {
       const eventApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(market.gameId)}?key=${
         process.env.RUNDOWN_API_KEY
       }`;
@@ -109,7 +110,10 @@ async function processAllLiveScores() {
       }
     }
     // TODO: hardcore MLB for testing
-    if (leagueProvider === Provider.OPTICODDS || leagueId === League.MLB) {
+    if (
+      leagueProvider === Provider.OPTICODDS ||
+      (leagueId === League.MLB && gameInfo && gameInfo.provider === Provider.OPTICODDS)
+    ) {
       const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?game_id=${convertFromBytes32(market.gameId)}`;
       const scoresResponse = await axios.get(scoresApiUrl, {
         headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
@@ -139,17 +143,13 @@ async function processAllLiveScores() {
           }
         });
       } else {
-        const gameInfo = gamesInfoMap.get(market.gameId);
-
-        if (gameInfo && gameInfo.provider === Provider.OPTICODDS) {
-          liveScoresMap.set(market.gameId, {
-            gameStatus: gameInfo.gameStatus,
-            homeScore: 0,
-            awayScore: 0,
-            homeScoreByPeriod: [],
-            awayScoreByPeriod: [],
-          });
-        }
+        liveScoresMap.set(market.gameId, {
+          gameStatus: gameInfo.gameStatus,
+          homeScore: 0,
+          awayScore: 0,
+          homeScoreByPeriod: [],
+          awayScoreByPeriod: [],
+        });
       }
     }
   }
