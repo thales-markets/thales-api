@@ -8,7 +8,8 @@ const KEYS = require("../../redis/redis-keys");
 const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getLeagueProvider } = require("../utils/sports");
-const { Provider } = require("../constants/sports");
+const { Provider, League } = require("../constants/sports");
+const { getOpticOddsScore } = require("./gamesInfo");
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {
@@ -55,18 +56,34 @@ function getOpenMarketsMap(network) {
   });
 }
 
+function getGamesInfoMap() {
+  return new Promise(function (resolve) {
+    redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
+      const gamesInfoMap = new Map(JSON.parse(obj));
+      resolve(gamesInfoMap);
+    });
+  });
+}
+
 async function processAllLiveScores() {
   const liveScoresMap = await getLiveScoresMap();
-  // TODO: take from OP for now
+  const gamesInfoMap = await getGamesInfoMap();
+  // TODO: take from OP and OP Sepolia for now
   const openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
+  const openSepoliaMarketsMap = await getOpenMarketsMap(NETWORK.OptimismSepolia);
 
-  const allOngoingMarketsMap = Array.from(openMarketsMap.values()).filter((market) => market.statusCode === "ongoing");
+  const allOngoingMarketsMap = [
+    ...Array.from(openMarketsMap.values()),
+    ...Array.from(openSepoliaMarketsMap.values()),
+  ].filter((market) => market.statusCode === "ongoing");
 
   for (let i = 0; i < allOngoingMarketsMap.length; i++) {
     const market = allOngoingMarketsMap[i];
     const leagueId = market.leagueId;
+    const leagueProvider = getLeagueProvider(leagueId);
+    const gameInfo = gamesInfoMap.get(market.gameId);
 
-    if (getLeagueProvider(leagueId) === Provider.RUNDOWN) {
+    if (leagueProvider === Provider.RUNDOWN && gameInfo && gameInfo.provider === Provider.RUNDOWN) {
       const eventApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(market.gameId)}?key=${
         process.env.RUNDOWN_API_KEY
       }`;
@@ -89,6 +106,49 @@ async function processAllLiveScores() {
               awayScoreByPeriod: event.score.score_away_by_period,
             });
           }
+        });
+      }
+    }
+    // TODO: hardcore MLB for testing
+    if (
+      leagueProvider === Provider.OPTICODDS ||
+      (leagueId === League.MLB && gameInfo && gameInfo.provider === Provider.OPTICODDS)
+    ) {
+      const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?game_id=${convertFromBytes32(market.gameId)}`;
+      const scoresResponse = await axios.get(scoresApiUrl, {
+        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+      });
+
+      const scoresResponseData = scoresResponse.data;
+
+      if (scoresResponseData !== null && scoresResponseData.data.length > 0) {
+        scoresResponseData.data.forEach((event) => {
+          if (event.game_id) {
+            const gameId = bytes32({ input: event.game_id });
+
+            const homeScores = getOpticOddsScore(event, market.leagueId, "home");
+            const awayScores = getOpticOddsScore(event, market.leagueId, "away");
+
+            const period = parseInt(event.period);
+
+            liveScoresMap.set(gameId, {
+              period: Number.isNaN(period) ? undefined : period,
+              gameStatus: event.period === "HALF" ? "Half" : event.status,
+              displayClock: event.clock,
+              homeScore: homeScores.score,
+              awayScore: awayScores.score,
+              homeScoreByPeriod: homeScores.scoreByPeriod,
+              awayScoreByPeriod: awayScores.scoreByPeriod,
+            });
+          }
+        });
+      } else {
+        liveScoresMap.set(market.gameId, {
+          gameStatus: gameInfo.gameStatus,
+          homeScore: 0,
+          awayScore: 0,
+          homeScoreByPeriod: [],
+          awayScoreByPeriod: [],
         });
       }
     }

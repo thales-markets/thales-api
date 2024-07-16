@@ -19,6 +19,13 @@ const MarketType = {
   WINNER2: 10011,
   // Winner (placeholder)
   WINNER3: 10012,
+  // Who will score first
+  FIRST_SCORE: 10019,
+  // Who will score last
+  LAST_SCORE: 10020,
+  // Clean sheet per team
+  CLEAN_SHEET_HOME_TEAM: 10141,
+  CLEAN_SHEET_AWAY_TEAM: 10142,
   // Winner period - half for soccer, quarter for basketball
   FIRST_PERIOD_WINNER: 10021,
   SECOND_PERIOD_WINNER: 10022,
@@ -151,8 +158,16 @@ const MarketType = {
   GOALS: 10007,
   HALFTIME_FULLTIME_GOALS: 10008,
 
+  // Who will qualify for the next round
+  WHO_WILL_QUALIFY: 10130,
+  // Will there be overtime in the game
+  WILL_THERE_BE_OVERTIME: 10131,
+  // No runs in the first inning
+  FIRST_INNING_NO_RUNS: 10132,
+
   // Player props
   PLAYER_PROPS_HOMERUNS: 11010,
+  PLAYER_PROPS_BASES: 11011,
   PLAYER_PROPS_STRIKEOUTS: 11019,
   PLAYER_PROPS_PASSING_YARDS: 11051,
   PLAYER_PROPS_PASSING_TOUCHDOWNS: 11052,
@@ -203,6 +218,33 @@ const MarketTypeMap = {
     id: MarketType.WINNER3,
     key: "winner3",
     name: "Winner",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  // Who will score first
+  [MarketType.FIRST_SCORE]: {
+    id: MarketType.FIRST_SCORE,
+    key: "firstScore",
+    name: "First",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  // Who will score last
+  [MarketType.LAST_SCORE]: {
+    id: MarketType.LAST_SCORE,
+    key: "lastScore",
+    name: "Last",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  // Clean sheet per team
+  [MarketType.CLEAN_SHEET_HOME_TEAM]: {
+    id: MarketType.CLEAN_SHEET_HOME_TEAM,
+    key: "cleanSheetHomeTeam",
+    name: "Clean sheet",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.CLEAN_SHEET_AWAY_TEAM]: {
+    id: MarketType.CLEAN_SHEET_AWAY_TEAM,
+    key: "cleanSheetAwayTeam",
+    name: "Clean sheet",
     resultType: ResultType.EXACT_POSITION,
   },
   // Winner period - half for soccer, quarter for basketball
@@ -857,6 +899,28 @@ const MarketTypeMap = {
     resultType: ResultType.COMBINED_POSITIONS,
   },
 
+  // Who will qualify for the next round
+  [MarketType.WHO_WILL_QUALIFY]: {
+    id: MarketType.WHO_WILL_QUALIFY,
+    key: "whoWillQualify",
+    name: "Who will qualify for the next round",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  // Will there be overtime in the game
+  [MarketType.WILL_THERE_BE_OVERTIME]: {
+    id: MarketType.WILL_THERE_BE_OVERTIME,
+    key: "willThereBeOvertime",
+    name: "Will there be overtime in the game",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  // Will there be overtime in the game
+  [MarketType.FIRST_INNING_NO_RUNS]: {
+    id: MarketType.FIRST_INNING_NO_RUNS,
+    key: "firstInningNoRuns",
+    name: "No runs in the first inning",
+    resultType: ResultType.EXACT_POSITION,
+  },
+
   // Player props
   [MarketType.PLAYER_PROPS_STRIKEOUTS]: {
     id: MarketType.PLAYER_PROPS_STRIKEOUTS,
@@ -868,6 +932,12 @@ const MarketTypeMap = {
     id: MarketType.PLAYER_PROPS_HOMERUNS,
     key: "homeruns",
     name: "Home runs",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_BASES]: {
+    id: MarketType.PLAYER_PROPS_BASES,
+    key: "bases",
+    name: "Bases",
     resultType: ResultType.OVER_UNDER,
   },
   [MarketType.PLAYER_PROPS_PASSING_YARDS]: {
@@ -998,6 +1068,7 @@ const MarketTypeMap = {
 
 const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_HOMERUNS,
+  MarketType.PLAYER_PROPS_BASES,
   MarketType.PLAYER_PROPS_STRIKEOUTS,
   MarketType.PLAYER_PROPS_PASSING_YARDS,
   MarketType.PLAYER_PROPS_PASSING_TOUCHDOWNS,

@@ -7,7 +7,7 @@ const KEYS = require("../../redis/redis-keys");
 const { isPlayerPropsMarket, convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getLeagueProvider } = require("../utils/sports");
-const { Provider } = require("../constants/sports");
+const { Provider, League } = require("../constants/sports");
 
 async function processPlayersInfo() {
   if (process.env.REDIS_URL) {
@@ -54,19 +54,32 @@ function getOpenMarketsMap(network) {
   });
 }
 
+function getGamesInfoMap() {
+  return new Promise(function (resolve) {
+    redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
+      const gamesInfoMap = new Map(JSON.parse(obj));
+      resolve(gamesInfoMap);
+    });
+  });
+}
+
 async function processAllPlayersInfo() {
   const playersInfoMap = await getPlayersInfoMap();
-  // TODO: take from OP for now
+  const gamesInfoMap = await getGamesInfoMap();
+  // TODO: take from OP and OP Sepolia for now
   const openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
+  const openSepoliaMarketsMap = await getOpenMarketsMap(NETWORK.OptimismSepolia);
 
-  const allOpenMarketsMap = Array.from(openMarketsMap.values());
+  const allOpenMarketsMap = [...Array.from(openMarketsMap.values()), ...Array.from(openSepoliaMarketsMap.values())];
 
   for (let i = 0; i < allOpenMarketsMap.length; i++) {
     const market = allOpenMarketsMap[i];
     const leagueId = market.leagueId;
+    const leagueProvider = getLeagueProvider(leagueId);
+    const gameInfo = gamesInfoMap.get(market.gameId);
 
-    if (getLeagueProvider(leagueId) === Provider.RUNDOWN) {
-      const hasPlayerPropsMarkets = market.childMarkets.some((childMarket) => isPlayerPropsMarket(childMarket.typeId));
+    if (leagueProvider === Provider.RUNDOWN && gameInfo && gameInfo.provider === Provider.RUNDOWN) {
+      const hasPlayerPropsMarkets = market.childMarkets.some((childMarket) => childMarket.isPlayerPropsMarket);
 
       if (hasPlayerPropsMarkets) {
         // console.log(
@@ -108,6 +121,20 @@ async function processAllPlayersInfo() {
           }
         }
       }
+    }
+
+    // TODO: hardcore MLB for testing
+    if (
+      leagueProvider === Provider.OPTICODDS ||
+      (leagueId === League.MLB && gameInfo && gameInfo.provider === Provider.RUNDOWN)
+    ) {
+      const playerPropsMarkets = market.childMarkets.filter((childMarket) => childMarket.isPlayerPropsMarket);
+
+      playerPropsMarkets.forEach((market) => {
+        playersInfoMap.set(`${market.playerProps.playerId}`, {
+          playerName: market.playerProps.playerName,
+        });
+      });
     }
   }
 

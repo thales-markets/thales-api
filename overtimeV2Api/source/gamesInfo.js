@@ -14,6 +14,7 @@ const {
   SportIdMapRundown,
   AMERICAN_LEAGUES,
   League,
+  SportIdMapOpticOdds,
 } = require("../constants/sports");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
@@ -97,6 +98,7 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
             event.score.event_status === "STATUS_CANCELED",
           tournamentName: "",
           tournamentRound: "",
+          provider: Provider.RUNDOWN,
           teams: event.teams_normalized
             ? event.teams_normalized.map((team) => ({
                 name: AMERICAN_LEAGUES.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
@@ -115,7 +117,7 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
 
 const getEnetpulseScoreByCode = (results, resultCode) => {
   const finalScore = results.find((result) => result.result_code == resultCode);
-  if (finalScore) {
+  if (finalScore !== undefined) {
     return Number(finalScore.value);
   }
   return undefined;
@@ -177,6 +179,7 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
           isGameFinished: event.status_type === "finished" || event.status_type === "cancelled",
           tournamentName: event.tournament_stage_name,
           tournamentRound: EnetpulseRounds[Number(event.round_typeFK)],
+          provider: Provider.ENETPULSE,
           teams: event.event_participants
             ? Object.values(event.event_participants).map((team) => ({
                 name: team.participant.name,
@@ -197,6 +200,117 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
   }
 };
 
+const getOpticOddsScoreByCode = (gameScores, code) => {
+  const score = gameScores[code];
+  if (score !== undefined) {
+    return Number(score);
+  }
+  return undefined;
+};
+
+const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
+  let score = undefined;
+  const scoreByPeriod = [];
+
+  if (gameScores) {
+    if (sport === League.WNBA || sport === League.MLB) {
+      score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`);
+      // set 50 as max number of periods
+      for (let i = 1; i <= 50; i++) {
+        const code = `score_${homeAwayType}_period_${i}`;
+        const periodScore = getOpticOddsScoreByCode(gameScores, code);
+        if (periodScore !== undefined) {
+          scoreByPeriod.push(periodScore);
+        } else {
+          break;
+        }
+      }
+    } else {
+      // soccer
+      const periodScore1 = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_period_1`);
+      const periodScore2 = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_period_2`);
+      if (periodScore1 !== undefined) {
+        scoreByPeriod.push(periodScore1);
+      }
+      score = (periodScore1 !== undefined ? periodScore1 : 0) + (periodScore2 !== undefined ? periodScore2 : 0);
+    }
+  }
+
+  return {
+    score,
+    scoreByPeriod,
+  };
+};
+
+const procesOpticOdssGamesInfo = async (sports, formattedDate, gamesInfoMap) => {
+  for (let j = 0; j < sports.length; j++) {
+    const sportId = Number(sports[j]);
+    const sport = sportId;
+    const opticOddsSport = SportIdMapOpticOdds[sport];
+
+    let page = 1;
+    let totalPages = 1;
+
+    while (page <= totalPages) {
+      console.log(
+        `Getting games info for OpticOdds sport: ${opticOddsSport}, ${sport}, date ${formattedDate} and page ${page}`,
+      );
+      const schedulesApiUrl = `https://api.opticodds.com/api/v2/schedules/list?game_date=${formattedDate}&league=${opticOddsSport}&page=${page}`;
+      const schedulesResponse = await axios.get(schedulesApiUrl, {
+        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+      });
+      page++;
+      totalPages = Number(schedulesResponse.data.total_pages);
+
+      const gameIds = schedulesResponse.data.data.map((data) => `game_id=${data.game_id}`);
+      const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?${gameIds.join("&")}`;
+      const scoresResponse = await axios.get(scoresApiUrl, {
+        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+      });
+
+      schedulesResponse.data.data.forEach((event) => {
+        if (event.game_id) {
+          const gameId = bytes32({ input: event.game_id });
+          const gameScores = scoresResponse.data.data.find((score) => score.game_id === event.game_id);
+
+          gamesInfoMap.set(gameId, {
+            lastUpdate: new Date().getTime(),
+            gameStatus: event.status,
+            isGameFinished: event.status === "Completed" || event.status === "Cancelled",
+            tournamentName: "",
+            tournamentRound: "",
+            provider: Provider.OPTICODDS,
+            teams: [
+              {
+                name: event.home_team,
+                isHome: true,
+                ...(gameScores
+                  ? getOpticOddsScore(gameScores, sport, "home")
+                  : {
+                      score: undefined,
+                      scoreByPeriod: [],
+                    }),
+              },
+              {
+                name: event.away_team,
+                isHome: false,
+                ...(gameScores
+                  ? getOpticOddsScore(gameScores, sport, "away")
+                  : {
+                      score: undefined,
+                      scoreByPeriod: [],
+                    }),
+              },
+            ],
+          });
+        }
+      });
+
+      await delay(5);
+    }
+  }
+};
+
 function getGamesInfoMap() {
   return new Promise(function (resolve) {
     redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
@@ -210,28 +324,31 @@ async function processAllGamesInfo() {
   const startDate = subDays(new Date(), numberOfDaysInPast);
   const gamesInfoMap = await getGamesInfoMap();
 
+  const allLeagues = Object.values(LeagueMap);
+  const rundownLeagues = allLeagues.filter((league) => league.provider === Provider.RUNDOWN).map((league) => league.id);
+  const enetpulseLeagues = allLeagues
+    .filter((league) => league.provider === Provider.ENETPULSE)
+    .map((league) => league.id);
+  const opticOddsLeagues = allLeagues
+    // TODO: hardcore MLB for testing
+    .filter((league) => league.provider === Provider.OPTICODDS || league.id === League.MLB)
+    .map((league) => league.id);
+
   for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
     const formattedDate = format(addDays(startDate, i), "yyyy-MM-dd");
     console.log(`Games info: Getting games info for date: ${formattedDate}`);
 
-    const allLeagues = Object.values(LeagueMap);
-    const rundownLeagues = allLeagues
-      .filter((league) => league.provider === Provider.RUNDOWN)
-      .map((league) => league.id);
-    const enetpulseLeagues = allLeagues
-      .filter((league) => league.provider === Provider.ENETPULSE)
-      .map((league) => league.id);
-
     await Promise.all([
       procesRundownGamesInfoPerDate(rundownLeagues, formattedDate, gamesInfoMap),
       procesEnetpulseGamesInfoPerDate(enetpulseLeagues, formattedDate, gamesInfoMap),
+      procesOpticOdssGamesInfo(opticOddsLeagues, formattedDate, gamesInfoMap),
     ]);
   }
-
   console.log(`Games info: Number of games info: ${Array.from(gamesInfoMap.values()).length}`);
   redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
 }
 
 module.exports = {
   processGamesInfo,
+  getOpticOddsScore,
 };

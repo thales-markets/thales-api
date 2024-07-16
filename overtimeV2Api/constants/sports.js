@@ -108,6 +108,7 @@ const Provider = {
   RUNDOWN: "rundown",
   ENETPULSE: "enetpulse",
   JSONODDS: "jsonOdds",
+  OPTICODDS: "opticOdds",
 };
 
 const LeagueMap = {
@@ -1008,6 +1009,12 @@ const SportIdMapEnetpulse = {
   10615: 10615, // Conference League Qualification
 };
 
+const SportIdMapOpticOdds = {
+  3: "MLB",
+  8: "WNBA",
+  50: "UEFA - European Championship",
+};
+
 module.exports = {
   Sport,
   League,
@@ -1020,4 +1027,5 @@ module.exports = {
   SportIdMapRundown,
   SportIdMapEnetpulse,
   AMERICAN_LEAGUES,
+  SportIdMapOpticOdds,
 };
