@@ -141,7 +141,7 @@ async function processAllLiveScores() {
       } else {
         const gameInfo = gamesInfoMap.get(market.gameId);
 
-        if (gameInfo) {
+        if (gameInfo && gameInfo.provider === Provider.OPTICODDS) {
           liveScoresMap.set(market.gameId, {
             gameStatus: gameInfo.gameStatus,
             homeScore: 0,
