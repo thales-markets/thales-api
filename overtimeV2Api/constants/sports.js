@@ -40,6 +40,8 @@ const League = {
   UEFA_EURO: 50,
   EREDIVISIE: 57,
   PRIMEIRA_LIGA: 61,
+  SUMMER_OLYMPICS_SOCCER_WOMEN: 65,
+  SUMMER_OLYMPICS_SOCCER: 66,
   FIFA_WC_WOMEN: 76,
   ENGLAND_CUP: 132,
   FRANCE_CUP: 134,
@@ -53,6 +55,8 @@ const League = {
   UEFA_EURO_U21: 288,
   FIFA_WORLD_CUP_U20: 296,
   EUROLEAGUE: 399,
+  SUMMER_OLYMPICS_BASKETBALL: 406,
+  SUMMER_OLYMPICS_BASKETBALL_WOMEN: 407,
   FIBA_WORLD_CUP: 409,
   FORMULA1: 445,
   MOTOGP: 497,
@@ -62,6 +66,8 @@ const League = {
   CONCACAF_NATIONS_LEAGUE: 9821,
   CSGO: 9977,
   DOTA2: 9983,
+  SUMMER_OLYMPICS_BASKETBALL_3X3: 10071,
+  SUMMER_OLYMPICS_BASKETBALL_3X3_WOMEN: 10072,
   SUMMER_OLYMPICS_QUALIFICATION: 10502,
   LOL: 10138,
   CONMEBOL_WC_QUALIFICATIONS: 10199,
@@ -438,6 +444,30 @@ const LeagueMap = {
     live: true,
     isLiveTestnet: true,
   },
+  [League.SUMMER_OLYMPICS_SOCCER_WOMEN]: {
+    sport: Sport.SOCCER,
+    id: League.SUMMER_OLYMPICS_SOCCER_WOMEN,
+    label: "Olympic Games Soccer Women",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.SUMMER_OLYMPICS_SOCCER]: {
+    sport: Sport.SOCCER,
+    id: League.SUMMER_OLYMPICS_SOCCER,
+    label: "Olympic Games Soccer",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
   [League.FIFA_WC_WOMEN]: {
     sport: Sport.SOCCER,
     id: League.FIFA_WC_WOMEN,
@@ -587,6 +617,30 @@ const LeagueMap = {
     live: true,
     isLiveTestnet: true,
   },
+  [League.SUMMER_OLYMPICS_BASKETBALL]: {
+    sport: Sport.BASKETBALL,
+    id: League.SUMMER_OLYMPICS_BASKETBALL,
+    label: "Olympic Games Basketball",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.POINTS,
+    matchResolveType: MatchResolveType.OVERTIME,
+    periodType: PeriodType.QUARTER,
+    isDrawAvailable: false,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.SUMMER_OLYMPICS_BASKETBALL_WOMEN]: {
+    sport: Sport.BASKETBALL,
+    id: League.SUMMER_OLYMPICS_BASKETBALL_WOMEN,
+    label: "Olympic Games Basketball Women",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.POINTS,
+    matchResolveType: MatchResolveType.OVERTIME,
+    periodType: PeriodType.QUARTER,
+    isDrawAvailable: false,
+    live: false,
+    isLiveTestnet: false,
+  },
   [League.FIBA_WORLD_CUP]: {
     sport: Sport.BASKETBALL,
     id: League.FIBA_WORLD_CUP,
@@ -698,10 +752,34 @@ const LeagueMap = {
     live: true,
     isLiveTestnet: true,
   },
+  [League.SUMMER_OLYMPICS_BASKETBALL_3X3]: {
+    sport: Sport.BASKETBALL,
+    id: League.SUMMER_OLYMPICS_BASKETBALL_3X3,
+    label: "Olympic Games Basketball 3x3",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.POINTS,
+    matchResolveType: MatchResolveType.OVERTIME,
+    periodType: PeriodType.QUARTER,
+    isDrawAvailable: false,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.SUMMER_OLYMPICS_BASKETBALL_3X3_WOMEN]: {
+    sport: Sport.BASKETBALL,
+    id: League.SUMMER_OLYMPICS_BASKETBALL_3X3_WOMEN,
+    label: "Olympic Games Basketball 3x3 Women",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.POINTS,
+    matchResolveType: MatchResolveType.OVERTIME,
+    periodType: PeriodType.QUARTER,
+    isDrawAvailable: false,
+    live: false,
+    isLiveTestnet: false,
+  },
   [League.SUMMER_OLYMPICS_QUALIFICATION]: {
     sport: Sport.BASKETBALL,
     id: League.SUMMER_OLYMPICS_QUALIFICATION,
-    label: "Summer Olympics Qualification",
+    label: "Summer Olympics Basketball Qualification",
     provider: Provider.ENETPULSE,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.OVERTIME,
@@ -887,6 +965,8 @@ const SportIdMapEnetpulse = {
   15: 55, // Seria A
   57: 57, // Netherlands League 1
   61: 61, // Portugal League 1
+  65: 65, // Summer Olympics Soccer Women
+  66: 66, // Summer Olympics Soccer
   17: 73, // Europa League
   76: 76, // World Cup Woman
   14: 87, // La Liga
@@ -906,6 +986,8 @@ const SportIdMapEnetpulse = {
   322: 322, // Hockey Germany
   327: 327, // Hockey Switzerland
   399: 399, // EuroLeague
+  406: 406, // Summer Olympics Basketball
+  407: 407, // Summer Olympics Basketball Women
   409: 409, // FIBA World Cup
   445: 445, // F1
   497: 497, // Moto GP
@@ -915,7 +997,9 @@ const SportIdMapEnetpulse = {
   9821: 9821, // CONCACAF League of Nations
   9977: 9977, // CsGo
   9983: 9983, // Dota
-  10502: 10502, // Summer Olympics Qualification
+  10071: 10071, // Summer Olympics Basketball 3x3
+  10072: 10072, // Summer Olympics Basketball 3x3 Women
+  10502: 10502, // Summer Olympics Basketball Qualification
   10138: 10138, // LOL
   10199: 10199, // World Cup Qualifications CONMBOL
   10216: 10216, // Europa Conference League
