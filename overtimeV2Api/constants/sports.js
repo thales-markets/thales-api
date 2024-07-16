@@ -410,7 +410,7 @@ const LeagueMap = {
     id: League.UEFA_EURO,
     label: "UEFA EURO 2024",
     opticOddsName: "UEFA - European Championship",
-    provider: Provider.RUNDOWN,
+    provider: Provider.ENETPULSE,
     scoringType: ScoringType.GOALS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
