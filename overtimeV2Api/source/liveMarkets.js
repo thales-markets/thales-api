@@ -5,18 +5,11 @@ const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const oddslib = require("oddslib");
 const axios = require("axios");
-const {
-  checkOddsFromMultipleBookmakersV2,
-  getAverageOdds,
-  adjustSpreadOnOdds,
-  getSpreadData,
-  getBookmakersArray,
-} = require("../utils/markets");
-const { LIVE_TYPE_ID_BASE } = require("../constants/markets");
+const { getAverageOdds } = require("../utils/markets");
+const { LIVE_TYPE_ID_BASE, MIN_ODDS_FOR_DIFF_CHECKING } = require("../constants/markets");
 const teamsMapping = require("../assets/teamsMapping.json");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
-const { readCsvFromUrl } = require("../utils/csvReader");
 const { groupBy } = require("lodash");
 const {
   getLeagueIsDrawAvailable,
@@ -25,7 +18,18 @@ const {
   getTestnetLiveSupportedLeagues,
   getLeagueOpticOddsName,
 } = require("../utils/sports");
-const { Sport, LEAGUES_NO_FORMAL_HOME_AWAY, League } = require("../constants/sports");
+const { Sport, League } = require("../constants/sports");
+const {
+  readCsvFromUrl,
+  getBookmakersArray,
+  teamNamesMatching,
+  gamesDatesMatching,
+  checkGameContraints,
+  extractOddsForGamePerProvider,
+  checkOddsFromBookmakers,
+  adjustSpreadOnOdds,
+  getSpreadData,
+} = require("overtime-live-trading-utils");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
@@ -114,7 +118,11 @@ async function processAllMarkets(network) {
         for (const leagueId of availableLeagueIds) {
           const leagueName = getLeagueOpticOddsName(leagueId);
 
-          const oddsProvidersForSport = getBookmakersArray(bookmakersData, Number(leagueId));
+          const oddsProvidersForSport = getBookmakersArray(
+            bookmakersData,
+            Number(leagueId),
+            process.env.LIVE_ODDS_PROVIDERS.split(","),
+          );
 
           liveOddsProvidersPerSport.set(Number(leagueId), oddsProvidersForSport);
 
@@ -141,74 +149,23 @@ async function processAllMarkets(network) {
         const providerMarketsMatchingOffer = [];
         filteredMarkets.forEach((market) => {
           const opticOddsGameEvent = opticOddsResponseData.find((opticOddsGame) => {
-            let homeTeamsMatch;
-            let awayTeamsMatch;
+            const teamsMatching = teamNamesMatching(
+              Number(market.leagueId),
+              market.homeTeam,
+              market.awayTeam,
+              opticOddsGame.home_team,
+              opticOddsGame.away_team,
+              teamsMap,
+            );
 
-            if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
-              homeTeamsMatch =
-                opticOddsGame.home_team.toLowerCase() == market.homeTeam.toLowerCase() ||
-                opticOddsGame.home_team.toLowerCase() == market.awayTeam.toLowerCase();
-              awayTeamsMatch =
-                opticOddsGame.away_team.toLowerCase() == market.homeTeam.toLowerCase() ||
-                opticOddsGame.away_team.toLowerCase() == market.awayTeam.toLowerCase();
-            } else {
-              homeTeamsMatch = opticOddsGame.home_team.toLowerCase() == market.homeTeam.toLowerCase();
-              awayTeamsMatch = opticOddsGame.away_team.toLowerCase() == market.awayTeam.toLowerCase();
-            }
+            const datesMatching = gamesDatesMatching(
+              new Date(market.maturityDate),
+              new Date(opticOddsGame.start_date),
+              Number(market.leagueId),
+              Number(process.env.TENNIS_MATCH_TIME_DIFFERENCE_MINUTES),
+            );
 
-            if (homeTeamsMatch !== true) {
-              const homeTeamOpticOdds = teamsMap.get(opticOddsGame.home_team.toLowerCase());
-              const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
-              const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
-              const hasUndefinedName = [homeTeamOpticOdds, gameHomeTeam].some((name) => name == undefined);
-
-              if (hasUndefinedName) {
-                return false;
-              }
-
-              if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
-                homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
-              } else {
-                homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
-              }
-            }
-
-            if (awayTeamsMatch !== true) {
-              const awayTeamOpticOdds = teamsMap.get(opticOddsGame.away_team.toLowerCase());
-              const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
-              const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
-
-              const hasUndefinedName = [awayTeamOpticOdds, gameAwayTeam].some((name) => name == undefined);
-
-              if (hasUndefinedName) {
-                return false;
-              }
-
-              if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
-                awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
-              } else {
-                awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
-              }
-            }
-
-            let datesMatch;
-            if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
-              const opticOddsTimestamp = new Date(opticOddsGame.start_date).getTime();
-              const marketTimestamp = new Date(market.maturityDate).getTime();
-              const differenceBetweenDates = Math.abs(marketTimestamp - opticOddsTimestamp);
-              if (differenceBetweenDates <= Number(process.env.TENNIS_MATCH_TIME_DIFFERENCE_MINUTES * 60 * 1000)) {
-                datesMatch = true;
-              } else {
-                datesMatch = false;
-              }
-            } else {
-              datesMatch =
-                new Date(opticOddsGame.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
-            }
-
-            const isMatchLiveFlag = opticOddsGame.is_live == true;
-
-            return homeTeamsMatch && awayTeamsMatch && datesMatch && isMatchLiveFlag;
+            return teamsMatching && datesMatching;
           });
 
           if (opticOddsGameEvent != undefined) {
@@ -240,75 +197,23 @@ async function processAllMarkets(network) {
         const filteredMarketsWithLiveOdds = filteredMarkets.map(async (market) => {
           const responseObject = responsesOddsPerGame.find((responseObject) => {
             const response = responseObject.data.data[0];
-            let homeTeamsMatch;
-            let awayTeamsMatch;
+            const teamsMatching = teamNamesMatching(
+              Number(market.leagueId),
+              market.homeTeam,
+              market.awayTeam,
+              response.home_team,
+              response.away_team,
+              teamsMap,
+            );
 
-            if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
-              homeTeamsMatch =
-                response.home_team.toLowerCase() == market.homeTeam.toLowerCase() ||
-                response.home_team.toLowerCase() == market.awayTeam.toLowerCase();
-              awayTeamsMatch =
-                response.away_team.toLowerCase() == market.homeTeam.toLowerCase() ||
-                response.away_team.toLowerCase() == market.awayTeam.toLowerCase();
-            } else {
-              homeTeamsMatch = response.home_team.toLowerCase() == market.homeTeam.toLowerCase();
-              awayTeamsMatch = response.away_team.toLowerCase() == market.awayTeam.toLowerCase();
-            }
+            const datesMatching = gamesDatesMatching(
+              new Date(market.maturityDate),
+              new Date(response.start_date),
+              Number(market.leagueId),
+              Number(process.env.TENNIS_MATCH_TIME_DIFFERENCE_MINUTES),
+            );
 
-            if (homeTeamsMatch !== true) {
-              const homeTeamOpticOdds = teamsMap.get(response.home_team.toLowerCase());
-              const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
-              const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
-
-              const hasUndefinedName = [homeTeamOpticOdds, gameHomeTeam].some((name) => name == undefined);
-
-              if (hasUndefinedName) {
-                return false;
-              }
-
-              if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
-                homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam || homeTeamOpticOdds == gameAwayTeam;
-              } else {
-                homeTeamsMatch = homeTeamOpticOdds == gameHomeTeam;
-              }
-            }
-
-            if (awayTeamsMatch !== true) {
-              const awayTeamOpticOdds = teamsMap.get(response.away_team.toLowerCase());
-              const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
-              const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
-
-              const hasUndefinedName = [awayTeamOpticOdds, gameAwayTeam].some((name) => name == undefined);
-
-              if (hasUndefinedName) {
-                return false;
-              }
-
-              if (LEAGUES_NO_FORMAL_HOME_AWAY.includes(Number(market.leagueId))) {
-                awayTeamsMatch = awayTeamOpticOdds == gameHomeTeam || awayTeamOpticOdds == gameAwayTeam;
-              } else {
-                awayTeamsMatch = awayTeamOpticOdds == gameAwayTeam;
-              }
-            }
-
-            let datesMatch;
-            if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
-              const opticOddsTimestamp = new Date(response.start_date).getTime();
-              const marketTimestamp = new Date(market.maturityDate).getTime();
-
-              const differenceBetweenDates = Math.abs(marketTimestamp - opticOddsTimestamp);
-              if (differenceBetweenDates <= Number(process.env.TENNIS_MATCH_TIME_DIFFERENCE_MINUTES * 60 * 1000)) {
-                datesMatch = true;
-              } else {
-                datesMatch = false;
-              }
-            } else {
-              datesMatch = new Date(response.start_date).toUTCString() == new Date(market.maturityDate).toUTCString();
-            }
-
-            const isMatchLiveFlag = response.is_live == true;
-
-            return homeTeamsMatch && awayTeamsMatch && datesMatch && isMatchLiveFlag;
+            return teamsMatching && datesMatching;
           });
 
           if (responseObject != undefined) {
@@ -338,274 +243,49 @@ async function processAllMarkets(network) {
             const gamesHomeScoreByPeriod = [];
             const gamesAwayScoreByPeriod = [];
 
-            if (isLive == false || currentGameStatus.toLowerCase() == "completed") {
+            if (currentGameStatus.toLowerCase() == "completed") {
               console.log(
-                `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} because it is no longer live.`,
+                `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} because it is finished.`,
               );
               return null;
             }
 
-            if (getLeagueSport(Number(market.leagueId)) === Sport.BASKETBALL) {
-              const quarterLimitForLiveTradingBasketball = Number(
-                process.env.QUARTER_LIMIT_FOR_LIVE_TRADING_BASKETBALL,
-              );
-              if (Number(currentPeriod) >= quarterLimitForLiveTradingBasketball) {
-                console.log(
-                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to period: ${currentPeriod}. quarter`,
-                );
-                return null;
-              }
+            const constraintsMap = new Map();
+
+            constraintsMap.set(Sport.BASKETBALL, Number(process.env.QUARTER_LIMIT_FOR_LIVE_TRADING_BASKETBALL));
+            constraintsMap.set(Sport.HOCKEY, Number(process.env.PERIOD_LIMIT_FOR_LIVE_TRADING_HOCKEY));
+            constraintsMap.set(Sport.BASEBALL, Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL));
+            constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
+
+            const passingConstraintsObject = checkGameContraints(
+              gameTimeOpticOddsResponseData,
+              Number(market.leagueId),
+              constraintsMap,
+            );
+
+            if (passingConstraintsObject.allow == false) {
+              console.log(passingConstraintsObject.message);
+              return null;
             }
-
-            if (getLeagueSport(Number(market.leagueId)) === Sport.HOCKEY) {
-              const periodLimitForLiveTradingHockey = Number(process.env.PERIOD_LIMIT_FOR_LIVE_TRADING_HOCKEY);
-              if (Number(currentPeriod) >= periodLimitForLiveTradingHockey) {
-                console.log(
-                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to period: ${currentPeriod}. period`,
-                );
-                return null;
-              }
-            }
-
-            if (getLeagueSport(Number(market.leagueId)) === Sport.BASEBALL) {
-              const inningLimitForLiveTradingBaseball = Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL);
-              if (Number(currentPeriod) >= inningLimitForLiveTradingBaseball) {
-                console.log(
-                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to period: ${currentPeriod}. inning`,
-                );
-                return null;
-              }
-            }
-
-            if (getLeagueSport(Number(market.leagueId)) === Sport.SOCCER) {
-              const currentClockNumber = Number(currentClock);
-              const minuteLimitForLiveTradingFootball = Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL);
-              if (
-                (!Number.isNaN(currentClockNumber) && currentClockNumber >= minuteLimitForLiveTradingFootball) ||
-                (Number.isNaN(currentClockNumber) && currentPeriod != "HALF")
-              ) {
-                console.log(
-                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to clock: ${currentClock}min`,
-                );
-                return null;
-              }
-            }
-
-            if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
-              const currentSet = Number(gameTimeOpticOddsResponseData.period);
-              let currentHomeGameScore;
-              let currentAwayGameScore;
-              switch (currentSet) {
-                case 1:
-                  gamesHomeScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_home_period_1));
-                  gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_1));
-                  break;
-                case 2:
-                  gamesHomeScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_home_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_2),
-                  );
-                  gamesAwayScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_away_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_2),
-                  );
-                  break;
-                case 3:
-                  gamesHomeScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_home_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_3),
-                  );
-                  gamesAwayScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_away_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_3),
-                  );
-                  break;
-                case 4:
-                  gamesHomeScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_home_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_3),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_4),
-                  );
-                  gamesAwayScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_away_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_3),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_4),
-                  );
-                  break;
-                case 5:
-                  gamesHomeScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_home_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_3),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_4),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_5),
-                  );
-                  gamesAwayScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_away_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_3),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_4),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_5),
-                  );
-                  break;
-              }
-
-              const atpGrandSlamMatch = gameTimeOpticOddsResponseData.league.toLowerCase() == "atp";
-              if (Number(market.leagueId) == League.TENNIS_GS && atpGrandSlamMatch) {
-                if (Number(currentScoreHome) == 2 || Number(currentScoreAway) == 2) {
-                  switch (currentSet) {
-                    case 3:
-                      currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_3);
-                      currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_3);
-                      break;
-                    case 4:
-                      currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_4);
-                      currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_4);
-                      break;
-                    case 5:
-                      currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_5);
-                      currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_5);
-                      break;
-                  }
-                  if (Number(currentScoreHome) == 2 && currentHomeGameScore >= 5) {
-                    console.log(
-                      `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to current result: ${currentScoreHome} - ${currentScoreAway} (${currentHomeGameScore} - ${currentAwayGameScore})`,
-                    );
-                    return null;
-                  }
-
-                  if (Number(currentScoreAway) == 2 && currentAwayGameScore >= 5) {
-                    console.log(
-                      `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to current result: ${currentScoreHome} - ${currentScoreAway} (${currentHomeGameScore} - ${currentAwayGameScore})`,
-                    );
-                    return null;
-                  }
-                }
-              } else {
-                if (Number(currentScoreHome) == 1 || Number(currentScoreAway) == 1) {
-                  switch (currentSet) {
-                    case 2:
-                      currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_2);
-                      currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_2);
-                      break;
-                    case 3:
-                      currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_3);
-                      currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_3);
-                      break;
-                  }
-                  if (Number(currentScoreHome) == 1 && currentHomeGameScore >= 5) {
-                    console.log(
-                      `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to current result: ${currentScoreHome} - ${currentScoreAway} (${currentHomeGameScore} - ${currentAwayGameScore})`,
-                    );
-                    return null;
-                  }
-
-                  if (Number(currentScoreAway) == 1 && currentAwayGameScore >= 5) {
-                    console.log(
-                      `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to current result: ${currentScoreHome} - ${currentScoreAway} (${currentHomeGameScore} - ${currentAwayGameScore})`,
-                    );
-                    return null;
-                  }
-                }
-              }
-            }
-
-            const linesMap = new Map();
 
             const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
 
-            liveOddsProviders.forEach((oddsProvider) => {
-              const providerOddsObjects = gameWithOdds.odds.filter(
-                (oddsObject) => oddsObject.sports_book_name.toLowerCase() == oddsProvider.toLowerCase(),
-              );
-
-              const gameHomeTeam = teamsMap.get(market.homeTeam.toLowerCase());
-              const gameAwayTeam = teamsMap.get(market.awayTeam.toLowerCase());
-
-              let homeOddsObject;
-              if (gameHomeTeam == undefined) {
-                homeOddsObject = providerOddsObjects.find((oddsObject) => {
-                  const opticOddsTeamName = teamsMap.get(oddsObject.name.toLowerCase());
-
-                  if (opticOddsTeamName == undefined) {
-                    return oddsObject.name.toLowerCase() == market.homeTeam.toLowerCase();
-                  } else {
-                    return opticOddsTeamName == market.homeTeam.toLowerCase();
-                  }
-                });
-              } else {
-                homeOddsObject = providerOddsObjects.find((oddsObject) => {
-                  const opticOddsTeamName = teamsMap.get(oddsObject.name.toLowerCase());
-
-                  if (opticOddsTeamName == undefined) {
-                    return oddsObject.name.toLowerCase() == gameHomeTeam;
-                  } else {
-                    return opticOddsTeamName == gameHomeTeam;
-                  }
-                });
-              }
-
-              let homeOdds = 0;
-              if (homeOddsObject != undefined) {
-                homeOdds = homeOddsObject.price;
-              }
-
-              let awayOddsObject;
-              if (gameAwayTeam == undefined) {
-                awayOddsObject = providerOddsObjects.find((oddsObject) => {
-                  const opticOddsTeamName = teamsMap.get(oddsObject.name.toLowerCase());
-
-                  if (opticOddsTeamName == undefined) {
-                    return oddsObject.name.toLowerCase() == market.awayTeam.toLowerCase();
-                  } else {
-                    return opticOddsTeamName == market.awayTeam.toLowerCase();
-                  }
-                });
-              } else {
-                awayOddsObject = providerOddsObjects.find((oddsObject) => {
-                  const opticOddsTeamName = teamsMap.get(oddsObject.name.toLowerCase());
-
-                  if (opticOddsTeamName == undefined) {
-                    return oddsObject.name.toLowerCase() == gameAwayTeam;
-                  } else {
-                    return opticOddsTeamName == gameAwayTeam;
-                  }
-                });
-              }
-
-              let awayOdds = 0;
-              if (awayOddsObject != undefined) {
-                awayOdds = awayOddsObject.price;
-              }
-
-              let drawOdds = 0;
-              if (getLeagueIsDrawAvailable(Number(market.leagueId))) {
-                const drawOddsObject = providerOddsObjects.find(
-                  (oddsObject) => oddsObject.name.toLowerCase() == "draw",
-                );
-
-                if (drawOddsObject != undefined) {
-                  drawOdds = drawOddsObject.price;
-                }
-              }
-
-              linesMap.set(oddsProvider.toLowerCase(), {
-                homeOdds: homeOdds,
-                awayOdds: awayOdds,
-                drawOdds: drawOdds,
-              });
-            });
+            const linesMap = extractOddsForGamePerProvider(
+              liveOddsProviders,
+              gameWithOdds,
+              market,
+              teamsMap,
+              getLeagueIsDrawAvailable(Number(market.leagueId)),
+            );
 
             console.log(linesMap);
 
-            const oddsList = checkOddsFromMultipleBookmakersV2(
+            const oddsList = checkOddsFromBookmakers(
               linesMap,
               liveOddsProviders,
               getLeagueIsDrawAvailable(Number(market.leagueId)),
+              Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
+              MIN_ODDS_FOR_DIFF_CHECKING,
             );
 
             console.log("ODDS AFTER CHECKING BOOKMAKERS:");
@@ -617,7 +297,8 @@ async function processAllMarkets(network) {
 
             if (
               isThere100PercentOdd ||
-              (oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0)
+              (oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0) ||
+              isLive == false
             ) {
               market.odds = market.odds.map(() => {
                 return {
@@ -641,7 +322,12 @@ async function processAllMarkets(network) {
                 const aggregatedOdds = getAverageOdds(oddsList);
 
                 // CURRENTLY ONLY SUPPORTING MONEYLINE
-                const spreadDataForSport = getSpreadData(spreadData, market.leagueId, LIVE_TYPE_ID_BASE);
+                const spreadDataForSport = getSpreadData(
+                  spreadData,
+                  market.leagueId,
+                  LIVE_TYPE_ID_BASE,
+                  Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
+                );
 
                 console.log(market.leagueId);
                 console.log(spreadDataForSport);
@@ -697,7 +383,12 @@ async function processAllMarkets(network) {
                 const primaryBookmakerOdds = oddsList[0];
                 console.log("Finding spread:");
                 // CURRENTLY ONLY SUPPORTING MONEYLINE
-                const spreadDataForSport = getSpreadData(spreadData, market.leagueId, LIVE_TYPE_ID_BASE);
+                const spreadDataForSport = getSpreadData(
+                  spreadData,
+                  market.leagueId,
+                  LIVE_TYPE_ID_BASE,
+                  Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
+                );
 
                 console.log(market.leagueId);
                 console.log(spreadDataForSport);
