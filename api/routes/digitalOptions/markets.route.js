@@ -4,6 +4,6 @@ const { markets, rangedMarkets } = require("../../controllers/digitalOptions/mar
 const router = express.Router();
 
 router.get("/list/:networkId", markets);
-router.get("/ranged/:networkId", rangedMarkets);
+router.post("/ranged/:networkId", rangedMarkets);
 
 module.exports = router;
