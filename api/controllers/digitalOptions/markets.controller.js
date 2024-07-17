@@ -50,7 +50,10 @@ const rangedMarkets = async (req, res) => {
     const maxMaturity = getQueryProperty(req, "max-maturity");
 
     const currencyKey = getQueryProperty(req, "currency-key");
-    const marketIds = getQueryProperty(req, "market-ids");
+    let marketIds;
+    if (req.body && req.body.hasOwnProperty("marketIds")) {
+      marketIds = req.body.marketIds;
+    }
 
     const marketsIdsArr = [];
 
