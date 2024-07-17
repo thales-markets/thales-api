@@ -361,6 +361,11 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS_FOR_ADDRESS, (req, res) =>
   }
 });
 
+app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, (req, res) => {
+  res.setHeader("content-type", "application/json");
+  res.send(Array.from(solanaAddressesMap));
+});
+
 app.get(ENDPOINTS.ENETPULSE_RESULT, (req, res) => {
   const sportId = req.params.sportId;
   const date = req.params.date;
