@@ -79,6 +79,7 @@ const ENDPOINTS = {
   OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_WRITE: "/overtime-v2/live-trading/write-message",
   OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ:
     "/overtime-v2/live-trading/networks/:networkParam/read-message/request/:requestId",
+  OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ: "/overtime-v2/live-trading/networks/:networkParam/error-messages",
 };
 
 module.exports = ENDPOINTS;

@@ -92,6 +92,8 @@ async function processAllMarkets(network) {
       const marketsByStatus = groupMarketsByStatus["ongoing"] || [];
       const marketsByType = marketsByStatus;
 
+      const errorsMap = new Map();
+
       const filteredMarkets = marketsByType.filter((market) => availableLeagueIds.includes(Number(market.leagueId)));
       if (filteredMarkets.length > 0) {
         const leagueIdsMap = {};
@@ -178,6 +180,10 @@ async function processAllMarkets(network) {
 
         if (providerMarketsMatchingOffer.length == 0 && enabledDummyMarkets == 0) {
           console.log(`Could not find any matches on the provider side for the given leagues`);
+          errorsMap.set(market.gameId, {
+            errorTime: new Date().toUTCString(),
+            errorMessage: `Could not find any matches on the provider side for the given leagues`,
+          });
           return;
         }
 
@@ -231,6 +237,10 @@ async function processAllMarkets(network) {
               console.log(
                 `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
               );
+              errorsMap.set(market.gameId, {
+                errorTime: new Date().toUTCString(),
+                errorMessage: `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
+              });
               return null;
             }
 
@@ -247,6 +257,10 @@ async function processAllMarkets(network) {
               console.log(
                 `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} because it is finished.`,
               );
+              errorsMap.set(market.gameId, {
+                errorTime: new Date().toUTCString(),
+                errorMessage: `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} because it is finished.`,
+              });
               return null;
             }
 
@@ -265,7 +279,16 @@ async function processAllMarkets(network) {
 
             if (passingConstraintsObject.allow == false) {
               console.log(passingConstraintsObject.message);
+              errorsMap.set(market.gameId, {
+                errorTime: new Date().toUTCString(),
+                errorMessage: passingConstraintsObject.message,
+              });
               return null;
+            }
+
+            if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
+              gamesHomeScoreByPeriod.push(passingConstraintsObject.currentHomeGameScore);
+              gamesAwayScoreByPeriod.push(passingConstraintsObject.currentAwayGameScore);
             }
 
             const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
@@ -461,8 +484,76 @@ async function processAllMarkets(network) {
           JSON.stringify(filteredMarketsWithLiveOddsAndDummyMarkets.filter((market) => market != null)),
           function () {},
         );
+
+        redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId], function (err, obj) {
+          const messagesMap = new Map(JSON.parse(obj));
+          const persistedGameIds = Object.keys(messagesMap);
+          const currentGameIds = Object.keys(errorsMap);
+
+          for (const gameId of persistedGameIds) {
+            const errorsForGameId = messagesMap.get(gameId);
+            const firstError = errorsForGameId[0];
+            const dayAgo = Date.now() - 1000 * 60 * 60 * 24;
+            if (dayAgo >= new Date(firstError.errorTime).getTime()) {
+              messagesMap.delete(gameId);
+            }
+          }
+
+          for (const currentKey of currentGameIds) {
+            if (persistedGameIds.includes(currentKey)) {
+              const persistedValuesArray = messagesMap.get(currentKey);
+              const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
+              const newMessageObject = errorsMap.get(currentKey);
+              if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
+                persistedValuesArray.push(newMessageObject);
+                messagesMap.set(currentKey, persistedValuesArray);
+              }
+            }
+          }
+
+          redisClient.set(
+            KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId],
+            JSON.stringify([...messagesMap]),
+            function () {},
+          );
+        });
+
         return;
       }
+
+      redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId], function (err, obj) {
+        const messagesMap = new Map(JSON.parse(obj));
+        const persistedGameIds = Object.keys(messagesMap);
+        const currentGameIds = Object.keys(errorsMap);
+        const dayAgo = Date.now() - 1000 * 60 * 60 * 24;
+
+        for (const gameId of persistedGameIds) {
+          const errorsForGameId = messagesMap.get(gameId);
+          const firstError = errorsForGameId[0];
+          if (dayAgo >= new Date(firstError.errorTime).getTime()) {
+            messagesMap.delete(gameId);
+          }
+        }
+
+        for (const currentKey of currentGameIds) {
+          if (persistedGameIds.includes(currentKey)) {
+            const persistedValuesArray = messagesMap.get(currentKey);
+            const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
+            const newMessageObject = errorsMap.get(currentKey);
+            if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
+              persistedValuesArray.push(newMessageObject);
+              messagesMap.set(currentKey, persistedValuesArray);
+            }
+          }
+        }
+
+        redisClient.set(
+          KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId],
+          JSON.stringify([...messagesMap]),
+          function () {},
+        );
+      });
+
       redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify([]), function () {});
     } catch (e) {
       console.log(e);
