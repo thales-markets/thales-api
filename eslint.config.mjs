@@ -17,6 +17,10 @@ export default [
       "no-var": "error",
     },
   },
-  { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
+  {
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.node, gameFinishersMap, userReffererIDsMap, solanaAddressesMap },
+    },
+  },
   pluginJs.configs.recommended,
 ];
