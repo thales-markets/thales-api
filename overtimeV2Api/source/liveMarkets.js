@@ -486,6 +486,8 @@ async function processAllMarkets(network) {
         );
 
         redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
+          console.log("PERSISTING ERRORS 1");
+          console.log(JSON.stringify(errorsMap));
           const messagesMap = new Map(JSON.parse(obj));
           const persistedGameIds = Object.keys(messagesMap);
           const currentGameIds = Object.keys(errorsMap);
@@ -502,11 +504,17 @@ async function processAllMarkets(network) {
           for (const currentKey of currentGameIds) {
             if (persistedGameIds.includes(currentKey)) {
               const persistedValuesArray = messagesMap.get(currentKey);
-              const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
               const newMessageObject = errorsMap.get(currentKey);
-              if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
-                persistedValuesArray.push(newMessageObject);
-                messagesMap.set(currentKey, persistedValuesArray);
+              if (persistedValuesArray != undefined) {
+                const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
+                if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
+                  persistedValuesArray.push(newMessageObject);
+                  messagesMap.set(currentKey, persistedValuesArray);
+                }
+              } else {
+                const errorsArray = [];
+                errorsArray.push(newMessageObject);
+                messagesMap.set(currentKey, [errorsArray]);
               }
             }
           }
@@ -522,6 +530,8 @@ async function processAllMarkets(network) {
       }
 
       redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
+        console.log("PERSISTING ERRORS 2");
+        console.log(JSON.stringify(errorsMap));
         const messagesMap = new Map(JSON.parse(obj));
         const persistedGameIds = Object.keys(messagesMap);
         const currentGameIds = Object.keys(errorsMap);
@@ -538,11 +548,17 @@ async function processAllMarkets(network) {
         for (const currentKey of currentGameIds) {
           if (persistedGameIds.includes(currentKey)) {
             const persistedValuesArray = messagesMap.get(currentKey);
-            const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
             const newMessageObject = errorsMap.get(currentKey);
-            if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
-              persistedValuesArray.push(newMessageObject);
-              messagesMap.set(currentKey, persistedValuesArray);
+            if (persistedValuesArray != undefined) {
+              const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
+              if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
+                persistedValuesArray.push(newMessageObject);
+                messagesMap.set(currentKey, persistedValuesArray);
+              }
+            } else {
+              const errorsArray = [];
+              errorsArray.push(newMessageObject);
+              messagesMap.set(currentKey, [errorsArray]);
             }
           }
         }
