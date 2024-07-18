@@ -19,8 +19,8 @@ const {
   getLeagueOpticOddsName,
 } = require("../utils/sports");
 const { Sport, League } = require("../constants/sports");
+const { readCsvFromUrl } = require("../utils/csvReader");
 const {
-  readCsvFromUrl,
   getBookmakersArray,
   teamNamesMatching,
   gamesDatesMatching,
@@ -306,7 +306,7 @@ async function processAllMarkets(network) {
             const oddsList = checkOddsFromBookmakers(
               linesMap,
               liveOddsProviders,
-              getLeagueIsDrawAvailable(Number(market.leagueId)),
+              !getLeagueIsDrawAvailable(Number(market.leagueId)),
               Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
               MIN_ODDS_FOR_DIFF_CHECKING,
             );
@@ -485,7 +485,7 @@ async function processAllMarkets(network) {
           function () {},
         );
 
-        redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId], function (err, obj) {
+        redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
           const messagesMap = new Map(JSON.parse(obj));
           const persistedGameIds = Object.keys(messagesMap);
           const currentGameIds = Object.keys(errorsMap);
@@ -512,7 +512,7 @@ async function processAllMarkets(network) {
           }
 
           redisClient.set(
-            KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId],
+            KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network],
             JSON.stringify([...messagesMap]),
             function () {},
           );
@@ -521,7 +521,7 @@ async function processAllMarkets(network) {
         return;
       }
 
-      redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId], function (err, obj) {
+      redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
         const messagesMap = new Map(JSON.parse(obj));
         const persistedGameIds = Object.keys(messagesMap);
         const currentGameIds = Object.keys(errorsMap);
@@ -548,7 +548,7 @@ async function processAllMarkets(network) {
         }
 
         redisClient.set(
-          KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId],
+          KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network],
           JSON.stringify([...messagesMap]),
           function () {},
         );
