@@ -3,11 +3,9 @@ require("dotenv").config();
 
 const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
-const oddslib = require("oddslib");
 const axios = require("axios");
 const { getAverageOdds } = require("../utils/markets");
 const { LIVE_TYPE_ID_BASE, MIN_ODDS_FOR_DIFF_CHECKING } = require("../constants/markets");
-const teamsMapping = require("../assets/teamsMapping.json");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const { groupBy } = require("lodash");
@@ -18,7 +16,7 @@ const {
   getTestnetLiveSupportedLeagues,
   getLeagueOpticOddsName,
 } = require("../utils/sports");
-const { Sport, League } = require("../constants/sports");
+const { Sport } = require("../constants/sports");
 const { readCsvFromUrl } = require("../utils/csvReader");
 const {
   getBookmakersArray,
@@ -27,9 +25,14 @@ const {
   checkGameContraints,
   extractOddsForGamePerProvider,
   checkOddsFromBookmakers,
-  adjustSpreadOnOdds,
-  getSpreadData,
 } = require("overtime-live-trading-utils");
+const {
+  fetchTeamsMap,
+  adjustSpreadAndReturnMarketWithOdds,
+  persistErrorMessages,
+  checkTennisIsEnabled,
+  fetchOpticOddsGamesForLeague,
+} = require("../utils/liveMarkets");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
@@ -63,22 +66,9 @@ async function processAllMarkets(network) {
   const liveOddsProvidersPerSport = new Map();
 
   const bookmakersData = await readCsvFromUrl(process.env.GITHUB_URL_LIVE_BOOKMAKERS_CSV);
-
   const spreadData = await readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV);
 
-  const enabledTennisMasters = Number(process.env.ENABLED_TENNIS_MASTERS);
-  const enabledTennisGrandSlam = Number(process.env.ENABLED_TENNIS_GRAND_SLAM);
-
-  const tennisMastersIndex = availableLeagueIds.indexOf(League.TENNIS_MASTERS);
-  const tennisGrandSlamIndex = availableLeagueIds.indexOf(League.TENNIS_GS);
-
-  if (tennisMastersIndex == -1 && enabledTennisMasters == 1) {
-    availableLeagueIds.push(League.TENNIS_MASTERS);
-  }
-
-  if (tennisGrandSlamIndex == -1 && enabledTennisGrandSlam == 1) {
-    availableLeagueIds.push(League.TENNIS_GS);
-  }
+  availableLeagueIds = checkTennisIsEnabled(availableLeagueIds);
 
   redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
@@ -101,25 +91,15 @@ async function processAllMarkets(network) {
         filteredMarkets.forEach((market) => (leagueIdsMap[market.leagueId] = true));
         availableLeagueIds = Object.keys(leagueIdsMap);
 
-        const teamsMap = new Map();
-
-        const teamsMappingJsonResponse = await axios.get(process.env.GITHUB_URL_LIVE_TEAMS_MAPPING);
-
-        let teamsMappingJson = teamsMappingJsonResponse.data;
-
-        if (teamsMappingJson == undefined || Object.keys(teamsMappingJson).length == 0) {
-          teamsMappingJson = teamsMapping;
-        }
-
-        Object.keys(teamsMappingJson).forEach(function (key) {
-          teamsMap.set(key.toString(), teamsMappingJson[key].toString());
-        });
+        // FETCHING TEAM NAMES FOR MAPPING
+        const teamsMap = await fetchTeamsMap();
 
         let opticOddsResponseData = [];
 
         for (const leagueId of availableLeagueIds) {
           const leagueName = getLeagueOpticOddsName(leagueId);
 
+          // EXTRACTING BOOKMAKERS FOR LEAGUE
           const oddsProvidersForSport = getBookmakersArray(
             bookmakersData,
             Number(leagueId),
@@ -128,27 +108,15 @@ async function processAllMarkets(network) {
 
           liveOddsProvidersPerSport.set(Number(leagueId), oddsProvidersForSport);
 
-          let responseOpticOddsGames;
-          if (getLeagueSport(Number(leagueId)) === Sport.TENNIS) {
-            responseOpticOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?sport=tennis`, {
-              headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-            });
-          } else {
-            responseOpticOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?league=${leagueName}`, {
-              headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-            });
-          }
+          // FETCHING GAMES FROM OPTIC ODDS FOR GIVEN LEAGUE
+          const opticOddsGames = await fetchOpticOddsGamesForLeague(leagueId, leagueName);
 
-          const opticOddsResponseDataForLeague = responseOpticOddsGames.data.data;
-
-          if (opticOddsResponseDataForLeague.length == 0) {
-            console.log(`Could not find any games on the provider side for the given league ${leagueName}`);
-          } else {
-            opticOddsResponseData = [...opticOddsResponseData, ...opticOddsResponseDataForLeague];
-          }
+          opticOddsResponseData = opticOddsResponseData.concat(opticOddsGames);
         }
 
         const providerMarketsMatchingOffer = [];
+
+        // TEAM NAMES AND DATES MATCHING CHECK
         filteredMarkets.forEach((market) => {
           const opticOddsGameEvent = opticOddsResponseData.find((opticOddsGame) => {
             const teamsMatching = teamNamesMatching(
@@ -178,6 +146,7 @@ async function processAllMarkets(network) {
           }
         });
 
+        // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
         if (providerMarketsMatchingOffer.length == 0 && enabledDummyMarkets == 0) {
           console.log(`Could not find any matches on the provider side for the given leagues`);
           errorsMap.set(market.gameId, {
@@ -187,6 +156,7 @@ async function processAllMarkets(network) {
           return;
         }
 
+        // FETCHING ODDS FOR THE GIVEN GAME
         const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
           let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.opticOddsGameEvent.id}&market_name=Moneyline&odds_format=Decimal`;
           const liveOddsProviders = liveOddsProvidersPerSport.get(game.leagueId);
@@ -200,6 +170,7 @@ async function processAllMarkets(network) {
 
         const responsesOddsPerGame = await Promise.all(urlsGamesOdds);
 
+        // MATCHING TEAM NAMES AND DATE AGAIN FOR EXTRACTING ODDS RESPONSE
         const filteredMarketsWithLiveOdds = filteredMarkets.map(async (market) => {
           const responseObject = responsesOddsPerGame.find((responseObject) => {
             const response = responseObject.data.data[0];
@@ -222,6 +193,7 @@ async function processAllMarkets(network) {
             return teamsMatching && datesMatching;
           });
 
+          // FETCHING CURRENT SCORE AND CLOCK FOR THE GAME
           if (responseObject != undefined) {
             const gameWithOdds = responseObject.data.data[0];
 
@@ -244,6 +216,7 @@ async function processAllMarkets(network) {
               return null;
             }
 
+            // READING CLOCK, PERIOD AND RESULT DATA FROM RESPONSE
             const currentScoreHome = gameTimeOpticOddsResponseData.score_home_total;
             const currentScoreAway = gameTimeOpticOddsResponseData.score_away_total;
             const currentClock = gameTimeOpticOddsResponseData.clock;
@@ -271,6 +244,7 @@ async function processAllMarkets(network) {
             constraintsMap.set(Sport.BASEBALL, Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL));
             constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
 
+            // CHECKING CONSTRAINTS FOR THE GAME SPORT & LEAGYE
             const passingConstraintsObject = checkGameContraints(
               gameTimeOpticOddsResponseData,
               Number(market.leagueId),
@@ -286,13 +260,9 @@ async function processAllMarkets(network) {
               return null;
             }
 
-            if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
-              gamesHomeScoreByPeriod.push(passingConstraintsObject.currentHomeGameScore);
-              gamesAwayScoreByPeriod.push(passingConstraintsObject.currentAwayGameScore);
-            }
-
             const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
 
+            // EXTRACTING ODDS FROM THE RESPONSE
             const linesMap = extractOddsForGamePerProvider(
               liveOddsProviders,
               gameWithOdds,
@@ -303,6 +273,7 @@ async function processAllMarkets(network) {
 
             console.log(linesMap);
 
+            // CHECKING AND COMPARING ODDS FOR THE GIVEN BOOKMAKERS
             const oddsList = checkOddsFromBookmakers(
               linesMap,
               liveOddsProviders,
@@ -318,11 +289,26 @@ async function processAllMarkets(network) {
               (oddsObject) => oddsObject.homeOdds == 1 || oddsObject.awayOdds == 1 || oddsObject.drawOdds == 1,
             );
 
+            if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
+              gamesHomeScoreByPeriod.push(passingConstraintsObject.currentHomeGameScore);
+              gamesAwayScoreByPeriod.push(passingConstraintsObject.currentAwayGameScore);
+            }
+
+            market.homeScore = currentScoreHome;
+            market.awayScore = currentScoreAway;
+            market.gameClock = currentClock;
+            market.gamePeriod = currentPeriod;
+            market.childMarkets = [];
+            market.proof = [];
+            market.homeScoreByPeriod = gamesHomeScoreByPeriod;
+            market.awayScoreByPeriod = gamesAwayScoreByPeriod;
+
             if (
               isThere100PercentOdd ||
               (oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0) ||
               isLive == false
             ) {
+              // RETURNING MARKET WITH ZERO ODDS IF CONDITIONS FOR ODDS ARE NOT MET OR LIVE FLAG ON OPTIC ODDS API IS FALSE BUT GAME IS IN PROGRESS
               market.odds = market.odds.map(() => {
                 return {
                   american: 0,
@@ -330,140 +316,17 @@ async function processAllMarkets(network) {
                   normalizedImplied: 0,
                 };
               });
-              market.homeScore = currentScoreHome;
-              market.awayScore = currentScoreAway;
-              market.gameClock = currentClock;
-              market.gamePeriod = currentPeriod;
-              market.childMarkets = [];
-              market.proof = [];
-              market.homeScoreByPeriod = gamesHomeScoreByPeriod;
-              market.awayScoreByPeriod = gamesAwayScoreByPeriod;
               return market;
             } else {
               const aggregationEnabled = Number(process.env.ODDS_AGGREGATION_ENABLED);
               if (aggregationEnabled > 0) {
                 const aggregatedOdds = getAverageOdds(oddsList);
-
-                // CURRENTLY ONLY SUPPORTING MONEYLINE
-                const spreadDataForSport = getSpreadData(
-                  spreadData,
-                  market.leagueId,
-                  LIVE_TYPE_ID_BASE,
-                  Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
-                );
-
-                console.log(market.leagueId);
-                console.log(spreadDataForSport);
-
-                const oddsArrayWithSpread = getLeagueIsDrawAvailable(Number(market.leagueId))
-                  ? adjustSpreadOnOdds(
-                      [
-                        oddslib.from("decimal", aggregatedOdds.homeOdds).to("impliedProbability"),
-                        oddslib.from("decimal", aggregatedOdds.awayOdds).to("impliedProbability"),
-                        oddslib.from("decimal", aggregatedOdds.drawOdds).to("impliedProbability"),
-                      ],
-                      spreadDataForSport.minSpread,
-                      spreadDataForSport.targetSpread,
-                    )
-                  : adjustSpreadOnOdds(
-                      [
-                        oddslib.from("decimal", aggregatedOdds.homeOdds).to("impliedProbability"),
-                        oddslib.from("decimal", aggregatedOdds.awayOdds).to("impliedProbability"),
-                      ],
-                      spreadDataForSport.minSpread,
-                      spreadDataForSport.targetSpread,
-                    );
-
-                market.odds = market.odds.map((_odd, index) => {
-                  let positionOdds;
-                  switch (index) {
-                    case 0:
-                      positionOdds = oddsArrayWithSpread[0];
-                      break;
-                    case 1:
-                      positionOdds = oddsArrayWithSpread[1];
-                      break;
-                    case 2:
-                      positionOdds = oddsArrayWithSpread[2];
-                      break;
-                  }
-                  return {
-                    american: oddslib.from("impliedProbability", positionOdds).to("moneyline"),
-                    decimal: oddslib.from("impliedProbability", positionOdds).to("decimal"),
-                    normalizedImplied: positionOdds,
-                  };
-                });
-                market.homeScore = currentScoreHome;
-                market.awayScore = currentScoreAway;
-                market.gameClock = currentClock;
-                market.gamePeriod = currentPeriod;
-                market.childMarkets = [];
-                market.proof = [];
-                market.homeScoreByPeriod = gamesHomeScoreByPeriod;
-                market.awayScoreByPeriod = gamesAwayScoreByPeriod;
-                return market;
+                // ADJUSTING SPREAD AND RETURNING MARKET WITH AGGREGATED LIVE ODDS
+                return adjustSpreadAndReturnMarketWithOdds(market, spreadData, aggregatedOdds, LIVE_TYPE_ID_BASE);
               } else {
                 const primaryBookmakerOdds = oddsList[0];
-                console.log("Finding spread:");
-                // CURRENTLY ONLY SUPPORTING MONEYLINE
-                const spreadDataForSport = getSpreadData(
-                  spreadData,
-                  market.leagueId,
-                  LIVE_TYPE_ID_BASE,
-                  Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
-                );
-
-                console.log(market.leagueId);
-                console.log(spreadDataForSport);
-
-                const oddsArrayWithSpread = getLeagueIsDrawAvailable(Number(market.leagueId))
-                  ? adjustSpreadOnOdds(
-                      [
-                        oddslib.from("decimal", primaryBookmakerOdds.homeOdds).to("impliedProbability"),
-                        oddslib.from("decimal", primaryBookmakerOdds.awayOdds).to("impliedProbability"),
-                        oddslib.from("decimal", primaryBookmakerOdds.drawOdds).to("impliedProbability"),
-                      ],
-                      spreadDataForSport.minSpread,
-                      spreadDataForSport.targetSpread,
-                    )
-                  : adjustSpreadOnOdds(
-                      [
-                        oddslib.from("decimal", primaryBookmakerOdds.homeOdds).to("impliedProbability"),
-                        oddslib.from("decimal", primaryBookmakerOdds.awayOdds).to("impliedProbability"),
-                      ],
-                      spreadDataForSport.minSpread,
-                      spreadDataForSport.targetSpread,
-                    );
-
-                market.odds = market.odds.map((_odd, index) => {
-                  let positionOdds;
-                  switch (index) {
-                    case 0:
-                      positionOdds = oddsArrayWithSpread[0];
-                      break;
-                    case 1:
-                      positionOdds = oddsArrayWithSpread[1];
-                      break;
-                    case 2:
-                      positionOdds = oddsArrayWithSpread[2];
-                      break;
-                  }
-                  console.log(positionOdds);
-                  return {
-                    american: oddslib.from("impliedProbability", positionOdds).to("moneyline"),
-                    decimal: oddslib.from("impliedProbability", positionOdds).to("decimal"),
-                    normalizedImplied: positionOdds,
-                  };
-                });
-                market.homeScore = currentScoreHome;
-                market.awayScore = currentScoreAway;
-                market.gameClock = currentClock;
-                market.gamePeriod = currentPeriod;
-                market.childMarkets = [];
-                market.proof = [];
-                market.homeScoreByPeriod = gamesHomeScoreByPeriod;
-                market.awayScoreByPeriod = gamesAwayScoreByPeriod;
-                return market;
+                // ADJUSTING SPREAD AND RETURNING MARKET WITH LIVE ODDS FROM PRIMARY BOOKMAKER
+                return adjustSpreadAndReturnMarketWithOdds(market, spreadData, primaryBookmakerOdds, LIVE_TYPE_ID_BASE);
               }
             }
           } else {
@@ -485,39 +348,11 @@ async function processAllMarkets(network) {
           function () {},
         );
 
+        // PERSISTING ERROR MESSAGES
         redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
           console.log("PERSISTING ERRORS 1");
           console.log(JSON.stringify(errorsMap));
-          const messagesMap = new Map(JSON.parse(obj));
-          const persistedGameIds = Object.keys(messagesMap);
-          const currentGameIds = Object.keys(errorsMap);
-
-          for (const gameId of persistedGameIds) {
-            const errorsForGameId = messagesMap.get(gameId);
-            const firstError = errorsForGameId[0];
-            const dayAgo = Date.now() - 1000 * 60 * 60 * 24;
-            if (dayAgo >= new Date(firstError.errorTime).getTime()) {
-              messagesMap.delete(gameId);
-            }
-          }
-
-          for (const currentKey of currentGameIds) {
-            if (persistedGameIds.includes(currentKey)) {
-              const persistedValuesArray = messagesMap.get(currentKey);
-              const newMessageObject = errorsMap.get(currentKey);
-              if (persistedValuesArray != undefined) {
-                const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
-                if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
-                  persistedValuesArray.push(newMessageObject);
-                  messagesMap.set(currentKey, persistedValuesArray);
-                }
-              } else {
-                const errorsArray = [];
-                errorsArray.push(newMessageObject);
-                messagesMap.set(currentKey, [errorsArray]);
-              }
-            }
-          }
+          const messagesMap = persistErrorMessages(new Map(JSON.parse(obj)), errorsMap);
 
           redisClient.set(
             KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network],
@@ -529,39 +364,11 @@ async function processAllMarkets(network) {
         return;
       }
 
+      // PERSISTING ERROR MESSAGES
       redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
         console.log("PERSISTING ERRORS 2");
         console.log(JSON.stringify(errorsMap));
-        const messagesMap = new Map(JSON.parse(obj));
-        const persistedGameIds = Object.keys(messagesMap);
-        const currentGameIds = Object.keys(errorsMap);
-        const dayAgo = Date.now() - 1000 * 60 * 60 * 24;
-
-        for (const gameId of persistedGameIds) {
-          const errorsForGameId = messagesMap.get(gameId);
-          const firstError = errorsForGameId[0];
-          if (dayAgo >= new Date(firstError.errorTime).getTime()) {
-            messagesMap.delete(gameId);
-          }
-        }
-
-        for (const currentKey of currentGameIds) {
-          if (persistedGameIds.includes(currentKey)) {
-            const persistedValuesArray = messagesMap.get(currentKey);
-            const newMessageObject = errorsMap.get(currentKey);
-            if (persistedValuesArray != undefined) {
-              const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
-              if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
-                persistedValuesArray.push(newMessageObject);
-                messagesMap.set(currentKey, persistedValuesArray);
-              }
-            } else {
-              const errorsArray = [];
-              errorsArray.push(newMessageObject);
-              messagesMap.set(currentKey, [errorsArray]);
-            }
-          }
-        }
+        const messagesMap = persistErrorMessages(new Map(JSON.parse(obj)), errorsMap);
 
         redisClient.set(
           KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network],
