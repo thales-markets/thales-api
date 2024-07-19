@@ -1080,6 +1080,8 @@ const SportIdMapEnetpulse = {
   319: 319, // Hockey Finland
   322: 322, // Hockey Germany
   327: 327, // Hockey Switzerland
+  380: 380, // Summer Olympics Handball Women
+  381: 381, // Summer Olympics Handball
   399: 399, // EuroLeague
   406: 406, // Summer Olympics Basketball
   407: 407, // Summer Olympics Basketball Women
@@ -1087,7 +1089,12 @@ const SportIdMapEnetpulse = {
   445: 445, // F1
   497: 497, // Moto GP
   536: 536, // Saudi Arabia Football League
+  8881: 8881, // Summer Olympics Water Polo
+  8893: 8893, // Summer Olympics Voleyball Women
+  8894: 8894, // Summer Olympics Voleyball
   9196: 9196, // Boxing
+  9578: 9578, // Summer Olympics Rugby
+  9588: 9588, // Summer Olympics Rugby Women
   9806: 9806, // UEFA League of Nations
   9821: 9821, // CONCACAF League of Nations
   9977: 9977, // CsGo
