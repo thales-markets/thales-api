@@ -126,7 +126,7 @@ async function processAllPlayersInfo() {
     // TODO: hardcore MLB for testing
     if (
       leagueProvider === Provider.OPTICODDS ||
-      (leagueId === League.MLB && gameInfo && gameInfo.provider === Provider.RUNDOWN)
+      (leagueId === League.MLB && gameInfo && gameInfo.provider === Provider.OPTICODDS)
     ) {
       const playerPropsMarkets = market.childMarkets.filter((childMarket) => childMarket.isPlayerPropsMarket);
 
