@@ -1711,25 +1711,45 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
   });
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
-  const network = req.params.networkParam;
-  const marketAddress = req.params.marketAddress;
-
-  redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], async function (err, objOpen) {
-    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], async function (err, objClosed) {
-      const openMarkets = new Map(JSON.parse(objOpen));
-      const closedMarkets = new Map(JSON.parse(objClosed));
-
-      try {
-        const allMarkets = [...Array.from(openMarkets.values()), ...Array.from(closedMarkets.values())];
-        const market = allMarkets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
-
-        return res.send(market || `Market with gameId ${marketAddress} not found.`);
-      } catch (e) {
-        console.log(e);
-      }
+function getOpenMarketsMap(network) {
+  return new Promise(function (resolve) {
+    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
+      const openMarketsMap = new Map(JSON.parse(obj));
+      resolve(openMarketsMap);
     });
   });
+}
+
+function getClosedMarketsMap(network) {
+  return new Promise(function (resolve) {
+    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
+      const openMarketsMap = new Map(JSON.parse(obj));
+      resolve(openMarketsMap);
+    });
+  });
+}
+
+app.get(ENDPOINTS.OVERTIME_V2_MARKET, async (req, res) => {
+  const network = req.params.networkParam;
+  const marketAddress = req.params.marketAddress;
+  try {
+    const openMarkets = await getOpenMarketsMap(network);
+    let market = Array.from(openMarkets.values()).find(
+      (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
+    );
+
+    if (market) {
+      return res.send(market);
+    } else {
+      const closedMarkets = await getClosedMarketsMap(network);
+      market = Array.from(closedMarkets.values()).find(
+        (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
+      );
+      return res.send(market || `Market with gameId ${marketAddress} not found.`);
+    }
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_GAMES_INFO, (req, res) => {
