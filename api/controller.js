@@ -2,6 +2,7 @@ const { redisClient } = require("../redis/client");
 require("dotenv").config();
 const express = require("express");
 const request = require("request");
+const compression = require("compression");
 const app = express();
 
 const stakersRoutes = require("./routes/stakers.route");
@@ -12,6 +13,7 @@ const sportMarketsRoutes = require("./routes/sportMarkets.route");
 const cors = require("cors");
 app.use(cors());
 app.use(express.json());
+app.use(compression());
 app.use(function (req, res, next) {
   for (const key in req.query) {
     req.query[key.toLowerCase()] = req.query[key];
