@@ -351,7 +351,6 @@ async function processAllMarkets(network) {
         // PERSISTING ERROR MESSAGES
         redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
           console.log("PERSISTING ERRORS 1");
-          console.log(JSON.stringify(errorsMap));
           const messagesMap = persistErrorMessages(new Map(JSON.parse(obj)), errorsMap);
 
           redisClient.set(
@@ -367,7 +366,6 @@ async function processAllMarkets(network) {
       // PERSISTING ERROR MESSAGES
       redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
         console.log("PERSISTING ERRORS 2");
-        console.log(JSON.stringify(errorsMap));
         const messagesMap = persistErrorMessages(new Map(JSON.parse(obj)), errorsMap);
 
         redisClient.set(
