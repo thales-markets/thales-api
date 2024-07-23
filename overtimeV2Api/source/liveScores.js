@@ -97,6 +97,7 @@ async function processAllLiveScores() {
             const gameId = bytes32({ input: event.event_id });
 
             liveScoresMap.set(gameId, {
+              lastUpdate: new Date().getTime(),
               period: event.score.game_period,
               gameStatus: event.score.event_status,
               displayClock: event.score.display_clock,
@@ -132,6 +133,7 @@ async function processAllLiveScores() {
             const period = parseInt(event.period);
 
             liveScoresMap.set(gameId, {
+              lastUpdate: new Date().getTime(),
               period: Number.isNaN(period) ? undefined : period,
               gameStatus: event.period === "HALF" ? "Half" : event.status,
               displayClock: event.clock,
