@@ -514,6 +514,16 @@ async function processAllMarkets(network) {
               }
             }
 
+            if (getLeagueSport(Number(market.leagueId)) === Sport.VOLLEYBALL) {
+              const setLimitForLiveTradingVolleyball = Number(process.env.SET_LIMIT_FOR_LIVE_TRADING_VOLLEYBALL);
+              if (Number(currentPeriod) >= setLimitForLiveTradingVolleyball) {
+                console.log(
+                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to period: ${currentPeriod}. set`,
+                );
+                return null;
+              }
+            }
+
             const linesMap = new Map();
 
             const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
