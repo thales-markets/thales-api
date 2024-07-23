@@ -10,9 +10,9 @@ require("dotenv").config();
 
 markets.processMarkets(true);
 markets.processMarkets(false);
-// liveMarkets.processLiveMarkets();
-// gamesInfo.processGamesInfo();
-// playersInfo.processPlayersInfo();
+liveMarkets.processLiveMarkets();
+gamesInfo.processGamesInfo();
+playersInfo.processPlayersInfo();
 resolver.processResolve();
-// liveScores.processLiveScores();
+liveScores.processLiveScores();
 cleaner.processClean();
