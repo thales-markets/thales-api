@@ -149,10 +149,6 @@ async function processAllMarkets(network) {
         // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
         if (providerMarketsMatchingOffer.length == 0 && enabledDummyMarkets == 0) {
           console.log(`Could not find any matches on the provider side for the given leagues`);
-          errorsMap.set(market.gameId, {
-            errorTime: new Date().toUTCString(),
-            errorMessage: `Could not find any matches on the provider side for the given leagues`,
-          });
           return;
         }
 
@@ -243,6 +239,7 @@ async function processAllMarkets(network) {
             constraintsMap.set(Sport.HOCKEY, Number(process.env.PERIOD_LIMIT_FOR_LIVE_TRADING_HOCKEY));
             constraintsMap.set(Sport.BASEBALL, Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL));
             constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
+            constraintsMap.set(Sport.VOLLEYBALL, Number(process.env.SET_LIMIT_FOR_LIVE_TRADING_VOLLEYBAL));
 
             // CHECKING CONSTRAINTS FOR THE GAME SPORT & LEAGYE
             const passingConstraintsObject = checkGameContraints(
@@ -337,8 +334,9 @@ async function processAllMarkets(network) {
         const resolvedMarketPromises = await Promise.all(filteredMarketsWithLiveOdds);
 
         let dummyMarkets = [];
-        if (Number(network) == 11155420) {
+        if (Number(network) == NETWORK.OptimismSepolia) {
           dummyMarkets = [...dummyMarketsLive];
+          console.log(errorsMap);
         }
         const filteredMarketsWithLiveOddsAndDummyMarkets = resolvedMarketPromises.concat(dummyMarkets);
 
