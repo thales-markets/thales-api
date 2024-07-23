@@ -26,7 +26,7 @@ async function processClean() {
           console.log("Cleaner: clean markets error: ", error);
         }
 
-        await delay(60 * 1000);
+        await delay(24 * 60 * 60 * 1000);
       }
     }, 3000);
   }
