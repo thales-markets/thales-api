@@ -401,56 +401,20 @@ async function processAllMarkets(network) {
                   gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_1));
                   break;
                 case 2:
-                  gamesHomeScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_home_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_2),
-                  );
-                  gamesAwayScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_away_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_2),
-                  );
+                  gamesHomeScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_home_period_2));
+                  gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_2));
                   break;
                 case 3:
-                  gamesHomeScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_home_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_3),
-                  );
-                  gamesAwayScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_away_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_3),
-                  );
+                  gamesHomeScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_home_period_3));
+                  gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_3));
                   break;
                 case 4:
-                  gamesHomeScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_home_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_3),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_4),
-                  );
-                  gamesAwayScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_away_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_3),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_4),
-                  );
+                  gamesHomeScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_home_period_4));
+                  gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_4));
                   break;
                 case 5:
-                  gamesHomeScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_home_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_3),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_4),
-                    Number(gameTimeOpticOddsResponseData.score_home_period_5),
-                  );
-                  gamesAwayScoreByPeriod.push(
-                    Number(gameTimeOpticOddsResponseData.score_away_period_1),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_2),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_3),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_4),
-                    Number(gameTimeOpticOddsResponseData.score_away_period_5),
-                  );
+                  gamesHomeScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_home_period_5));
+                  gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_5));
                   break;
               }
 
@@ -515,12 +479,60 @@ async function processAllMarkets(network) {
             }
 
             if (getLeagueSport(Number(market.leagueId)) === Sport.VOLLEYBALL) {
-              const setLimitForLiveTradingVolleyball = Number(process.env.SET_LIMIT_FOR_LIVE_TRADING_VOLLEYBALL);
-              if (Number(currentPeriod) >= setLimitForLiveTradingVolleyball) {
-                console.log(
-                  `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to period: ${currentPeriod}. set`,
-                );
-                return null;
+              const currentSet = Number(gameTimeOpticOddsResponseData.period);
+              let currentHomeGameScore;
+              let currentAwayGameScore;
+
+              switch (currentSet) {
+                case 1:
+                  gamesHomeScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_home_period_1));
+                  gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_1));
+                  break;
+                case 2:
+                  gamesHomeScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_home_period_2));
+                  gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_2));
+                  break;
+                case 3:
+                  gamesHomeScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_home_period_3));
+                  gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_3));
+                  break;
+                case 4:
+                  gamesHomeScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_home_period_4));
+                  gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_4));
+                  break;
+                case 5:
+                  gamesHomeScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_home_period_5));
+                  gamesAwayScoreByPeriod.push(Number(gameTimeOpticOddsResponseData.score_away_period_5));
+                  break;
+              }
+              if (Number(currentScoreHome) == 2 || Number(currentScoreAway) == 2) {
+                switch (currentSet) {
+                  case 3:
+                    currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_3);
+                    currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_3);
+                    break;
+                  case 4:
+                    currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_4);
+                    currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_4);
+                    break;
+                  case 5:
+                    currentHomeGameScore = Number(gameTimeOpticOddsResponseData.score_home_period_5);
+                    currentAwayGameScore = Number(gameTimeOpticOddsResponseData.score_away_period_5);
+                    break;
+                }
+                if (Number(currentScoreHome) == 2 && currentHomeGameScore >= 20) {
+                  console.log(
+                    `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to current result: ${currentScoreHome} - ${currentScoreAway} (${currentHomeGameScore} - ${currentAwayGameScore})`,
+                  );
+                  return null;
+                }
+
+                if (Number(currentScoreAway) == 2 && currentAwayGameScore >= 20) {
+                  console.log(
+                    `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to current result: ${currentScoreHome} - ${currentScoreAway} (${currentHomeGameScore} - ${currentAwayGameScore})`,
+                  );
+                  return null;
+                }
               }
             }
 
