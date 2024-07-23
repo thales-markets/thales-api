@@ -19,7 +19,13 @@ export default [
   },
   {
     languageOptions: {
-      globals: { ...globals.browser, ...globals.node, gameFinishersMap, userReffererIDsMap, solanaAddressesMap },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        gameFinishersMap: "writable",
+        userReffererIDsMap: "writable",
+        solanaAddressesMap: "writable",
+      },
     },
   },
   pluginJs.configs.recommended,
