@@ -15,7 +15,9 @@ const {
   AMERICAN_LEAGUES,
   League,
   SportIdMapOpticOdds,
+  PeriodType,
 } = require("../constants/sports");
+const { getLeaguePeriodType } = require("../utils/sports");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_FUTURE);
@@ -127,22 +129,28 @@ const getEnetpulseScore = (results, sport) => {
   let score = undefined;
   const scoreByPeriod = [];
 
-  if (sport === League.EUROLEAGUE || sport === League.SUMMER_OLYMPICS_QUALIFICATION) {
+  const periodType = getLeaguePeriodType(sport);
+
+  if (periodType === PeriodType.QUARTER) {
     score = getEnetpulseScoreByCode(Object.values(results), "finalresult");
     for (let i = 1; i <= 4; i++) {
       const code = `quarter${i}`;
       const periodScore = getEnetpulseScoreByCode(Object.values(results), code);
       if (periodScore !== undefined) {
         scoreByPeriod.push(periodScore);
+      } else {
+        break;
       }
     }
-  } else if (sport === League.TENNIS_GS || sport === League.TENNIS_MASTERS) {
+  } else if (periodType === PeriodType.SET) {
     score = getEnetpulseScoreByCode(Object.values(results), "setswon");
     for (let i = 1; i <= 7; i++) {
       const code = `set${i}`;
       const periodScore = getEnetpulseScoreByCode(Object.values(results), code);
       if (periodScore !== undefined) {
         scoreByPeriod.push(periodScore);
+      } else {
+        break;
       }
     }
   } else if (sport === League.CSGO || sport === League.DOTA2 || sport === League.LOL) {
