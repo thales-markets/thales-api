@@ -40,6 +40,11 @@ const getLeagueOpticOddsName = (league) => {
   return leagueInfo ? leagueInfo.opticOddsName : undefined;
 };
 
+const getLeaguePeriodType = (league) => {
+  const leagueInfo = LeagueMap[league];
+  return leagueInfo ? leagueInfo.periodType : "";
+};
+
 module.exports = {
   getLeagueSport,
   getLeagueProvider,
@@ -49,4 +54,5 @@ module.exports = {
   getLeagueLabel,
   isLiveSupportedForLeague,
   getLeagueOpticOddsName,
+  getLeaguePeriodType,
 };
