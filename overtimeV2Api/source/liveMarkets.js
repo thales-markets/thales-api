@@ -239,7 +239,6 @@ async function processAllMarkets(network) {
             constraintsMap.set(Sport.HOCKEY, Number(process.env.PERIOD_LIMIT_FOR_LIVE_TRADING_HOCKEY));
             constraintsMap.set(Sport.BASEBALL, Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL));
             constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
-            constraintsMap.set(Sport.VOLLEYBALL, Number(process.env.SET_LIMIT_FOR_LIVE_TRADING_VOLLEYBAL));
 
             // CHECKING CONSTRAINTS FOR THE GAME SPORT & LEAGYE
             const passingConstraintsObject = checkGameContraints(
