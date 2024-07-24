@@ -3,6 +3,7 @@ const { getSpreadData, adjustSpreadOnOdds } = require("overtime-live-trading-uti
 const { getLeagueIsDrawAvailable, getLeagueSport } = require("./sports");
 const oddslib = require("oddslib");
 const { Sport, League } = require("../constants/sports");
+const teamsMapping = require("../assets/teamsMapping.json");
 
 const fetchTeamsMap = async () => {
   const teamsMap = new Map();
@@ -77,8 +78,8 @@ const adjustSpreadAndReturnMarketWithOdds = (market, spreadData, odds, marketTyp
 };
 
 const persistErrorMessages = (messagesMap, errorsMap) => {
-  const persistedGameIds = Object.keys(messagesMap);
-  const currentGameIds = Object.keys(errorsMap);
+  const persistedGameIds = Array.from(messagesMap.keys());
+  const currentGameIds = Array.from(errorsMap.keys());
 
   for (const gameId of persistedGameIds) {
     const errorsForGameId = messagesMap.get(gameId);
@@ -90,9 +91,10 @@ const persistErrorMessages = (messagesMap, errorsMap) => {
   }
 
   for (const currentKey of currentGameIds) {
+    const errorsArray = [];
+    const newMessageObject = errorsMap.get(currentKey);
     if (persistedGameIds.includes(currentKey)) {
       const persistedValuesArray = messagesMap.get(currentKey);
-      const newMessageObject = errorsMap.get(currentKey);
       if (persistedValuesArray != undefined) {
         const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
         if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
@@ -100,12 +102,15 @@ const persistErrorMessages = (messagesMap, errorsMap) => {
           messagesMap.set(currentKey, persistedValuesArray);
         }
       } else {
-        const errorsArray = [];
         errorsArray.push(newMessageObject);
-        messagesMap.set(currentKey, [errorsArray]);
+        messagesMap.set(currentKey, errorsArray);
       }
+    } else {
+      errorsArray.push(newMessageObject);
+      messagesMap.set(currentKey, errorsArray);
     }
   }
+
   return messagesMap;
 };
 
