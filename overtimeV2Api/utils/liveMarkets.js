@@ -4,6 +4,8 @@ const { getLeagueIsDrawAvailable, getLeagueSport } = require("./sports");
 const oddslib = require("oddslib");
 const { Sport, League } = require("../constants/sports");
 const teamsMapping = require("../assets/teamsMapping.json");
+const { redisClient } = require("../../redis/client");
+const KEYS = require("../../redis/redis-keys");
 
 const fetchTeamsMap = async () => {
   const teamsMap = new Map();
@@ -31,9 +33,6 @@ const adjustSpreadAndReturnMarketWithOdds = (market, spreadData, odds, marketTyp
     marketType,
     Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
   );
-
-  console.log(market.leagueId);
-  console.log(spreadDataForSport);
 
   const oddsArrayWithSpread = getLeagueIsDrawAvailable(Number(market.leagueId))
     ? adjustSpreadOnOdds(
@@ -77,41 +76,51 @@ const adjustSpreadAndReturnMarketWithOdds = (market, spreadData, odds, marketTyp
   return market;
 };
 
-const persistErrorMessages = (messagesMap, errorsMap) => {
-  const persistedGameIds = Array.from(messagesMap.keys());
-  const currentGameIds = Array.from(errorsMap.keys());
+const persistErrorMessages = (errorsMap, network) => {
+  redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
+    const messagesMap = persistErrorMessages(new Map(JSON.parse(obj)), errorsMap);
 
-  for (const gameId of persistedGameIds) {
-    const errorsForGameId = messagesMap.get(gameId);
-    const firstError = errorsForGameId[0];
-    const dayAgo = Date.now() - 1000 * 60 * 60 * 24;
-    if (dayAgo >= new Date(firstError.errorTime).getTime()) {
-      messagesMap.delete(gameId);
+    const persistedGameIds = Array.from(messagesMap.keys());
+    const currentGameIds = Array.from(errorsMap.keys());
+
+    // DELETE ERROR MESSAGES OLDER THAN 24H
+    for (const gameId of persistedGameIds) {
+      const errorsForGameId = messagesMap.get(gameId);
+      const firstError = errorsForGameId[0];
+      const dayAgo = Date.now() - 1000 * 60 * 60 * 24;
+      if (dayAgo >= new Date(firstError.errorTime).getTime()) {
+        messagesMap.delete(gameId);
+      }
     }
-  }
 
-  for (const currentKey of currentGameIds) {
-    const errorsArray = [];
-    const newMessageObject = errorsMap.get(currentKey);
-    if (persistedGameIds.includes(currentKey)) {
-      const persistedValuesArray = messagesMap.get(currentKey);
-      if (persistedValuesArray != undefined) {
-        const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
-        if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
-          persistedValuesArray.push(newMessageObject);
-          messagesMap.set(currentKey, persistedValuesArray);
+    // ADD NEW MESSAGE ONLY IF IT IS DIFFERENT THAN THE LAST ONE
+    for (const currentKey of currentGameIds) {
+      const errorsArray = [];
+      const newMessageObject = errorsMap.get(currentKey);
+      if (persistedGameIds.includes(currentKey)) {
+        const persistedValuesArray = messagesMap.get(currentKey);
+        if (persistedValuesArray != undefined) {
+          const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
+          if (latestMessageObject.errorMessage != newMessageObject.errorMessage) {
+            persistedValuesArray.push(newMessageObject);
+            messagesMap.set(currentKey, persistedValuesArray);
+          }
+        } else {
+          errorsArray.push(newMessageObject);
+          messagesMap.set(currentKey, errorsArray);
         }
       } else {
         errorsArray.push(newMessageObject);
         messagesMap.set(currentKey, errorsArray);
       }
-    } else {
-      errorsArray.push(newMessageObject);
-      messagesMap.set(currentKey, errorsArray);
     }
-  }
 
-  return messagesMap;
+    redisClient.set(
+      KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network],
+      JSON.stringify([...messagesMap]),
+      function () {},
+    );
+  });
 };
 
 const checkTennisIsEnabled = (availableLeagueIds) => {
@@ -147,7 +156,7 @@ const fetchOpticOddsGamesForLeague = async (leagueId, leagueName) => {
   const opticOddsResponseDataForLeague = responseOpticOddsGames.data.data;
 
   if (opticOddsResponseDataForLeague.length == 0) {
-    console.log(`Could not find any games on the provider side for the given league ${leagueName}`);
+    console.log(`Could not find any live games on the provider side for the given league ${leagueName}`);
     return [];
   } else {
     return opticOddsResponseDataForLeague;

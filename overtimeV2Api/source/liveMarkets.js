@@ -148,7 +148,7 @@ async function processAllMarkets(network) {
 
         // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
         if (providerMarketsMatchingOffer.length == 0 && enabledDummyMarkets == 0) {
-          console.log(`Could not find any matches on the provider side for the given leagues`);
+          console.log(`Could not find anylive matches on the provider side for the given leagues`);
           return;
         }
 
@@ -202,9 +202,6 @@ async function processAllMarkets(network) {
             const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
 
             if (gameTimeOpticOddsResponseData == undefined || responseOpticOddsScores.data.data.length == 0) {
-              console.log(
-                `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
-              );
               errorsMap.set(market.gameId, {
                 errorTime: new Date().toUTCString(),
                 errorMessage: `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
@@ -223,9 +220,6 @@ async function processAllMarkets(network) {
             const gamesAwayScoreByPeriod = [];
 
             if (currentGameStatus.toLowerCase() == "completed") {
-              console.log(
-                `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} because it is finished.`,
-              );
               errorsMap.set(market.gameId, {
                 errorTime: new Date().toUTCString(),
                 errorMessage: `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} because it is finished.`,
@@ -248,7 +242,6 @@ async function processAllMarkets(network) {
             );
 
             if (passingConstraintsObject.allow == false) {
-              console.log(passingConstraintsObject.message);
               errorsMap.set(market.gameId, {
                 errorTime: new Date().toUTCString(),
                 errorMessage: passingConstraintsObject.message,
@@ -267,8 +260,6 @@ async function processAllMarkets(network) {
               getLeagueIsDrawAvailable(Number(market.leagueId)),
             );
 
-            console.log(linesMap);
-
             // CHECKING AND COMPARING ODDS FOR THE GIVEN BOOKMAKERS
             const oddsList = checkOddsFromBookmakers(
               linesMap,
@@ -277,9 +268,6 @@ async function processAllMarkets(network) {
               Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
               MIN_ODDS_FOR_DIFF_CHECKING,
             );
-
-            console.log("ODDS AFTER CHECKING BOOKMAKERS:");
-            console.log(oddsList);
 
             const isThere100PercentOdd = oddsList.some(
               (oddsObject) => oddsObject.homeOdds == 1 || oddsObject.awayOdds == 1 || oddsObject.drawOdds == 1,
@@ -335,7 +323,6 @@ async function processAllMarkets(network) {
         let dummyMarkets = [];
         if (Number(network) == NETWORK.OptimismSepolia) {
           dummyMarkets = [...dummyMarketsLive];
-          console.log(errorsMap);
         }
         const filteredMarketsWithLiveOddsAndDummyMarkets = resolvedMarketPromises.concat(dummyMarkets);
 
@@ -346,29 +333,13 @@ async function processAllMarkets(network) {
         );
 
         // PERSISTING ERROR MESSAGES
-        redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
-          const messagesMap = persistErrorMessages(new Map(JSON.parse(obj)), errorsMap);
-
-          redisClient.set(
-            KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network],
-            JSON.stringify([...messagesMap]),
-            function () {},
-          );
-        });
+        persistErrorMessages(errorsMap, network);
 
         return;
       }
 
       // PERSISTING ERROR MESSAGES
-      redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
-        const messagesMap = persistErrorMessages(new Map(JSON.parse(obj)), errorsMap);
-
-        redisClient.set(
-          KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network],
-          JSON.stringify([...messagesMap]),
-          function () {},
-        );
-      });
+      persistErrorMessages(errorsMap, network);
 
       redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify([]), function () {});
     } catch (e) {
