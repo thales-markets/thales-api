@@ -65,6 +65,12 @@ const KEYS = {
     42161: "overtimeV2ArbLiveTradeAdapterMessages",
     8453: "overtimeV2BaseLiveTradeAdapterMessages",
   },
+  OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES: {
+    10: "overtimeV2OpLiveMarketsApiErrorMessages",
+    11155420: "overtimeV2SepoliaLiveMarketsApiErrorMessages",
+    42161: "overtimeV2ArbLiveMarketsApiErrorMessages",
+    8453: "overtimeV2BaseLiveMarketsApiErrorMessages",
+  },
   SOLANA_ADDRESSES: "solanaAddresses",
 };
 
