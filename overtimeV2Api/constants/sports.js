@@ -6,6 +6,7 @@ const Sport = {
   HOCKEY: "Hockey",
   FIGHTING: "Fighting",
   TENNIS: "Tennis",
+  TABLE_TENNIS: "TableTennis",
   ESPORTS: "eSports",
   RUGBY: "Rugby",
   VOLLEYBALL: "Volleyball",
@@ -53,6 +54,7 @@ const League = {
   ITALY_CUP: 141,
   TENNIS_GS: 153,
   TENNIS_MASTERS: 156,
+  SUMMER_OLYMPICS_TENNIS: 158,
   GERMANY_CUP: 209,
   LIGA_MX: 230,
   BRAZIL_1: 268,
@@ -65,14 +67,19 @@ const League = {
   SUMMER_OLYMPICS_BASKETBALL_WOMEN: 407,
   FIBA_WORLD_CUP: 409,
   FORMULA1: 445,
+  SUMMER_OLYMPICS_BEACH_VOLEYBALL_WOMEN: 453,
+  SUMMER_OLYMPICS_BEACH_VOLEYBALL: 454,
   MOTOGP: 497,
   SAUDI_PROFESSIONAL_LEAGUE: 536,
   SUMMER_OLYMPICS_WATERPOLO: 8881,
   SUMMER_OLYMPICS_VOLEYBALL_WOMEN: 8893,
   SUMMER_OLYMPICS_VOLEYBALL: 8894,
+  SUMMER_OLYMPICS_TABLE_TENNIS: 8910,
   BOXING: 9196,
   SUMMER_OLYMPICS_RUGBY: 9578,
   SUMMER_OLYMPICS_RUGBY_WOMEN: 9588,
+  SUMMER_OLYMPICS_HOCKEY_WOMEN: 9698,
+  SUMMER_OLYMPICS_HOCKEY: 9699,
   UEFA_NATIONS_LEAGUE: 9806,
   CONCACAF_NATIONS_LEAGUE: 9821,
   CSGO: 9977,
@@ -153,7 +160,7 @@ const LeagueMap = {
     id: League.MLB,
     label: "MLB",
     opticOddsName: "MLB",
-    provider: Provider.RUNDOWN,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.INNING,
@@ -216,7 +223,7 @@ const LeagueMap = {
     id: League.WNBA,
     label: "WNBA",
     opticOddsName: "WNBA",
-    provider: Provider.RUNDOWN,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
@@ -567,6 +574,18 @@ const LeagueMap = {
     live: false,
     isLiveTestnet: true,
   },
+  [League.SUMMER_OLYMPICS_TENNIS]: {
+    sport: Sport.TENNIS,
+    id: League.SUMMER_OLYMPICS_TENNIS,
+    label: "Olympic Games Tennis",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.SETS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.SET,
+    isDrawAvailable: false,
+    live: false,
+    isLiveTestnet: true,
+  },
   [League.GERMANY_CUP]: {
     sport: Sport.SOCCER,
     id: League.GERMANY_CUP,
@@ -704,6 +723,42 @@ const LeagueMap = {
     live: false,
     isLiveTestnet: false,
   },
+  [League.SUMMER_OLYMPICS_BEACH_VOLEYBALL_WOMEN]: {
+    sport: Sport.VOLLEYBALL,
+    id: League.SUMMER_OLYMPICS_BEACH_VOLEYBALL_WOMEN,
+    label: "Olympic Games Beach Voleyball Women",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.SETS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.SET,
+    isDrawAvailable: false,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.SUMMER_OLYMPICS_BEACH_VOLEYBALL]: {
+    sport: Sport.VOLLEYBALL,
+    id: League.SUMMER_OLYMPICS_BEACH_VOLEYBALL,
+    label: "Olympic Games Beach Voleyball",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.SETS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.SET,
+    isDrawAvailable: false,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.SUMMER_OLYMPICS_TABLE_TENNIS]: {
+    sport: Sport.TABLE_TENNIS,
+    id: League.SUMMER_OLYMPICS_TABLE_TENNIS,
+    label: "Olympic Games Table Tennis",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.SETS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.SET,
+    isDrawAvailable: false,
+    live: false,
+    isLiveTestnet: false,
+  },
   [League.MOTOGP]: {
     sport: Sport.MOTOSPORT,
     id: League.MOTOGP,
@@ -804,6 +859,30 @@ const LeagueMap = {
     isDrawAvailable: true,
     live: true,
     isLiveTestnet: true,
+  },
+  [League.SUMMER_OLYMPICS_HOCKEY_WOMEN]: {
+    sport: Sport.HOCKEY,
+    id: League.SUMMER_OLYMPICS_HOCKEY_WOMEN,
+    label: "Olympic Games Hockey Women",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.PERIOD,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.SUMMER_OLYMPICS_HOCKEY]: {
+    sport: Sport.HOCKEY,
+    id: League.SUMMER_OLYMPICS_HOCKEY,
+    label: "Olympic Games Hockey",
+    provider: Provider.ENETPULSE,
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.PERIOD,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
   },
   [League.UEFA_NATIONS_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1077,6 +1156,7 @@ const SportIdMapEnetpulse = {
   14: 87, // La Liga
   153: 153, // Tennis GS
   156: 156, // Tennis Masters 1000
+  158: 158, // Summer Olympics Tennnis
   132: 132, // FA Cup
   134: 134, // Coupe de France
   138: 138, // Copa del Rey
@@ -1097,14 +1177,19 @@ const SportIdMapEnetpulse = {
   407: 407, // Summer Olympics Basketball Women
   409: 409, // FIBA World Cup
   445: 445, // F1
+  453: 453, // Summer Olympics Beach Voleyball Women
+  454: 454, // Summer Olympics Beach Voleyball
   497: 497, // Moto GP
   536: 536, // Saudi Arabia Football League
   8881: 8881, // Summer Olympics Water Polo
   8893: 8893, // Summer Olympics Voleyball Women
   8894: 8894, // Summer Olympics Voleyball
+  8910: 8910, // Summer Olympics Table Tennnis
   9196: 9196, // Boxing
   9578: 9578, // Summer Olympics Rugby
   9588: 9588, // Summer Olympics Rugby Women
+  9698: 9698, // Summer Olympics Hockey Women
+  9699: 9699, // Summer Olympics Hockey
   9806: 9806, // UEFA League of Nations
   9821: 9821, // CONCACAF League of Nations
   9977: 9977, // CsGo
