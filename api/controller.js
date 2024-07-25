@@ -1948,6 +1948,19 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ, (req, res) => {
   });
 });
 
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ, (req, res) => {
+  const networkId = req.params.networkParam;
+
+  redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId], function (err, obj) {
+    const messagesMap = new Map(JSON.parse(obj));
+    try {
+      res.send([Array.from(messagesMap.keys()), Array.from(messagesMap.values())]);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+});
+
 // V1 Digital Options and Sport Markets API with cache response logic
 app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/digital-options", digitalOptionsRoutes);
