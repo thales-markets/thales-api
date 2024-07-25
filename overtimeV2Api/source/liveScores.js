@@ -110,10 +110,10 @@ async function processAllLiveScores() {
         });
       }
     }
-    // TODO: hardcore MLB for testing
+    // TODO: hardcore UFC for testing
     if (
       leagueProvider === Provider.OPTICODDS ||
-      (leagueId === League.MLB && gameInfo && gameInfo.provider === Provider.OPTICODDS)
+      (leagueId === League.UFC && gameInfo && gameInfo.provider === Provider.OPTICODDS)
     ) {
       const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?game_id=${convertFromBytes32(market.gameId)}`;
       const scoresResponse = await axios.get(scoresApiUrl, {

@@ -221,7 +221,7 @@ const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
   const scoreByPeriod = [];
 
   if (gameScores) {
-    if (sport === League.WNBA || sport === League.MLB) {
+    if (sport === League.WNBA || sport === League.MLB || sport === League.UFC) {
       score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`);
       // set 50 as max number of periods
       for (let i = 1; i <= 50; i++) {
@@ -338,8 +338,8 @@ async function processAllGamesInfo() {
     .filter((league) => league.provider === Provider.ENETPULSE)
     .map((league) => league.id);
   const opticOddsLeagues = allLeagues
-    // TODO: hardcore MLB for testing
-    .filter((league) => league.provider === Provider.OPTICODDS || league.id === League.MLB)
+    // TODO: hardcore UFC for testing
+    .filter((league) => league.provider === Provider.OPTICODDS || league.id === League.UFC)
     .map((league) => league.id);
 
   for (let i = 0; i <= numberOfDaysInPast + numberOfDaysInFuture; i++) {
