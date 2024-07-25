@@ -1208,6 +1208,7 @@ const SportIdMapEnetpulse = {
 
 const SportIdMapOpticOdds = {
   3: "MLB",
+  7: "UFC",
   8: "WNBA",
   50: "UEFA - European Championship",
 };
