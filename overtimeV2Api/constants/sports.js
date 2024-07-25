@@ -584,7 +584,7 @@ const LeagueMap = {
     periodType: PeriodType.SET,
     isDrawAvailable: false,
     live: false,
-    isLiveTestnet: true,
+    isLiveTestnet: false,
   },
   [League.GERMANY_CUP]: {
     sport: Sport.SOCCER,
