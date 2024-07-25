@@ -123,7 +123,7 @@ async function processAllPlayersInfo() {
       }
     }
 
-    // TODO: hardcore UFC for testing
+    // TODO: hardcode UFC for testing
     if (
       leagueProvider === Provider.OPTICODDS ||
       (leagueId === League.UFC && gameInfo && gameInfo.provider === Provider.OPTICODDS)

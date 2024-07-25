@@ -338,7 +338,7 @@ async function processAllGamesInfo() {
     .filter((league) => league.provider === Provider.ENETPULSE)
     .map((league) => league.id);
   const opticOddsLeagues = allLeagues
-    // TODO: hardcore UFC for testing
+    // TODO: hardcode UFC for testing
     .filter((league) => league.provider === Provider.OPTICODDS || league.id === League.UFC)
     .map((league) => league.id);
 
