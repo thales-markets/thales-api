@@ -783,25 +783,27 @@ const LeagueMap = {
     sport: Sport.RUGBY,
     id: League.SUMMER_OLYMPICS_RUGBY,
     label: "Olympic Games Rugby",
+    opticOddsName: "Olympics Rugby 7s Men",
     provider: Provider.ENETPULSE,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    live: true,
+    isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_RUGBY_WOMEN]: {
     sport: Sport.RUGBY,
     id: League.SUMMER_OLYMPICS_RUGBY_WOMEN,
     label: "Olympic Games Rugby Women",
+    opticOddsName: "Olympics Rugby 7s Women",
     provider: Provider.ENETPULSE,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    live: true,
+    isLiveTestnet: true,
   },
   [League.UEFA_NATIONS_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1016,6 +1018,8 @@ const LeagueMap = {
 
 const LEAGUES_NO_FORMAL_HOME_AWAY = [League.CSGO, League.DOTA2, League.LOL, League.TENNIS_GS, League.TENNIS_MASTERS];
 
+const LEAGUES_NO_LIVE_CONSTRAINTS = [League.SUMMER_OLYMPICS_RUGBY, League.SUMMER_OLYMPICS_RUGBY_WOMEN];
+
 const AMERICAN_LEAGUES = [
   League.NCAAF,
   League.NFL,
@@ -1136,4 +1140,5 @@ module.exports = {
   SportIdMapEnetpulse,
   AMERICAN_LEAGUES,
   SportIdMapOpticOdds,
+  LEAGUES_NO_LIVE_CONSTRAINTS,
 };

@@ -16,7 +16,7 @@ const {
   getTestnetLiveSupportedLeagues,
   getLeagueOpticOddsName,
 } = require("../utils/sports");
-const { Sport } = require("../constants/sports");
+const { Sport, LEAGUES_NO_LIVE_CONSTRAINTS } = require("../constants/sports");
 const { readCsvFromUrl } = require("../utils/csvReader");
 const {
   getBookmakersArray,
@@ -227,26 +227,36 @@ async function processAllMarkets(network) {
               return null;
             }
 
-            const constraintsMap = new Map();
+            // CHECKING CONSTRAINTS FOR THE GAME SPORT & LEAGUE
+            if (!LEAGUES_NO_LIVE_CONSTRAINTS.includes(market.leagueId)) {
+              const constraintsMap = new Map();
 
-            constraintsMap.set(Sport.BASKETBALL, Number(process.env.QUARTER_LIMIT_FOR_LIVE_TRADING_BASKETBALL));
-            constraintsMap.set(Sport.HOCKEY, Number(process.env.PERIOD_LIMIT_FOR_LIVE_TRADING_HOCKEY));
-            constraintsMap.set(Sport.BASEBALL, Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL));
-            constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
+              constraintsMap.set(Sport.BASKETBALL, Number(process.env.QUARTER_LIMIT_FOR_LIVE_TRADING_BASKETBALL));
+              constraintsMap.set(Sport.HOCKEY, Number(process.env.PERIOD_LIMIT_FOR_LIVE_TRADING_HOCKEY));
+              constraintsMap.set(Sport.BASEBALL, Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL));
+              constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
 
-            // CHECKING CONSTRAINTS FOR THE GAME SPORT & LEAGYE
-            const passingConstraintsObject = checkGameContraints(
-              gameTimeOpticOddsResponseData,
-              Number(market.leagueId),
-              constraintsMap,
-            );
+              const passingConstraintsObject = checkGameContraints(
+                gameTimeOpticOddsResponseData,
+                Number(market.leagueId),
+                constraintsMap,
+              );
 
-            if (passingConstraintsObject.allow == false) {
-              errorsMap.set(market.gameId, {
-                errorTime: new Date().toUTCString(),
-                errorMessage: passingConstraintsObject.message,
-              });
-              return null;
+              if (passingConstraintsObject.allow == false) {
+                errorsMap.set(market.gameId, {
+                  errorTime: new Date().toUTCString(),
+                  errorMessage: passingConstraintsObject.message,
+                });
+                return null;
+              }
+
+              if (
+                getLeagueSport(Number(market.leagueId)) === Sport.TENNIS ||
+                getLeagueSport(Number(market.leagueId)) === Sport.VOLLEYBALL
+              ) {
+                gamesHomeScoreByPeriod.push(passingConstraintsObject.currentHomeGameScore);
+                gamesAwayScoreByPeriod.push(passingConstraintsObject.currentAwayGameScore);
+              }
             }
 
             const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
@@ -272,11 +282,6 @@ async function processAllMarkets(network) {
             const isThere100PercentOdd = oddsList.some(
               (oddsObject) => oddsObject.homeOdds == 1 || oddsObject.awayOdds == 1 || oddsObject.drawOdds == 1,
             );
-
-            if (getLeagueSport(Number(market.leagueId)) === Sport.TENNIS) {
-              gamesHomeScoreByPeriod.push(passingConstraintsObject.currentHomeGameScore);
-              gamesAwayScoreByPeriod.push(passingConstraintsObject.currentAwayGameScore);
-            }
 
             market.homeScore = currentScoreHome;
             market.awayScore = currentScoreAway;
