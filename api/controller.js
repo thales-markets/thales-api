@@ -385,6 +385,21 @@ app.get(ENDPOINTS.JSON_ODDS_DATA, (req, res) => {
   request.get(url, { headers: { "x-api-key": process.env.JSON_ODDS_KEY.toString() } }).pipe(res);
 });
 
+app.use(ENDPOINTS.ONE_INCH_PROXY, (req, res) => {
+  const ONE_INCH_BASE_URL = "https://api.1inch.dev";
+  const url = ONE_INCH_BASE_URL + req.url;
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: "Bearer " + process.env.ONE_INCH_API_KEY.toString(),
+  };
+
+  if (req.method === "POST") {
+    request.post(url, { json: req.body, headers }).pipe(res);
+  } else {
+    request.get(url, { headers }).pipe(res);
+  }
+});
+
 app.get(ENDPOINTS.OVERTIME_SPORTS, (req, res) => {
   const network = req.params.networkParam;
   if ([10, 420, 8453, 42161].includes(Number(network))) {

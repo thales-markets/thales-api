@@ -27,6 +27,7 @@ const ENDPOINTS = {
   GET_REFFERER_MAP: "/get-refferer-map",
   ENETPULSE_RESULT: "/enetpulse-result/:sportId/:date",
   JSON_ODDS_DATA: "/json-odds-data/:sportParameter",
+  ONE_INCH_PROXY: "/1inch-proxy",
 
   OVERTIME_SPORTS: "/overtime/networks/:networkParam/sports",
   OVERTIME_COLLATERALS: "/overtime/networks/:networkParam/collaterals",
