@@ -78,7 +78,13 @@ const adjustSpreadAndReturnMarketWithOdds = (market, spreadData, odds, marketTyp
 
 const persistErrorMessages = (errorsMap, network) => {
   redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
-    const messagesMap = new Map(JSON.parse(obj));
+    const persistedMessages = JSON.parse(obj);
+
+    const messagesMap = new Map();
+
+    for (let i = 0; i++; i < persistedMessages[0].length) {
+      messagesMap.set(persistedMessages[0][i], persistedMessages[1][i]);
+    }
 
     const persistedGameIds = Array.from(messagesMap.keys());
     const currentGameIds = Array.from(errorsMap.keys());
