@@ -189,6 +189,17 @@ const MarketType = {
   PLAYER_PROPS_LAST_TOUCHDOWN: 11056,
   PLAYER_PROPS_3PTS_MADE: 11038,
   PLAYER_PROPS_BLOCKS: 11098,
+
+  // UFC market types
+  WINNING_ROUND: 10151,
+  GO_THE_DISTANCE: 10154,
+  WILL_FIGHT_END_IN_FIRST_MINUTE: 10155,
+  WILL_POINT_BE_DEDUCTED: 10156,
+  ENDING_METHOD: 10157,
+  METHOD_OF_VICTORY: 10158,
+  // UFC player props market types
+  PLAYER_PROPS_UFC_TAKEDOWNS: 11200,
+  PLAYER_PROPS_UFC_STRIKES: 11201,
 };
 
 const MarketTypeMap = {
@@ -1064,6 +1075,57 @@ const MarketTypeMap = {
     name: "Blcoks",
     resultType: ResultType.OVER_UNDER,
   },
+
+  // UFC market types
+  [MarketType.WINNING_ROUND]: {
+    id: MarketType.WINNING_ROUND,
+    key: "winningRound",
+    name: "Winning round",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.GO_THE_DISTANCE]: {
+    id: MarketType.GO_THE_DISTANCE,
+    key: "goToDistance",
+    name: "Go to distance",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.WILL_FIGHT_END_IN_FIRST_MINUTE]: {
+    id: MarketType.WILL_FIGHT_END_IN_FIRST_MINUTE,
+    key: "willFightEndInFirstMinute",
+    name: "Will the fight end in the first minute",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.WILL_POINT_BE_DEDUCTED]: {
+    id: MarketType.WILL_POINT_BE_DEDUCTED,
+    key: "willPointBeDeducted",
+    name: "Will point be deducted",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.ENDING_METHOD]: {
+    id: MarketType.ENDING_METHOD,
+    key: "endingMethod",
+    name: "Endging method",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.METHOD_OF_VICTORY]: {
+    id: MarketType.METHOD_OF_VICTORY,
+    key: "methodOfVictory",
+    name: "Method of victory",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  // UFC player props market types
+  [MarketType.PLAYER_PROPS_UFC_TAKEDOWNS]: {
+    id: MarketType.PLAYER_PROPS_UFC_TAKEDOWNS,
+    key: "takedowns",
+    name: "Takedowns",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_UFC_STRIKES]: {
+    id: MarketType.PLAYER_PROPS_UFC_STRIKES,
+    key: "strikes",
+    name: "Strikes",
+    resultType: ResultType.OVER_UNDER,
+  },
 };
 
 const PLAYER_PROPS_MARKET_TYPES = [
@@ -1090,6 +1152,8 @@ const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_LAST_TOUCHDOWN,
   MarketType.PLAYER_PROPS_3PTS_MADE,
   MarketType.PLAYER_PROPS_BLOCKS,
+  MarketType.PLAYER_PROPS_UFC_TAKEDOWNS,
+  MarketType.PLAYER_PROPS_UFC_STRIKES,
 ];
 
 const ONE_SIDE_PLAYER_PROPS_MARKET_TYPES = [
