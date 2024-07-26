@@ -921,10 +921,11 @@ const MarketTypeMap = {
   [MarketType.WILL_THERE_BE_OVERTIME]: {
     id: MarketType.WILL_THERE_BE_OVERTIME,
     key: "willThereBeOvertime",
-    name: "Will there be overtime in the game",
+    name: "Overtime",
+    description: "Will there be overtime in the game",
     resultType: ResultType.EXACT_POSITION,
   },
-  // Will there be overtime in the game
+  // No runs in the first inning
   [MarketType.FIRST_INNING_NO_RUNS]: {
     id: MarketType.FIRST_INNING_NO_RUNS,
     key: "firstInningNoRuns",
@@ -1092,13 +1093,15 @@ const MarketTypeMap = {
   [MarketType.WILL_FIGHT_END_IN_FIRST_MINUTE]: {
     id: MarketType.WILL_FIGHT_END_IN_FIRST_MINUTE,
     key: "willFightEndInFirstMinute",
-    name: "Will the fight end in the first minute",
+    name: "First minute finish",
+    description: "Will the fight end in the first minute",
     resultType: ResultType.EXACT_POSITION,
   },
   [MarketType.WILL_POINT_BE_DEDUCTED]: {
     id: MarketType.WILL_POINT_BE_DEDUCTED,
     key: "willPointBeDeducted",
-    name: "Will point be deducted",
+    name: "Point to be deducted",
+    description: "Will point be deducted",
     resultType: ResultType.EXACT_POSITION,
   },
   [MarketType.ENDING_METHOD]: {
