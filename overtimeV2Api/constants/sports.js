@@ -583,8 +583,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
+    live: true,
+    isLiveTestnet: true,
   },
   [League.GERMANY_CUP]: {
     sport: Sport.SOCCER,
