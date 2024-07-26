@@ -198,8 +198,8 @@ const MarketType = {
   ENDING_METHOD: 10157,
   METHOD_OF_VICTORY: 10158,
   // UFC player props market types
-  PLAYER_PROPS_UFC_TAKEDOWNS: 11200,
-  PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES: 11201,
+  PLAYER_PROPS_UFC_TAKEDOWNS_LANDED: 11200,
+  PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES_LANDED: 11201,
 };
 
 const MarketTypeMap = {
@@ -1114,16 +1114,16 @@ const MarketTypeMap = {
     resultType: ResultType.EXACT_POSITION,
   },
   // UFC player props market types
-  [MarketType.PLAYER_PROPS_UFC_TAKEDOWNS]: {
-    id: MarketType.PLAYER_PROPS_UFC_TAKEDOWNS,
-    key: "takedowns",
-    name: "Takedowns",
+  [MarketType.PLAYER_PROPS_UFC_TAKEDOWNS_LANDED]: {
+    id: MarketType.PLAYER_PROPS_UFC_TAKEDOWNS_LANDED,
+    key: "takedownsLanded",
+    name: "Takedowns landed",
     resultType: ResultType.OVER_UNDER,
   },
-  [MarketType.PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES]: {
-    id: MarketType.PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES,
-    key: "significantStrikes",
-    name: "Significant strikes",
+  [MarketType.PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES_LANDED]: {
+    id: MarketType.PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES_LANDED,
+    key: "significantStrikesLanded",
+    name: "Significant strikes landed",
     resultType: ResultType.OVER_UNDER,
   },
 };
@@ -1152,8 +1152,8 @@ const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_LAST_TOUCHDOWN,
   MarketType.PLAYER_PROPS_3PTS_MADE,
   MarketType.PLAYER_PROPS_BLOCKS,
-  MarketType.PLAYER_PROPS_UFC_TAKEDOWNS,
-  MarketType.PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES,
+  MarketType.PLAYER_PROPS_UFC_TAKEDOWNS_LANDED,
+  MarketType.PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES_LANDED,
 ];
 
 const ONE_SIDE_PLAYER_PROPS_MARKET_TYPES = [
