@@ -66,14 +66,13 @@ function getGamesInfoMap() {
 async function processAllPlayersInfo() {
   const playersInfoMap = await getPlayersInfoMap();
   const gamesInfoMap = await getGamesInfoMap();
-  // TODO: take from OP and OP Sepolia for now
+  // TODO: take from OP for now
   const openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
-  const openSepoliaMarketsMap = await getOpenMarketsMap(NETWORK.OptimismSepolia);
 
-  const allOpenMarketsMap = [...Array.from(openMarketsMap.values()), ...Array.from(openSepoliaMarketsMap.values())];
+  const allOpenMarkets = Array.from(openMarketsMap.values());
 
-  for (let i = 0; i < allOpenMarketsMap.length; i++) {
-    const market = allOpenMarketsMap[i];
+  for (let i = 0; i < allOpenMarkets.length; i++) {
+    const market = allOpenMarkets[i];
     const leagueId = market.leagueId;
     const leagueProvider = getLeagueProvider(leagueId);
     const gameInfo = gamesInfoMap.get(market.gameId);
