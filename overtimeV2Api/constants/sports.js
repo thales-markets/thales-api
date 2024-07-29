@@ -15,6 +15,7 @@ const Sport = {
   CRICKET: "Cricket",
   MOTOSPORT: "Motosport",
   GOLF: "Golf",
+  POLITICS: "Politics",
   EMPTY: "",
 };
 
@@ -94,6 +95,7 @@ const League = {
   UEFA_CHAMPIONS_LEAGUE_QUALIFICATION: 10611,
   UEFA_EUROPA_LEAGUE_QUALIFICATION: 10613,
   UEFA_CONFERENCE_LEAGUE_QUALIFICATION: 10615,
+  US_ELECTION: 20000,
   GOLF_H2H: 100021,
   GOLF_WINNER: 100121,
 };
@@ -127,6 +129,7 @@ const Provider = {
   ENETPULSE: "enetpulse",
   JSONODDS: "jsonOdds",
   OPTICODDS: "opticOdds",
+  EMPTY: "",
 };
 
 const LeagueMap = {
@@ -1090,6 +1093,18 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
+    live: true,
+    isLiveTestnet: true,
+  },
+  [League.US_ELECTION]: {
+    sport: Sport.POLITICS,
+    id: League.US_ELECTION,
+    label: "US Election 2024",
+    provider: Provider.EMPTY,
+    scoringType: ScoringType.EMPTY,
+    matchResolveType: MatchResolveType.EMPTY,
+    periodType: PeriodType.EMPTY,
+    isDrawAvailable: false,
     live: true,
     isLiveTestnet: true,
   },
