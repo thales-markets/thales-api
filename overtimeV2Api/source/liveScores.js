@@ -8,7 +8,7 @@ const KEYS = require("../../redis/redis-keys");
 const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getLeagueProvider } = require("../utils/sports");
-const { Provider, League } = require("../constants/sports");
+const { Provider } = require("../constants/sports");
 const { getOpticOddsScore } = require("./gamesInfo");
 
 async function processLiveScores() {
@@ -110,11 +110,8 @@ async function processAllLiveScores() {
         });
       }
     }
-    // TODO: hardcode UFC for testing
-    if (
-      leagueProvider === Provider.OPTICODDS ||
-      (leagueId === League.UFC && gameInfo && gameInfo.provider === Provider.OPTICODDS)
-    ) {
+
+    if (leagueProvider === Provider.OPTICODDS) {
       const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?game_id=${convertFromBytes32(market.gameId)}`;
       const scoresResponse = await axios.get(scoresApiUrl, {
         headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },

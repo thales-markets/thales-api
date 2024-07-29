@@ -7,7 +7,7 @@ const KEYS = require("../../redis/redis-keys");
 const { isPlayerPropsMarket, convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getLeagueProvider } = require("../utils/sports");
-const { Provider, League } = require("../constants/sports");
+const { Provider } = require("../constants/sports");
 
 async function processPlayersInfo() {
   if (process.env.REDIS_URL) {
@@ -122,11 +122,7 @@ async function processAllPlayersInfo() {
       }
     }
 
-    // TODO: hardcode UFC for testing
-    if (
-      leagueProvider === Provider.OPTICODDS ||
-      (leagueId === League.UFC && gameInfo && gameInfo.provider === Provider.OPTICODDS)
-    ) {
+    if (leagueProvider === Provider.OPTICODDS) {
       const playerPropsMarkets = market.childMarkets.filter((childMarket) => childMarket.isPlayerPropsMarket);
 
       playerPropsMarkets.forEach((market) => {
