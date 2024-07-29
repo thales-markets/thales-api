@@ -210,7 +210,7 @@ const LeagueMap = {
     sport: Sport.FIGHTING,
     id: League.UFC,
     label: "UFC",
-    provider: Provider.RUNDOWN,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.ROUNDS,
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.ROUND,
