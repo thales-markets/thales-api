@@ -85,8 +85,9 @@ const packMarket = (market) => {
     line: Number(market.line) / 100,
     maturity: market.maturity,
     maturityDate: new Date(market.maturity * 1000),
-    homeTeam: fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
-    awayTeam: fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
+    homeTeam:
+      leagueId == League.US_ELECTION ? "US Election 2024" : fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
+    awayTeam: leagueId == League.US_ELECTION ? "" : fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
     status: market.status,
     isOpen: market.status === Status.OPEN || market.status === Status.IN_PROGRESS,
     isResolved: market.status === Status.RESOLVED,
@@ -119,6 +120,7 @@ const packMarket = (market) => {
         normalizedImplied: formattedOdds ? formatMarketOdds(formattedOdds, OddsType.AMM) : 0,
       };
     }),
+    positionNames: market.positionNames,
     proof: market.proof,
   };
 };
