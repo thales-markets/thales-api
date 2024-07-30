@@ -4,8 +4,6 @@ require("dotenv").config();
 const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const axios = require("axios");
-const { getAverageOdds } = require("../utils/markets");
-const { LIVE_TYPE_ID_BASE, MIN_ODDS_FOR_DIFF_CHECKING } = require("../constants/markets");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const { groupBy } = require("lodash");
@@ -23,16 +21,16 @@ const {
   teamNamesMatching,
   gamesDatesMatching,
   checkGameContraints,
-  extractOddsForGamePerProvider,
-  checkOddsFromBookmakers,
+  getLeagueSpreadType,
+  processMarket,
 } = require("overtime-live-trading-utils");
 const {
   fetchTeamsMap,
-  adjustSpreadAndReturnMarketWithOdds,
   persistErrorMessages,
   checkTennisIsEnabled,
   fetchOpticOddsGamesForLeague,
 } = require("../utils/liveMarkets");
+const { MONEYLINE } = require("overtime-live-trading-utils/src/constants/constantsOpticodds");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
@@ -154,7 +152,16 @@ async function processAllMarkets(network) {
 
         // FETCHING ODDS FOR THE GIVEN GAME
         const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
-          let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.opticOddsGameEvent.id}&market_name=Moneyline&odds_format=Decimal`;
+          let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.opticOddsGameEvent.id}&odds_format=Decimal`;
+          const betTypes = [MONEYLINE];
+          const spreadType = getLeagueSpreadType(game.leagueId);
+          if (spreadType != undefined) {
+            betTypes.push(spreadType);
+          }
+
+          betTypes.forEach((betType) => {
+            url = url.concat(`&market_name=${betType}`);
+          });
           const liveOddsProviders = liveOddsProvidersPerSport.get(game.leagueId);
           liveOddsProviders.forEach((liveOddsProvider) => {
             url = url.concat(`&sportsbook=${liveOddsProvider}`);
@@ -191,20 +198,24 @@ async function processAllMarkets(network) {
 
           // FETCHING CURRENT SCORE AND CLOCK FOR THE GAME
           if (responseObject != undefined) {
-            const gameWithOdds = responseObject.data.data[0];
+            const apiResponseWithOdds = responseObject.data.data[0];
 
             const responseOpticOddsScores = await axios.get(
-              `https://api.opticodds.com/api/v2/scores?game_id=${gameWithOdds.id}`,
+              `https://api.opticodds.com/api/v2/scores?game_id=${apiResponseWithOdds.id}`,
               {
                 headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
               },
             );
+
+            console.log(apiResponseWithOdds);
+            console.log(`https://api.opticodds.com/api/v2/scores?game_id=${apiResponseWithOdds.id}`);
             const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
+            console.log(gameTimeOpticOddsResponseData);
 
             if (gameTimeOpticOddsResponseData == undefined || responseOpticOddsScores.data.data.length == 0) {
               errorsMap.set(market.gameId, {
                 errorTime: new Date().toUTCString(),
-                errorMessage: `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
+                errorMessage: `Blocking game ${apiResponseWithOdds.home_team} - ${apiResponseWithOdds.away_team} due to game clock being unavailable`,
               });
               return null;
             }
@@ -222,7 +233,7 @@ async function processAllMarkets(network) {
             if (currentGameStatus.toLowerCase() == "completed") {
               errorsMap.set(market.gameId, {
                 errorTime: new Date().toUTCString(),
-                errorMessage: `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} because it is finished.`,
+                errorMessage: `Blocking game ${apiResponseWithOdds.home_team} - ${apiResponseWithOdds.away_team} because it is finished.`,
               });
               return null;
             }
@@ -261,28 +272,7 @@ async function processAllMarkets(network) {
 
             const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
 
-            // EXTRACTING ODDS FROM THE RESPONSE
-            const linesMap = extractOddsForGamePerProvider(
-              liveOddsProviders,
-              gameWithOdds,
-              market,
-              teamsMap,
-              getLeagueIsDrawAvailable(Number(market.leagueId)),
-            );
-
-            // CHECKING AND COMPARING ODDS FOR THE GIVEN BOOKMAKERS
-            const oddsList = checkOddsFromBookmakers(
-              linesMap,
-              liveOddsProviders,
-              !getLeagueIsDrawAvailable(Number(market.leagueId)),
-              Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
-              MIN_ODDS_FOR_DIFF_CHECKING,
-            );
-
-            const isThere100PercentOdd = oddsList.some(
-              (oddsObject) => oddsObject.homeOdds == 1 || oddsObject.awayOdds == 1 || oddsObject.drawOdds == 1,
-            );
-
+            // SET CURRENT RESULT AND PERIOD VALUES, PREPARE CHILD MARKETS
             market.homeScore = currentScoreHome;
             market.awayScore = currentScoreAway;
             market.gameClock = currentClock;
@@ -292,37 +282,27 @@ async function processAllMarkets(network) {
             market.homeScoreByPeriod = gamesHomeScoreByPeriod;
             market.awayScoreByPeriod = gamesAwayScoreByPeriod;
 
-            if (
-              isThere100PercentOdd ||
-              (oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0) ||
-              isLive == false
-            ) {
-              // RETURNING MARKET WITH ZERO ODDS IF CONDITIONS FOR ODDS ARE NOT MET OR LIVE FLAG ON OPTIC ODDS API IS FALSE BUT GAME IS IN PROGRESS
-              market.odds = market.odds.map(() => {
-                return {
-                  american: 0,
-                  decimal: 0,
-                  normalizedImplied: 0,
-                };
-              });
-              return market;
-            } else {
-              const aggregationEnabled = Number(process.env.ODDS_AGGREGATION_ENABLED);
-              if (aggregationEnabled > 0) {
-                const aggregatedOdds = getAverageOdds(oddsList);
-                // ADJUSTING SPREAD AND RETURNING MARKET WITH AGGREGATED LIVE ODDS
-                return adjustSpreadAndReturnMarketWithOdds(market, spreadData, aggregatedOdds, LIVE_TYPE_ID_BASE);
-              } else {
-                const primaryBookmakerOdds = oddsList[0];
-                // ADJUSTING SPREAD AND RETURNING MARKET WITH LIVE ODDS FROM PRIMARY BOOKMAKER
-                return adjustSpreadAndReturnMarketWithOdds(market, spreadData, primaryBookmakerOdds, LIVE_TYPE_ID_BASE);
-              }
-            }
+            // TODO EXTRACT ODDS FOR GAME PER PROVIDER, PER TYPE
+
+            const processedMarket = processMarket(
+              market,
+              apiResponseWithOdds,
+              liveOddsProviders,
+              spreadData,
+              teamsMap,
+              getLeagueIsDrawAvailable,
+              isLive,
+              Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
+              Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
+            );
+
+            return processedMarket;
           } else {
             return null;
           }
         });
 
+        //
         const resolvedMarketPromises = await Promise.all(filteredMarketsWithLiveOdds);
 
         let dummyMarkets = [];

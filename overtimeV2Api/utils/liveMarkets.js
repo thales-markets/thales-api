@@ -25,6 +25,7 @@ const fetchTeamsMap = async () => {
   return teamsMap;
 };
 
+// DEPRECATE
 const adjustSpreadAndReturnMarketWithOdds = (market, spreadData, odds, marketType) => {
   // CURRENTLY ONLY SUPPORTING MONEYLINE
   const spreadDataForSport = getSpreadData(

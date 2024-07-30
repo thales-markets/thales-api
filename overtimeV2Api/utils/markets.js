@@ -63,6 +63,7 @@ const getIsCombinedPositionsMarket = (marketType) => {
   return COMBINED_POSITIONS_MARKET_TYPES.includes(marketType);
 };
 
+// DEPRECATE
 const getAverageOdds = (multipleOddsFromProviders) => {
   let homeOdds;
   let awayOdds;
