@@ -200,6 +200,16 @@ const MarketType = {
   // UFC player props market types
   PLAYER_PROPS_UFC_TAKEDOWNS_LANDED: 11200,
   PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES_LANDED: 11201,
+
+  // US election market types
+  US_ELECTION_POPULAR_VOTE_WINNER: 10900,
+  US_ELECTION_WINNING_PARTY: 10901,
+  US_ELECTION_WINNING_PARTY_ARIZONA: 10902,
+  US_ELECTION_WINNING_PARTY_GEORGIA: 10903,
+  US_ELECTION_WINNING_PARTY_MICHIGAN: 10904,
+  US_ELECTION_WINNING_PARTY_NEVADA: 10905,
+  US_ELECTION_WINNING_PARTY_PENNSYLVANIA: 10906,
+  US_ELECTION_WINNING_PARTY_WINSCONSIN: 10907,
 };
 
 const MarketTypeMap = {
@@ -1128,6 +1138,56 @@ const MarketTypeMap = {
     key: "significantStrikesLanded",
     name: "Significant strikes landed",
     resultType: ResultType.OVER_UNDER,
+  },
+
+  // US election market types
+  [MarketType.US_ELECTION_POPULAR_VOTE_WINNER]: {
+    id: MarketType.US_ELECTION_POPULAR_VOTE_WINNER,
+    key: "popularVoteWinner",
+    name: "Popular vote winner",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.US_ELECTION_WINNING_PARTY]: {
+    id: MarketType.US_ELECTION_WINNING_PARTY,
+    key: "winningParty",
+    name: "Winning party",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.US_ELECTION_WINNING_PARTY_ARIZONA]: {
+    id: MarketType.US_ELECTION_WINNING_PARTY_ARIZONA,
+    key: "winningPartyArizona",
+    name: "Winning party Arizona",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.US_ELECTION_WINNING_PARTY_GEORGIA]: {
+    id: MarketType.US_ELECTION_WINNING_PARTY_GEORGIA,
+    key: "winningPartyGeorgia",
+    name: "Winning party Georgia",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.US_ELECTION_WINNING_PARTY_MICHIGAN]: {
+    id: MarketType.US_ELECTION_WINNING_PARTY_MICHIGAN,
+    key: "winningPartyMichigan",
+    name: "Winning party Michigan",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.US_ELECTION_WINNING_PARTY_NEVADA]: {
+    id: MarketType.US_ELECTION_WINNING_PARTY_NEVADA,
+    key: "winningPartyNevada",
+    name: "Winning party Nevada",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.US_ELECTION_WINNING_PARTY_PENNSYLVANIA]: {
+    id: MarketType.US_ELECTION_WINNING_PARTY_PENNSYLVANIA,
+    key: "winningPartyPennsylvania",
+    name: "Winning party Pennsylvania",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.US_ELECTION_WINNING_PARTY_WINSCONSIN]: {
+    id: MarketType.US_ELECTION_WINNING_PARTY_WINSCONSIN,
+    key: "winningPartyWinsconsin",
+    name: "Winning party Winsconsin",
+    resultType: ResultType.EXACT_POSITION,
   },
 };
 

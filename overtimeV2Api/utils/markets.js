@@ -50,7 +50,8 @@ const formatMarketOdds = (odds, oddsType) => {
   }
 };
 
-const isOneSideMarket = (league) => getLeagueSport(league) === Sport.MOTOSPORT || league == League.GOLF_WINNER;
+const isOneSideMarket = (league) =>
+  getLeagueSport(league) === Sport.MOTOSPORT || league == League.GOLF_WINNER || league == League.US_ELECTION;
 
 const isPlayerPropsMarket = (marketType) => PLAYER_PROPS_MARKET_TYPES.includes(marketType);
 
