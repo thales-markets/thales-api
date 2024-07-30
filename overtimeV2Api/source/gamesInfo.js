@@ -362,6 +362,31 @@ async function processAllGamesInfo() {
       procesOpticOdssGamesInfo(opticOddsLeagues, formattedDate, gamesInfoMap),
     ]);
   }
+
+  // TODO hardcode US Election 2024
+  gamesInfoMap.set("0x3764616430383334656435643464643038386661336166643230613033343336", {
+    lastUpdate: new Date().getTime(),
+    gameStatus: "",
+    isGameFinished: false,
+    tournamentName: "",
+    tournamentRound: "",
+    provider: Provider.EMPTY,
+    teams: [
+      {
+        name: "US Election 2024",
+        isHome: true,
+        score: undefined,
+        scoreByPeriod: [],
+      },
+      {
+        name: "",
+        isHome: false,
+        score: undefined,
+        scoreByPeriod: [],
+      },
+    ],
+  });
+
   console.log(`Games info: Number of games info: ${Array.from(gamesInfoMap.values()).length}`);
   redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
 }
