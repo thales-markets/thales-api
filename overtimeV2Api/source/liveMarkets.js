@@ -282,21 +282,28 @@ async function processAllMarkets(network) {
             market.homeScoreByPeriod = gamesHomeScoreByPeriod;
             market.awayScoreByPeriod = gamesAwayScoreByPeriod;
 
-            // TODO EXTRACT ODDS FOR GAME PER PROVIDER, PER TYPE
+            if (isLive == true) {
+              const processedMarket = processMarket(
+                market,
+                apiResponseWithOdds,
+                liveOddsProviders,
+                spreadData,
+                getLeagueIsDrawAvailable(market.leagueId),
+                Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
+                Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
+              );
 
-            const processedMarket = processMarket(
-              market,
-              apiResponseWithOdds,
-              liveOddsProviders,
-              spreadData,
-              teamsMap,
-              getLeagueIsDrawAvailable,
-              isLive,
-              Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
-              Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
-            );
-
-            return processedMarket;
+              return processedMarket;
+            } else {
+              market.odds = market.odds.map(() => {
+                return {
+                  american: 0,
+                  decimal: 0,
+                  normalizedImplied: 0,
+                };
+              });
+              return market;
+            }
           } else {
             return null;
           }
