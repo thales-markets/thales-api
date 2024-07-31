@@ -210,6 +210,9 @@ const MarketType = {
   US_ELECTION_WINNING_PARTY_NEVADA: 10905,
   US_ELECTION_WINNING_PARTY_PENNSYLVANIA: 10906,
   US_ELECTION_WINNING_PARTY_WINSCONSIN: 10907,
+
+  // Correct score
+  CORRECT_SCORE: 10100,
 };
 
 const MarketTypeMap = {
@@ -1187,6 +1190,12 @@ const MarketTypeMap = {
     id: MarketType.US_ELECTION_WINNING_PARTY_WINSCONSIN,
     key: "winningPartyWinsconsin",
     name: "Winning party Winsconsin",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.CORRECT_SCORE]: {
+    id: MarketType.CORRECT_SCORE,
+    key: "correctScore",
+    name: "Correct score",
     resultType: ResultType.EXACT_POSITION,
   },
 };
