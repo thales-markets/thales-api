@@ -1090,7 +1090,7 @@ const LeagueMap = {
     sport: Sport.SOCCER,
     id: League.UEFA_SUPER_CUP,
     label: "UEFA Super Cup",
-    provider: Provider.ENETPULSE,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.GOALS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
@@ -1102,7 +1102,7 @@ const LeagueMap = {
     sport: Sport.SOCCER,
     id: League.ENGLAND_CHAMPIONSHIP,
     label: "EFL Championship",
-    provider: Provider.ENETPULSE,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.GOALS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
@@ -1251,7 +1251,8 @@ const SportIdMapOpticOdds = {
   3: "MLB",
   7: "UFC",
   8: "WNBA",
-  50: "UEFA - European Championship",
+  20001: "UEFA - Super Cup",
+  20011: "England - Championship",
 };
 
 module.exports = {
