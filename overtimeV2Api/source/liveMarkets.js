@@ -23,6 +23,7 @@ const {
   checkGameContraints,
   getLeagueSpreadType,
   processMarket,
+  getLeagueTotalType,
 } = require("overtime-live-trading-utils");
 const {
   fetchTeamsMap,
@@ -155,8 +156,15 @@ async function processAllMarkets(network) {
           let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.opticOddsGameEvent.id}&odds_format=Decimal`;
           const betTypes = [MONEYLINE];
           const spreadType = getLeagueSpreadType(game.leagueId);
+
           if (spreadType != undefined) {
             betTypes.push(spreadType);
+          }
+
+          const totalType = getLeagueTotalType(game.leagueId);
+
+          if (totalType != undefined) {
+            betTypes.push(totalType);
           }
 
           betTypes.forEach((betType) => {
