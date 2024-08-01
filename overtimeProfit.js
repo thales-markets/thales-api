@@ -56,14 +56,18 @@ if (process.env.REDIS_URL) {
 }
 
 function getRates(network, provider) {
-  return new Promise(function (resolve) {
+  return new Promise(function (resolve, reject) {
     redisClient.get(KEYS.TOKEN, async function (err, obj) {
       const tokenMap = new Map(JSON.parse(obj));
       const thalesRate = Number(tokenMap.get("price"));
 
-      const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
-      const ethRate = formatEther(await priceFeed.rateForCurrency(formatBytes32String("ETH")));
-      resolve({ thalesRate, ethRate });
+      try {
+        const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
+        const ethRate = formatEther(await priceFeed.rateForCurrency(formatBytes32String("ETH")));
+        resolve({ thalesRate, ethRate });
+      } catch {
+        reject("Error getting rates.");
+      }
     });
   });
 }
@@ -85,16 +89,14 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod, pe
     const batchSize = process.env.BATCH_SIZE;
     const numberOfBatches = Math.trunc(filteredTicketsAddresses.length / batchSize) + 1;
 
-    let userWinningTicketsFromContract = [];
+    const promises = [];
     for (let i = 0; i < numberOfBatches; i++) {
-      const ticketData = await sportsAmmData.getTicketsData(
-        filteredTicketsAddresses.slice(i * batchSize, (i + 1) * batchSize),
-      );
-      userWinningTicketsFromContract = [
-        ...userWinningTicketsFromContract,
-        ...ticketData.filter((ticket) => ticket.isUserTheWinner),
-      ];
+      promises.push(sportsAmmData.getTicketsData(filteredTicketsAddresses.slice(i * batchSize, (i + 1) * batchSize)));
     }
+    const promisesResult = await Promise.all(promises);
+    const ticketData = promisesResult.flat(1);
+    const userWinningTicketsFromContract = ticketData.filter((ticket) => ticket.isUserTheWinner);
+
     const userWinningTicketsAddressesFromContract = userWinningTicketsFromContract.map((ticket) =>
       ticket.id.toLowerCase(),
     );
@@ -242,29 +244,34 @@ async function processParlayLeaderboard(network) {
   const latestPeriodWeekly = Math.ceil(differenceInDays(new Date(), PARLAY_LEADERBOARD_WEEKLY_START_DATE) / 7);
 
   const provider = getProvider(network);
-  const rates = network === NETWORK.Optimism ? await getRates(network, provider) : undefined;
-  const sportsAmmData =
-    network === NETWORK.Optimism
-      ? new ethers.Contract(sportsAMMV2DataContract.addresses[network], sportsAMMV2DataContract.abi, provider)
-      : undefined;
 
-  for (let period = latestPeriodWeekly - 4; period <= latestPeriodWeekly; period++) {
-    const startPeriod = Math.trunc(addDays(PARLAY_LEADERBOARD_WEEKLY_START_DATE_UTC, period * 7).getTime() / 1000);
-    const endPeriod = Math.trunc(
-      subMilliseconds(addDays(PARLAY_LEADERBOARD_WEEKLY_START_DATE_UTC, (period + 1) * 7), 1).getTime() / 1000,
-    );
+  try {
+    const rates = network === NETWORK.Optimism ? await getRates(network, provider) : undefined;
+    const sportsAmmData =
+      network === NETWORK.Optimism
+        ? new ethers.Contract(sportsAMMV2DataContract.addresses[network], sportsAMMV2DataContract.abi, provider)
+        : undefined;
 
-    console.log(`Getting data for period: ${period}`);
-    const parlayMarkets = await getParlayLeaderboardForPeriod(
-      network,
-      startPeriod,
-      endPeriod,
-      period,
-      rates,
-      sportsAmmData,
-    );
-    periodMap.set(period, parlayMarkets);
+    for (let period = latestPeriodWeekly - 4; period <= latestPeriodWeekly; period++) {
+      const startPeriod = Math.trunc(addDays(PARLAY_LEADERBOARD_WEEKLY_START_DATE_UTC, period * 7).getTime() / 1000);
+      const endPeriod = Math.trunc(
+        subMilliseconds(addDays(PARLAY_LEADERBOARD_WEEKLY_START_DATE_UTC, (period + 1) * 7), 1).getTime() / 1000,
+      );
+
+      console.log(`Getting data for period: ${period}`);
+      const parlayMarkets = await getParlayLeaderboardForPeriod(
+        network,
+        startPeriod,
+        endPeriod,
+        period,
+        rates,
+        sportsAmmData,
+      );
+      periodMap.set(period, parlayMarkets);
+    }
+
+    redisClient.set(KEYS.PARLAY_LEADERBOARD[network], JSON.stringify([...periodMap]), function () {});
+  } catch (e) {
+    console.log("Error getting parlay leaderboard data.", e);
   }
-
-  redisClient.set(KEYS.PARLAY_LEADERBOARD[network], JSON.stringify([...periodMap]), function () {});
 }
