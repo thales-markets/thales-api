@@ -271,9 +271,9 @@ const procesOpticOdssGamesInfo = async (sports, formattedDate, gamesInfoMap) => 
     let totalPages = 1;
 
     while (page <= totalPages) {
-      console.log(
-        `Getting games info for OpticOdds sport: ${opticOddsSport}, ${sport}, date ${formattedDate} and page ${page}`,
-      );
+      // console.log(
+      //   `Getting games info for OpticOdds sport: ${opticOddsSport}, ${sport}, date ${formattedDate} and page ${page}`,
+      // );
       const schedulesApiUrl = `https://api.opticodds.com/api/v2/schedules/list?game_date=${formattedDate}&league=${opticOddsSport}&page=${page}`;
       const schedulesResponse = await axios.get(schedulesApiUrl, {
         headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
