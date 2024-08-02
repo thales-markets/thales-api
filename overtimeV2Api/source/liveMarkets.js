@@ -16,7 +16,7 @@ const {
   getTestnetLiveSupportedLeagues,
   getLeagueOpticOddsName,
 } = require("../utils/sports");
-const { Sport, LEAGUES_NO_LIVE_CONSTRAINTS } = require("../constants/sports");
+const { Sport } = require("../constants/sports");
 const { readCsvFromUrl } = require("../utils/csvReader");
 const {
   getBookmakersArray,
@@ -25,6 +25,7 @@ const {
   checkGameContraints,
   extractOddsForGamePerProvider,
   checkOddsFromBookmakers,
+  fetchResultInCurrentSet,
 } = require("overtime-live-trading-utils");
 const {
   fetchTeamsMap,
@@ -227,13 +228,10 @@ async function processAllMarkets(network) {
               return null;
             }
 
-            // CHECKING CONSTRAINTS FOR THE GAME SPORT & LEAGUE
-            if (!LEAGUES_NO_LIVE_CONSTRAINTS.includes(market.leagueId)) {
-              const constraintsMap = new Map();
+            const leagueSport = getLeagueSport(Number(market.leagueId));
 
-              constraintsMap.set(Sport.BASKETBALL, Number(process.env.QUARTER_LIMIT_FOR_LIVE_TRADING_BASKETBALL));
-              constraintsMap.set(Sport.HOCKEY, Number(process.env.PERIOD_LIMIT_FOR_LIVE_TRADING_HOCKEY));
-              constraintsMap.set(Sport.BASEBALL, Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL));
+            if (leagueSport == Sport.SOCCER) {
+              const constraintsMap = new Map();
               constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
 
               const passingConstraintsObject = checkGameContraints(
@@ -249,14 +247,12 @@ async function processAllMarkets(network) {
                 });
                 return null;
               }
+            }
 
-              if (
-                getLeagueSport(Number(market.leagueId)) === Sport.TENNIS ||
-                getLeagueSport(Number(market.leagueId)) === Sport.VOLLEYBALL
-              ) {
-                gamesHomeScoreByPeriod.push(passingConstraintsObject.currentHomeGameScore);
-                gamesAwayScoreByPeriod.push(passingConstraintsObject.currentAwayGameScore);
-              }
+            if (leagueSport === Sport.TENNIS || leagueSport === Sport.VOLLEYBALL) {
+              const resultInCurrentSet = fetchResultInCurrentSet(currentPeriod, gameTimeOpticOddsResponseData);
+              gamesHomeScoreByPeriod.push(resultInCurrentSet.currentHomeGameScore);
+              gamesAwayScoreByPeriod.push(resultInCurrentSet.currentAwayGameScore);
             }
 
             const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
