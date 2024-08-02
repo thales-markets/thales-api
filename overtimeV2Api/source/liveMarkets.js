@@ -254,8 +254,8 @@ async function processAllMarkets(network) {
                 parseInt(currentPeriod),
                 gameTimeOpticOddsResponseData,
               );
-              gamesHomeScoreByPeriod.push(resultInCurrentSet.currentHomeGameScore);
-              gamesAwayScoreByPeriod.push(resultInCurrentSet.currentAwayGameScore);
+              gamesHomeScoreByPeriod.push(resultInCurrentSet.home);
+              gamesAwayScoreByPeriod.push(resultInCurrentSet.away);
             }
 
             const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
