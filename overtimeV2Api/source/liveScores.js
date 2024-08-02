@@ -141,7 +141,7 @@ async function processAllLiveScores() {
             });
           }
         });
-      } else {
+      } else if (gameInfo) {
         liveScoresMap.set(market.gameId, {
           gameStatus: gameInfo.gameStatus,
           homeScore: 0,

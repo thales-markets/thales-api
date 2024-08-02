@@ -210,6 +210,18 @@ const MarketType = {
   US_ELECTION_WINNING_PARTY_NEVADA: 10905,
   US_ELECTION_WINNING_PARTY_PENNSYLVANIA: 10906,
   US_ELECTION_WINNING_PARTY_WINSCONSIN: 10907,
+
+  // Correct score
+  CORRECT_SCORE: 10100,
+
+  // Total exact per team
+  TOTAL_EXACT_HOME_TEAM: 10143,
+  TOTAL_EXACT_AWAY_TEAM: 10144,
+  // Total exact per team - half for soccer
+  FIRST_PERIOD_TOTAL_EXACT_HOME_TEAM: 10145,
+  FIRST_PERIOD_TOTAL_EXACT_AWAY_TEAM: 10146,
+  SECOND_PERIOD_TOTAL_EXACT_HOME_TEAM: 10147,
+  SECOND_PERIOD_TOTAL_EXACT_AWAY_TEAM: 10148,
 };
 
 const MarketTypeMap = {
@@ -1187,6 +1199,52 @@ const MarketTypeMap = {
     id: MarketType.US_ELECTION_WINNING_PARTY_WINSCONSIN,
     key: "winningPartyWinsconsin",
     name: "Winning party Winsconsin",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.CORRECT_SCORE]: {
+    id: MarketType.CORRECT_SCORE,
+    key: "correctScore",
+    name: "Correct score",
+    resultType: ResultType.EXACT_POSITION,
+  },
+
+  // Total exact per team
+  [MarketType.TOTAL_EXACT_HOME_TEAM]: {
+    id: MarketType.TOTAL_EXACT_HOME_TEAM,
+    key: "exactTotalHomeTeam",
+    name: "Exact total",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.TOTAL_EXACT_AWAY_TEAM]: {
+    id: MarketType.TOTAL_EXACT_AWAY_TEAM,
+    key: "exactTotalAwayTeam",
+    name: "Exact total",
+    resultType: ResultType.EXACT_POSITION,
+  },
+
+  // Total exact per team - half for soccer
+  [MarketType.FIRST_PERIOD_TOTAL_EXACT_HOME_TEAM]: {
+    id: MarketType.FIRST_PERIOD_TOTAL_EXACT_HOME_TEAM,
+    key: "firstPeriodExactTotalHomeTeam",
+    name: "Exact total 1st",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.FIRST_PERIOD_TOTAL_EXACT_AWAY_TEAM]: {
+    id: MarketType.FIRST_PERIOD_TOTAL_EXACT_AWAY_TEAM,
+    key: "firstPeriodExactTotalAwayTeam",
+    name: "Exact total 1st",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.SECOND_PERIOD_TOTAL_EXACT_HOME_TEAM]: {
+    id: MarketType.SECOND_PERIOD_TOTAL_EXACT_HOME_TEAM,
+    key: "secondPeriodExactTotalHomeTeam",
+    name: "Exact total 2nd",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.SECOND_PERIOD_TOTAL_EXACT_AWAY_TEAM]: {
+    id: MarketType.SECOND_PERIOD_TOTAL_EXACT_AWAY_TEAM,
+    key: "secondPeriodExactTotalAwayTeam",
+    name: "Exact total 2nd",
     resultType: ResultType.EXACT_POSITION,
   },
 };
