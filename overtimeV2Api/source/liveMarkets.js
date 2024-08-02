@@ -250,7 +250,10 @@ async function processAllMarkets(network) {
             }
 
             if (leagueSport === Sport.TENNIS || leagueSport === Sport.VOLLEYBALL) {
-              const resultInCurrentSet = fetchResultInCurrentSet(currentPeriod, gameTimeOpticOddsResponseData);
+              const resultInCurrentSet = fetchResultInCurrentSet(
+                parseInt(currentPeriod),
+                gameTimeOpticOddsResponseData,
+              );
               gamesHomeScoreByPeriod.push(resultInCurrentSet.currentHomeGameScore);
               gamesAwayScoreByPeriod.push(resultInCurrentSet.currentAwayGameScore);
             }
