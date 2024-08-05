@@ -47,7 +47,11 @@ async function processLiveMarkets() {
         try {
           const startTime = new Date().getTime();
           console.log("process live markets");
-          await Promise.all([processAllMarkets(NETWORK.Optimism), processAllMarkets(NETWORK.OptimismSepolia)]);
+          await Promise.all([
+            processAllMarkets(NETWORK.Optimism),
+            processAllMarkets(NETWORK.Arbitrum),
+            processAllMarkets(NETWORK.OptimismSepolia),
+          ]);
           const endTime = new Date().getTime();
           console.log(`=== Seconds for processing live markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
         } catch (error) {

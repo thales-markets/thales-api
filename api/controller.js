@@ -1562,8 +1562,8 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   }
   status = status.toLowerCase();
 
-  if (![10, 11155420].includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 11155420 (optimism sepolia).");
+  if (![10, 42161, 11155420].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
     return;
   }
 
@@ -1661,8 +1661,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
   const ungroup = req.query.ungroup;
   const leagueId = req.query.leagueId;
 
-  if (![10, 11155420].includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 11155420 (optimism sepolia).");
+  if (![10, 42161, 11155420].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
     return;
   }
 
@@ -1850,8 +1850,8 @@ app.get(ENDPOINTS.OVERTIME_V2_USER_HISTORY, async (req, res) => {
   const userAddress = req.params.userAddress;
   const status = req.query.status;
 
-  if (![10, 11155420].includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 11155420 (optimism sepolia).");
+  if (![10, 42161, 11155420].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
     return;
   }
 
@@ -1888,8 +1888,8 @@ app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
   const buyInAmount = req.body.buyInAmount;
   const collateral = req.body.collateral;
 
-  if (![10, 11155420].includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 11155420 (optimism sepolia).");
+  if (![10, 42161, 11155420].includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
     return;
   }
 
