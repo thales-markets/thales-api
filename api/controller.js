@@ -1538,14 +1538,14 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET_TYPES, (req, res) => {
 
 app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
   const network = req.params.networkParam;
-  if ([10, 11155420].includes(Number(network))) {
+  if ([10, 42161, 11155420].includes(Number(network))) {
     try {
       res.send(OVERTIME_V2_COLLATERALS[Number(network)]);
     } catch (e) {
       console.log(e);
     }
   } else {
-    res.send("Unsupported network. upported networks: 10 (optimism), 11155420 (optimism sepolia).");
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
   }
 });
 

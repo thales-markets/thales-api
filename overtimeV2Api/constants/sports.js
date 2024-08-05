@@ -97,6 +97,7 @@ const League = {
   UEFA_CONFERENCE_LEAGUE_QUALIFICATION: 10615,
   US_ELECTION: 20000,
   UEFA_SUPER_CUP: 20001,
+  BRAZIL_CUP: 20002,
   ENGLAND_CHAMPIONSHIP: 20011,
   GOLF_H2H: 100021,
   GOLF_WINNER: 100121,
@@ -1098,6 +1099,18 @@ const LeagueMap = {
     live: true,
     isLiveTestnet: true,
   },
+  [League.BRAZIL_CUP]: {
+    sport: Sport.SOCCER,
+    id: League.BRAZIL_CUP,
+    label: "Copa do Brasil",
+    provider: Provider.OPTICODDS,
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
   [League.ENGLAND_CHAMPIONSHIP]: {
     sport: Sport.SOCCER,
     id: League.ENGLAND_CHAMPIONSHIP,
@@ -1252,6 +1265,7 @@ const SportIdMapOpticOdds = {
   7: "UFC",
   8: "WNBA",
   20001: "UEFA - Super Cup",
+  20002: "Brazil - Copa do Brasil",
   20011: "England - Championship",
 };
 
