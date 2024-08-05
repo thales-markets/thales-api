@@ -14,7 +14,7 @@ const {
   getTestnetLiveSupportedLeagues,
   getLeagueOpticOddsName,
 } = require("../utils/sports");
-const { Sport, LEAGUES_NO_LIVE_CONSTRAINTS } = require("../constants/sports");
+const { Sport } = require("../constants/sports");
 const { readCsvFromUrl } = require("../utils/csvReader");
 const {
   getBookmakersArray,
@@ -24,6 +24,7 @@ const {
   getLeagueSpreadType,
   processMarket,
   getLeagueTotalType,
+  fetchResultInCurrentSet,
 } = require("overtime-live-trading-utils");
 const {
   fetchTeamsMap,
@@ -45,7 +46,11 @@ async function processLiveMarkets() {
         try {
           const startTime = new Date().getTime();
           console.log("process live markets");
-          await Promise.all([processAllMarkets(NETWORK.Optimism), processAllMarkets(NETWORK.OptimismSepolia)]);
+          await Promise.all([
+            processAllMarkets(NETWORK.Optimism),
+            processAllMarkets(NETWORK.Arbitrum),
+            processAllMarkets(NETWORK.OptimismSepolia),
+          ]);
           const endTime = new Date().getTime();
           console.log(`=== Seconds for processing live markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
         } catch (error) {
@@ -246,13 +251,10 @@ async function processAllMarkets(network) {
               return null;
             }
 
-            // CHECKING CONSTRAINTS FOR THE GAME SPORT & LEAGUE
-            if (!LEAGUES_NO_LIVE_CONSTRAINTS.includes(market.leagueId)) {
-              const constraintsMap = new Map();
+            const leagueSport = getLeagueSport(Number(market.leagueId));
 
-              constraintsMap.set(Sport.BASKETBALL, Number(process.env.QUARTER_LIMIT_FOR_LIVE_TRADING_BASKETBALL));
-              constraintsMap.set(Sport.HOCKEY, Number(process.env.PERIOD_LIMIT_FOR_LIVE_TRADING_HOCKEY));
-              constraintsMap.set(Sport.BASEBALL, Number(process.env.INNING_LIMIT_FOR_LIVE_TRADING_BASEBALL));
+            if (leagueSport == Sport.SOCCER) {
+              const constraintsMap = new Map();
               constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
 
               const passingConstraintsObject = checkGameContraints(
@@ -268,14 +270,15 @@ async function processAllMarkets(network) {
                 });
                 return null;
               }
+            }
 
-              if (
-                getLeagueSport(Number(market.leagueId)) === Sport.TENNIS ||
-                getLeagueSport(Number(market.leagueId)) === Sport.VOLLEYBALL
-              ) {
-                gamesHomeScoreByPeriod.push(passingConstraintsObject.currentHomeGameScore);
-                gamesAwayScoreByPeriod.push(passingConstraintsObject.currentAwayGameScore);
-              }
+            if (leagueSport === Sport.TENNIS || leagueSport === Sport.VOLLEYBALL) {
+              const resultInCurrentSet = fetchResultInCurrentSet(
+                parseInt(currentPeriod),
+                gameTimeOpticOddsResponseData,
+              );
+              gamesHomeScoreByPeriod.push(resultInCurrentSet.home);
+              gamesAwayScoreByPeriod.push(resultInCurrentSet.away);
             }
 
             const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));

@@ -68,13 +68,13 @@ function getGamesInfoMap() {
 async function processAllLiveScores() {
   const liveScoresMap = await getLiveScoresMap();
   const gamesInfoMap = await getGamesInfoMap();
-  // TODO: take from OP and OP Sepolia for now
-  const openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
-  const openSepoliaMarketsMap = await getOpenMarketsMap(NETWORK.OptimismSepolia);
+  // TODO: take from OP and ARB for now
+  const openOpMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
+  const openArbMarketsMap = await getOpenMarketsMap(NETWORK.Arbitrum);
 
   const allOngoingMarketsMap = [
-    ...Array.from(openMarketsMap.values()),
-    ...Array.from(openSepoliaMarketsMap.values()),
+    ...Array.from(openOpMarketsMap.values()),
+    ...Array.from(openArbMarketsMap.values()),
   ].filter((market) => market.statusCode === "ongoing");
 
   for (let i = 0; i < allOngoingMarketsMap.length; i++) {
