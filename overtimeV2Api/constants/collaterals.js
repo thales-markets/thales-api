@@ -1,4 +1,5 @@
 const collateralsOp = require("../assets/collaterals-op.json");
+const collateralsArb = require("../assets/collaterals-arb.json");
 const collateralsOpSepolia = require("../assets/collaterals-op-sepolia.json");
 const { NETWORK } = require("./networks");
 
@@ -8,6 +9,7 @@ const LONG_DECIMALS = 8;
 
 const COLLATERALS = {
   [NETWORK.Optimism]: collateralsOp,
+  [NETWORK.Arbitrum]: collateralsArb,
   [NETWORK.OptimismSepolia]: collateralsOpSepolia,
 };
 
