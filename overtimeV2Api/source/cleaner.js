@@ -15,7 +15,7 @@ async function processClean() {
           const startTime = new Date().getTime();
           console.log("Cleaner: clean markets");
           await cleanMarkets(NETWORK.Optimism);
-          // await cleanMarkets(NETWORK.Arbitrum);
+          await cleanMarkets(NETWORK.Arbitrum);
           // await cleanMarkets(NETWORK.Base);
           await cleanMarkets(NETWORK.OptimismSepolia);
           await cleanGamesInfo();
@@ -82,11 +82,11 @@ async function cleanMarkets(network) {
 
 async function cleanGamesInfo() {
   const gamesInfoMap = await getGamesInfoMap();
-  // TODO: take from OP and OP Sepolia for now
-  const closedMarketsMap = await getClosedMarketsMap(NETWORK.Optimism);
-  const closedMarketsMapSepolia = await getClosedMarketsMap(NETWORK.OptimismSepolia);
+  // TODO: take from OP and ARB for now
+  const closedMarketsMapOp = await getClosedMarketsMap(NETWORK.Optimism);
+  const closedMarketsMapArb = await getClosedMarketsMap(NETWORK.Arbitrum);
 
-  const allClosedMarketsMap = new Map([...closedMarketsMap, ...closedMarketsMapSepolia]);
+  const allClosedMarketsMap = new Map([...closedMarketsMapOp, ...closedMarketsMapArb]);
 
   const cleanerNumberOfDaysInPast = Number(process.env.CLEANER_NUMBER_OF_DAYS_IN_PAST);
 

@@ -46,7 +46,7 @@ async function processMarkets(isTestNetwork) {
             ? await Promise.all([processAllMarkets(markets, NETWORK.OptimismSepolia)])
             : await Promise.all([
                 processAllMarkets(markets, NETWORK.Optimism),
-                // processAllMarkets(markets, NETWORK.Arbitrum),
+                processAllMarkets(markets, NETWORK.Arbitrum),
                 // processAllMarkets(markets, NETWORK.Base),
               ]);
           const endTime = new Date().getTime();
@@ -257,7 +257,7 @@ async function updateMerkleTree(gameIds) {
 
   // TODO: add test network, for now only mainnets
   const opOpenMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
-  // const arbOpenMarketsMap = await getOpenMarketsMap(NETWORK.Arbitrum);
+  const arbOpenMarketsMap = await getOpenMarketsMap(NETWORK.Arbitrum);
   // const baseOpenMarketsMap = await getOpenMarketsMap(NETWORK.Base);
 
   for (let i = 0; i < gameIds.length; i++) {
@@ -270,7 +270,7 @@ async function updateMerkleTree(gameIds) {
       const mappedMarket = mapMarket(market);
 
       opOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
-      // arbOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
+      arbOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
       // baseOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
     } catch (e) {
       console.log(`Markets mainnets: Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
@@ -282,11 +282,11 @@ async function updateMerkleTree(gameIds) {
     JSON.stringify([...opOpenMarketsMap]),
     function () {},
   );
-  // redisClient.set(
-  //   KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum],
-  //   JSON.stringify([...arbOpenMarketsMap]),
-  //   function () {},
-  // );
+  redisClient.set(
+    KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum],
+    JSON.stringify([...arbOpenMarketsMap]),
+    function () {},
+  );
   // redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Base], JSON.stringify([...baseOpenMarketsMap]), function () {});
 
   const endTime = new Date().getTime();

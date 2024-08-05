@@ -28,8 +28,8 @@ async function processResolve() {
           const startTime = new Date().getTime();
           console.log("Resolver: resolve markets");
           await resolveMarkets(NETWORK.Optimism);
-          // await resolveMarkets(NETWORK.Arbitrum),
-          // await resolveMarkets(NETWORK.Base),
+          await resolveMarkets(NETWORK.Arbitrum);
+          // await resolveMarkets(NETWORK.Base);
           await resolveMarkets(NETWORK.OptimismSepolia);
           const endTime = new Date().getTime();
           console.log(`Resolver: === Seconds for resolving markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
