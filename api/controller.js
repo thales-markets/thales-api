@@ -63,6 +63,7 @@ const {
   initializeParlayAMMBuyListener,
   initializeSportsAMMLPListener,
   initializeParlayAMMLPListener,
+  initializeThalesAMMLPListener,
 } = require("./services/contractEventListener");
 
 app.listen(process.env.PORT || 3002, () => {
@@ -1987,3 +1988,4 @@ initializeSportsAMMBuyListener();
 initializeParlayAMMBuyListener();
 initializeSportsAMMLPListener();
 initializeParlayAMMLPListener();
+initializeThalesAMMLPListener();

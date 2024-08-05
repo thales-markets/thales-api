@@ -9,6 +9,7 @@ const { wait } = require("../utils/helpers");
 const { parlayMarketsAMMContract } = require("../../abi/parlayMarketsAMMContract");
 const { sportsAMMLiquidityPoolContract } = require("../../abi/sportsAMMLiquidityPool");
 const { parlayAMMLiquidityPoolContract } = require("../../abi/parlayAMMLiquidityPool");
+const liquidityPoolContract = require("../../abi/thalesLPContract");
 
 const invalidationMechanism = async (cacheKeys) => {
   try {
@@ -48,6 +49,27 @@ const initSportsAMMEventListenerByNetwork = (networkId) => {
     });
   } catch {
     console.log("Error while trying to initialize sportsAMM contract listener");
+  }
+};
+
+const initThalesAMMEventListenerByNetwork = (networkId) => {
+  try {
+    console.log("initThalesAMMEventListenerByNetwork ", networkId);
+    const provider = getProvider(networkId);
+
+    const thalesAMMContractInstance = new ethers.Contract(
+      liquidityPoolContract.addresses[networkId],
+      liquidityPoolContract.abi,
+      provider,
+    );
+
+    thalesAMMContractInstance.on("RoundClosed", async () => {
+      console.log("Event thalesAMMContractInstance");
+
+      await invalidationMechanism([getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [networkId])]);
+    });
+  } catch (e) {
+    console.log("Error while trying to initialize thalesAMM contract listener -> ", e);
   }
 };
 
@@ -119,6 +141,7 @@ const initSportAMMLPListeners = (networkId) => {
     sportsAMMLPContractInstance.on("RoundClosed", async () => {
       console.log("Event SportsAMMLP RoundClosed");
       await invalidationMechanism([getCacheKey(PREFIX_KEYS.SportsMarkets.LiquidityPoolPnl, [networkId, "single"])]);
+      await invalidationMechanism([getCacheKey(PREFIX_KEYS.SportsMarkets.LiquidityPoolPnl, [networkId, "parlay"])]);
     });
   } catch {
     console.log("Error while trying to initialize lp contract listeners");
@@ -188,6 +211,12 @@ const initializeParlayAMMLPListener = () => {
   initParlayAMMLPListeners(NETWORK.Base);
 };
 
+const initializeThalesAMMLPListener = () => {
+  initThalesAMMEventListenerByNetwork(NETWORK.Optimism);
+  initThalesAMMEventListenerByNetwork(NETWORK.Arbitrum);
+  initThalesAMMEventListenerByNetwork(NETWORK.Base);
+};
+
 module.exports = {
   initSportsAMMEventListenerByNetwork,
   initializeSportsAMMBuyListener,
@@ -195,4 +224,5 @@ module.exports = {
   initializeParlayAMMBuyListener,
   initializeSportsAMMLPListener,
   initializeParlayAMMLPListener,
+  initializeThalesAMMLPListener,
 };
