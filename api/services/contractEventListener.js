@@ -1,12 +1,10 @@
 const { ethers } = require("ethers");
 const { NETWORK } = require("../constants/networks");
 const { getProvider } = require("../utils/provider");
-const sportsAMMContract = require("../../abi/sportsAMMContract");
 const { getCacheKey } = require("../utils/getters");
 const { PREFIX_KEYS, BUFFER_PERIOD_FOR_INVALIDATION_IN_SECONDS } = require("../constants/cacheKeys");
 const cache = require("./cache");
 const { wait } = require("../utils/helpers");
-const { parlayMarketsAMMContract } = require("../../abi/parlayMarketsAMMContract");
 const { sportsAMMLiquidityPoolContract } = require("../../abi/sportsAMMLiquidityPool");
 const { parlayAMMLiquidityPoolContract } = require("../../abi/parlayAMMLiquidityPool");
 const liquidityPoolContract = require("../../abi/thalesLPContract");
@@ -28,30 +26,6 @@ const invalidationMechanism = async (cacheKeys) => {
   }
 };
 
-const initSportsAMMEventListenerByNetwork = (networkId) => {
-  try {
-    console.log("initSportsAMMEventListenerByNetwork ", networkId);
-    const provider = getProvider(networkId);
-
-    const sportsAMMContractInstance = new ethers.Contract(
-      sportsAMMContract.addresses[networkId],
-      sportsAMMContract.abi,
-      provider,
-    );
-
-    sportsAMMContractInstance.on("BoughtFromAmm", async (buyer) => {
-      console.log("Event sportsAMMContractInstance");
-
-      await invalidationMechanism([
-        getCacheKey(PREFIX_KEYS.SportsMarkets.PositionBalance, [networkId, buyer]),
-        getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]),
-      ]);
-    });
-  } catch {
-    console.log("Error while trying to initialize sportsAMM contract listener");
-  }
-};
-
 const initThalesAMMEventListenerByNetwork = (networkId) => {
   try {
     console.log("initThalesAMMEventListenerByNetwork ", networkId);
@@ -70,41 +44,6 @@ const initThalesAMMEventListenerByNetwork = (networkId) => {
     });
   } catch (e) {
     console.log("Error while trying to initialize thalesAMM contract listener -> ", e);
-  }
-};
-
-const initParlayAMMEventListenerByNetwork = (networkId) => {
-  try {
-    console.log("initParlayAMMEventListenerByNetwork ", networkId);
-
-    const provider = getProvider(networkId);
-
-    const parlayAMMContractInstance = new ethers.Contract(
-      parlayMarketsAMMContract.addresses[networkId],
-      parlayMarketsAMMContract.abi,
-      provider,
-    );
-
-    // ParlayMarketCreated event listener - When user buys parlay
-    parlayAMMContractInstance.on("ParlayMarketCreated", async (_parlayAddress, buyer) => {
-      console.log("Event ParlayMarketCreated ");
-
-      await invalidationMechanism([
-        getCacheKey(PREFIX_KEYS.SportsMarkets.Parlay, [networkId, buyer]),
-        getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]),
-      ]);
-    });
-
-    // ParlayResolved event listener - When user exercise parlay
-    parlayAMMContractInstance.on("ParlayResolved", async (_parlayAddress, buyer) => {
-      console.log("Event ParlayResolved");
-      await invalidationMechanism([
-        getCacheKey(PREFIX_KEYS.SportsMarkets.Parlay, [networkId, buyer]),
-        getCacheKey(PREFIX_KEYS.SportsMarkets.Transactions, [networkId, buyer]),
-      ]);
-    });
-  } catch {
-    console.log("Error while trying to initialize sportsAMM contract listener");
   }
 };
 
@@ -141,7 +80,6 @@ const initSportAMMLPListeners = (networkId) => {
     sportsAMMLPContractInstance.on("RoundClosed", async () => {
       console.log("Event SportsAMMLP RoundClosed");
       await invalidationMechanism([getCacheKey(PREFIX_KEYS.SportsMarkets.LiquidityPoolPnl, [networkId, "single"])]);
-      await invalidationMechanism([getCacheKey(PREFIX_KEYS.SportsMarkets.LiquidityPoolPnl, [networkId, "parlay"])]);
     });
   } catch {
     console.log("Error while trying to initialize lp contract listeners");
@@ -187,18 +125,6 @@ const initParlayAMMLPListeners = (networkId) => {
   }
 };
 
-const initializeSportsAMMBuyListener = () => {
-  initSportsAMMEventListenerByNetwork(NETWORK.Optimism);
-  initSportsAMMEventListenerByNetwork(NETWORK.Arbitrum);
-  initSportsAMMEventListenerByNetwork(NETWORK.Base);
-};
-
-const initializeParlayAMMBuyListener = () => {
-  initParlayAMMEventListenerByNetwork(NETWORK.Optimism);
-  initParlayAMMEventListenerByNetwork(NETWORK.Arbitrum);
-  initParlayAMMEventListenerByNetwork(NETWORK.Base);
-};
-
 const initializeSportsAMMLPListener = () => {
   initSportAMMLPListeners(NETWORK.Optimism);
   initSportAMMLPListeners(NETWORK.Arbitrum);
@@ -218,10 +144,6 @@ const initializeThalesAMMLPListener = () => {
 };
 
 module.exports = {
-  initSportsAMMEventListenerByNetwork,
-  initializeSportsAMMBuyListener,
-  initParlayAMMEventListenerByNetwork,
-  initializeParlayAMMBuyListener,
   initializeSportsAMMLPListener,
   initializeParlayAMMLPListener,
   initializeThalesAMMLPListener,
