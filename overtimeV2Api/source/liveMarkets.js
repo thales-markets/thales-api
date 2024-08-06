@@ -153,7 +153,6 @@ async function processAllMarkets(network) {
 
         // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
         if (providerMarketsMatchingOffer.length == 0 && enabledDummyMarkets == 0) {
-          console.log(`Could not find anylive matches on the provider side for the given leagues`);
           return;
         }
 
