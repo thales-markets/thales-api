@@ -153,7 +153,7 @@ const LeagueMap = {
     id: League.NFL,
     label: "NFL",
     opticOddsName: "NFL",
-    provider: Provider.RUNDOWN,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
@@ -1261,6 +1261,7 @@ const SportIdMapEnetpulse = {
 };
 
 const SportIdMapOpticOdds = {
+  2: "NFL",
   3: "MLB",
   7: "UFC",
   8: "WNBA",
