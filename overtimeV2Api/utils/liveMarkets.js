@@ -156,7 +156,6 @@ const fetchOpticOddsGamesForLeague = async (leagueId, leagueName) => {
   const opticOddsResponseDataForLeague = responseOpticOddsGames.data.data;
 
   if (opticOddsResponseDataForLeague.length == 0) {
-    console.log(`Could not find any live games on the provider side for the given league ${leagueName}`);
     return [];
   } else {
     return opticOddsResponseDataForLeague;
