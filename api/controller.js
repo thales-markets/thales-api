@@ -59,8 +59,6 @@ const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
 const { LeagueMap } = require("../overtimeV2Api/constants/sports");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
 const {
-  initializeSportsAMMBuyListener,
-  initializeParlayAMMBuyListener,
   initializeSportsAMMLPListener,
   initializeParlayAMMLPListener,
   initializeThalesAMMLPListener,
@@ -1984,8 +1982,6 @@ app.use("/v1/sport-markets", sportMarketsRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
 
 // Contract listeners
-initializeSportsAMMBuyListener();
-initializeParlayAMMBuyListener();
 initializeSportsAMMLPListener();
 initializeParlayAMMLPListener();
 initializeThalesAMMLPListener();
