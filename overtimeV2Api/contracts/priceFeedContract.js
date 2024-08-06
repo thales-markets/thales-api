@@ -4,7 +4,7 @@ const priceFeedContract = {
   addresses: {
     [NETWORK.Optimism]: "0xf4aef21d906992aFAdde7A9676e1dB4feb6390DD",
     [NETWORK.OptimismSepolia]: "0x1B6F4245F79D968285df4056931d408C99F54A06",
-    [NETWORK.Arbitrum]: "",
+    [NETWORK.Arbitrum]: "0x563cCaBfBaCCb1a2e00d21704570cFc1AF21f47f",
     [NETWORK.Base]: "",
   },
   abi: [
