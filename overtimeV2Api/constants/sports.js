@@ -1276,7 +1276,7 @@ const SportIdMapOpticOdds = {
   17: "UEFA - Europa League",
   19: "Japan - J1 League",
   9977: "CS2",
-  9982: "Dota 2",
+  9983: "Dota 2",
   10138: "League of Legends",
   20001: "UEFA - Super Cup",
   20002: "Brazil - Copa do Brasil",
