@@ -31,8 +31,8 @@ const {
   persistErrorMessages,
   checkTennisIsEnabled,
   fetchOpticOddsGamesForLeague,
+  MONEYLINE,
 } = require("../utils/liveMarkets");
-const { MONEYLINE } = require("overtime-live-trading-utils/src/constants/constantsOpticodds");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
