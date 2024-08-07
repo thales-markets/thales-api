@@ -232,7 +232,13 @@ const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
         numberOfRoundsResult = Number(numberOfRounds) == 1 ? numberOfRounds : numberOfRounds - 1;
       }
       score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`) == 1 ? numberOfRoundsResult : 0;
-    } else if (sport === League.WNBA || sport === League.MLB) {
+    } else if (
+      sport === League.WNBA ||
+      sport === League.MLB ||
+      sport === League.CSGO ||
+      sport === League.DOTA2 ||
+      sport === League.LOL
+    ) {
       score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`);
       // set 50 as max number of periods
       for (let i = 1; i <= 50; i++) {
