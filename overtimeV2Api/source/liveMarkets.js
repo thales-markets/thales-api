@@ -114,7 +114,7 @@ async function processAllMarkets(network) {
           liveOddsProvidersPerSport.set(Number(leagueId), oddsProvidersForSport);
 
           // FETCHING GAMES FROM OPTIC ODDS FOR GIVEN LEAGUE
-          const opticOddsGames = await fetchOpticOddsGamesForLeague(leagueId, leagueName);
+          const opticOddsGames = await fetchOpticOddsGamesForLeague(leagueId, leagueName, Number(network));
 
           opticOddsResponseData = opticOddsResponseData.concat(opticOddsGames);
         }
