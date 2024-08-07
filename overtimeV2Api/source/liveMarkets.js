@@ -220,10 +220,7 @@ async function processAllMarkets(network) {
               },
             );
 
-            console.log(apiResponseWithOdds);
-            console.log(`https://api.opticodds.com/api/v2/scores?game_id=${apiResponseWithOdds.id}`);
             const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
-            console.log(gameTimeOpticOddsResponseData);
 
             if (gameTimeOpticOddsResponseData == undefined || responseOpticOddsScores.data.data.length == 0) {
               errorsMap.set(market.gameId, {
