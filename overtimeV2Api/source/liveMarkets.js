@@ -113,7 +113,7 @@ async function processAllMarkets(network) {
           liveOddsProvidersPerSport.set(Number(leagueId), oddsProvidersForSport);
 
           // FETCHING GAMES FROM OPTIC ODDS FOR GIVEN LEAGUE
-          const opticOddsGames = await fetchOpticOddsGamesForLeague(leagueId, leagueName);
+          const opticOddsGames = await fetchOpticOddsGamesForLeague(leagueId, leagueName, Number(network));
 
           opticOddsResponseData = opticOddsResponseData.concat(opticOddsGames);
         }
@@ -152,7 +152,7 @@ async function processAllMarkets(network) {
 
         // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
         if (providerMarketsMatchingOffer.length == 0 && enabledDummyMarkets == 0) {
-          console.log(`Could not find anylive matches on the provider side for the given leagues`);
+          console.log(`Could not find any live matches matching the criteria for team names and date`);
           return;
         }
 

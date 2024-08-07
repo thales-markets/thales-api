@@ -6,6 +6,7 @@ const { Sport, League } = require("../constants/sports");
 const teamsMapping = require("../assets/teamsMapping.json");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
+const { NETWORK } = require("../constants/networks");
 
 const fetchTeamsMap = async () => {
   const teamsMap = new Map();
@@ -142,7 +143,7 @@ const checkTennisIsEnabled = (availableLeagueIds) => {
   return availableLeagueIds;
 };
 
-const fetchOpticOddsGamesForLeague = async (leagueId, leagueName) => {
+const fetchOpticOddsGamesForLeague = async (leagueId, leagueName, network) => {
   let responseOpticOddsGames;
   if (getLeagueSport(Number(leagueId)) === Sport.TENNIS) {
     responseOpticOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?sport=tennis`, {
@@ -157,7 +158,9 @@ const fetchOpticOddsGamesForLeague = async (leagueId, leagueName) => {
   const opticOddsResponseDataForLeague = responseOpticOddsGames.data.data;
 
   if (opticOddsResponseDataForLeague.length == 0) {
-    console.log(`Could not find any live games on the provider side for the given league ${leagueName}`);
+    if (network != NETWORK.OptimismSepolia) {
+      console.log(`Could not find any live games on the provider side for the given league ${leagueName}`);
+    }
     return [];
   } else {
     return opticOddsResponseDataForLeague;

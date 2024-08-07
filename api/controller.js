@@ -59,10 +59,9 @@ const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
 const { LeagueMap } = require("../overtimeV2Api/constants/sports");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
 const {
-  initializeSportsAMMBuyListener,
-  initializeParlayAMMBuyListener,
   initializeSportsAMMLPListener,
   initializeParlayAMMLPListener,
+  initializeThalesAMMLPListener,
 } = require("./services/contractEventListener");
 
 app.listen(process.env.PORT || 3002, () => {
@@ -1537,14 +1536,14 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET_TYPES, (req, res) => {
 
 app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
   const network = req.params.networkParam;
-  if ([10, 11155420].includes(Number(network))) {
+  if ([10, 42161, 11155420].includes(Number(network))) {
     try {
       res.send(OVERTIME_V2_COLLATERALS[Number(network)]);
     } catch (e) {
       console.log(e);
     }
   } else {
-    res.send("Unsupported network. upported networks: 10 (optimism), 11155420 (optimism sepolia).");
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
   }
 });
 
@@ -1983,7 +1982,6 @@ app.use("/v1/sport-markets", sportMarketsRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
 
 // Contract listeners
-initializeSportsAMMBuyListener();
-initializeParlayAMMBuyListener();
 initializeSportsAMMLPListener();
 initializeParlayAMMLPListener();
+initializeThalesAMMLPListener();
