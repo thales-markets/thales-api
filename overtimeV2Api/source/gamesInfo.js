@@ -16,8 +16,9 @@ const {
   League,
   SportIdMapOpticOdds,
   PeriodType,
+  Sport,
 } = require("../constants/sports");
-const { getLeaguePeriodType } = require("../utils/sports");
+const { getLeaguePeriodType, getLeagueSport } = require("../utils/sports");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_FUTURE);
@@ -219,6 +220,7 @@ const getOpticOddsScoreByCode = (gameScores, code) => {
 const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
   let score = undefined;
   const scoreByPeriod = [];
+  const leagueSport = getLeagueSport(sport);
 
   if (gameScores) {
     if (sport === League.UFC) {
@@ -232,13 +234,7 @@ const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
         numberOfRoundsResult = Number(numberOfRounds) == 1 ? numberOfRounds : numberOfRounds - 1;
       }
       score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`) == 1 ? numberOfRoundsResult : 0;
-    } else if (
-      sport === League.WNBA ||
-      sport === League.MLB ||
-      sport === League.CSGO ||
-      sport === League.DOTA2 ||
-      sport === League.LOL
-    ) {
+    } else if (leagueSport !== Sport.SOCCER) {
       score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`);
       // set 50 as max number of periods
       for (let i = 1; i <= 50; i++) {
