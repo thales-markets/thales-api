@@ -50,7 +50,7 @@ if (process.env.REDIS_URL) {
         console.log("parlay leaderboard on arbitrum error: ", error);
       }
 
-      await delay(3 * 60 * 1000);
+      await delay(5 * 60 * 1000);
     }
   }, 3000);
 }
@@ -82,7 +82,17 @@ const getParlayLeaderboardForPeriod = async (network, startPeriod, endPeriod, pe
       endPeriod,
     });
     const filteredTickets = ticketsV2.filter(
-      (ticket) => ticket.markets.length > 1 && ticket.lastGameStarts < new Date().getTime(),
+      (ticket) =>
+        ticket.markets.length > 1 &&
+        ticket.lastGameStarts < new Date().getTime() &&
+        ![
+          "0xb20fb6bf02434581e6344e4e0f04f37953b29913",
+          "0x6c8eedf5cafa23ddb921e1bcc92b02c0b586001c",
+          "0x7264ed3ef21c06477cd6d9642154f9a2c8dc6ba8",
+          "0x34cec00710f842362b7aa2d75a0ce4d7c0df71f4",
+          "0x20ebb51747b7678c8e2468e440512ffaa26dfb73",
+          "0xa652a7d5e345f96c5d7cb50debf736c3ce79e353",
+        ].includes(ticket.owner.toLowerCase()),
     );
     const filteredTicketsAddresses = filteredTickets.map((ticket) => ticket.id);
 
@@ -252,7 +262,7 @@ async function processParlayLeaderboard(network) {
         ? new ethers.Contract(sportsAMMV2DataContract.addresses[network], sportsAMMV2DataContract.abi, provider)
         : undefined;
 
-    for (let period = latestPeriodWeekly - 4; period <= latestPeriodWeekly; period++) {
+    for (let period = latestPeriodWeekly - 3; period <= latestPeriodWeekly; period++) {
       const startPeriod = Math.trunc(addDays(PARLAY_LEADERBOARD_WEEKLY_START_DATE_UTC, period * 7).getTime() / 1000);
       const endPeriod = Math.trunc(
         subMilliseconds(addDays(PARLAY_LEADERBOARD_WEEKLY_START_DATE_UTC, (period + 1) * 7), 1).getTime() / 1000,
