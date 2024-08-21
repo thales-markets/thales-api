@@ -140,7 +140,7 @@ const LeagueMap = {
     sport: Sport.FOOTBALL,
     id: League.NCAAF,
     label: "NCAA Football",
-    provider: Provider.RUNDOWN,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
@@ -1271,6 +1271,7 @@ const SportIdMapEnetpulse = {
 };
 
 const SportIdMapOpticOdds = {
+  1: "NCAAF",
   2: "NFL",
   3: "MLB",
   7: "UFC",
