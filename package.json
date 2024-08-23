@@ -33,7 +33,7 @@
     "oddslib": "^2.1.1",
     "overtime-live-trading-utils": "^0.1.9",
     "redis": "^3.0.2",
-    "thales-data": "^3.0.4",
+    "thales-data": "^3.0.6",
     "twitter-api-v2": "^1.4.1",
     "web3": "^1.5.2"
   },
