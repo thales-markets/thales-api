@@ -1276,7 +1276,7 @@ const SportIdMapOpticOdds = {
   3: "MLB",
   7: "UFC",
   8: "WNBA",
-  10: "USA - MLS Pro",
+  10: "USA - Major League Soccer",
   11: "England - Premier League",
   12: "France - Ligue 1",
   13: "Germany - Bundesliga",
