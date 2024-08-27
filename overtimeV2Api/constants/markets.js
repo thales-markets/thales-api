@@ -109,6 +109,11 @@ const MarketType = {
   FIRST_PERIOD_TOTAL_AWAY_TEAM: 10112,
   SECOND_PERIOD_TOTAL_HOME_TEAM: 10211,
   SECOND_PERIOD_TOTAL_AWAY_TEAM: 10212,
+  // Total per team period - half for basketball
+  FIRST_PERIOD_TOTAL2_HOME_TEAM: 10118,
+  FIRST_PERIOD_TOTAL2_AWAY_TEAM: 10119,
+  SECOND_PERIOD_TOTAL2_HOME_TEAM: 10218,
+  SECOND_PERIOD_TOTAL2_AWAY_TEAM: 10219,
 
   // Total odd/even
   TOTAL_ODD_EVEN: 10005,
@@ -700,6 +705,31 @@ const MarketTypeMap = {
   [MarketType.SECOND_PERIOD_TOTAL_AWAY_TEAM]: {
     id: MarketType.SECOND_PERIOD_TOTAL_AWAY_TEAM,
     key: "secondPeriodTotalAwayTeam",
+    name: "Total 2nd",
+    resultType: ResultType.OVER_UNDER,
+  },
+  // Total per team period - half for basketball
+  [MarketType.FIRST_PERIOD_TOTAL2_HOME_TEAM]: {
+    id: MarketType.FIRST_PERIOD_TOTAL2_HOME_TEAM,
+    key: "firstPeriodTotal2HomeTeam",
+    name: "Total 1st",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.FIRST_PERIOD_TOTAL2_AWAY_TEAM]: {
+    id: MarketType.FIRST_PERIOD_TOTAL2_AWAY_TEAM,
+    key: "firstPeriodTotal2AwayTeam",
+    name: "Total 1st",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.SECOND_PERIOD_TOTAL2_HOME_TEAM]: {
+    id: MarketType.SECOND_PERIOD_TOTAL2_HOME_TEAM,
+    key: "secondPeriodTotal2HomeTeam",
+    name: "Total 2nd",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.SECOND_PERIOD_TOTAL2_AWAY_TEAM]: {
+    id: MarketType.SECOND_PERIOD_TOTAL2_AWAY_TEAM,
+    key: "secondPeriodTotal2AwayTeam",
     name: "Total 2nd",
     resultType: ResultType.OVER_UNDER,
   },

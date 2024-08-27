@@ -34,24 +34,27 @@ const getProvider = (network) => {
     case "llama":
       rpcUrl =
         Number(network) === NETWORK.OptimismSepolia
-          ? `${BLAST_URL[network]}${process.env.BLAST_ID}`
+          ? `${BLAST_URL[network]}${process.env.BLAST_ID_CACHE}`
           : `${LLAMA_URL[network]}${process.env.LLAMA_ID}`;
       break;
     case "ankr":
       rpcUrl = `${ANKR_URL[network]}${process.env.ANKR_ID}`;
       break;
     case "blast":
-      rpcUrl = `${BLAST_URL[network]}${process.env.BLAST_ID}`;
+      rpcUrl = `${BLAST_URL[network]}${process.env.BLAST_ID_CACHE}`;
       break;
     default:
       rpcUrl =
         Number(network) === NETWORK.OptimismSepolia
-          ? `${BLAST_URL[network]}${process.env.BLAST_ID}`
+          ? `${BLAST_URL[network]}${process.env.BLAST_ID_CACHE}`
           : `${CHAINNODES_URL[network]}${process.env.CHAINNODES_ID}`;
       break;
   }
 
-  return new ethers.providers.JsonRpcProvider(rpcUrl);
+  const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+  provider.pollingInterval = 30000;
+
+  return provider;
 };
 
 module.exports = {
