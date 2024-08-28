@@ -157,15 +157,17 @@ async function processAllMarkets(network) {
         }
 
         // FETCHING ODDS FOR THE GIVEN GAME
+        // SPREAD & TOTALS - FETCHING ODDS FOR ALL TYPES
         const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
           let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.opticOddsGameEvent.id}&odds_format=Decimal`;
           const betTypes = [MONEYLINE];
+          // SPREAD & TOTALS - GET SPREAD TYPE
           const spreadType = getLeagueSpreadType(game.leagueId);
 
           if (spreadType != undefined) {
             betTypes.push(spreadType);
           }
-
+          // SPREAD & TOTALS - GET TOTAL TYPE
           const totalType = getLeagueTotalType(game.leagueId);
 
           if (totalType != undefined) {
