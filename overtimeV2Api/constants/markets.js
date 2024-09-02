@@ -200,6 +200,13 @@ const MarketType = {
   PLAYER_PROPS_PASSING_ATTEMPTS: 11204,
   PLAYER_PROPS_PASSING_COMPLETIONS: 11205,
 
+  PLAYER_PROPS_SACKS: 11207,
+  PLAYER_PROPS_PASSING_RUSHING: 11208,
+  PLAYER_PROPS_RUSHING_RECEIVING: 11209,
+  PLAYER_PROPS_LONGEST_RECEPTION: 11210,
+  PLAYER_PROPS_EXTRA_POINTS: 11211,
+  PLAYER_PROPS_TACKLES: 11212,
+
   // UFC market types
   WINNING_ROUND: 10151,
   GO_THE_DISTANCE: 10154,
@@ -1159,6 +1166,43 @@ const MarketTypeMap = {
     resultType: ResultType.OVER_UNDER,
   },
 
+  [MarketType.PLAYER_PROPS_SACKS]: {
+    id: MarketType.PLAYER_PROPS_SACKS,
+    key: "sacks",
+    name: "Sacks",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_PASSING_RUSHING]: {
+    id: MarketType.PLAYER_PROPS_PASSING_RUSHING,
+    key: "passingAndRushing",
+    name: "Passing + Rushing Yards",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_RUSHING_RECEIVING]: {
+    id: MarketType.PLAYER_PROPS_RUSHING_RECEIVING,
+    key: "rushingAndReceiving",
+    name: "Rushing + Receiving Yards",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_LONGEST_RECEPTION]: {
+    id: MarketType.PLAYER_PROPS_LONGEST_RECEPTION,
+    key: "longestReception",
+    name: "Longest reception",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_EXTRA_POINTS]: {
+    id: MarketType.PLAYER_PROPS_EXTRA_POINTS,
+    key: "extraPoints",
+    name: "Extra points",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_TACKLES]: {
+    id: MarketType.PLAYER_PROPS_TACKLES,
+    key: "tackles",
+    name: "Tackles",
+    resultType: ResultType.OVER_UNDER,
+  },
+
   // UFC market types
   [MarketType.WINNING_ROUND]: {
     id: MarketType.WINNING_ROUND,
@@ -1339,6 +1383,12 @@ const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_KICKING_POINTS,
   MarketType.PLAYER_PROPS_PASSING_ATTEMPTS,
   MarketType.PLAYER_PROPS_PASSING_COMPLETIONS,
+  MarketType.PLAYER_PROPS_SACKS,
+  MarketType.PLAYER_PROPS_RUSHING_RECEIVING,
+  MarketType.PLAYER_PROPS_PASSING_RUSHING,
+  MarketType.PLAYER_PROPS_LONGEST_RECEPTION,
+  MarketType.PLAYER_PROPS_EXTRA_POINTS,
+  MarketType.PLAYER_PROPS_TACKLES,
 ];
 
 const ONE_SIDE_PLAYER_PROPS_MARKET_TYPES = [
