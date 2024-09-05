@@ -5,7 +5,7 @@ const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const axios = require("axios");
 const { getAverageOdds } = require("../utils/markets");
-const { LIVE_TYPE_ID_BASE, MIN_ODDS_FOR_DIFF_CHECKING } = require("../constants/markets");
+const { LIVE_TYPE_ID_BASE, MIN_ODDS_FOR_DIFF_CHECKING, MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const { groupBy } = require("lodash");
@@ -197,6 +197,25 @@ async function processAllMarkets(network) {
           // FETCHING CURRENT SCORE AND CLOCK FOR THE GAME
           if (responseObject != undefined) {
             const gameWithOdds = responseObject.data.data[0];
+
+            if (
+              network === NETWORK.OptimismSepolia &&
+              gameWithOdds?.odds?.some((odds) => {
+                if (typeof odds.timestamp !== "number") {
+                  return true;
+                }
+                const oddsDate = new Date(odds.timestamp * 1000);
+                const now = new Date();
+                const timeDiff = now.getTime() - oddsDate.getTime();
+                return timeDiff > MAX_ALLOWED_STALE_ODDS_DELAY;
+              })
+            ) {
+              errorsMap.set(market.gameId, {
+                errorTime: new Date().toUTCString(),
+                errorMessage: `Pausing game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to odds being stale`,
+              });
+              gameWithOdds.odds = [];
+            }
 
             const responseOpticOddsScores = await axios.get(
               `https://api.opticodds.com/api/v2/scores?game_id=${gameWithOdds.id}`,
