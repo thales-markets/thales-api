@@ -25,13 +25,13 @@ const {
   processMarket,
   getLeagueTotalType,
   fetchResultInCurrentSet,
+  MONEYLINE,
 } = require("overtime-live-trading-utils");
 const {
   fetchTeamsMap,
   persistErrorMessages,
   checkTennisIsEnabled,
   fetchOpticOddsGamesForLeague,
-  MONEYLINE,
 } = require("../utils/liveMarkets");
 
 async function processLiveMarkets() {
@@ -48,8 +48,8 @@ async function processLiveMarkets() {
           console.log("process live markets");
           await Promise.all([
             processAllMarkets(NETWORK.Optimism),
-            processAllMarkets(NETWORK.Arbitrum),
-            processAllMarkets(NETWORK.OptimismSepolia),
+            // processAllMarkets(NETWORK.Arbitrum),
+            // processAllMarkets(NETWORK.OptimismSepolia),
           ]);
           const endTime = new Date().getTime();
           console.log(`=== Seconds for processing live markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
@@ -180,6 +180,7 @@ async function processAllMarkets(network) {
           liveOddsProviders.forEach((liveOddsProvider) => {
             url = url.concat(`&sportsbook=${liveOddsProvider}`);
           });
+          console.log("get URL: ", url);
           return axios.get(url, {
             headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
           });
@@ -290,6 +291,7 @@ async function processAllMarkets(network) {
             market.proof = [];
             market.homeScoreByPeriod = gamesHomeScoreByPeriod;
             market.awayScoreByPeriod = gamesAwayScoreByPeriod;
+            console.log("READY TO FETCH PARENT ODDS: ", apiResponseWithOdds);
 
             if (isLive == true) {
               const processedMarket = processMarket(
