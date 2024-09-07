@@ -66,13 +66,12 @@ async function processLiveMarkets() {
 async function processAllMarkets(network) {
   let availableLeagueIds =
     Number(network) == NETWORK.OptimismSepolia ? getTestnetLiveSupportedLeagues() : getLiveSupportedLeagues();
+  availableLeagueIds = checkTennisIsEnabled(availableLeagueIds);
 
   const liveOddsProvidersPerSport = new Map();
 
   const bookmakersData = await readCsvFromUrl(process.env.GITHUB_URL_LIVE_BOOKMAKERS_CSV);
   const spreadData = await readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV);
-
-  availableLeagueIds = checkTennisIsEnabled(availableLeagueIds);
 
   redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
@@ -90,8 +89,8 @@ async function processAllMarkets(network) {
 
       const filteredMarkets = marketsByType.filter((market) => availableLeagueIds.includes(Number(market.leagueId)));
       if (filteredMarkets.length > 0) {
+        // replace with availableLeagueIds = filteredMarkets.map((market) => market.leagueId);
         const leagueIdsMap = {};
-
         filteredMarkets.forEach((market) => (leagueIdsMap[market.leagueId] = true));
         availableLeagueIds = Object.keys(leagueIdsMap);
 
@@ -119,7 +118,6 @@ async function processAllMarkets(network) {
         }
 
         const providerMarketsMatchingOffer = [];
-
         // TEAM NAMES AND DATES MATCHING CHECK
         filteredMarkets.forEach((market) => {
           const opticOddsGameEvent = opticOddsResponseData.find((opticOddsGame) => {
@@ -160,6 +158,7 @@ async function processAllMarkets(network) {
         // SPREAD & TOTALS - FETCHING ODDS FOR ALL TYPES
         const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
           let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.opticOddsGameEvent.id}&odds_format=Decimal`;
+
           const betTypes = [MONEYLINE];
           // SPREAD & TOTALS - GET SPREAD TYPE
           const spreadType = getLeagueSpreadType(game.leagueId);
@@ -342,7 +341,6 @@ async function processAllMarkets(network) {
 
       // PERSISTING ERROR MESSAGES
       persistErrorMessages(errorsMap, network);
-
       redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify([]), function () {});
     } catch (e) {
       console.log(e);
