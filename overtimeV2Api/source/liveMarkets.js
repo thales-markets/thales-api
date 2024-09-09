@@ -198,8 +198,9 @@ async function processAllMarkets(network) {
           if (responseObject != undefined) {
             const gameWithOdds = responseObject.data.data[0];
 
+            let gamePaused = false;
+
             if (
-              network === NETWORK.OptimismSepolia &&
               gameWithOdds?.odds?.some((odds) => {
                 if (typeof odds.timestamp !== "number") {
                   return true;
@@ -210,11 +211,7 @@ async function processAllMarkets(network) {
                 return timeDiff > MAX_ALLOWED_STALE_ODDS_DELAY;
               })
             ) {
-              errorsMap.set(market.gameId, {
-                errorTime: new Date().toUTCString(),
-                errorMessage: `Pausing game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to odds being stale`,
-              });
-              gameWithOdds.odds = [];
+              gamePaused = true;
             }
 
             const responseOpticOddsScores = await axios.get(
@@ -249,6 +246,18 @@ async function processAllMarkets(network) {
                 errorMessage: `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} because it is finished.`,
               });
               return null;
+            }
+
+            if (currentGameStatus.toLowerCase().includes("half")) {
+              gamePaused = false;
+            }
+
+            if (gamePaused) {
+              errorsMap.set(market.gameId, {
+                errorTime: new Date().toUTCString(),
+                errorMessage: `Pausing game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to odds being stale`,
+              });
+              gameWithOdds.odds = [];
             }
 
             const leagueSport = getLeagueSport(Number(market.leagueId));
