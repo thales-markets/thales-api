@@ -1440,6 +1440,7 @@ const TicketMarketStatus = {
 
 const MIN_ODDS_FOR_DIFF_CHECKING = 0.2;
 const LIVE_TYPE_ID_BASE = 100000;
+const MAX_ALLOWED_STALE_ODDS_DELAY = process.env.MAX_ALLOWED_STALE_ODDS_DELAY || 1000 * 60 * 3; // 3 mins
 
 const EnetpulseRounds = {
   [0]: "",
@@ -1466,6 +1467,7 @@ module.exports = {
   ZERO_ADDRESS,
   Status,
   MIN_ODDS_FOR_DIFF_CHECKING,
+  MAX_ALLOWED_STALE_ODDS_DELAY,
   COMBINED_POSITIONS_MARKET_TYPES,
   EnetpulseRounds,
   LIVE_TYPE_ID_BASE,
