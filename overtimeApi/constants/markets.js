@@ -25,6 +25,7 @@ const BET_TYPE = {
   FirstTouchdown: 11049,
   LastTouchdown: 11056,
   ThreePointsMade: 11038,
+  OverGoals: 11100,
 };
 
 const MARKET_TYPE = {
@@ -54,6 +55,7 @@ const MARKET_TYPE = {
   [BET_TYPE.FirstTouchdown]: "firstTouchdown",
   [BET_TYPE.LastTouchdown]: "lastTouchdown",
   [BET_TYPE.ThreePointsMade]: "threePointsMade",
+  [BET_TYPE.OverGoals]: "overGoals",
 };
 
 const PLAYER_PROPS_BET_TYPES = [
@@ -78,6 +80,7 @@ const PLAYER_PROPS_BET_TYPES = [
   BET_TYPE.FirstTouchdown,
   BET_TYPE.LastTouchdown,
   BET_TYPE.ThreePointsMade,
+  BET_TYPE.OverGoals,
 ];
 
 const ONE_SIDER_PLAYER_PROPS_BET_TYPES = [
