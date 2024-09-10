@@ -248,7 +248,10 @@ async function processAllMarkets(network) {
               return null;
             }
 
-            if (currentGameStatus.toLowerCase().includes("half")) {
+            if (
+              currentGameStatus.toLowerCase().includes("half") ||
+              ("" + currentPeriod).toLowerCase().includes("half")
+            ) {
               gamePaused = false;
             }
 
