@@ -194,6 +194,7 @@ const MarketType = {
   PLAYER_PROPS_LAST_TOUCHDOWN: 11056,
   PLAYER_PROPS_3PTS_MADE: 11038,
   PLAYER_PROPS_BLOCKS: 11098,
+  PLAYER_PROPS_OVER_GOALS: 11100,
 
   PLAYER_PROPS_INTERCEPTIONS: 11202,
   PLAYER_PROPS_KICKING_POINTS: 11203,
@@ -1140,6 +1141,12 @@ const MarketTypeMap = {
     name: "Blcoks",
     resultType: ResultType.OVER_UNDER,
   },
+  [MarketType.PLAYER_PROPS_OVER_GOALS]: {
+    id: MarketType.PLAYER_PROPS_OVER_GOALS,
+    key: "overGoals",
+    name: "OverGoals",
+    description: "How many goals will player score?",
+  },
 
   [MarketType.PLAYER_PROPS_INTERCEPTIONS]: {
     id: MarketType.PLAYER_PROPS_INTERCEPTIONS,
@@ -1377,6 +1384,7 @@ const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_LAST_TOUCHDOWN,
   MarketType.PLAYER_PROPS_3PTS_MADE,
   MarketType.PLAYER_PROPS_BLOCKS,
+  MarketType.PLAYER_PROPS_OVER_GOALS,
   MarketType.PLAYER_PROPS_UFC_TAKEDOWNS_LANDED,
   MarketType.PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES_LANDED,
   MarketType.PLAYER_PROPS_INTERCEPTIONS,
