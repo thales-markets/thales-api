@@ -172,7 +172,7 @@ const LeagueMap = {
     periodType: PeriodType.INNING,
     isDrawAvailable: false,
     live: false,
-    isLiveTestnet: true,
+    isLiveTestnet: false,
   },
   [League.NBA]: {
     sport: Sport.BASKETBALL,
