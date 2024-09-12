@@ -1287,6 +1287,7 @@ const SportIdMapOpticOdds = {
   17: "UEFA - Europa League",
   18: "FIFA - World Cup Qualifiers",
   19: "Japan - J1 League",
+  45: "CONMEBOL - Copa Libertadores",
   57: "Netherlands - Eredivisie",
   61: "Portugal - Primeira Liga",
   9806: "UEFA - Nations League",
