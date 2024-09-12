@@ -276,7 +276,6 @@ const LeagueMap = {
     live: true,
     isLiveTestnet: true,
   },
-
   [League.BUNDESLIGA]: {
     sport: Sport.SOCCER,
     id: League.BUNDESLIGA,
@@ -422,7 +421,7 @@ const LeagueMap = {
     id: League.COPA_LIBERTADORES,
     label: "Copa Libertadores",
     opticOddsName: "CONMEBOL - Copa Libertadores",
-    provider: Provider.ENETPULSE,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.GOALS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
@@ -1025,7 +1024,7 @@ const LeagueMap = {
     id: League.UEFA_CONFERENCE_LEAGUE,
     label: "UEFA Conference League",
     opticOddsName: "UEFA - Europa Conference League",
-    provider: Provider.ENETPULSE,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.GOALS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
@@ -1288,6 +1287,7 @@ const SportIdMapOpticOdds = {
   17: "UEFA - Europa League",
   18: "FIFA - World Cup Qualifiers",
   19: "Japan - J1 League",
+  45: "CONMEBOL - Copa Libertadores",
   57: "Netherlands - Eredivisie",
   61: "Portugal - Primeira Liga",
   9806: "UEFA - Nations League",
