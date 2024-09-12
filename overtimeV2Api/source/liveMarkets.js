@@ -82,6 +82,7 @@ async function processAllMarkets(network) {
       Number(network) !== NETWORK.OptimismSepolia ? 0 : Number(process.env.LIVE_DUMMY_MARKETS_ENABLED);
     try {
       const allMarkets = Array.from(markets.values());
+
       const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
 
       const marketsByStatus = groupMarketsByStatus["ongoing"] || [];
@@ -360,7 +361,7 @@ async function processAllMarkets(network) {
         const resolvedMarketPromises = await Promise.all(filteredMarketsWithLiveOdds);
 
         let dummyMarkets = [];
-        if (Number(network) == NETWORK.OptimismSepolia) {
+        if (Number(network) == NETWORK.OptimismSepolia && enabledDummyMarkets) {
           dummyMarkets = [...dummyMarketsLive];
         }
         const filteredMarketsWithLiveOddsAndDummyMarkets = resolvedMarketPromises.concat(dummyMarkets);
