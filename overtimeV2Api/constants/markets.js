@@ -178,7 +178,7 @@ const MarketType = {
   PLAYER_PROPS_PASSING_TOUCHDOWNS: 11052,
   PLAYER_PROPS_RUSHING_YARDS: 11053,
   PLAYER_PROPS_RECEIVING_YARDS: 11057,
-  PLAYER_PROPS_TOUCHDOWNS: 11055,
+  PLAYER_PROPS_TOUCHDOWNS_SCORER: 11055,
   PLAYER_PROPS_FIELD_GOALS_MADE: 11060,
   PLAYER_PROPS_PITCHER_HITS_ALLOWED: 11047,
   PLAYER_PROPS_POINTS: 11029,
@@ -194,6 +194,19 @@ const MarketType = {
   PLAYER_PROPS_LAST_TOUCHDOWN: 11056,
   PLAYER_PROPS_3PTS_MADE: 11038,
   PLAYER_PROPS_BLOCKS: 11098,
+  PLAYER_PROPS_OVER_GOALS: 11100,
+
+  PLAYER_PROPS_INTERCEPTIONS: 11202,
+  PLAYER_PROPS_KICKING_POINTS: 11203,
+  PLAYER_PROPS_PASSING_ATTEMPTS: 11204,
+  PLAYER_PROPS_PASSING_COMPLETIONS: 11205,
+
+  PLAYER_PROPS_SACKS: 11207,
+  PLAYER_PROPS_PASSING_RUSHING: 11208,
+  PLAYER_PROPS_RUSHING_RECEIVING: 11209,
+  PLAYER_PROPS_LONGEST_RECEPTION: 11210,
+  PLAYER_PROPS_EXTRA_POINTS: 11211,
+  PLAYER_PROPS_TACKLES: 11212,
 
   // UFC market types
   WINNING_ROUND: 10151,
@@ -1028,8 +1041,8 @@ const MarketTypeMap = {
     name: "Receiving yards",
     resultType: ResultType.OVER_UNDER,
   },
-  [MarketType.PLAYER_PROPS_TOUCHDOWNS]: {
-    id: MarketType.PLAYER_PROPS_TOUCHDOWNS,
+  [MarketType.PLAYER_PROPS_TOUCHDOWNS_SCORER]: {
+    id: MarketType.PLAYER_PROPS_TOUCHDOWNS_SCORER,
     key: "touchdowns",
     name: "Scoring touchdown",
     description: "Who will score a touchdown in the game?",
@@ -1126,6 +1139,75 @@ const MarketTypeMap = {
     id: MarketType.PLAYER_PROPS_BLOCKS,
     key: "blocks",
     name: "Blcoks",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_OVER_GOALS]: {
+    id: MarketType.PLAYER_PROPS_OVER_GOALS,
+    key: "overGoals",
+    name: "OverGoals",
+    description: "How many goals will player score?",
+    resultType: ResultType.OVER_UNDER,
+  },
+
+  [MarketType.PLAYER_PROPS_INTERCEPTIONS]: {
+    id: MarketType.PLAYER_PROPS_INTERCEPTIONS,
+    key: "interceptions",
+    name: "Interceptions",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_KICKING_POINTS]: {
+    id: MarketType.PLAYER_PROPS_KICKING_POINTS,
+    key: "KickingPoints",
+    name: "Kicking points",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_PASSING_ATTEMPTS]: {
+    id: MarketType.PLAYER_PROPS_PASSING_ATTEMPTS,
+    key: "passingAttempts",
+    name: "Passing attempts",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_PASSING_COMPLETIONS]: {
+    id: MarketType.PLAYER_PROPS_PASSING_COMPLETIONS,
+    key: "passingCompletions",
+    name: "Passing completions",
+    resultType: ResultType.OVER_UNDER,
+  },
+
+  [MarketType.PLAYER_PROPS_SACKS]: {
+    id: MarketType.PLAYER_PROPS_SACKS,
+    key: "sacks",
+    name: "Sacks",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_PASSING_RUSHING]: {
+    id: MarketType.PLAYER_PROPS_PASSING_RUSHING,
+    key: "passingAndRushing",
+    name: "Passing + Rushing Yards",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_RUSHING_RECEIVING]: {
+    id: MarketType.PLAYER_PROPS_RUSHING_RECEIVING,
+    key: "rushingAndReceiving",
+    name: "Rushing + Receiving Yards",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_LONGEST_RECEPTION]: {
+    id: MarketType.PLAYER_PROPS_LONGEST_RECEPTION,
+    key: "longestReception",
+    name: "Longest reception",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_EXTRA_POINTS]: {
+    id: MarketType.PLAYER_PROPS_EXTRA_POINTS,
+    key: "extraPoints",
+    name: "Extra points",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_TACKLES]: {
+    id: MarketType.PLAYER_PROPS_TACKLES,
+    key: "tackles",
+    name: "Tackles",
     resultType: ResultType.OVER_UNDER,
   },
 
@@ -1287,7 +1369,7 @@ const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_PASSING_TOUCHDOWNS,
   MarketType.PLAYER_PROPS_RUSHING_YARDS,
   MarketType.PLAYER_PROPS_RECEIVING_YARDS,
-  MarketType.PLAYER_PROPS_TOUCHDOWNS,
+  MarketType.PLAYER_PROPS_TOUCHDOWNS_SCORER,
   MarketType.PLAYER_PROPS_FIELD_GOALS_MADE,
   MarketType.PLAYER_PROPS_PITCHER_HITS_ALLOWED,
   MarketType.PLAYER_PROPS_POINTS,
@@ -1303,12 +1385,23 @@ const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_LAST_TOUCHDOWN,
   MarketType.PLAYER_PROPS_3PTS_MADE,
   MarketType.PLAYER_PROPS_BLOCKS,
+  MarketType.PLAYER_PROPS_OVER_GOALS,
   MarketType.PLAYER_PROPS_UFC_TAKEDOWNS_LANDED,
   MarketType.PLAYER_PROPS_UFC_SIGNIFICANT_STRIKES_LANDED,
+  MarketType.PLAYER_PROPS_INTERCEPTIONS,
+  MarketType.PLAYER_PROPS_KICKING_POINTS,
+  MarketType.PLAYER_PROPS_PASSING_ATTEMPTS,
+  MarketType.PLAYER_PROPS_PASSING_COMPLETIONS,
+  MarketType.PLAYER_PROPS_SACKS,
+  MarketType.PLAYER_PROPS_RUSHING_RECEIVING,
+  MarketType.PLAYER_PROPS_PASSING_RUSHING,
+  MarketType.PLAYER_PROPS_LONGEST_RECEPTION,
+  MarketType.PLAYER_PROPS_EXTRA_POINTS,
+  MarketType.PLAYER_PROPS_TACKLES,
 ];
 
 const ONE_SIDE_PLAYER_PROPS_MARKET_TYPES = [
-  MarketType.PLAYER_PROPS_TOUCHDOWNS,
+  MarketType.PLAYER_PROPS_TOUCHDOWNS_SCORER,
   MarketType.PLAYER_PROPS_GOALS,
   MarketType.PLAYER_PROPS_FIRST_TOUCHDOWN,
   MarketType.PLAYER_PROPS_LAST_TOUCHDOWN,
@@ -1348,6 +1441,7 @@ const TicketMarketStatus = {
 
 const MIN_ODDS_FOR_DIFF_CHECKING = 0.2;
 const LIVE_TYPE_ID_BASE = 100000;
+const MAX_ALLOWED_STALE_ODDS_DELAY = process.env.MAX_ALLOWED_STALE_ODDS_DELAY || 1000 * 60 * 3; // 3 mins
 
 const EnetpulseRounds = {
   [0]: "",
@@ -1374,6 +1468,7 @@ module.exports = {
   ZERO_ADDRESS,
   Status,
   MIN_ODDS_FOR_DIFF_CHECKING,
+  MAX_ALLOWED_STALE_ODDS_DELAY,
   COMBINED_POSITIONS_MARKET_TYPES,
   EnetpulseRounds,
   LIVE_TYPE_ID_BASE,

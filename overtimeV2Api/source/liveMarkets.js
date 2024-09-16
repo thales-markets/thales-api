@@ -4,6 +4,7 @@ require("dotenv").config();
 const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const axios = require("axios");
+const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const { groupBy } = require("lodash");
@@ -80,6 +81,7 @@ async function processAllMarkets(network) {
       Number(network) !== NETWORK.OptimismSepolia ? 0 : Number(process.env.LIVE_DUMMY_MARKETS_ENABLED);
     try {
       const allMarkets = Array.from(markets.values());
+
       const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
 
       const marketsByStatus = groupMarketsByStatus["ongoing"] || [];
@@ -215,6 +217,22 @@ async function processAllMarkets(network) {
           if (responseObject != undefined) {
             const apiResponseWithOdds = responseObject.data.data[0];
 
+            let gamePaused = false;
+
+            if (
+              gameWithOdds?.odds?.some((odds) => {
+                if (typeof odds.timestamp !== "number") {
+                  return true;
+                }
+                const oddsDate = new Date(odds.timestamp * 1000);
+                const now = new Date();
+                const timeDiff = now.getTime() - oddsDate.getTime();
+                return timeDiff > MAX_ALLOWED_STALE_ODDS_DELAY;
+              })
+            ) {
+              gamePaused = true;
+            }
+
             const responseOpticOddsScores = await axios.get(
               `https://api.opticodds.com/api/v2/scores?game_id=${apiResponseWithOdds.id}`,
               {
@@ -248,6 +266,21 @@ async function processAllMarkets(network) {
                 errorMessage: `Blocking game ${apiResponseWithOdds.home_team} - ${apiResponseWithOdds.away_team} because it is finished.`,
               });
               return null;
+            }
+
+            if (
+              currentGameStatus.toLowerCase().includes("half") ||
+              ("" + currentPeriod).toLowerCase().includes("half")
+            ) {
+              gamePaused = false;
+            }
+
+            if (gamePaused) {
+              errorsMap.set(market.gameId, {
+                errorTime: new Date().toUTCString(),
+                errorMessage: `Pausing game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to odds being stale`,
+              });
+              gameWithOdds.odds = [];
             }
 
             const leagueSport = getLeagueSport(Number(market.leagueId));
@@ -324,7 +357,7 @@ async function processAllMarkets(network) {
         const resolvedMarketPromises = await Promise.all(filteredMarketsWithLiveOdds);
 
         let dummyMarkets = [];
-        if (Number(network) == NETWORK.OptimismSepolia) {
+        if (Number(network) == NETWORK.OptimismSepolia && enabledDummyMarkets) {
           dummyMarkets = [...dummyMarketsLive];
         }
         const filteredMarketsWithLiveOddsAndDummyMarkets = resolvedMarketPromises.concat(dummyMarkets);

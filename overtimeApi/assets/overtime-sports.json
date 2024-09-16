@@ -124,7 +124,8 @@
   },
   {
     "id": 9018,
-    "name": "FIFA World Cup",
+    "name": "FIFA World Cup Qualifiers",
+    "opticOddsName": "FIFA - World Cup Qualifiers",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
@@ -282,6 +283,7 @@
   {
     "id": 18806,
     "name": "UEFA Nations League",
+    "opticOddsName": "UEFA - Nations League",
     "sport": "Soccer",
     "supportedTypes": ["moneyline", "spread", "total", "doubleChance"]
   },
