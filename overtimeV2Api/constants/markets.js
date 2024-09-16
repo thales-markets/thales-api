@@ -1146,6 +1146,7 @@ const MarketTypeMap = {
     key: "overGoals",
     name: "OverGoals",
     description: "How many goals will player score?",
+    resultType: ResultType.OVER_UNDER,
   },
 
   [MarketType.PLAYER_PROPS_INTERCEPTIONS]: {
