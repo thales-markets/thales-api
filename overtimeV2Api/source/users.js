@@ -15,7 +15,7 @@ const freeBetsHolderContract = require("../contracts/freeBetsHolderContract");
 const { getProvider } = require("../utils/provider");
 const { ethers } = require("ethers");
 const KEYS = require("../../redis/redis-keys");
-const { League } = require("../constants/sports");
+const { League, UFC_LEAGUE_IDS } = require("../constants/sports");
 const { getCollateralDecimals, getCollateralSymbolByAddress } = require("../utils/collaterals");
 const { getLeagueSport, getLeagueLabel } = require("../utils/sports");
 const { orderBy } = require("lodash");
@@ -73,7 +73,7 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
         ? League.TENNIS_GS
         : `${market.sportId}`.startsWith("156")
         ? League.TENNIS_MASTERS
-        : market.sportId === 701 || market.sportId == 702 || market.sportId == 703
+        : UFC_LEAGUE_IDS.includes(market.sportId)
         ? League.UFC
         : Number(market.sportId);
       const typeId = Number(market.typeId);

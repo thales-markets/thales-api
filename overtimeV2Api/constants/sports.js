@@ -633,7 +633,7 @@ const LeagueMap = {
     id: League.LIGA_MX,
     label: "Liga MX",
     opticOddsName: "Mexico - Liga MX",
-    provider: Provider.ENETPULSE,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.GOALS,
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
@@ -1513,6 +1513,8 @@ const AMERICAN_LEAGUES = [
   League.T20_BLAST,
 ];
 
+const UFC_LEAGUE_IDS = [701, 702, 703, 704];
+
 const SportIdMapRundown = {
   1: 1, // NCAAF
   2: 2, // NFL
@@ -1626,6 +1628,7 @@ const SportIdMapOpticOdds = {
   45: "CONMEBOL - Copa Libertadores",
   57: "Netherlands - Eredivisie",
   61: "Portugal - Primeira Liga",
+  230: "Mexico - Liga MX",
   9806: "UEFA - Nations League",
   9977: "CS2",
   9983: "Dota 2",
@@ -1674,4 +1677,5 @@ module.exports = {
   AMERICAN_LEAGUES,
   SportIdMapOpticOdds,
   LEAGUES_NO_LIVE_CONSTRAINTS,
+  UFC_LEAGUE_IDS,
 };
