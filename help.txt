@@ -4,9 +4,6 @@ Please ensure to have the latest dependencies installed by running `npm i` befor
 ###### BUILD ALL IMAGES ######
 docker build -f Dockerfile.api -t thalesmarket/api .
 docker build -f Dockerfile.tokenAPI -t thalesmarket/tokenapi .
-docker build -f Dockerfile.rewards -t thalesmarket/rewards .
-docker build -f Dockerfile.overtimerewards -t thalesmarket/overtime .
-docker build -f Dockerfile.rewardsV2 -t thalesmarket/rewardsv2 .
 docker build -f Dockerfile.overtimeAPI -t thalesmarket/overtime-api .
 docker build -f Dockerfile.thalesAPI -t thalesmarket/thales-api .
 docker build -f Dockerfile.thalesIO -t thalesmarket/thales-io .
@@ -15,9 +12,6 @@ docker build -f Dockerfile.overtimeV2API -t thalesmarket/overtime-v2-api .
 ###### PUSH IMAGES TO GIT ######
 docker push thalesmarket/api
 docker push thalesmarket/tokenapi
-docker push thalesmarket/rewards
-docker push thalesmarket/overtime
-docker push thalesmarket/rewardsv2
 docker push thalesmarket/overtime-api
 docker push thalesmarket/thales-api
 docker push thalesmarket/thales-io
@@ -35,18 +29,6 @@ docker-compose up -d thales-api
 docker-compose pull thales-tokenapi
 docker-compose stop thales-tokenapi
 docker-compose up -d thales-tokenapi
-
-docker-compose pull rewards
-docker-compose stop rewards
-docker-compose up -d rewards
-
-docker-compose pull rewardsv2
-docker-compose stop rewardsv2
-docker-compose up -d rewardsv2
-
-docker-compose pull overtime
-docker-compose stop overtime
-docker-compose up -d overtime
 
 docker-compose pull overtime-api
 docker-compose stop overtime-api
