@@ -92,9 +92,9 @@ function getOpenLiveMarkets(network) {
         availableLeagueIds = checkTennisIsEnabled(availableLeagueIds);
 
         const filteredMarkets = marketsByType.filter((market) => availableLeagueIds.includes(Number(market.leagueId)));
+
         if (filteredMarkets.length > 0) {
           const leagueIdsMap = {};
-
           filteredMarkets.forEach((market) => (leagueIdsMap[market.leagueId] = true));
           availableLeagueIds = Object.keys(leagueIdsMap);
 
@@ -103,8 +103,8 @@ function getOpenLiveMarkets(network) {
 
           const bookmakersData = await readCsvFromUrl(process.env.GITHUB_URL_LIVE_BOOKMAKERS_CSV);
           const spreadData = await readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV);
-          let opticOddsResponseData = [];
 
+          let opticOddsResponseData = [];
           for (const leagueId of availableLeagueIds) {
             const leagueName = getLeagueOpticOddsName(leagueId);
 
@@ -157,8 +157,9 @@ function getOpenLiveMarkets(network) {
 
           // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
           if (providerMarketsMatchingOffer.length == 0 && enabledDummyMarkets == 0) {
-            console.log(`Could not find any live matches matching the criteria for team names and date`);
-            resolve("");
+            const message = "Could not find any live matches matching the criteria for team names and date";
+            console.log(message);
+            resolve(message);
           }
 
           // FETCHING ODDS FOR THE GIVEN GAME
@@ -383,6 +384,7 @@ function getOpenLiveMarkets(network) {
         persistErrorMessages(errorsMap, network);
       } catch (e) {
         console.log(e);
+        resolve(e);
       }
     });
   });
