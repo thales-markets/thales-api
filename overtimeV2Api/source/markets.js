@@ -28,9 +28,10 @@ const awsS3Client = new S3Client({
   },
 });
 
-async function processMarkets(isTestNetwork) {
+async function processMarkets() {
   if (process.env.REDIS_URL) {
-    const network = isTestNetwork ? "test" : "mainnets";
+    const isTestnet = process.env.IS_TESTNET === "true";
+    const network = isTestnet ? "testnet" : "mainnets";
     console.log(`Markets ${network}: create client from index`);
 
     redisClient.on("error", function (error) {
@@ -40,14 +41,13 @@ async function processMarkets(isTestNetwork) {
       while (true) {
         try {
           const startTime = new Date().getTime();
-          const markets = await loadAndMapMarkets(isTestNetwork);
+          const markets = await loadAndMapMarkets(isTestnet);
           console.log(`Markets ${network}: process markets`);
-          isTestNetwork
+          isTestnet
             ? await Promise.all([processAllMarkets(markets, NETWORK.OptimismSepolia)])
             : await Promise.all([
                 processAllMarkets(markets, NETWORK.Optimism),
                 processAllMarkets(markets, NETWORK.Arbitrum),
-                // processAllMarkets(markets, NETWORK.Base),
               ]);
           const endTime = new Date().getTime();
           console.log(
@@ -135,10 +135,10 @@ const readAwsS3File = async (bucket, key) => {
   return response.Body.transformToString();
 };
 
-const loadMarkets = async (isTestNetwork) => {
+const loadMarkets = async (isTestnet) => {
   const bucketName = process.env.AWS_BUCKET_NAME;
-  const listFolderName = isTestNetwork ? process.env.AWS_FOLDER_NAME_LIST_TEST : process.env.AWS_FOLDER_NAME_LIST;
-  const network = isTestNetwork ? "test" : "mainnets";
+  const listFolderName = isTestnet ? process.env.AWS_FOLDER_NAME_LIST_TEST : process.env.AWS_FOLDER_NAME_LIST;
+  const network = isTestnet ? "testnet" : "mainnets";
 
   const command = new ListObjectsV2Command({
     Bucket: bucketName,
@@ -225,8 +225,8 @@ function getOpenMarketsMap(network) {
   });
 }
 
-async function loadAndMapMarkets(isTestNetwork) {
-  const markets = await loadMarkets(isTestNetwork);
+async function loadAndMapMarkets(isTestnet) {
+  const markets = await loadMarkets(isTestnet);
   return markets.map((market) => mapMarket(market));
 }
 

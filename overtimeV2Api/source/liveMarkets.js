@@ -37,7 +37,9 @@ const {
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
-    console.log("create client from index");
+    const isTestnet = process.env.IS_TESTNET === "true";
+    const network = isTestnet ? "testnet" : "mainnets";
+    console.log(`Live markets ${network}: create client from index`);
 
     redisClient.on("error", function (error) {
       console.error(error);
@@ -46,16 +48,18 @@ async function processLiveMarkets() {
       while (true) {
         try {
           const startTime = new Date().getTime();
-          console.log("process live markets");
-          await Promise.all([
-            processAllMarkets(NETWORK.Optimism),
-            processAllMarkets(NETWORK.Arbitrum),
-            processAllMarkets(NETWORK.OptimismSepolia),
-          ]);
+          console.log(`Live markets ${network}: process live markets`);
+          isTestnet
+            ? await Promise.all([processAllMarkets(NETWORK.OptimismSepolia)])
+            : await Promise.all([processAllMarkets(NETWORK.Optimism), processAllMarkets(NETWORK.Arbitrum)]);
           const endTime = new Date().getTime();
-          console.log(`=== Seconds for processing live markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`);
+          console.log(
+            `Live markets ${network}: === Seconds for processing live markets: ${((endTime - startTime) / 1000).toFixed(
+              0,
+            )} ===`,
+          );
         } catch (error) {
-          console.log("live markets error: ", error);
+          console.log(`Live markets ${network}: live markets error: `, error);
         }
 
         await delay(2 * 1000);
