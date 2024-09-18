@@ -90,6 +90,7 @@ async function processAllMarkets(network) {
     const filteredMarkets = marketsByType.filter((market) => availableLeagueIds.includes(Number(market.leagueId)));
 
     if (filteredMarkets.length > 0) {
+      // replace with availableLeagueIds = filteredMarkets.map((market) => market.leagueId);
       const leagueIdsMap = {};
       filteredMarkets.forEach((market) => (leagueIdsMap[market.leagueId] = true));
       availableLeagueIds = Object.keys(leagueIdsMap);
@@ -119,6 +120,7 @@ async function processAllMarkets(network) {
         opticOddsResponseData = opticOddsResponseData.concat(opticOddsGames);
       }
 
+      const providerMarketsMatchingOffer = [];
       // TEAM NAMES AND DATES MATCHING CHECK
       filteredMarkets.forEach((market) => {
         const opticOddsGameEvent = opticOddsResponseData.find((opticOddsGame) => {
@@ -151,12 +153,32 @@ async function processAllMarkets(network) {
 
       // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
       if (providerMarketsMatchingOffer.length == 0 && enabledDummyMarkets == 0) {
-        throw "Could not find any live matches matching the criteria for team names and date";
+        console.log(`Could not find any live matches matching the criteria for team names and date`);
+        return;
       }
 
       // FETCHING ODDS FOR THE GIVEN GAME
+      // SPREAD & TOTALS - FETCHING ODDS FOR ALL TYPES
       const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
-        let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.opticOddsGameEvent.id}&market_name=Moneyline&odds_format=Decimal`;
+        let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.opticOddsGameEvent.id}&odds_format=Decimal`;
+
+        const betTypes = [MONEYLINE];
+        // SPREAD & TOTALS - GET SPREAD TYPE
+        const spreadType = getLeagueSpreadType(game.leagueId);
+
+        if (spreadType != undefined) {
+          betTypes.push(spreadType);
+        }
+        // SPREAD & TOTALS - GET TOTAL TYPE
+        const totalType = getLeagueTotalType(game.leagueId);
+
+        if (totalType != undefined) {
+          betTypes.push(totalType);
+        }
+
+        betTypes.forEach((betType) => {
+          url = url.concat(`&market_name=${betType}`);
+        });
         const liveOddsProviders = liveOddsProvidersPerSport.get(game.leagueId);
         liveOddsProviders.forEach((liveOddsProvider) => {
           url = url.concat(`&sportsbook=${liveOddsProvider}`);
@@ -193,42 +215,12 @@ async function processAllMarkets(network) {
 
         // FETCHING CURRENT SCORE AND CLOCK FOR THE GAME
         if (responseObject != undefined) {
-          const gameWithOdds = responseObject.data.data[0];
+          const apiResponseWithOdds = responseObject.data.data[0];
 
-          // FETCHING ODDS FOR THE GIVEN GAME
-          // SPREAD & TOTALS - FETCHING ODDS FOR ALL TYPES
-          const urlsGamesOdds = providerMarketsMatchingOffer.map((game) => {
-            let url = `https://api.opticodds.com/api/v2/game-odds?game_id=${game.opticOddsGameEvent.id}&odds_format=Decimal`;
-
-            const betTypes = [MONEYLINE];
-            // SPREAD & TOTALS - GET SPREAD TYPE
-            const spreadType = getLeagueSpreadType(game.leagueId);
-
-            if (spreadType != undefined) {
-              betTypes.push(spreadType);
-            }
-            // SPREAD & TOTALS - GET TOTAL TYPE
-            const totalType = getLeagueTotalType(game.leagueId);
-
-            if (totalType != undefined) {
-              betTypes.push(totalType);
-            }
-
-            betTypes.forEach((betType) => {
-              url = url.concat(`&market_name=${betType}`);
-            });
-            const liveOddsProviders = liveOddsProvidersPerSport.get(game.leagueId);
-            liveOddsProviders.forEach((liveOddsProvider) => {
-              url = url.concat(`&sportsbook=${liveOddsProvider}`);
-            });
-            console.log("get URL: ", url);
-            return axios.get(url, {
-              headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-            });
-          });
+          let gamePaused = false;
 
           if (
-            gameWithOdds?.odds?.some((odds) => {
+            apiResponseWithOdds?.odds?.some((odds) => {
               if (typeof odds.timestamp !== "number") {
                 return true;
               }
@@ -242,17 +234,18 @@ async function processAllMarkets(network) {
           }
 
           const responseOpticOddsScores = await axios.get(
-            `https://api.opticodds.com/api/v2/scores?game_id=${gameWithOdds.id}`,
+            `https://api.opticodds.com/api/v2/scores?game_id=${apiResponseWithOdds.id}`,
             {
               headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
             },
           );
+
           const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
 
           if (gameTimeOpticOddsResponseData == undefined || responseOpticOddsScores.data.data.length == 0) {
             errorsMap.set(market.gameId, {
               errorTime: new Date().toUTCString(),
-              errorMessage: `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to game clock being unavailable`,
+              errorMessage: `Blocking game ${apiResponseWithOdds.home_team} - ${apiResponseWithOdds.away_team} due to game clock being unavailable`,
             });
             return null;
           }
@@ -270,65 +263,27 @@ async function processAllMarkets(network) {
           if (currentGameStatus.toLowerCase() == "completed") {
             errorsMap.set(market.gameId, {
               errorTime: new Date().toUTCString(),
-              errorMessage: `Blocking game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} because it is finished.`,
+              errorMessage: `Blocking game ${apiResponseWithOdds.home_team} - ${apiResponseWithOdds.away_team} because it is finished.`,
             });
             return null;
           }
 
-          // FETCHING CURRENT SCORE AND CLOCK FOR THE GAME
-          if (responseObject != undefined) {
-            const apiResponseWithOdds = responseObject.data.data[0];
+          if (currentGameStatus.toLowerCase().includes("half") || ("" + currentPeriod).toLowerCase().includes("half")) {
+            gamePaused = false;
+          }
 
-            let gamePaused = false;
+          if (gamePaused) {
+            errorsMap.set(market.gameId, {
+              errorTime: new Date().toUTCString(),
+              errorMessage: `Pausing game ${apiResponseWithOdds.home_team} - ${apiResponseWithOdds.away_team} due to odds being stale`,
+            });
+          }
 
-            if (
-              apiResponseWithOdds?.odds?.some((odds) => {
-                if (typeof odds.timestamp !== "number") {
-                  return true;
-                }
-                const oddsDate = new Date(odds.timestamp * 1000);
-                const now = new Date();
-                const timeDiff = now.getTime() - oddsDate.getTime();
-                return timeDiff > MAX_ALLOWED_STALE_ODDS_DELAY;
-              })
-            ) {
-              gamePaused = true;
-            }
+          const leagueSport = getLeagueSport(Number(market.leagueId));
 
-            const responseOpticOddsScores = await axios.get(
-              `https://api.opticodds.com/api/v2/scores?game_id=${apiResponseWithOdds.id}`,
-              {
-                headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-              },
-            );
-
-            const gameTimeOpticOddsResponseData = responseOpticOddsScores.data.data[0];
-
-            if (gameTimeOpticOddsResponseData == undefined || responseOpticOddsScores.data.data.length == 0) {
-              errorsMap.set(market.gameId, {
-                errorTime: new Date().toUTCString(),
-                errorMessage: `Blocking game ${apiResponseWithOdds.home_team} - ${apiResponseWithOdds.away_team} due to game clock being unavailable`,
-              });
-              return null;
-            }
-
-            // READING CLOCK, PERIOD AND RESULT DATA FROM RESPONSE
-            const currentScoreHome = gameTimeOpticOddsResponseData.score_home_total;
-            const currentScoreAway = gameTimeOpticOddsResponseData.score_away_total;
-            const currentClock = gameTimeOpticOddsResponseData.clock;
-            const currentPeriod = gameTimeOpticOddsResponseData.period;
-            const isLive = gameTimeOpticOddsResponseData.is_live;
-            const currentGameStatus = gameTimeOpticOddsResponseData.status;
-            const gamesHomeScoreByPeriod = [];
-            const gamesAwayScoreByPeriod = [];
-
-            if (currentGameStatus.toLowerCase() == "completed") {
-              errorsMap.set(market.gameId, {
-                errorTime: new Date().toUTCString(),
-                errorMessage: `Blocking game ${apiResponseWithOdds.home_team} - ${apiResponseWithOdds.away_team} because it is finished.`,
-              });
-              return null;
-            }
+          if (leagueSport == Sport.SOCCER) {
+            const constraintsMap = new Map();
+            constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
 
             const passingConstraintsObject = checkGameContraints(
               gameTimeOpticOddsResponseData,
@@ -339,29 +294,9 @@ async function processAllMarkets(network) {
             if (passingConstraintsObject.allow == false) {
               errorsMap.set(market.gameId, {
                 errorTime: new Date().toUTCString(),
-                errorMessage: `Pausing game ${apiResponseWithOdds.home_team} - ${apiResponseWithOdds.away_team} due to odds being stale`,
+                errorMessage: passingConstraintsObject.message,
               });
-            }
-
-            const leagueSport = getLeagueSport(Number(market.leagueId));
-
-            if (leagueSport == Sport.SOCCER) {
-              const constraintsMap = new Map();
-              constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
-
-              const passingConstraintsObject = checkGameContraints(
-                gameTimeOpticOddsResponseData,
-                Number(market.leagueId),
-                constraintsMap,
-              );
-
-              if (passingConstraintsObject.allow == false) {
-                errorsMap.set(market.gameId, {
-                  errorTime: new Date().toUTCString(),
-                  errorMessage: passingConstraintsObject.message,
-                });
-                return null;
-              }
+              return null;
             }
           }
 
@@ -406,9 +341,12 @@ async function processAllMarkets(network) {
             });
             return market;
           }
+        } else {
+          return null;
         }
       });
 
+      //
       const resolvedMarketPromises = await Promise.all(filteredMarketsWithLiveOdds);
 
       let dummyMarkets = [];
@@ -424,7 +362,7 @@ async function processAllMarkets(network) {
 
     redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(openLiveMarkets), function () {});
   } catch (e) {
-    console.log(`${network}: ${e}`);
+    console.log(e);
   }
 }
 
