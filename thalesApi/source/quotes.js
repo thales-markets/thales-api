@@ -23,7 +23,7 @@ const {
   roundNumberToDecimals,
 } = require("../utils/formatters");
 const { getRangedAmmQuoteAndPriceImpactMethods, getAmmQuoteAndPriceImpactMethods } = require("../utils/amm");
-const { fetchAmountOfTokensForXsUSDAmount } = require("../../overtimeApi/utils/skewCalculator");
+const { fetchAmountOfTokensForXsUSDAmount } = require("../utils/skewCalculator");
 
 const MINIMUM_AMM_LIQUIDITY = 2;
 const MIN_SCEW_IMPACT = 0.0;
