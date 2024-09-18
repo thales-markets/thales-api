@@ -1348,6 +1348,15 @@ function getOpenMarketsMap(network) {
   });
 }
 
+function getLiveMarketsMap(network) {
+  return new Promise(function (resolve) {
+    redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], function (err, obj) {
+      const openMarketsMap = new Map(JSON.parse(obj));
+      resolve(openMarketsMap);
+    });
+  });
+}
+
 function getClosedMarketsMap(network) {
   return new Promise(function (resolve) {
     redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
@@ -1373,6 +1382,25 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, async (req, res) => {
       market = Array.from(closedMarkets.values()).find(
         (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
       );
+      return res.send(market || `Market with gameId ${marketAddress} not found.`);
+    }
+  } catch (e) {
+    console.log(e);
+  }
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKET, async (req, res) => {
+  const network = req.params.networkParam;
+  const marketAddress = req.params.marketAddress;
+  try {
+    const openMarkets = await getLiveMarketsMap(network);
+    let market = Array.from(openMarkets.values()).find(
+      (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
+    );
+
+    if (market) {
+      return res.send(market);
+    } else {
       return res.send(market || `Market with gameId ${marketAddress} not found.`);
     }
   } catch (e) {
