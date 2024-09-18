@@ -18,7 +18,7 @@ const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { NETWORK } = require("../constants/networks");
 const { getLeagueSport, getLeagueLabel, getLeagueProvider } = require("../utils/sports");
-const { Provider, League } = require("../constants/sports");
+const { Provider, League, UFC_LEAGUE_IDS } = require("../constants/sports");
 
 const awsS3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -68,7 +68,7 @@ const packMarket = (market) => {
     ? League.TENNIS_GS
     : `${market.sportId}`.startsWith("156")
     ? League.TENNIS_MASTERS
-    : market.sportId === 701 || market.sportId == 702 || market.sportId == 703
+    : UFC_LEAGUE_IDS.includes(market.sportId)
     ? League.UFC
     : market.sportId;
   const isEnetpulseSport = getLeagueProvider(leagueId) === Provider.ENETPULSE;

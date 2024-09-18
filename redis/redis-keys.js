@@ -20,12 +20,6 @@ const KEYS = {
     8453: "overtimeBaseParlayLeaderboard",
   },
   TWAP_FOR_PERIOD: "twapMap",
-  OVERTIME_MARKETS: {
-    10: "overtimeOpMarkets",
-    420: "overtimeOpGoerliMarkets",
-    42161: "overtimeArbMarkets",
-    8453: "overtimeBaseMarkets",
-  },
   THALES_MARKETS: {
     10: "thalesOpMarkets",
     137: "thalesPolygonMarkets",

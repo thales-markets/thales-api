@@ -200,6 +200,7 @@ const MarketType = {
   PLAYER_PROPS_KICKING_POINTS: 11203,
   PLAYER_PROPS_PASSING_ATTEMPTS: 11204,
   PLAYER_PROPS_PASSING_COMPLETIONS: 11205,
+  PLAYER_PROPS_TOUCHDOWNS: 11206,
 
   PLAYER_PROPS_SACKS: 11207,
   PLAYER_PROPS_PASSING_RUSHING: 11208,
@@ -207,6 +208,18 @@ const MarketType = {
   PLAYER_PROPS_LONGEST_RECEPTION: 11210,
   PLAYER_PROPS_EXTRA_POINTS: 11211,
   PLAYER_PROPS_TACKLES: 11212,
+
+  PLAYER_PROPS_OUTS: 11213,
+  PLAYER_PROPS_RBIS: 11214,
+  PLAYER_PROPS_HITS_RUNS_RBIS: 11215,
+  PLAYER_PROPS_EARNED_RUNS: 11216,
+  PLAYER_PROPS_DOUBLES: 11217,
+  PLAYER_PROPS_BATTING_WALKS: 11218,
+  PLAYER_PROPS_BATTING_STRIKEOUTS: 11219,
+  PLAYER_PROPS_SINGLES: 11220,
+  PLAYER_PROPS_STOLEN_BASES: 11221,
+  PLAYER_PROPS_RUNS: 11222,
+  PLAYER_PROPS_WALKS: 11223,
 
   // UFC market types
   WINNING_ROUND: 10151,
@@ -1144,7 +1157,7 @@ const MarketTypeMap = {
   [MarketType.PLAYER_PROPS_OVER_GOALS]: {
     id: MarketType.PLAYER_PROPS_OVER_GOALS,
     key: "overGoals",
-    name: "OverGoals",
+    name: "Over goals",
     description: "How many goals will player score?",
     resultType: ResultType.OVER_UNDER,
   },
@@ -1171,6 +1184,12 @@ const MarketTypeMap = {
     id: MarketType.PLAYER_PROPS_PASSING_COMPLETIONS,
     key: "passingCompletions",
     name: "Passing completions",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_TOUCHDOWNS]: {
+    id: MarketType.PLAYER_PROPS_TOUCHDOWNS,
+    key: "totalTouchdowns", // TODO: new
+    name: "Touchdowns", // TODO: new
     resultType: ResultType.OVER_UNDER,
   },
 
@@ -1208,6 +1227,73 @@ const MarketTypeMap = {
     id: MarketType.PLAYER_PROPS_TACKLES,
     key: "tackles",
     name: "Tackles",
+    resultType: ResultType.OVER_UNDER,
+  },
+
+  [MarketType.PLAYER_PROPS_OUTS]: {
+    id: MarketType.PLAYER_PROPS_OUTS,
+    key: "outs",
+    name: "Outs recorded",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_RBIS]: {
+    id: MarketType.PLAYER_PROPS_RBIS,
+    key: "rbis",
+    name: "RBIs O/U",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_HITS_RUNS_RBIS]: {
+    id: MarketType.PLAYER_PROPS_HITS_RUNS_RBIS,
+    key: "hitsRunsRbis",
+    name: "Hits + Runs + RBIs",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_EARNED_RUNS]: {
+    id: MarketType.PLAYER_PROPS_EARNED_RUNS,
+    key: "earnedRuns",
+    name: "Earned runs allowed",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_DOUBLES]: {
+    id: MarketType.PLAYER_PROPS_DOUBLES,
+    key: "doubles",
+    name: "Doubles",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_BATTING_WALKS]: {
+    id: MarketType.PLAYER_PROPS_BATTING_WALKS,
+    key: "battingWalks",
+    name: "Walks",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_BATTING_STRIKEOUTS]: {
+    id: MarketType.PLAYER_PROPS_BATTING_STRIKEOUTS,
+    key: "battingStrikeouts",
+    name: "Strikeouts",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_SINGLES]: {
+    id: MarketType.PLAYER_PROPS_SINGLES,
+    key: "singles",
+    name: "Singles",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_STOLEN_BASES]: {
+    id: MarketType.PLAYER_PROPS_STOLEN_BASES,
+    key: "stolenBases",
+    name: "Stolen bases",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_RUNS]: {
+    id: MarketType.PLAYER_PROPS_RUNS,
+    key: "runsScored",
+    name: "Runs scored",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_WALKS]: {
+    id: MarketType.PLAYER_PROPS_WALKS,
+    key: "walksAllowed",
+    name: "Walks allowed",
     resultType: ResultType.OVER_UNDER,
   },
 
@@ -1392,12 +1478,24 @@ const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_KICKING_POINTS,
   MarketType.PLAYER_PROPS_PASSING_ATTEMPTS,
   MarketType.PLAYER_PROPS_PASSING_COMPLETIONS,
+  MarketType.PLAYER_PROPS_TOUCHDOWNS,
   MarketType.PLAYER_PROPS_SACKS,
   MarketType.PLAYER_PROPS_RUSHING_RECEIVING,
   MarketType.PLAYER_PROPS_PASSING_RUSHING,
   MarketType.PLAYER_PROPS_LONGEST_RECEPTION,
   MarketType.PLAYER_PROPS_EXTRA_POINTS,
   MarketType.PLAYER_PROPS_TACKLES,
+  MarketType.PLAYER_PROPS_OUTS,
+  MarketType.PLAYER_PROPS_RBIS,
+  MarketType.PLAYER_PROPS_HITS_RUNS_RBIS,
+  MarketType.PLAYER_PROPS_EARNED_RUNS,
+  MarketType.PLAYER_PROPS_DOUBLES,
+  MarketType.PLAYER_PROPS_BATTING_WALKS,
+  MarketType.PLAYER_PROPS_BATTING_STRIKEOUTS,
+  MarketType.PLAYER_PROPS_SINGLES,
+  MarketType.PLAYER_PROPS_STOLEN_BASES,
+  MarketType.PLAYER_PROPS_RUNS,
+  MarketType.PLAYER_PROPS_WALKS,
 ];
 
 const ONE_SIDE_PLAYER_PROPS_MARKET_TYPES = [
