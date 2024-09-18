@@ -59,6 +59,7 @@ const ENDPOINTS = {
   OVERTIME_V2_MARKETS: "/overtime-v2/networks/:networkParam/markets",
   OVERTIME_V2_LIVE_MARKETS: "/overtime-v2/networks/:networkParam/live-markets",
   OVERTIME_V2_MARKET: "/overtime-v2/networks/:networkParam/markets/:marketAddress",
+  OVERTIME_V2_LIVE_MARKET: "/overtime-v2/networks/:networkParam/live-markets/:marketAddress",
   OVERTIME_V2_GAMES_INFO: "/overtime-v2/games-info",
   OVERTIME_V2_PLAYERS_INFO: "/overtime-v2/players-info",
   OVERTIME_V2_LIVE_SCORES: "/overtime-v2/live-scores",
