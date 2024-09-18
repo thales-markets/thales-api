@@ -38,7 +38,7 @@ docker-compose pull overtime-v2-api
 docker-compose stop overtime-v2-api
 docker-compose up -d overtime-v2-api
 
-docker-compose pull overtime-v2-api
+docker-compose pull overtime-v2-api-testnet
 docker-compose stop overtime-v2-api-testnet
 docker-compose up -d overtime-v2-api-testnet
 
