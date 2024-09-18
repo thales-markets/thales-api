@@ -1351,8 +1351,8 @@ function getOpenMarketsMap(network) {
 function getLiveMarketsMap(network) {
   return new Promise(function (resolve) {
     redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], function (err, obj) {
-      const openMarketsMap = new Map(JSON.parse(obj));
-      resolve(openMarketsMap);
+      const markets = JSON.parse(obj);
+      resolve(markets);
     });
   });
 }
@@ -1394,9 +1394,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKET, async (req, res) => {
   const marketAddress = req.params.marketAddress;
   try {
     const openMarkets = await getLiveMarketsMap(network);
-    let market = Array.from(openMarkets.values()).find(
-      (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
-    );
+    let market = Array.from(openMarkets).find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
 
     if (market) {
       return res.send(market);
