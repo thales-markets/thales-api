@@ -220,7 +220,7 @@ async function processAllMarkets(network) {
             let gamePaused = false;
 
             if (
-              gameWithOdds?.odds?.some((odds) => {
+              apiResponseWithOdds?.odds?.some((odds) => {
                 if (typeof odds.timestamp !== "number") {
                   return true;
                 }
@@ -278,9 +278,8 @@ async function processAllMarkets(network) {
             if (gamePaused) {
               errorsMap.set(market.gameId, {
                 errorTime: new Date().toUTCString(),
-                errorMessage: `Pausing game ${gameWithOdds.home_team} - ${gameWithOdds.away_team} due to odds being stale`,
+                errorMessage: `Pausing game ${apiResponseWithOdds.home_team} - ${apiResponseWithOdds.away_team} due to odds being stale`,
               });
-              gameWithOdds.odds = [];
             }
 
             const leagueSport = getLeagueSport(Number(market.leagueId));
