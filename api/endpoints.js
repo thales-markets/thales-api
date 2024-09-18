@@ -29,15 +29,6 @@ const ENDPOINTS = {
   JSON_ODDS_DATA: "/json-odds-data/:sportParameter",
   ONE_INCH_PROXY: "/1inch-proxy",
 
-  OVERTIME_SPORTS: "/overtime/networks/:networkParam/sports",
-  OVERTIME_COLLATERALS: "/overtime/networks/:networkParam/collaterals",
-  OVERTIME_MARKETS: "/overtime/networks/:networkParam/markets",
-  OVERTIME_MARKET: "/overtime/networks/:networkParam/markets/:marketAddress",
-  OVERTIME_USER_POSITIONS: "/overtime/networks/:networkParam/users/:userAddress/positions",
-  OVERTIME_USER_TRANSACTIONS: "/overtime/networks/:networkParam/users/:userAddress/transactions",
-  OVERTIME_MARKET_QUOTE: "/overtime/networks/:networkParam/markets/:marketAddress/quote",
-  OVERTIME_PARLAY_QUOTE: "/overtime/networks/:networkParam/parlay/quote",
-
   THALES_COLLATERALS: "/thales/networks/:networkParam/collaterals",
   THALES_MARKETS: "/thales/networks/:networkParam/markets",
   THALES_MARKET: "/thales/networks/:networkParam/markets/:marketAddress",
