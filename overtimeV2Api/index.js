@@ -8,8 +8,7 @@ const cleaner = require("./source/cleaner");
 
 require("dotenv").config();
 
-markets.processMarkets(true);
-markets.processMarkets(false);
+markets.processMarkets();
 liveMarkets.processLiveMarkets();
 gamesInfo.processGamesInfo();
 playersInfo.processPlayersInfo();
