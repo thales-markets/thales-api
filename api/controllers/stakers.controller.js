@@ -18,7 +18,7 @@ const stakers = async (req, res) => {
       network: networkId,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.Stakers, [networkId]), stakersData, TTL.Stakers);
+    cache.set(getCacheKey(PREFIX_KEYS.Stakers, [networkId]), stakersData, TTL.STAKERS);
 
     if (!stakersData) return res.sendStatus(204);
 
@@ -46,7 +46,7 @@ const claimOnBehalfItems = async (req, res) => {
       sender: sender ? sender : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.ClaimOnBehalfItems, [networkId, sender]), canClaimOnBehalfItems, TTL.Stakers);
+    cache.set(getCacheKey(PREFIX_KEYS.ClaimOnBehalfItems, [networkId, sender]), canClaimOnBehalfItems, TTL.STAKERS);
 
     if (!canClaimOnBehalfItems) return res.sendStatus(204);
 
@@ -80,7 +80,7 @@ const tokenTransaction = async (req, res) => {
       type_in: typeInGraphFormat,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.TokenTransactions, [networkId, account, typeIn]), tokenTransactions, TTL.Stakers);
+    cache.set(getCacheKey(PREFIX_KEYS.TokenTransactions, [networkId, account, typeIn]), tokenTransactions, TTL.STAKERS);
 
     if (!tokenTransactions) return res.sendStatus(204);
 
