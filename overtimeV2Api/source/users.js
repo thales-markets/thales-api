@@ -42,11 +42,11 @@ function getGamesInfoMap() {
 
 const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
   let collateral = getCollateralSymbolByAddress(network, ticket.collateral);
+  const collateralDecimals = getCollateralDecimals(network, collateral);
   collateral =
     ticket.ticketOwner.toLowerCase() === stakingThalesBettingProxyContract.addresses[network].toLowerCase()
       ? "sTHALES"
       : collateral;
-  const collateralDecimals = getCollateralDecimals(network, collateral);
 
   const mappedTicket = {
     id: ticket.id,
