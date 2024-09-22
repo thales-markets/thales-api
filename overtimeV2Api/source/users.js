@@ -12,6 +12,7 @@ const { bigNumberFormatter } = require("../utils/formatters");
 const sportsAMMV2DataContract = require("../contracts/sportsAMMV2DataContract");
 const sportsAMMV2ManagerContract = require("../contracts/sportsAMMV2ManagerContract");
 const freeBetsHolderContract = require("../contracts/freeBetsHolderContract");
+const stakingThalesBettingProxyContract = require("../contracts/stakingThalesBettingProxyContract");
 const { getProvider } = require("../utils/provider");
 const { ethers } = require("ethers");
 const KEYS = require("../../redis/redis-keys");
@@ -40,8 +41,12 @@ function getGamesInfoMap() {
 }
 
 const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
-  const collateral = getCollateralSymbolByAddress(network, ticket.collateral);
+  let collateral = getCollateralSymbolByAddress(network, ticket.collateral);
   const collateralDecimals = getCollateralDecimals(network, collateral);
+  collateral =
+    ticket.ticketOwner.toLowerCase() === stakingThalesBettingProxyContract.addresses[network].toLowerCase()
+      ? "sTHALES"
+      : collateral;
 
   const mappedTicket = {
     id: ticket.id,
@@ -56,9 +61,9 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
     expiry: Number(ticket.expiry) * 1000,
     isResolved: ticket.resolved,
     isPaused: ticket.paused,
-    isCancelled: ticket.marketsResult.every(
-      (marketResult) => Number(marketResult.status) === TicketMarketStatus.CANCELLED,
-    ),
+    isCancelled:
+      ticket.cancelled ||
+      ticket.marketsResult.every((marketResult) => Number(marketResult.status) === TicketMarketStatus.CANCELLED),
     isLost: ticket.isLost,
     isUserTheWinner: ticket.isUserTheWinner,
     isExercisable: ticket.isExercisable,
@@ -211,6 +216,11 @@ async function processUserHistory(network, walletAddress) {
     freeBetsHolderContract.abi,
     provider,
   );
+  const stakingThalesBettingProxy = new ethers.Contract(
+    stakingThalesBettingProxyContract.addresses[network],
+    stakingThalesBettingProxyContract.abi,
+    provider,
+  );
 
   const batchSize = process.env.BATCH_SIZE_V2;
 
@@ -219,24 +229,34 @@ async function processUserHistory(network, walletAddress) {
     numOfResolvedTicketsPerUser,
     numOfActiveFreeBetTicketsPerUser,
     numOfResolvedFreeBetTicketsPerUser,
+    numOfActiveStakedThalesTicketsPerUser,
+    numOfResolvedStakedThalesTicketsPerUser,
   ] = await Promise.all([
     sportsAMMV2Manager.numOfActiveTicketsPerUser(walletAddress),
     sportsAMMV2Manager.numOfResolvedTicketsPerUser(walletAddress),
     freeBetsHolder.numOfActiveTicketsPerUser(walletAddress),
     freeBetsHolder.numOfResolvedTicketsPerUser(walletAddress),
+    stakingThalesBettingProxy.numOfActiveTicketsPerUser(walletAddress),
+    stakingThalesBettingProxy.numOfResolvedTicketsPerUser(walletAddress),
   ]);
 
   const numberOfActiveBatches =
     Math.trunc(
-      (Number(numOfActiveTicketsPerUser) > Number(numOfActiveFreeBetTicketsPerUser)
+      (Number(numOfActiveTicketsPerUser) > Number(numOfActiveFreeBetTicketsPerUser) &&
+      Number(numOfActiveTicketsPerUser) > Number(numOfActiveStakedThalesTicketsPerUser)
         ? Number(numOfActiveTicketsPerUser)
-        : Number(numOfActiveFreeBetTicketsPerUser)) / batchSize,
+        : Number(numOfActiveFreeBetTicketsPerUser) > Number(numOfActiveStakedThalesTicketsPerUser)
+        ? Number(numOfActiveFreeBetTicketsPerUser)
+        : Number(numOfActiveStakedThalesTicketsPerUser)) / batchSize,
     ) + 1;
   const numberOfResolvedBatches =
     Math.trunc(
-      (Number(numOfResolvedTicketsPerUser) > Number(numOfResolvedFreeBetTicketsPerUser)
+      (Number(numOfResolvedTicketsPerUser) > Number(numOfResolvedFreeBetTicketsPerUser) &&
+      Number(numOfResolvedTicketsPerUser) > Number(numOfResolvedStakedThalesTicketsPerUser)
         ? Number(numOfResolvedTicketsPerUser)
-        : Number(numOfResolvedFreeBetTicketsPerUser)) / batchSize,
+        : Number(numOfResolvedFreeBetTicketsPerUser) > Number(numOfResolvedStakedThalesTicketsPerUser)
+        ? Number(numOfResolvedFreeBetTicketsPerUser)
+        : Number(numOfResolvedStakedThalesTicketsPerUser)) / batchSize,
     ) + 1;
 
   const promises = [];
@@ -249,7 +269,9 @@ async function processUserHistory(network, walletAddress) {
 
   const promisesResult = await Promise.all(promises);
 
-  const tickets = promisesResult.map((allData) => [...allData.ticketsData, ...allData.freeBetsData]).flat(1);
+  const tickets = promisesResult
+    .map((allData) => [...allData.ticketsData, ...allData.freeBetsData, ...allData.stakingBettingProxyData])
+    .flat(1);
 
   const mappedTickets = tickets.map((ticket) => mapTicket(ticket, network, gamesInfoMap, playersInfoMap));
 
