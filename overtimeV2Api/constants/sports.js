@@ -199,8 +199,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.INNING,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
+    live: true,
+    isLiveTestnet: true,
   },
   [League.NBA]: {
     sport: Sport.BASKETBALL,
@@ -212,7 +212,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.NCAAB]: {
@@ -237,7 +237,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.PERIOD,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.UFC]: {
@@ -262,7 +262,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.MLS]: {
@@ -275,7 +275,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.EPL]: {
@@ -288,7 +288,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.LIGUE_ONE]: {
@@ -301,7 +301,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.BUNDESLIGA]: {
@@ -314,7 +314,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.LA_LIGA]: {
@@ -327,7 +327,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SERIE_A]: {
@@ -340,7 +340,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.UEFA_CL]: {
@@ -353,7 +353,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.UEFA_EL]: {
@@ -366,7 +366,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.FIFA_WC]: {
@@ -392,7 +392,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.IPL]: {
@@ -441,7 +441,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.COPA_LIBERTADORES]: {
@@ -454,7 +454,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.UEFA_EURO]: {
@@ -467,7 +467,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.EREDIVISIE]: {
@@ -480,7 +480,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.PRIMEIRA_LIGA]: {
@@ -493,7 +493,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_SOCCER_WOMEN]: {
@@ -506,7 +506,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_SOCCER]: {
@@ -519,7 +519,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.FIFA_WC_WOMEN]: {
@@ -629,7 +629,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.GERMANY_CUP]: {
@@ -654,7 +654,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.BRAZIL_1]: {
@@ -667,7 +667,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.UEFA_EURO_U21]: {
@@ -704,7 +704,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_HANDBALL]: {
@@ -717,7 +717,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.EUROLEAGUE]: {
@@ -743,7 +743,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_BASKETBALL_WOMEN]: {
@@ -756,7 +756,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.FIBA_WORLD_CUP]: {
@@ -841,7 +841,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_WATERPOLO]: {
@@ -854,7 +854,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_VOLEYBALL_WOMEN]: {
@@ -867,7 +867,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_VOLEYBALL]: {
@@ -880,7 +880,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.BOXING]: {
@@ -1006,7 +1006,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_BASKETBALL_3X3_WOMEN]: {
@@ -1019,7 +1019,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_QUALIFICATION]: {
@@ -1069,7 +1069,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.NON_TITLE_BOXING]: {
@@ -1094,7 +1094,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.UEFA_EUROPA_LEAGUE_QUALIFICATION]: {
@@ -1107,7 +1107,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.UEFA_CONFERENCE_LEAGUE_QUALIFICATION]: {
@@ -1120,7 +1120,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.US_ELECTION]: {
@@ -1145,7 +1145,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.BRAZIL_CUP]: {
@@ -1158,7 +1158,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.ENGLAND_CHAMPIONSHIP]: {
@@ -1171,7 +1171,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SCOTLAND_PREMIERSHIP]: {
