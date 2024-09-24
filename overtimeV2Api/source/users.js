@@ -74,7 +74,9 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
     isFreeBet: ticket.ticketOwner.toLowerCase() == freeBetsHolderContract.addresses[network].toLowerCase(),
 
     sportMarkets: ticket.marketsData.map((market, index) => {
-      const leagueId = `${market.sportId}`.startsWith("153")
+      const leagueId = `${market.sportId}`.startsWith("152")
+        ? League.TENNIS_WTA
+        : `${market.sportId}`.startsWith("153")
         ? League.TENNIS_GS
         : `${market.sportId}`.startsWith("156")
         ? League.TENNIS_MASTERS
