@@ -53,6 +53,7 @@ const League = {
   FRANCE_CUP: 134,
   SPAIN_CUP: 138,
   ITALY_CUP: 141,
+  TENNIS_WTA: 152,
   TENNIS_GS: 153,
   TENNIS_MASTERS: 156,
   SUMMER_OLYMPICS_TENNIS: 158,
@@ -123,6 +124,9 @@ const League = {
   POLAND_LEAGUE: 20122,
   SWEDEN_LEAGUE: 20123,
   COLOMBIA_PRIMERA_A: 20124,
+  ENGLAND_EFL_CUP: 20125,
+  ENGLAND_LEGAUE_1: 20126,
+  URUGUAY_PRIMERA_DIVISION: 20127,
   GOLF_H2H: 100021,
   GOLF_WINNER: 100121,
 };
@@ -576,6 +580,17 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.TENNIS_WTA]: {
+    sport: Sport.TENNIS,
+    id: League.TENNIS_WTA,
+    label: "WTA Events",
+    scoringType: ScoringType.SETS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.SET,
+    isDrawAvailable: false,
     live: false,
     isLiveTestnet: false,
   },
@@ -1470,6 +1485,42 @@ const LeagueMap = {
     live: false,
     isLiveTestnet: false,
   },
+  [League.ENGLAND_EFL_CUP]: {
+    sport: Sport.SOCCER,
+    id: League.ENGLAND_EFL_CUP,
+    label: "England EFL Cup",
+    opticOddsName: "England - EFL Cup",
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.ENGLAND_LEGAUE_1]: {
+    sport: Sport.SOCCER,
+    id: League.ENGLAND_LEGAUE_1,
+    label: "England League 1",
+    opticOddsName: "England - League 1",
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.URUGUAY_PRIMERA_DIVISION]: {
+    sport: Sport.SOCCER,
+    id: League.URUGUAY_PRIMERA_DIVISION,
+    label: "Uruguay Primera Division",
+    opticOddsName: "Uruguay - Primera Division",
+    scoringType: ScoringType.GOALS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.HALF,
+    isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
   [League.GOLF_H2H]: {
     sport: Sport.GOLF,
     id: League.GOLF_H2H,
@@ -1496,7 +1547,14 @@ const LeagueMap = {
   },
 };
 
-const LEAGUES_NO_FORMAL_HOME_AWAY = [League.CSGO, League.DOTA2, League.LOL, League.TENNIS_GS, League.TENNIS_MASTERS];
+const LEAGUES_NO_FORMAL_HOME_AWAY = [
+  League.CSGO,
+  League.DOTA2,
+  League.LOL,
+  League.TENNIS_WTA,
+  League.TENNIS_GS,
+  League.TENNIS_MASTERS,
+];
 
 const LEAGUES_NO_LIVE_CONSTRAINTS = [League.SUMMER_OLYMPICS_RUGBY, League.SUMMER_OLYMPICS_RUGBY_WOMEN];
 
@@ -1557,6 +1615,7 @@ const SportIdMapEnetpulse = {
   17: 73, // Europa League
   76: 76, // World Cup Woman
   14: 87, // La Liga
+  152: 152, // Tennis WTA
   153: 153, // Tennis GS
   156: 156, // Tennis Masters 1000
   158: 158, // Summer Olympics Tennnis
@@ -1663,6 +1722,9 @@ const SportIdMapOpticOdds = {
   20122: "Poland - Ekstraklasa",
   20123: "Sweden - Allsvenskan",
   20124: "Colombia - Primera A",
+  20125: "England - EFL Cup",
+  20126: "England - League 1",
+  20127: "Uruguay - Primera Division",
 };
 
 module.exports = {

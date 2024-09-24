@@ -64,7 +64,9 @@ async function processMarkets() {
 }
 
 const packMarket = (market) => {
-  const leagueId = `${market.sportId}`.startsWith("153")
+  const leagueId = `${market.sportId}`.startsWith("152")
+    ? League.TENNIS_WTA
+    : `${market.sportId}`.startsWith("153")
     ? League.TENNIS_GS
     : `${market.sportId}`.startsWith("156")
     ? League.TENNIS_MASTERS
