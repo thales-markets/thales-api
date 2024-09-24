@@ -245,53 +245,49 @@ async function processAllMarkets(network) {
         // Add Optic Odds game scores data and filter it
         const supportedLiveMarketsByScores = supportedLiveMarketsByOpticOddsOdds
           .map((market) => {
-            const opticOddsScoreData = scoresPerGame.find((game) => game.id == market.opticOddsGameOdds.id);
+            const opticOddsScoreData = scoresPerGame.find((game) => game.game_id == market.opticOddsGameOdds.id);
             return { ...market, opticOddsScoreData };
           })
           .filter((market) => {
-            if (market.opticOddsScoreData != undefined) {
-              const opticOddsScoreData = market.opticOddsScoreData;
+            const opticOddsScoreData = market.opticOddsScoreData;
 
-              if (opticOddsScoreData == undefined) {
-                errorsMap.set(market.gameId, {
-                  errorTime: new Date().toUTCString(),
-                  errorMessage: `Blocking game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} due to game clock being unavailable`,
-                });
-                return false;
-              }
-
-              if (opticOddsScoreData.status.toLowerCase() == "completed") {
-                errorsMap.set(market.gameId, {
-                  errorTime: new Date().toUTCString(),
-                  errorMessage: `Blocking game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} because it is finished.`,
-                });
-                return false;
-              }
-
-              const leagueSport = getLeagueSport(Number(market.leagueId));
-              if (leagueSport == Sport.SOCCER) {
-                const constraintsMap = new Map();
-                constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
-
-                const passingConstraintsObject = checkGameContraints(
-                  opticOddsScoreData,
-                  Number(market.leagueId),
-                  constraintsMap,
-                );
-
-                if (passingConstraintsObject.allow == false) {
-                  errorsMap.set(market.gameId, {
-                    errorTime: new Date().toUTCString(),
-                    errorMessage: passingConstraintsObject.message,
-                  });
-                  return false;
-                }
-              }
-
-              return true;
+            if (opticOddsScoreData == undefined) {
+              errorsMap.set(market.gameId, {
+                errorTime: new Date().toUTCString(),
+                errorMessage: `Blocking game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} due to game clock being unavailable`,
+              });
+              return false;
             }
 
-            return false;
+            if (opticOddsScoreData.status.toLowerCase() == "completed") {
+              errorsMap.set(market.gameId, {
+                errorTime: new Date().toUTCString(),
+                errorMessage: `Blocking game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} because it is finished.`,
+              });
+              return false;
+            }
+
+            const leagueSport = getLeagueSport(Number(market.leagueId));
+            if (leagueSport == Sport.SOCCER) {
+              const constraintsMap = new Map();
+              constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
+
+              const passingConstraintsObject = checkGameContraints(
+                opticOddsScoreData,
+                Number(market.leagueId),
+                constraintsMap,
+              );
+
+              if (passingConstraintsObject.allow == false) {
+                errorsMap.set(market.gameId, {
+                  errorTime: new Date().toUTCString(),
+                  errorMessage: passingConstraintsObject.message,
+                });
+                return false;
+              }
+            }
+
+            return true;
           });
 
         const liveMarkets = supportedLiveMarketsByScores.map((market) => {
