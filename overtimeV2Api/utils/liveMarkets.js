@@ -3,6 +3,7 @@ const { getSpreadData, adjustSpreadOnOdds } = require("overtime-live-trading-uti
 const { getLeagueIsDrawAvailable, getLeagueSport } = require("./sports");
 const oddslib = require("oddslib");
 const { Sport, League } = require("../constants/sports");
+const { OPTIC_ODDS_API_GAMES_URL } = require("../constants/opticodds");
 const teamsMapping = require("../assets/teamsMapping.json");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
@@ -125,40 +126,22 @@ const persistErrorMessages = (errorsMap, network) => {
   });
 };
 
-const checkTennisIsEnabled = (leagueIds) => {
-  const isTennisMastersEnabled = process.env.ENABLED_TENNIS_MASTERS === "true";
-  const isTennisGrandSlamEnabled = process.env.ENABLED_TENNIS_GRAND_SLAM === "true";
-
-  const tennisMastersIndex = leagueIds.indexOf(League.TENNIS_MASTERS);
-  const tennisGrandSlamIndex = leagueIds.indexOf(League.TENNIS_GS);
-
-  if (tennisMastersIndex == -1 && isTennisMastersEnabled) {
-    leagueIds.push(League.TENNIS_MASTERS);
-  }
-
-  if (tennisGrandSlamIndex == -1 && isTennisGrandSlamEnabled) {
-    leagueIds.push(League.TENNIS_GS);
-  }
-
-  return leagueIds;
-};
-
 const fetchOpticOddsGamesForLeague = async (leagueIds, network) => {
-  const baseUrl = "https://api.opticodds.com/api/v2/games?";
   const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
   const promises = [];
 
   const hasTennis = leagueIds.some((leagueId) => getLeagueSport(leagueId) === Sport.TENNIS);
   if (hasTennis) {
-    promises.push(axios.get(baseUrl + "sport=tennis", { headers }));
+    promises.push(axios.get(OPTIC_ODDS_API_GAMES_URL + "sport=tennis", { headers }));
   }
 
   const hasOnlyTennis = leagueIds.every((leagueId) => getLeagueSport(leagueId) === Sport.TENNIS);
   if (!hasOnlyTennis) {
     const urlParam = leagueIds
+      .filter((leagueId) => getLeagueSport(leagueId) !== Sport.TENNIS)
       .map((leagueId, index) => (index > 0 ? "&" : "") + "league=" + getLeagueOpticOddsName(leagueId))
       .join("");
-    promises.push(axios.get(baseUrl + urlParam, { headers }));
+    promises.push(axios.get(OPTIC_ODDS_API_GAMES_URL + urlParam, { headers }));
   }
 
   const opticOddsGamesResponses = await Promise.all(promises);
@@ -181,6 +164,5 @@ module.exports = {
   fetchTeamsMap,
   adjustSpreadAndReturnMarketWithOdds,
   persistErrorMessages,
-  checkTennisIsEnabled,
   fetchOpticOddsGamesForLeague,
 };

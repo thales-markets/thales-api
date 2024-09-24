@@ -8,7 +8,12 @@ const { getAverageOdds } = require("../utils/markets");
 const { LIVE_TYPE_ID_BASE, MIN_ODDS_FOR_DIFF_CHECKING, MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
-const { groupBy, uniq } = require("lodash");
+const {
+  OPTIC_ODDS_API_ODDS_URL,
+  OPTIC_ODDS_API_SCORES_URL,
+  OPTIC_ODDS_API_SCORES_MAX_GAMES,
+} = require("../constants/opticodds");
+const { uniq } = require("lodash");
 const {
   getLeagueIsDrawAvailable,
   getLeagueSport,
@@ -30,7 +35,6 @@ const {
   fetchTeamsMap,
   adjustSpreadAndReturnMarketWithOdds,
   persistErrorMessages,
-  checkTennisIsEnabled,
   fetchOpticOddsGamesForLeague,
 } = require("../utils/liveMarkets");
 
@@ -73,6 +77,10 @@ async function processLiveMarkets() {
 	  - "LIVE_DUMMY_MARKETS_ENABLED=1"
     - "LIVE_ODDS_PROVIDERS=draftkings,bovada,espn bet"
 
+  Remove from overtime-v2-api env:
+    - "ENABLED_TENNIS_MASTERS=true"
+    - "ENABLED_TENNIS_GRAND_SLAM=true"
+
   Update these params from 0/1 to false/true:
 	  - "ODDS_AGGREGATION_ENABLED=false"
 	  - "LIVE_DUMMY_MARKETS_ENABLED=true"
@@ -95,18 +103,17 @@ async function processAllMarkets(network) {
   const errorsMap = new Map();
 
   try {
-    let supportedLiveLeagueIds =
+    const supportedLiveLeagueIds =
       Number(network) == NETWORK.OptimismSepolia ? getTestnetLiveSupportedLeagues() : getLiveSupportedLeagues();
-    supportedLiveLeagueIds = checkTennisIsEnabled(supportedLiveLeagueIds);
-
     const openMarketsMap = await getOpenMarkets(network);
+
     const supportedLiveMarkets = Array.from(openMarketsMap.values())
       .filter((market) => market.statusCode === "ongoing")
       .filter((market) => supportedLiveLeagueIds.includes(market.leagueId));
     const uniqueLiveLeagueIds = uniq(supportedLiveMarkets.map((market) => market.leagueId));
 
-    console.log(`Live markets ${network}: Number of supported live markets ${supportedLiveMarkets.length}`);
     if (supportedLiveMarkets.length > 0) {
+      // Get teams map, bookmakers and spread data from Github
       const teamsMapPromise = fetchTeamsMap();
       const bookmakersDataPromise = readCsvFromUrl(process.env.GITHUB_URL_LIVE_BOOKMAKERS_CSV);
       const spreadDataPromise = readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV);
@@ -116,9 +123,9 @@ async function processAllMarkets(network) {
         spreadDataPromise,
       ]);
 
-      // Fetching games from Optic Odds for given leagues (one API call if no tennis games or max 2 calls for tennis and all other leagues)
+      // Fetching games from Optic Odds for given leagues
+      // one API call if no tennis games or max 2 calls for tennis and all other leagues
       const opticOddsGames = await fetchOpticOddsGamesForLeague(uniqueLiveLeagueIds, Number(network));
-      console.log(`Live markets ${network}: Number of Optic Odds games ${opticOddsGames.length}`);
 
       // Add Optic Odds game data and filter by Optic Odds games (teams name and date)
       const supportedLiveMarketsByOpticOddsGames = supportedLiveMarkets
@@ -145,9 +152,6 @@ async function processAllMarkets(network) {
           return { ...market, opticOddsGameEvent };
         })
         .filter((market) => market.opticOddsGameEvent != undefined);
-      console.log(
-        `Live markets ${network}: Number of Optic Odds matching games ${supportedLiveMarketsByOpticOddsGames.length}`,
-      );
 
       const isDummyMarketsEnabled =
         Number(network) === NETWORK.OptimismSepolia && process.env.LIVE_DUMMY_MARKETS_ENABLED === "true";
@@ -164,9 +168,9 @@ async function processAllMarkets(network) {
           liveOddsProvidersPerSport.set(Number(leagueId), oddsProvidersForSport);
         }
 
-        // FETCHING ODDS BY LEAGUE
+        //============================= FETCHING ODDS BY LEAGUE =============================
         const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
-        let requestUrl = "https://api.opticodds.com/api/v2/game-odds?market_name=Moneyline&odds_format=Decimal";
+        let requestUrl = OPTIC_ODDS_API_ODDS_URL + "market_name=Moneyline&odds_format=Decimal";
         const uniqueProviderLeagueIds = uniq(supportedLiveMarketsByOpticOddsGames.map((game) => game.leagueId));
 
         const opticOddsGameOddsPromises = uniqueProviderLeagueIds.map((uniqueGameByLeague) => {
@@ -183,51 +187,45 @@ async function processAllMarkets(network) {
         });
 
         const oddsPerGameResponses = await Promise.all(opticOddsGameOddsPromises);
-        console.log(`Live markets ${network}: Number of Optic Odds odds ${oddsPerGameResponses.length}`);
+        const oddsPerGames = oddsPerGameResponses.map((oddsPerGameResponse) => oddsPerGameResponse.data.data).flat();
 
-        // FETCHING SCORES FOR ALL GAMES
-        let opticOddsScoresRequestUrl = "https://api.opticodds.com/api/v2/scores?";
-        let numOfGamesWithOdds = 0;
+        //============================= FETCHING SCORES FOR ALL GAMES =============================
+        let opticOddsScoresRequestUrl = OPTIC_ODDS_API_SCORES_URL;
+        const opticOddsScoresPromises = [];
+
         // Add Optic Odds game odds data, filter it and prepare request for scores
         const supportedLiveMarketsByOpticOddsOdds = supportedLiveMarketsByOpticOddsGames
           .map((market) => {
-            const gameOddsResponse = oddsPerGameResponses.find((game) => game.id == market.opticOddsGameEvent.id);
-            const opticOddsGameOdds =
-              gameOddsResponse != undefined && gameOddsResponse.data.data.length > 0
-                ? gameOddsResponse.data.data[0]
-                : undefined;
-
+            const opticOddsGameOdds = oddsPerGames.find((game) => game.id == market.opticOddsGameEvent.id);
             return {
               ...market,
               opticOddsGameOdds,
             };
           })
-          .filter((market) => {
-            const hasOdds = market.opticOddsGameOdds != undefined;
-            if (hasOdds) {
-              numOfGamesWithOdds++;
-
-              opticOddsScoresRequestUrl +=
-                "game_id=" + market.opticoddsGameOdds.id + (numOfGamesWithOdds > 1 ? "&" : "");
+          .filter((market) => market.opticOddsGameOdds != undefined)
+          .map((market, index, markets) => {
+            const gameNumInRequest = (index + 1) % OPTIC_ODDS_API_SCORES_MAX_GAMES;
+            // creating new request after max num og games
+            if (gameNumInRequest == 0) {
+              opticOddsScoresPromises.push(axios.get(opticOddsScoresRequestUrl, { headers }));
+              opticOddsScoresRequestUrl = OPTIC_ODDS_API_SCORES_URL;
             }
-
-            return hasOdds;
+            opticOddsScoresRequestUrl += (gameNumInRequest > 1 ? "&" : "") + "game_id=" + market.opticoddsGameOdds.id;
+            // last game in request
+            if (index == markets.length - 1) {
+              opticOddsScoresPromises.push(axios.get(opticOddsScoresRequestUrl, { headers }));
+            }
           });
-        console.log(
-          `Live markets ${network}: Number of Optic Odds matching odds ${supportedLiveMarketsByOpticOddsOdds.length}`,
-        );
 
-        const opticOddsScoresResponse =
-          numOfGamesWithOdds > 0 ? await axios.get(opticOddsScoresRequestUrl, { headers }) : undefined;
-        console.log(`Live markets ${network}: Number of Optic Odds scores ${opticOddsScoresResponse.length}`);
+        const opticOddsScoresResponses = await Promise.all(opticOddsScoresPromises);
+        const scoresPerGame = opticOddsScoresResponses
+          .map((opticOddsScoresResponse) => opticOddsScoresResponse.data.data)
+          .flat();
 
+        // Add Optic Odds game scores data and filter it
         const supportedLiveMarketsByScores = supportedLiveMarketsByOpticOddsOdds
-          .map((market, index) => {
-            const opticOddsScoreData =
-              opticOddsScoresResponse != undefined && opticOddsScoresResponse.data.data.length > 0
-                ? opticOddsScoresResponse.data.data[index]
-                : undefined;
-
+          .map((market) => {
+            const opticOddsScoreData = scoresPerGame.find((game) => game.id == market.opticOddsGameOdds.id);
             return {
               ...market,
               opticOddsScoreData,
@@ -278,9 +276,6 @@ async function processAllMarkets(network) {
 
             return false;
           });
-        console.log(
-          `Live markets ${network}: Number of Optic Odds matching scores ${supportedLiveMarketsByScores.length}`,
-        );
 
         const liveMarkets = supportedLiveMarketsByScores.map((market) => {
           let gamePaused = false;
@@ -397,9 +392,19 @@ async function processAllMarkets(network) {
         if (Number(network) == NETWORK.OptimismSepolia && isDummyMarketsEnabled) {
           liveMarkets.push(...dummyMarketsLive);
         }
+
+        console.log(`Live markets ${network}:
+          Number of supported live markets ${supportedLiveMarkets.length}
+          Number of Optic Odds games ${opticOddsGames.length} and matching games ${supportedLiveMarketsByOpticOddsGames.length}
+          Number of Optic Odds odds ${oddsPerGames.length} and matching odds ${supportedLiveMarketsByOpticOddsOdds.length}
+          Number of Optic Odds scores ${scoresPerGame.length} and matching scores ${supportedLiveMarketsByScores.length}`);
       } else {
         // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
         console.log("Live markets: Could not find any live matches matching the criteria for team names and date");
+
+        console.log(`Live markets ${network}:
+          Number of supported live markets ${supportedLiveMarkets.length}
+          Number of Optic Odds games ${opticOddsGames.length} and matching games ${supportedLiveMarketsByOpticOddsGames.length}`);
       }
     }
 
@@ -410,7 +415,7 @@ async function processAllMarkets(network) {
       persistErrorMessages(errorsMap, network);
     }
   } catch (e) {
-    console.log(`Error on network ${network}: ${e}`);
+    console.log(`Error processing network ${network}: ${e}`);
   }
 }
 
