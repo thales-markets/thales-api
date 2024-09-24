@@ -117,11 +117,18 @@ async function processAllMarkets(network) {
       const teamsMapPromise = fetchTeamsMap();
       const bookmakersDataPromise = readCsvFromUrl(process.env.GITHUB_URL_LIVE_BOOKMAKERS_CSV);
       const spreadDataPromise = readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV);
-      const [teamsMap, bookmakersData, spreadData] = await Promise.all([
-        teamsMapPromise,
-        bookmakersDataPromise,
-        spreadDataPromise,
-      ]);
+      let teamsMap = new Map();
+      let bookmakersData,
+        spreadData = [];
+      try {
+        [teamsMap, bookmakersData, spreadData] = await Promise.all([
+          teamsMapPromise,
+          bookmakersDataPromise,
+          spreadDataPromise,
+        ]);
+      } catch (e) {
+        console.log(`Live markets (${network}) fetching from Github config data error: ${e}`);
+      }
 
       // Fetching games from Optic Odds for given leagues
       // one API call if no tennis games or max 2 calls for tennis and all other leagues
@@ -186,7 +193,12 @@ async function processAllMarkets(network) {
           return axios.get(requestUrl, { headers });
         });
 
-        const oddsPerGameResponses = await Promise.all(opticOddsGameOddsPromises);
+        let oddsPerGameResponses = [];
+        try {
+          oddsPerGameResponses = await Promise.all(opticOddsGameOddsPromises);
+        } catch (e) {
+          console.log(`Live markets (${network}) fetching Optic Odds game odds data error: ${e}`);
+        }
         const oddsPerGames = oddsPerGameResponses.map((oddsPerGameResponse) => oddsPerGameResponse.data.data).flat();
 
         //============================= FETCHING SCORES FOR ALL GAMES =============================
@@ -217,7 +229,12 @@ async function processAllMarkets(network) {
             }
           });
 
-        const opticOddsScoresResponses = await Promise.all(opticOddsScoresPromises);
+        let opticOddsScoresResponses = [];
+        try {
+          opticOddsScoresResponses = await Promise.all(opticOddsScoresPromises);
+        } catch (e) {
+          console.log(`Live markets (${network}) fetching Optic Odds game scores data error: ${e}`);
+        }
         const scoresPerGame = opticOddsScoresResponses
           .map((opticOddsScoresResponse) => opticOddsScoresResponse.data.data)
           .flat();
@@ -393,16 +410,18 @@ async function processAllMarkets(network) {
           liveMarkets.push(...dummyMarketsLive);
         }
 
-        console.log(`Live markets ${network}:
+        console.log(`Live markets (${network}):
           Number of supported live markets ${supportedLiveMarkets.length}
           Number of Optic Odds games ${opticOddsGames.length} and matching games ${supportedLiveMarketsByOpticOddsGames.length}
           Number of Optic Odds odds ${oddsPerGames.length} and matching odds ${supportedLiveMarketsByOpticOddsOdds.length}
           Number of Optic Odds scores ${scoresPerGame.length} and matching scores ${supportedLiveMarketsByScores.length}`);
       } else {
         // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
-        console.log("Live markets: Could not find any live matches matching the criteria for team names and date");
+        console.log(
+          `Live markets (${network}): Could not find any live matches matching the criteria for team names and date`,
+        );
 
-        console.log(`Live markets ${network}:
+        console.log(`Live markets (${network}):
           Number of supported live markets ${supportedLiveMarkets.length}
           Number of Optic Odds games ${opticOddsGames.length} and matching games ${supportedLiveMarketsByOpticOddsGames.length}`);
       }
@@ -415,7 +434,7 @@ async function processAllMarkets(network) {
       persistErrorMessages(errorsMap, network);
     }
   } catch (e) {
-    console.log(`Error processing network ${network}: ${e}`);
+    console.log(`Live markets (${network}) processing error: ${e}`);
   }
 }
 

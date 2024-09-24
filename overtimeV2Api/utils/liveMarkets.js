@@ -144,7 +144,12 @@ const fetchOpticOddsGamesForLeague = async (leagueIds, network) => {
     promises.push(axios.get(OPTIC_ODDS_API_GAMES_URL + urlParam, { headers }));
   }
 
-  const opticOddsGamesResponses = await Promise.all(promises);
+  let opticOddsGamesResponses = [];
+  try {
+    opticOddsGamesResponses = await Promise.all(promises);
+  } catch (e) {
+    console.log(`Live markets (${network}) fetching Optic Odds games error: ${e}`);
+  }
 
   const opticOddsResponseData = opticOddsGamesResponses
     .map((opticOddsGamesResponse) => opticOddsGamesResponse.data.data)
@@ -152,7 +157,9 @@ const fetchOpticOddsGamesForLeague = async (leagueIds, network) => {
 
   if (opticOddsResponseData.length == 0) {
     if (network != NETWORK.OptimismSepolia) {
-      console.log(`Could not find any live games on the provider side for the given league IDs ${leagueIds}`);
+      console.log(
+        `Live markets (${network}): Could not find any live games on the provider side for the given league IDs ${leagueIds}`,
+      );
     }
     return [];
   } else {
