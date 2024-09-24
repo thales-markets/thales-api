@@ -9,8 +9,9 @@ const { LIVE_TYPE_ID_BASE, MIN_ODDS_FOR_DIFF_CHECKING, MAX_ALLOWED_STALE_ODDS_DE
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const {
-  OPTIC_ODDS_API_ODDS_URL,
+  OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS,
   OPTIC_ODDS_API_SCORES_URL,
+  OPTIC_ODDS_API_ODDS_MAX_GAMES,
   OPTIC_ODDS_API_SCORES_MAX_GAMES,
 } = require("../constants/opticodds");
 const { uniq } = require("lodash");
@@ -177,20 +178,27 @@ async function processAllMarkets(network) {
 
         //============================= FETCHING ODDS BY LEAGUE =============================
         const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
-        let requestUrl = OPTIC_ODDS_API_ODDS_URL + "market_name=Moneyline&odds_format=Decimal";
+        let oddsRequestUrl = OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS;
+        const opticOddsGameOddsPromises = [];
+
         const uniqueProviderLeagueIds = uniq(supportedLiveMarketsByOpticOddsGames.map((game) => game.leagueId));
+        // For each unique league prepare separate request with max num of games
+        uniqueProviderLeagueIds.forEach((uniqueProviderLeagueId) => {
+          supportedLiveMarketsByOpticOddsGames
+            .filter((game) => game.leagueId == uniqueProviderLeagueId)
+            .forEach((market, index, markets) => {
+              oddsRequestUrl += `&game_id=${market.opticOddsGameEvent.id}`;
 
-        const opticOddsGameOddsPromises = uniqueProviderLeagueIds.map((uniqueGameByLeague) => {
-          const gameIdsByLeague = supportedLiveMarketsByOpticOddsGames
-            .filter((game) => game.leagueId == uniqueGameByLeague.leagueId)
-            .map((game) => game.opticOddsGameEvent.id)
-            .join("&game_id=");
-          requestUrl += `&game_id=${gameIdsByLeague}`;
+              const gameNumInRequest = (index + 1) % OPTIC_ODDS_API_ODDS_MAX_GAMES;
+              // creating new request after max num of games or when last game in request
+              if (gameNumInRequest == 0 || index == markets.length - 1) {
+                const liveOddsProvider = liveOddsProvidersPerSport.get(uniqueProviderLeagueId);
+                oddsRequestUrl += `&sportsbook=${liveOddsProvider.join("&sportsbook=")}`;
 
-          const liveOddsProvider = liveOddsProvidersPerSport.get(uniqueGameByLeague.leagueId);
-          requestUrl += `&sportsbook=${liveOddsProvider}`;
-
-          return axios.get(requestUrl, { headers });
+                opticOddsGameOddsPromises.push(axios.get(oddsRequestUrl, { headers }));
+                oddsRequestUrl = OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS;
+              }
+            });
         });
 
         let oddsPerGameResponses = [];
@@ -205,29 +213,24 @@ async function processAllMarkets(network) {
         let opticOddsScoresRequestUrl = OPTIC_ODDS_API_SCORES_URL;
         const opticOddsScoresPromises = [];
 
-        // Add Optic Odds game odds data, filter it and prepare request for scores
+        // Add Optic Odds game odds data and filter it
         const supportedLiveMarketsByOpticOddsOdds = supportedLiveMarketsByOpticOddsGames
           .map((market) => {
             const opticOddsGameOdds = oddsPerGames.find((game) => game.id == market.opticOddsGameEvent.id);
-            return {
-              ...market,
-              opticOddsGameOdds,
-            };
+            return { ...market, opticOddsGameOdds };
           })
-          .filter((market) => market.opticOddsGameOdds != undefined)
-          .map((market, index, markets) => {
-            const gameNumInRequest = (index + 1) % OPTIC_ODDS_API_SCORES_MAX_GAMES;
-            // creating new request after max num og games
-            if (gameNumInRequest == 0) {
-              opticOddsScoresPromises.push(axios.get(opticOddsScoresRequestUrl, { headers }));
-              opticOddsScoresRequestUrl = OPTIC_ODDS_API_SCORES_URL;
-            }
-            opticOddsScoresRequestUrl += (gameNumInRequest > 1 ? "&" : "") + "game_id=" + market.opticoddsGameOdds.id;
-            // last game in request
-            if (index == markets.length - 1) {
-              opticOddsScoresPromises.push(axios.get(opticOddsScoresRequestUrl, { headers }));
-            }
-          });
+          .filter((market) => market.opticOddsGameOdds != undefined);
+        //  Prepare request for scores
+        supportedLiveMarketsByOpticOddsOdds.forEach((market, index, markets) => {
+          const gameNumInRequest = (index + 1) % OPTIC_ODDS_API_SCORES_MAX_GAMES;
+          opticOddsScoresRequestUrl += `${gameNumInRequest > 1 ? "&" : ""}game_id=${market.opticOddsGameOdds.id}`;
+
+          // creating new request after max num of games or when last game in request
+          if (gameNumInRequest == 0 || index == markets.length - 1) {
+            opticOddsScoresPromises.push(axios.get(opticOddsScoresRequestUrl, { headers }));
+            opticOddsScoresRequestUrl = OPTIC_ODDS_API_SCORES_URL;
+          }
+        });
 
         let opticOddsScoresResponses = [];
         try {
@@ -243,10 +246,7 @@ async function processAllMarkets(network) {
         const supportedLiveMarketsByScores = supportedLiveMarketsByOpticOddsOdds
           .map((market) => {
             const opticOddsScoreData = scoresPerGame.find((game) => game.id == market.opticOddsGameOdds.id);
-            return {
-              ...market,
-              opticOddsScoreData,
-            };
+            return { ...market, opticOddsScoreData };
           })
           .filter((market) => {
             if (market.opticOddsScoreData != undefined) {
@@ -385,11 +385,7 @@ async function processAllMarkets(network) {
           ) {
             // RETURNING MARKET WITH ZERO ODDS IF CONDITIONS FOR ODDS ARE NOT MET OR LIVE FLAG ON OPTIC ODDS API IS FALSE BUT GAME IS IN PROGRESS
             market.odds = market.odds.map(() => {
-              return {
-                american: 0,
-                decimal: 0,
-                normalizedImplied: 0,
-              };
+              return { american: 0, decimal: 0, normalizedImplied: 0 };
             });
             return market;
           } else {
