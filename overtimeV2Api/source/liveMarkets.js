@@ -304,7 +304,7 @@ async function processAllMarkets(network) {
             return true;
           });
 
-        const liveMarkets = supportedLiveMarketsByScores.map((market) => {
+        liveMarkets = supportedLiveMarketsByScores.map((market) => {
           let gamePaused = false;
 
           if (
