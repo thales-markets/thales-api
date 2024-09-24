@@ -3,10 +3,12 @@ const { getSpreadData, adjustSpreadOnOdds } = require("overtime-live-trading-uti
 const { getLeagueIsDrawAvailable, getLeagueSport } = require("./sports");
 const oddslib = require("oddslib");
 const { Sport, League } = require("../constants/sports");
+const { OPTIC_ODDS_API_GAMES_URL } = require("../constants/opticodds");
 const teamsMapping = require("../assets/teamsMapping.json");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 const { NETWORK } = require("../constants/networks");
+const { getLeagueOpticOddsName } = require("./sports");
 
 const fetchTeamsMap = async () => {
   const teamsMap = new Map();
@@ -125,45 +127,44 @@ const persistErrorMessages = (errorsMap, network) => {
   });
 };
 
-const checkTennisIsEnabled = (availableLeagueIds) => {
-  const enabledTennisMasters = Number(process.env.ENABLED_TENNIS_MASTERS);
-  const enabledTennisGrandSlam = Number(process.env.ENABLED_TENNIS_GRAND_SLAM);
+const fetchOpticOddsGamesForLeague = async (leagueIds, network) => {
+  const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
+  const promises = [];
 
-  const tennisMastersIndex = availableLeagueIds.indexOf(League.TENNIS_MASTERS);
-  const tennisGrandSlamIndex = availableLeagueIds.indexOf(League.TENNIS_GS);
-
-  if (tennisMastersIndex == -1 && enabledTennisMasters == 1) {
-    availableLeagueIds.push(League.TENNIS_MASTERS);
+  const hasTennis = leagueIds.some((leagueId) => getLeagueSport(leagueId) === Sport.TENNIS);
+  if (hasTennis) {
+    promises.push(axios.get(OPTIC_ODDS_API_GAMES_URL + "sport=tennis", { headers }));
   }
 
-  if (tennisGrandSlamIndex == -1 && enabledTennisGrandSlam == 1) {
-    availableLeagueIds.push(League.TENNIS_GS);
+  const hasOnlyTennis = leagueIds.every((leagueId) => getLeagueSport(leagueId) === Sport.TENNIS);
+  if (!hasOnlyTennis) {
+    const urlParam = leagueIds
+      .filter((leagueId) => getLeagueSport(leagueId) !== Sport.TENNIS)
+      .map((leagueId, index) => (index > 0 ? "&" : "") + "league=" + getLeagueOpticOddsName(leagueId))
+      .join("");
+    promises.push(axios.get(OPTIC_ODDS_API_GAMES_URL + urlParam, { headers }));
   }
 
-  return availableLeagueIds;
-};
-
-const fetchOpticOddsGamesForLeague = async (leagueId, leagueName, network) => {
-  let responseOpticOddsGames;
-  if (getLeagueSport(Number(leagueId)) === Sport.TENNIS) {
-    responseOpticOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?sport=tennis`, {
-      headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-    });
-  } else {
-    responseOpticOddsGames = await axios.get(`https://api.opticodds.com/api/v2/games?league=${leagueName}`, {
-      headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-    });
+  let opticOddsGamesResponses = [];
+  try {
+    opticOddsGamesResponses = await Promise.all(promises);
+  } catch (e) {
+    console.log(`Live markets (${network}) fetching Optic Odds games error: ${e}`);
   }
 
-  const opticOddsResponseDataForLeague = responseOpticOddsGames.data.data;
+  const opticOddsResponseData = opticOddsGamesResponses
+    .map((opticOddsGamesResponse) => opticOddsGamesResponse.data.data)
+    .flat();
 
-  if (opticOddsResponseDataForLeague.length == 0) {
+  if (opticOddsResponseData.length == 0) {
     if (network != NETWORK.OptimismSepolia) {
-      console.log(`Could not find any live games on the provider side for the given league ${leagueName}`);
+      console.log(
+        `Live markets (${network}): Could not find any live games on the provider side for the given league IDs ${leagueIds}`,
+      );
     }
     return [];
   } else {
-    return opticOddsResponseDataForLeague;
+    return opticOddsResponseData;
   }
 };
 
@@ -171,6 +172,5 @@ module.exports = {
   fetchTeamsMap,
   adjustSpreadAndReturnMarketWithOdds,
   persistErrorMessages,
-  checkTennisIsEnabled,
   fetchOpticOddsGamesForLeague,
 };
