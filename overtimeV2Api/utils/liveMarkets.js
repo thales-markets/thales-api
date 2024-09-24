@@ -2,12 +2,11 @@ const axios = require("axios");
 const { getSpreadData, adjustSpreadOnOdds } = require("overtime-live-trading-utils");
 const { getLeagueIsDrawAvailable, getLeagueSport } = require("./sports");
 const oddslib = require("oddslib");
-const { Sport, League } = require("../constants/sports");
+const { Sport } = require("../constants/sports");
 const { OPTIC_ODDS_API_GAMES_URL } = require("../constants/opticodds");
 const teamsMapping = require("../assets/teamsMapping.json");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
-const { NETWORK } = require("../constants/networks");
 const { getLeagueOpticOddsName } = require("./sports");
 
 const fetchTeamsMap = async () => {
@@ -126,7 +125,7 @@ const persistErrorMessages = (errorsMap, network) => {
   });
 };
 
-const fetchOpticOddsGamesForLeague = async (leagueIds, network) => {
+const fetchOpticOddsGamesForLeague = async (leagueIds, isTestnet) => {
   const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
   const promises = [];
 
@@ -148,7 +147,7 @@ const fetchOpticOddsGamesForLeague = async (leagueIds, network) => {
   try {
     opticOddsGamesResponses = await Promise.all(promises);
   } catch (e) {
-    console.log(`Live markets (${network}) fetching Optic Odds games error: ${e}`);
+    console.log(`Live markets: Fetching Optic Odds games error: ${e}`);
   }
 
   const opticOddsResponseData = opticOddsGamesResponses
@@ -156,9 +155,9 @@ const fetchOpticOddsGamesForLeague = async (leagueIds, network) => {
     .flat();
 
   if (opticOddsResponseData.length == 0) {
-    if (network != NETWORK.OptimismSepolia) {
+    if (!isTestnet) {
       console.log(
-        `Live markets (${network}): Could not find any live games on the provider side for the given league IDs ${leagueIds}`,
+        `Live markets: Could not find any live games on the provider side for the given league IDs ${leagueIds}`,
       );
     }
     return [];

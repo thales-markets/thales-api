@@ -53,9 +53,7 @@ async function processLiveMarkets() {
         try {
           const startTime = new Date().getTime();
           console.log(`Live markets ${network}: process live markets`);
-          isTestnet
-            ? await Promise.all([processAllMarkets(NETWORK.OptimismSepolia)])
-            : await Promise.all([processAllMarkets(NETWORK.Optimism), processAllMarkets(NETWORK.Arbitrum)]);
+          await processAllMarkets(isTestnet);
           const endTime = new Date().getTime();
           console.log(
             `Live markets ${network}: === Seconds for processing live markets: ${((endTime - startTime) / 1000).toFixed(
@@ -97,14 +95,16 @@ async function processLiveMarkets() {
     - Get OpticOdds scores from OpticOdds API
 
 */
-async function processAllMarkets(network) {
+async function processAllMarkets(isTestnet) {
+  const SUPPORTED_NETWORKS = isTestnet ? [NETWORK.OptimismSepolia] : [NETWORK.Optimism, NETWORK.Arbitrum];
+
   let liveMarkets = [];
   const errorsMap = new Map();
 
   try {
-    const supportedLiveLeagueIds =
-      Number(network) == NETWORK.OptimismSepolia ? getTestnetLiveSupportedLeagues() : getLiveSupportedLeagues();
-    const openMarketsMap = await getOpenMarkets(network);
+    const supportedLiveLeagueIds = isTestnet ? getTestnetLiveSupportedLeagues() : getLiveSupportedLeagues();
+    // Read open markets only from one network as markets are the same on all networks
+    const openMarketsMap = await getOpenMarkets(SUPPORTED_NETWORKS[0]);
 
     const supportedLiveMarkets = Array.from(openMarketsMap.values())
       .filter((market) => market.statusCode === "ongoing")
@@ -124,14 +124,14 @@ async function processAllMarkets(network) {
           spreadDataPromise,
         ]);
       } catch (e) {
-        console.log(`Live markets (${network}) fetching from Github config data error: ${e}`);
+        console.log(`Live markets: Fetching from Github config data error: ${e}`);
         teamsMap = new Map();
         bookmakersData = spreadData = [];
       }
 
       // Fetching games from Optic Odds for given leagues
       // one API call if no tennis games or max 2 calls for tennis and all other leagues
-      const opticOddsGames = await fetchOpticOddsGamesForLeague(uniqueLiveLeagueIds, Number(network));
+      const opticOddsGames = await fetchOpticOddsGamesForLeague(uniqueLiveLeagueIds, isTestnet);
 
       // Add Optic Odds game data and filter by Optic Odds games (teams name and date)
       const supportedLiveMarketsByOpticOddsGames = supportedLiveMarkets
@@ -159,8 +159,7 @@ async function processAllMarkets(network) {
         })
         .filter((market) => market.opticOddsGameEvent != undefined);
 
-      const isDummyMarketsEnabled =
-        Number(network) === NETWORK.OptimismSepolia && process.env.LIVE_DUMMY_MARKETS_ENABLED === "true";
+      const isDummyMarketsEnabled = isTestnet && process.env.LIVE_DUMMY_MARKETS_ENABLED === "true";
 
       if (supportedLiveMarketsByOpticOddsGames.length > 0 || isDummyMarketsEnabled) {
         // Extracting bookmakers for league
@@ -203,7 +202,7 @@ async function processAllMarkets(network) {
         try {
           oddsPerGameResponses = await Promise.all(opticOddsGameOddsPromises);
         } catch (e) {
-          console.log(`Live markets (${network}) fetching Optic Odds game odds data error: ${e}`);
+          console.log(`Live markets: Fetching Optic Odds game odds data error: ${e}`);
           oddsPerGameResponses = [];
         }
         const oddsPerGames = oddsPerGameResponses.map((oddsPerGameResponse) => oddsPerGameResponse.data.data).flat();
@@ -219,13 +218,18 @@ async function processAllMarkets(network) {
             return { ...market, opticOddsGameOdds };
           })
           .filter((market) => market.opticOddsGameOdds != undefined);
+
         //  Prepare request for scores
-        supportedLiveMarketsByOpticOddsOdds.forEach((market, index, markets) => {
+        const uniqueOpticOddsGameIds = uniq(
+          supportedLiveMarketsByOpticOddsOdds.map((market) => market.opticOddsGameOdds.id),
+        );
+        // For each unique game ID prepare separate request with max num of games
+        uniqueOpticOddsGameIds.forEach((gameId, index, allGameIds) => {
           const gameNumInRequest = (index + 1) % OPTIC_ODDS_API_SCORES_MAX_GAMES;
-          opticOddsScoresRequestUrl += `${gameNumInRequest > 1 ? "&" : ""}game_id=${market.opticOddsGameOdds.id}`;
+          opticOddsScoresRequestUrl += `${gameNumInRequest > 1 ? "&" : ""}game_id=${gameId}`;
 
           // creating new request after max num of games or when last game in request
-          if (gameNumInRequest == 0 || index == markets.length - 1) {
+          if (gameNumInRequest == 0 || index == allGameIds.length - 1) {
             opticOddsScoresPromises.push(axios.get(opticOddsScoresRequestUrl, { headers }));
             opticOddsScoresRequestUrl = OPTIC_ODDS_API_SCORES_URL;
           }
@@ -235,7 +239,7 @@ async function processAllMarkets(network) {
         try {
           opticOddsScoresResponses = await Promise.all(opticOddsScoresPromises);
         } catch (e) {
-          console.log(`Live markets (${network}) fetching Optic Odds game scores data error: ${e}`);
+          console.log(`Live markets: Fetching Optic Odds game scores data error: ${e}`);
           opticOddsScoresResponses = [];
         }
         const scoresPerGame = opticOddsScoresResponses
@@ -398,35 +402,35 @@ async function processAllMarkets(network) {
           }
         });
 
-        if (Number(network) == NETWORK.OptimismSepolia && isDummyMarketsEnabled) {
+        if (isTestnet && isDummyMarketsEnabled) {
           liveMarkets.push(...dummyMarketsLive);
         }
 
-        console.log(`Live markets (${network}):
+        console.log(`Live markets:
           Number of supported live markets ${supportedLiveMarkets.length}
           Number of Optic Odds games ${opticOddsGames.length} and matching games ${supportedLiveMarketsByOpticOddsGames.length}
           Number of Optic Odds odds ${oddsPerGames.length} and matching odds ${supportedLiveMarketsByOpticOddsOdds.length}
           Number of Optic Odds scores ${scoresPerGame.length} and matching scores ${supportedLiveMarketsByScores.length}`);
       } else {
         // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
-        console.log(
-          `Live markets (${network}): Could not find any live matches matching the criteria for team names and date`,
-        );
+        console.log(`Live markets: Could not find any live matches matching the criteria for team names and date`);
 
-        console.log(`Live markets (${network}):
+        console.log(`Live markets:
           Number of supported live markets ${supportedLiveMarkets.length}
           Number of Optic Odds games ${opticOddsGames.length} and matching games ${supportedLiveMarketsByOpticOddsGames.length}`);
       }
     }
 
-    redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets), function () {});
+    SUPPORTED_NETWORKS.forEach((network) => {
+      redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets), function () {});
 
-    // PERSISTING ERROR MESSAGES
-    if (errorsMap.size > 0) {
-      persistErrorMessages(errorsMap, network);
-    }
+      // PERSISTING ERROR MESSAGES
+      if (errorsMap.size > 0) {
+        persistErrorMessages(errorsMap, network);
+      }
+    });
   } catch (e) {
-    console.log(`Live markets (${network}) processing error: ${e}`);
+    console.log(`Live markets: Processing error: ${e}`);
   }
 }
 
