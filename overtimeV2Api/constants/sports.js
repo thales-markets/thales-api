@@ -53,6 +53,7 @@ const League = {
   FRANCE_CUP: 134,
   SPAIN_CUP: 138,
   ITALY_CUP: 141,
+  TENNIS_WTA: 152,
   TENNIS_GS: 153,
   TENNIS_MASTERS: 156,
   SUMMER_OLYMPICS_TENNIS: 158,
@@ -579,6 +580,17 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.TENNIS_WTA]: {
+    sport: Sport.TENNIS,
+    id: League.TENNIS_WTA,
+    label: "WTA Events",
+    scoringType: ScoringType.SETS,
+    matchResolveType: MatchResolveType.REGULAR,
+    periodType: PeriodType.SET,
+    isDrawAvailable: false,
     live: false,
     isLiveTestnet: false,
   },
@@ -1535,7 +1547,14 @@ const LeagueMap = {
   },
 };
 
-const LEAGUES_NO_FORMAL_HOME_AWAY = [League.CSGO, League.DOTA2, League.LOL, League.TENNIS_GS, League.TENNIS_MASTERS];
+const LEAGUES_NO_FORMAL_HOME_AWAY = [
+  League.CSGO,
+  League.DOTA2,
+  League.LOL,
+  League.TENNIS_WTA,
+  League.TENNIS_GS,
+  League.TENNIS_MASTERS,
+];
 
 const LEAGUES_NO_LIVE_CONSTRAINTS = [League.SUMMER_OLYMPICS_RUGBY, League.SUMMER_OLYMPICS_RUGBY_WOMEN];
 
@@ -1596,6 +1615,7 @@ const SportIdMapEnetpulse = {
   17: 73, // Europa League
   76: 76, // World Cup Woman
   14: 87, // La Liga
+  152: 152, // Tennis WTA
   153: 153, // Tennis GS
   156: 156, // Tennis Masters 1000
   158: 158, // Summer Olympics Tennnis
