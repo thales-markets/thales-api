@@ -75,14 +75,12 @@ async function processLiveMarkets() {
     - "LIVE_ODDS_PROVIDERS=draftkings,bovada,espn bet"
 
   Remove from overtime-v2-api env:
-    - "ENABLED_TENNIS_MASTERS=true"
-    - "ENABLED_TENNIS_GRAND_SLAM=true"
+    - "ENABLED_TENNIS_MASTERS=1"
+    - "ENABLED_TENNIS_GRAND_SLAM=1"
 
   Update these params from 0/1 to false/true:
 	  - "ODDS_AGGREGATION_ENABLED=false"
 	  - "LIVE_DUMMY_MARKETS_ENABLED=true"
-	  - "ENABLED_TENNIS_MASTERS=true"
-	  - "ENABLED_TENNIS_GRAND_SLAM=true"
 
   Processing steps:
     - Get supported live league IDs from config(LeagueMap) and from env for tennis
@@ -114,9 +112,7 @@ async function processAllMarkets(network) {
       const teamsMapPromise = fetchTeamsMap();
       const bookmakersDataPromise = readCsvFromUrl(process.env.GITHUB_URL_LIVE_BOOKMAKERS_CSV);
       const spreadDataPromise = readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV);
-      let teamsMap = new Map();
-      let bookmakersData,
-        spreadData = [];
+      let teamsMap, bookmakersData, spreadData;
       try {
         [teamsMap, bookmakersData, spreadData] = await Promise.all([
           teamsMapPromise,
@@ -125,6 +121,8 @@ async function processAllMarkets(network) {
         ]);
       } catch (e) {
         console.log(`Live markets (${network}) fetching from Github config data error: ${e}`);
+        teamsMap = new Map();
+        bookmakersData = spreadData = [];
       }
 
       // Fetching games from Optic Odds for given leagues
@@ -220,6 +218,7 @@ async function processAllMarkets(network) {
           oddsPerGameResponses = await Promise.all(opticOddsGameOddsPromises);
         } catch (e) {
           console.log(`Live markets (${network}) fetching Optic Odds game odds data error: ${e}`);
+          oddsPerGameResponses = [];
         }
         const oddsPerGames = oddsPerGameResponses.map((oddsPerGameResponse) => oddsPerGameResponse.data.data).flat();
 
@@ -251,6 +250,7 @@ async function processAllMarkets(network) {
           opticOddsScoresResponses = await Promise.all(opticOddsScoresPromises);
         } catch (e) {
           console.log(`Live markets (${network}) fetching Optic Odds game scores data error: ${e}`);
+          opticOddsScoresResponses = [];
         }
         const scoresPerGame = opticOddsScoresResponses
           .map((opticOddsScoresResponse) => opticOddsScoresResponse.data.data)
