@@ -353,6 +353,8 @@ async function processAllMarkets(network) {
 
           const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
 
+          const apiResponse = { ...market.opticOddsGameOdds };
+
           delete market.opticOddsGameEvent;
           delete market.opticOddsGameOdds;
           delete market.opticOddsScoreData;
@@ -365,12 +367,12 @@ async function processAllMarkets(network) {
           market.proof = [];
           market.homeScoreByPeriod = gamesHomeScoreByPeriod;
           market.awayScoreByPeriod = gamesAwayScoreByPeriod;
-          console.log("READY TO FETCH PARENT ODDS: ", apiResponseWithOdds);
+          console.log("READY TO FETCH PARENT ODDS: ");
 
           if (isLive == true) {
             const processedMarket = processMarket(
               market,
-              apiResponseWithOdds,
+              apiResponse,
               liveOddsProviders,
               spreadData,
               getLeagueIsDrawAvailable(market.leagueId),
