@@ -593,8 +593,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
+    live: true,
+    isLiveTestnet: true,
   },
   [League.TENNIS_GS]: {
     sport: Sport.TENNIS,
@@ -606,7 +606,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.TENNIS_MASTERS]: {
@@ -618,7 +618,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_TENNIS]: {
@@ -1497,8 +1497,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    live: true,
+    isLiveTestnet: true,
   },
   [League.ENGLAND_LEGAUE_1]: {
     sport: Sport.SOCCER,

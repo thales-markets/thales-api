@@ -127,9 +127,11 @@ const persistErrorMessages = (errorsMap, network) => {
 const checkTennisIsEnabled = (availableLeagueIds) => {
   const enabledTennisMasters = Number(process.env.ENABLED_TENNIS_MASTERS);
   const enabledTennisGrandSlam = Number(process.env.ENABLED_TENNIS_GRAND_SLAM);
+  const enabledTennisWtaEvents = Number(process.env.ENABLED_TENNIS_WTA_EVENTS);
 
   const tennisMastersIndex = availableLeagueIds.indexOf(League.TENNIS_MASTERS);
   const tennisGrandSlamIndex = availableLeagueIds.indexOf(League.TENNIS_GS);
+  const tennisWtaEventsIndex = availableLeagueIds.indexOf(League.TENNIS_WTA);
 
   if (tennisMastersIndex == -1 && enabledTennisMasters == 1) {
     availableLeagueIds.push(League.TENNIS_MASTERS);
@@ -137,6 +139,10 @@ const checkTennisIsEnabled = (availableLeagueIds) => {
 
   if (tennisGrandSlamIndex == -1 && enabledTennisGrandSlam == 1) {
     availableLeagueIds.push(League.TENNIS_GS);
+  }
+
+  if (tennisWtaEventsIndex == -1 && enabledTennisWtaEvents == 1) {
+    availableLeagueIds.push(League.TENNIS_WTA);
   }
 
   return availableLeagueIds;
