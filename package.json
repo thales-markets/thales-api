@@ -31,7 +31,7 @@
     "node-cache": "^5.1.2",
     "node-fetch": "^2.6.1",
     "oddslib": "^2.1.1",
-    "overtime-live-trading-utils": "^0.1.11",
+    "overtime-live-trading-utils": "^0.1.12",
     "redis": "^3.0.2",
     "thales-data": "^3.0.10",
     "twitter-api-v2": "^1.4.1",
