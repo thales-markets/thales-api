@@ -75,6 +75,7 @@ async function processLiveMarkets() {
   Remove from overtime-v2-api env:
     - "ENABLED_TENNIS_MASTERS=1"
     - "ENABLED_TENNIS_GRAND_SLAM=1"
+    - "ENABLED_TENNIS_WTA_EVENTS=1"
 
   Update these params from 0/1 to false/true:
 	  - "ODDS_AGGREGATION_ENABLED=false"
