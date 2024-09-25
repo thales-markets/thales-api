@@ -16,6 +16,7 @@ const ENDPOINTS = {
   BANNERS_V2: "/banners-v2/:networkParam",
   BANNERS_V2_IMAGE: "/banners-v2/image/:imageName",
   PROMOTIONS: "/promotions",
+  PROMOTIONS_STATIC: "/promotions/static",
   THALES_BANNERS: "/thales-banners/:networkParam",
   THALES_BANNERS_IMAGE: "/thales-banners/image/:imageName",
   SPEED_BANNERS: "/speed-banners/:networkParam",

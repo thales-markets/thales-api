@@ -127,6 +127,7 @@ const League = {
   ENGLAND_EFL_CUP: 20125,
   ENGLAND_LEGAUE_1: 20126,
   URUGUAY_PRIMERA_DIVISION: 20127,
+  EUROCUP: 20200,
   GOLF_H2H: 100021,
   GOLF_WINNER: 100121,
 };
@@ -592,8 +593,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
+    live: true,
+    isLiveTestnet: true,
   },
   [League.TENNIS_GS]: {
     sport: Sport.TENNIS,
@@ -605,7 +606,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.TENNIS_MASTERS]: {
@@ -617,7 +618,7 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
+    live: true,
     isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_TENNIS]: {
@@ -1496,8 +1497,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    live: true,
+    isLiveTestnet: true,
   },
   [League.ENGLAND_LEGAUE_1]: {
     sport: Sport.SOCCER,
@@ -1522,6 +1523,18 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
+    live: false,
+    isLiveTestnet: false,
+  },
+  [League.EUROCUP]: {
+    sport: Sport.BASKETBALL,
+    id: League.EUROCUP,
+    label: "Euroleague",
+    provider: Provider.OPTICODDS,
+    scoringType: ScoringType.POINTS,
+    matchResolveType: MatchResolveType.OVERTIME,
+    periodType: PeriodType.QUARTER,
+    isDrawAvailable: false,
     live: false,
     isLiveTestnet: false,
   },
@@ -1729,6 +1742,7 @@ const SportIdMapOpticOdds = {
   20125: "England - EFL Cup",
   20126: "England - League 1",
   20127: "Uruguay - Primera Division",
+  20200: "Eurocup",
 };
 
 module.exports = {
