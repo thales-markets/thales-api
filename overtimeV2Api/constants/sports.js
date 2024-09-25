@@ -127,6 +127,7 @@ const League = {
   ENGLAND_EFL_CUP: 20125,
   ENGLAND_LEGAUE_1: 20126,
   URUGUAY_PRIMERA_DIVISION: 20127,
+  EUROCUP: 20200,
   GOLF_H2H: 100021,
   GOLF_WINNER: 100121,
 };
@@ -1525,6 +1526,18 @@ const LeagueMap = {
     live: false,
     isLiveTestnet: false,
   },
+  [League.EUROCUP]: {
+    sport: Sport.BASKETBALL,
+    id: League.EUROCUP,
+    label: "Euroleague",
+    provider: Provider.OPTICODDS,
+    scoringType: ScoringType.POINTS,
+    matchResolveType: MatchResolveType.OVERTIME,
+    periodType: PeriodType.QUARTER,
+    isDrawAvailable: false,
+    live: false,
+    isLiveTestnet: false,
+  },
   [League.GOLF_H2H]: {
     sport: Sport.GOLF,
     id: League.GOLF_H2H,
@@ -1729,6 +1742,7 @@ const SportIdMapOpticOdds = {
   20125: "England - EFL Cup",
   20126: "England - League 1",
   20127: "Uruguay - Primera Division",
+  20200: "Eurocup",
 };
 
 module.exports = {
