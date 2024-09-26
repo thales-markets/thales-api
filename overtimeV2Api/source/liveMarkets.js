@@ -363,7 +363,6 @@ async function processAllMarkets(isTestnet) {
           market.proof = [];
           market.homeScoreByPeriod = gamesHomeScoreByPeriod;
           market.awayScoreByPeriod = gamesAwayScoreByPeriod;
-          console.log("READY TO FETCH PARENT ODDS: ");
 
           if (isLive == true) {
             const processedMarket = processMarket(
