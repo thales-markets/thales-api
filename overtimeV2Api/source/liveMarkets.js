@@ -5,7 +5,12 @@ const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const axios = require("axios");
 const { getAverageOdds } = require("../utils/markets");
-const { LIVE_TYPE_ID_BASE, MIN_ODDS_FOR_DIFF_CHECKING, MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
+const {
+  LIVE_TYPE_ID_BASE,
+  MIN_ODDS_FOR_DIFF_CHECKING,
+  MAX_ALLOWED_STALE_ODDS_DELAY,
+  MAX_ALLOWED_STALE_ODDS_POLLING_DELAY,
+} = require("../constants/markets");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const { groupBy } = require("lodash");
@@ -170,6 +175,8 @@ async function processAllMarkets(network) {
 
       const responsesOddsPerGame = await Promise.all(urlsGamesOdds);
 
+      const lastPolledByLeague = {};
+
       // MATCHING TEAM NAMES AND DATE AGAIN FOR EXTRACTING ODDS RESPONSE
       const filteredMarketsWithLiveOdds = filteredMarkets.map(async (market) => {
         const responseObject = responsesOddsPerGame.find((responseObject) => {
@@ -195,6 +202,7 @@ async function processAllMarkets(network) {
 
         // FETCHING CURRENT SCORE AND CLOCK FOR THE GAME
         if (responseObject != undefined) {
+          const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
           const gameWithOdds = responseObject.data.data[0];
 
           let gamePaused = false;
@@ -208,6 +216,32 @@ async function processAllMarkets(network) {
               const now = new Date();
               const timeDiff = now.getTime() - oddsDate.getTime();
               return timeDiff > MAX_ALLOWED_STALE_ODDS_DELAY;
+            })
+          ) {
+            gamePaused = true;
+          }
+
+          const lastPolledLeague =
+            lastPolledByLeague[gameWithOdds.league] ||
+            (
+              await axios.get(
+                `https://api.opticodds.com/api/v3/sportsbooks/last-polled?league=${gameWithOdds.league}&sportsbook=${liveOddsProviders[0]}`,
+                {
+                  headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
+                },
+              )
+            ).data.data[0];
+          lastPolledByLeague[gameWithOdds.league] = lastPolledLeague;
+
+          if (
+            lastPolledLeague.sportsbooks.some((sportsbook) => {
+              if (typeof sportsbook.timestamp !== "number") {
+                return true;
+              }
+              const oddsDate = new Date(sportsbook.timestamp * 1000);
+              const now = new Date();
+              const timeDiff = now.getTime() - oddsDate.getTime();
+              return timeDiff > MAX_ALLOWED_STALE_ODDS_POLLING_DELAY;
             })
           ) {
             gamePaused = true;
@@ -285,8 +319,6 @@ async function processAllMarkets(network) {
             gamesHomeScoreByPeriod.push(resultInCurrentSet.home);
             gamesAwayScoreByPeriod.push(resultInCurrentSet.away);
           }
-
-          const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
 
           // EXTRACTING ODDS FROM THE RESPONSE
           const linesMap = extractOddsForGamePerProvider(
