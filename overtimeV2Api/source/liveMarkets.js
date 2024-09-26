@@ -33,7 +33,12 @@ const {
   fetchResultInCurrentSet,
   MONEYLINE,
 } = require("overtime-live-trading-utils");
-const { fetchTeamsMap, persistErrorMessages, fetchOpticOddsGamesForLeague } = require("../utils/liveMarkets");
+const {
+  fetchTeamsMap,
+  adjustSpreadAndReturnMarketWithOdds,
+  persistErrorMessages,
+  fetchOpticOddsGamesForLeague,
+} = require("../utils/liveMarkets");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
@@ -67,20 +72,6 @@ async function processLiveMarkets() {
 }
 
 /*
-  Remove from thales-api env:
-	  - "ODDS_AGGREGATION_ENABLED=0"
-	  - "LIVE_DUMMY_MARKETS_ENABLED=1"
-    - "LIVE_ODDS_PROVIDERS=draftkings,bovada,espn bet"
-
-  Remove from overtime-v2-api env:
-    - "ENABLED_TENNIS_MASTERS=1"
-    - "ENABLED_TENNIS_GRAND_SLAM=1"
-    - "ENABLED_TENNIS_WTA_EVENTS=1"
-
-  Update these params from 0/1 to false/true:
-	  - "ODDS_AGGREGATION_ENABLED=false"
-	  - "LIVE_DUMMY_MARKETS_ENABLED=true"
-
   Processing steps:
     - Get supported live league IDs from config(LeagueMap) and from env for tennis
     - Get open markets from Redis and filter by ongoing and live supported
@@ -414,12 +405,12 @@ async function processAllMarkets(isTestnet) {
     }
 
     SUPPORTED_NETWORKS.forEach((network) => {
-      redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets), function () {});
-
       // PERSISTING ERROR MESSAGES
       if (errorsMap.size > 0) {
         persistErrorMessages(errorsMap, network);
       }
+
+      redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets), function () {});
     });
   } catch (e) {
     console.log(`Live markets: Processing error: ${e}`);
