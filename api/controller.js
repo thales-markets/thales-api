@@ -4,7 +4,6 @@ const express = require("express");
 const request = require("request");
 const compression = require("compression");
 const app = express();
-const UglifyJS = require('uglify-js');
 
 const stakersRoutes = require("./routes/stakers.route");
 const cacheControlRoutes = require("./routes/cache.route");
@@ -263,28 +262,6 @@ app.get(ENDPOINTS.PROMOTIONS, async (req, res) => {
     branchName ? branchName : "main"
   }/src/assets/promotions/index.json`;
   request.get(banners).pipe(res);
-});
-
-app.get(ENDPOINTS.PROMOTIONS_STATIC, async (req, res) => {
-  const branchName = req.query["branch-name"];
-  const promotionsJsonUrl = `https://raw.githubusercontent.com/thales-markets/thales-sport-markets/${
-    branchName ? branchName : "main"
-  }/src/assets/promotions/index.json`;
-
-  try {
-    request(promotionsJsonUrl, (error, response, body) => {
-      if (error) {
-        console.log(error);
-        res.status(500).send("Error fetching promotions.");
-        return;
-      }
-      const minifiedData = UglifyJS.minify(`window.promotions = ${body};`).code;
-      res.send(minifiedData);
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send("Error fetching promotions.");
-  }
 });
 
 app.get(ENDPOINTS.LIVE_RESULT, (req, res) => {
