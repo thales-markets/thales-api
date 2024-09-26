@@ -1529,7 +1529,8 @@ const LeagueMap = {
   [League.EUROCUP]: {
     sport: Sport.BASKETBALL,
     id: League.EUROCUP,
-    label: "Euroleague",
+    label: "Eurocup",
+    opticOddsName: "Eurocup",
     provider: Provider.OPTICODDS,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.OVERTIME,
