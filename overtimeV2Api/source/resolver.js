@@ -286,12 +286,16 @@ async function resolveMarkets(network) {
             (singleMarket) =>
               singleMarket.typeId === combinedPosition.typeId && singleMarket.line === combinedPosition.line,
           );
-          if (singleMarket.isResolved && !singleMarket.winningPositions.includes(combinedPosition.position)) {
+          if (
+            singleMarket &&
+            singleMarket.isResolved &&
+            !singleMarket.winningPositions.includes(combinedPosition.position)
+          ) {
             hasLosingPosition = true;
             break;
           }
-          hasOpenPosition = singleMarket.isOpen || singleMarket.isPaused;
-          hasCancelledPosition = singleMarket.isCancelled;
+          hasOpenPosition = !singleMarket || singleMarket.isOpen || singleMarket.isPaused;
+          hasCancelledPosition = singleMarket && singleMarket.isCancelled;
         }
 
         // TODO: check logic with multiple (or zero) winning positions
