@@ -362,9 +362,8 @@ async function processAllMarkets(isTestnet) {
             MIN_ODDS_FOR_DIFF_CHECKING,
           );
 
-          const isThere100PercentOdd = oddsList.some(
-            (oddsObject) => oddsObject.homeOdds == 1 || oddsObject.awayOdds == 1 || oddsObject.drawOdds == 1,
-          );
+          const opticOddsHomeTeam = market.opticOddsGameOdds.home_team;
+          const opticOddsAwayTeam = market.opticOddsGameOdds.away_team;
 
           delete market.opticOddsGameEvent;
           delete market.opticOddsGameOdds;
@@ -379,11 +378,21 @@ async function processAllMarkets(isTestnet) {
           market.homeScoreByPeriod = gamesHomeScoreByPeriod;
           market.awayScoreByPeriod = gamesAwayScoreByPeriod;
 
-          if (
-            isThere100PercentOdd ||
-            (oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0) ||
-            isLive == false
-          ) {
+          const isThere100PercentOdd = oddsList.some(
+            (oddsObject) => oddsObject.homeOdds == 1 || oddsObject.awayOdds == 1 || oddsObject.drawOdds == 1,
+          );
+          const isZeroOdds = oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0;
+
+          if (isThere100PercentOdd || isZeroOdds || !isLive) {
+            errorsMap.set(market.gameId, {
+              errorTime: new Date().toUTCString(),
+              errorMessage: isThere100PercentOdd
+                ? `Some odds returned by provider are 1 for game ${opticOddsHomeTeam} - ${opticOddsAwayTeam}`
+                : isZeroOdds
+                ? `Zero odds returned by provider for game ${opticOddsHomeTeam} - ${opticOddsAwayTeam}`
+                : `Provider marked game ${opticOddsHomeTeam} - ${opticOddsAwayTeam} as not live`,
+            });
+
             // RETURNING MARKET WITH ZERO ODDS IF CONDITIONS FOR ODDS ARE NOT MET OR LIVE FLAG ON OPTIC ODDS API IS FALSE BUT GAME IS IN PROGRESS
             market.odds = market.odds.map(() => {
               return { american: 0, decimal: 0, normalizedImplied: 0 };
@@ -423,12 +432,12 @@ async function processAllMarkets(isTestnet) {
     }
 
     SUPPORTED_NETWORKS.forEach((network) => {
-      redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets), function () {});
-
       // PERSISTING ERROR MESSAGES
       if (errorsMap.size > 0) {
         persistErrorMessages(errorsMap, network);
       }
+
+      redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets), function () {});
     });
   } catch (e) {
     console.log(`Live markets: Processing error: ${e}`);

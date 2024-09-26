@@ -4,7 +4,7 @@ const express = require("express");
 const request = require("request");
 const compression = require("compression");
 const app = express();
-const UglifyJS = require('uglify-js');
+const UglifyJS = require("uglify-js");
 
 const stakersRoutes = require("./routes/stakers.route");
 const cacheControlRoutes = require("./routes/cache.route");
@@ -1290,7 +1290,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   });
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
   const network = req.params.networkParam;
   const typeId = req.query.typeId;
   const sport = req.query.sport;
@@ -1340,6 +1340,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
     return;
   }
 
+  const errorsMap = await getLiveMarketsErrorsMap(network);
   const errors = [];
   redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], async function (err, obj) {
     const markets = JSON.parse(obj);
@@ -1352,6 +1353,13 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           (!typeId || Number(market.typeId) === Number(typeId)),
       );
 
+      filteredMarkets.forEach((market) => {
+        const errorsDetails = errorsMap.get(market.gameId);
+        if (errorsDetails != undefined) {
+          errors.push({ gameId: market.gameId, errorsDetails });
+        }
+      });
+
       res.send({
         markets: filteredMarkets,
         errors,
@@ -1361,6 +1369,15 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
     }
   });
 });
+
+function getLiveMarketsErrorsMap(network) {
+  return new Promise(function (resolve) {
+    redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
+      const liveMarketsErrorsMap = new Map(JSON.parse(obj));
+      resolve(liveMarketsErrorsMap);
+    });
+  });
+}
 
 function getOpenMarketsMap(network) {
   return new Promise(function (resolve) {
@@ -1417,7 +1434,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKET, async (req, res) => {
   const marketAddress = req.params.marketAddress;
   try {
     const openMarkets = await getLiveMarketsMap(network);
-    const market = Array.from(openMarkets).find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
+    const market = Array.from(openMarkets).find(
+      (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
+    );
 
     if (market) {
       return res.send(market);
@@ -1625,17 +1644,15 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ, (req, res) => {
   });
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ, (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ, async (req, res) => {
   const networkId = req.params.networkParam;
+  const errorsMap = await getLiveMarketsErrorsMap(networkId);
 
-  redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId], function (err, obj) {
-    const messagesMap = new Map(JSON.parse(obj));
-    try {
-      res.send(Object.fromEntries(messagesMap));
-    } catch (e) {
-      console.log(e);
-    }
-  });
+  try {
+    res.send(Object.fromEntries(errorsMap));
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 // V1 Digital Options and Sport Markets API with cache response logic
