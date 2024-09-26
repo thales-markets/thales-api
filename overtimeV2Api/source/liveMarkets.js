@@ -71,20 +71,6 @@ async function processLiveMarkets() {
 }
 
 /*
-  Remove from thales-api env:
-	  - "ODDS_AGGREGATION_ENABLED=0"
-	  - "LIVE_DUMMY_MARKETS_ENABLED=1"
-    - "LIVE_ODDS_PROVIDERS=draftkings,bovada,espn bet"
-
-  Remove from overtime-v2-api env:
-    - "ENABLED_TENNIS_MASTERS=1"
-    - "ENABLED_TENNIS_GRAND_SLAM=1"
-    - "ENABLED_TENNIS_WTA_EVENTS=1"
-
-  Update these params from 0/1 to false/true:
-	  - "ODDS_AGGREGATION_ENABLED=false"
-	  - "LIVE_DUMMY_MARKETS_ENABLED=true"
-
   Processing steps:
     - Get supported live league IDs from config(LeagueMap) and from env for tennis
     - Get open markets from Redis and filter by ongoing and live supported
