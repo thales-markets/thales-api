@@ -5,9 +5,11 @@ const playersInfo = require("./source/playersInfo");
 const resolver = require("./source/resolver");
 const liveScores = require("./source/liveScores");
 const cleaner = require("./source/cleaner");
+const oddsStream = require("./source/oddsStream");
 
 require("dotenv").config();
 
+oddsStream.connectToStream();
 markets.processMarkets();
 liveMarkets.processLiveMarkets();
 gamesInfo.processGamesInfo();
