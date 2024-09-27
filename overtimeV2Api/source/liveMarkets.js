@@ -84,6 +84,7 @@ async function processLiveMarkets() {
 
 */
 async function processAllMarkets(isTestnet) {
+  const PROCESSING_START_TIME = new Date().toUTCString();
   const SUPPORTED_NETWORKS = isTestnet ? [NETWORK.OptimismSepolia] : [NETWORK.Optimism, NETWORK.Arbitrum];
 
   let liveMarkets = [];
@@ -263,6 +264,7 @@ async function processAllMarkets(isTestnet) {
 
             if (opticOddsScoreData == undefined) {
               errorsMap.set(market.gameId, {
+                processingTime: PROCESSING_START_TIME,
                 errorTime: new Date().toUTCString(),
                 errorMessage: `Blocking game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} due to game clock being unavailable`,
               });
@@ -271,6 +273,7 @@ async function processAllMarkets(isTestnet) {
 
             if (opticOddsScoreData.status.toLowerCase() == "completed") {
               errorsMap.set(market.gameId, {
+                processingTime: PROCESSING_START_TIME,
                 errorTime: new Date().toUTCString(),
                 errorMessage: `Blocking game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} because it is finished.`,
               });
@@ -290,6 +293,7 @@ async function processAllMarkets(isTestnet) {
 
               if (passingConstraintsObject.allow == false) {
                 errorsMap.set(market.gameId, {
+                  processingTime: PROCESSING_START_TIME,
                   errorTime: new Date().toUTCString(),
                   errorMessage: passingConstraintsObject.message,
                 });
@@ -333,6 +337,7 @@ async function processAllMarkets(isTestnet) {
 
           if (gamePaused) {
             errorsMap.set(market.gameId, {
+              processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
               errorMessage: `Pausing game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} due to odds being stale`,
             });
