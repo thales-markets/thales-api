@@ -33,12 +33,7 @@ const {
   fetchResultInCurrentSet,
   MONEYLINE,
 } = require("overtime-live-trading-utils");
-const {
-  fetchTeamsMap,
-  adjustSpreadAndReturnMarketWithOdds,
-  persistErrorMessages,
-  fetchOpticOddsGamesForLeague,
-} = require("../utils/liveMarkets");
+const { fetchTeamsMap, persistErrorMessages, fetchOpticOddsGamesForLeague } = require("../utils/liveMarkets");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
@@ -336,11 +331,13 @@ async function processAllMarkets(isTestnet) {
           }
 
           if (gamePaused) {
+            const errorMessage = `Pausing game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} due to odds being stale`;
             errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
-              errorMessage: `Pausing game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} due to odds being stale`,
+              errorMessage,
             });
+            market.errorMessage = errorMessage;
             market.opticOddsGameOdds.odds = [];
           }
 
@@ -369,7 +366,7 @@ async function processAllMarkets(isTestnet) {
           market.homeScoreByPeriod = gamesHomeScoreByPeriod;
           market.awayScoreByPeriod = gamesAwayScoreByPeriod;
 
-          if (isLive == true) {
+          if (isLive && !market.errorMessage) {
             const processedMarket = processMarket(
               market,
               apiResponse,
@@ -379,6 +376,14 @@ async function processAllMarkets(isTestnet) {
               Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
               Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
             );
+
+            if (processedMarket.errorMessage) {
+              errorsMap.set(market.gameId, {
+                processingTime: PROCESSING_START_TIME,
+                errorTime: new Date().toUTCString(),
+                errorMessage: processedMarket.errorMessage,
+              });
+            }
 
             return processedMarket;
           } else {
