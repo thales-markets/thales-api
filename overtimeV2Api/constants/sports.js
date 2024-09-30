@@ -1211,6 +1211,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.SERBIA_SUPER_LEAGUE]: {
     sport: Sport.SOCCER,
