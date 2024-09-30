@@ -366,32 +366,41 @@ async function processAllMarkets(isTestnet) {
           market.homeScoreByPeriod = gamesHomeScoreByPeriod;
           market.awayScoreByPeriod = gamesAwayScoreByPeriod;
 
-          if (isLive && !market.errorMessage) {
-            const processedMarket = processMarket(
-              market,
-              apiResponse,
-              liveOddsProviders,
-              spreadData,
-              getLeagueIsDrawAvailable(market.leagueId),
-              Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
-              Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
-            );
+          if (!market.errorMessage) {
+            if (isLive) {
+              const processedMarket = processMarket(
+                market,
+                apiResponse,
+                liveOddsProviders,
+                spreadData,
+                getLeagueIsDrawAvailable(market.leagueId),
+                Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
+                Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
+              );
 
-            if (processedMarket.errorMessage) {
+              if (processedMarket.errorMessage) {
+                errorsMap.set(market.gameId, {
+                  processingTime: PROCESSING_START_TIME,
+                  errorTime: new Date().toUTCString(),
+                  errorMessage: processedMarket.errorMessage,
+                });
+              }
+
+              market = processedMarket;
+            } else {
+              const errorMessage = `Provider marked game ${apiResponse.home_team} - ${apiResponse.away_team} as not live`;
               errorsMap.set(market.gameId, {
                 processingTime: PROCESSING_START_TIME,
                 errorTime: new Date().toUTCString(),
-                errorMessage: processedMarket.errorMessage,
+                errorMessage,
               });
-            }
+              market.errorMessage = errorMessage;
 
-            return processedMarket;
-          } else {
-            market.odds = market.odds.map(() => {
-              return { american: 0, decimal: 0, normalizedImplied: 0 };
-            });
-            return market;
+              market.odds = market.odds.map(() => ({ american: 0, decimal: 0, normalizedImplied: 0 }));
+            }
           }
+
+          return market;
         });
 
         if (isTestnet && isDummyMarketsEnabled) {
