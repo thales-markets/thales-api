@@ -20,6 +20,7 @@ const {
 const { bigNumberFormatter, ceilNumberToDecimals, bigNumberParser, getPrecision } = require("../utils/formatters");
 const KEYS = require("../../redis/redis-keys");
 const { formatBytes32String } = require("ethers/lib/utils");
+const { getIsLiveSupported } = require("../utils/sports");
 
 const MIN_COLLATERAL_MULTIPLIER = 1.01;
 
@@ -268,8 +269,8 @@ async function getLiquidityData(network, tradeData, provider) {
           market.typeId,
           market.playerId,
           market.line,
-          market.live ? Math.round(new Date().getTime() / 1000) + 60 : market.maturity,
-          !!market.live,
+          getIsLiveSupported(market.leagueId) ? Math.round(new Date().getTime() / 1000) + 60 : market.maturity,
+          !!getIsLiveSupported(market.leagueId),
         ),
       );
     }

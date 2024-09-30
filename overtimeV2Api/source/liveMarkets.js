@@ -19,6 +19,7 @@ const {
   getLeagueSport,
   getLiveSupportedLeagues,
   getTestnetLiveSupportedLeagues,
+  getBetTypesForLeague,
 } = require("../utils/sports");
 const { Sport } = require("../constants/sports");
 const { readCsvFromUrl } = require("../utils/csvReader");
@@ -176,19 +177,7 @@ async function processAllMarkets(isTestnet) {
                 const liveOddsProvider = liveOddsProvidersPerSport.get(uniqueProviderLeagueId);
                 oddsRequestUrl += `&sportsbook=${liveOddsProvider.join("&sportsbook=")}`;
 
-                const betTypes = [MONEYLINE];
-                // SPREAD & TOTALS - GET SPREAD TYPE
-                const spreadType = getLeagueSpreadType(market.leagueId);
-
-                if (spreadType != undefined) {
-                  betTypes.push(spreadType);
-                }
-                // SPREAD & TOTALS - GET TOTAL TYPE
-                const totalType = getLeagueTotalType(market.leagueId);
-
-                if (totalType != undefined) {
-                  betTypes.push(totalType);
-                }
+                const betTypes = getBetTypesForLeague(market.leagueId, isTestnet);
 
                 betTypes.forEach((betType) => {
                   oddsRequestUrl += `&market_name=${betType}`;
