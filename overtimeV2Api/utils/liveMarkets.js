@@ -3,7 +3,7 @@ const { getSpreadData, adjustSpreadOnOdds } = require("overtime-live-trading-uti
 const { getLeagueIsDrawAvailable, getLeagueSport } = require("./sports");
 const oddslib = require("oddslib");
 const { Sport } = require("../constants/sports");
-const { OPTIC_ODDS_API_GAMES_URL } = require("../constants/opticodds");
+const { OPTIC_ODDS_API_GAMES_URL, OPTIC_ODDS_API_LAST_POLLED_URL } = require("../constants/opticodds");
 const teamsMapping = require("../assets/teamsMapping.json");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
@@ -166,9 +166,40 @@ const fetchOpticOddsGamesForLeague = async (leagueIds, isTestnet) => {
   }
 };
 
+const fetchOpticOddsLastPolledForLeagues = async (leagueIdsWithPrimaryProvider) => {
+  const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
+  const promises = leagueIdsWithPrimaryProvider
+    .filter((league) => getLeagueSport(league.leagueId) !== Sport.TENNIS)
+    .map((league) =>
+      axios.get(
+        OPTIC_ODDS_API_LAST_POLLED_URL +
+          "league=" +
+          getLeagueOpticOddsName(league.leagueId) +
+          "&sportsbook=" +
+          league.sportsbook,
+        { headers },
+      ),
+    );
+
+  let opticOddsLastPolledResponses = [];
+
+  try {
+    opticOddsLastPolledResponses = await Promise.all(promises);
+  } catch (e) {
+    console.log(`Live markets: Fetching Optic Odds last polled error: ${e}`);
+  }
+
+  const opticOddsResponseData = opticOddsLastPolledResponses
+    .map((opticOddsLastPolledResponse) => opticOddsLastPolledResponse.data.data)
+    .flat();
+
+  return opticOddsResponseData;
+};
+
 module.exports = {
   fetchTeamsMap,
   adjustSpreadAndReturnMarketWithOdds,
   persistErrorMessages,
   fetchOpticOddsGamesForLeague,
+  fetchOpticOddsLastPolledForLeagues,
 };

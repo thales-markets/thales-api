@@ -5,7 +5,12 @@ const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const axios = require("axios");
 const { getAverageOdds } = require("../utils/markets");
-const { LIVE_TYPE_ID_BASE, MIN_ODDS_FOR_DIFF_CHECKING, MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
+const {
+  LIVE_TYPE_ID_BASE,
+  MIN_ODDS_FOR_DIFF_CHECKING,
+  MAX_ALLOWED_STALE_ODDS_DELAY,
+  MAX_ALLOWED_STALE_ODDS_POLLING_DELAY,
+} = require("../constants/markets");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const {
@@ -20,6 +25,7 @@ const {
   getLeagueSport,
   getLiveSupportedLeagues,
   getTestnetLiveSupportedLeagues,
+  getLeagueOpticOddsName,
 } = require("../utils/sports");
 const { Sport } = require("../constants/sports");
 const { readCsvFromUrl } = require("../utils/csvReader");
@@ -37,6 +43,7 @@ const {
   adjustSpreadAndReturnMarketWithOdds,
   persistErrorMessages,
   fetchOpticOddsGamesForLeague,
+  fetchOpticOddsLastPolledForLeagues,
 } = require("../utils/liveMarkets");
 
 async function processLiveMarkets() {
@@ -285,6 +292,14 @@ async function processAllMarkets(isTestnet) {
             return true;
           });
 
+        const leagueIdsCurrentlyLive = uniq(supportedLiveMarketsByScores.map((market) => market.leagueId));
+        const lastPolledByLeague = await fetchOpticOddsLastPolledForLeagues(
+          leagueIdsCurrentlyLive.map((leagueId) => ({
+            leagueId,
+            sportsbook: liveOddsProvidersPerSport.get(Number(leagueId))[0],
+          })),
+        );
+
         liveMarkets = supportedLiveMarketsByScores.map((market) => {
           let gamePaused = false;
 
@@ -297,6 +312,27 @@ async function processAllMarkets(isTestnet) {
               const now = new Date();
               const timeDiff = now.getTime() - oddsDate.getTime();
               return timeDiff > MAX_ALLOWED_STALE_ODDS_DELAY;
+            })
+          ) {
+            gamePaused = true;
+          }
+
+          const lastPolledLeague = lastPolledByLeague.find(
+            (lastPolled) =>
+              lastPolled.league.name.toLowerCase() === getLeagueOpticOddsName(market.leagueId).toLowerCase(),
+          );
+
+          if (
+            lastPolledLeague &&
+            !lastPolledLeague.error &&
+            lastPolledLeague.sportsbooks.some((sportsbook) => {
+              if (typeof sportsbook.timestamp !== "number") {
+                return true;
+              }
+              const oddsDate = new Date(sportsbook.timestamp * 1000);
+              const now = new Date();
+              const timeDiff = now.getTime() - oddsDate.getTime();
+              return timeDiff > MAX_ALLOWED_STALE_ODDS_POLLING_DELAY;
             })
           ) {
             gamePaused = true;
@@ -332,9 +368,7 @@ async function processAllMarkets(isTestnet) {
             gamesHomeScoreByPeriod.push(resultInCurrentSet.home);
             gamesAwayScoreByPeriod.push(resultInCurrentSet.away);
           }
-
           const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
-
           // EXTRACTING ODDS FROM THE RESPONSE
           const linesMap = extractOddsForGamePerProvider(
             liveOddsProviders,
