@@ -1,12 +1,6 @@
 const axios = require("axios");
-const {
-  getLeagueTotalType,
-  getLeagueSpreadType,
-  getSpreadData,
-  adjustSpreadOnOdds,
-  MONEYLINE,
-} = require("overtime-live-trading-utils");
-const { getLeagueIsDrawAvailable, getLeagueSport } = require("./sports");
+const { getSpreadData, adjustSpreadOnOdds } = require("overtime-live-trading-utils");
+const { getLeagueIsDrawAvailable, getLeagueSport, getBetTypesForLeague } = require("./sports");
 const oddslib = require("oddslib");
 const { Sport } = require("../constants/sports");
 const {
@@ -113,19 +107,7 @@ const fetchOpticOddsGameOddsForMarkets = async (markets, oddsProviders) => {
     if (gameNumInRequest == 0 || index == marketsLength - 1) {
       oddsRequestUrl += `&sportsbook=${oddsProviders.join("&sportsbook=")}`;
 
-      const betTypes = [MONEYLINE];
-      // SPREAD & TOTALS - GET SPREAD TYPE
-      const spreadType = getLeagueSpreadType(market.leagueId);
-
-      if (spreadType != undefined) {
-        betTypes.push(spreadType);
-      }
-      // SPREAD & TOTALS - GET TOTAL TYPE
-      const totalType = getLeagueTotalType(market.leagueId);
-
-      if (totalType != undefined) {
-        betTypes.push(totalType);
-      }
+      const betTypes = getBetTypesForLeague(market.leagueId, isTestnet);
 
       betTypes.forEach((betType) => {
         oddsRequestUrl += `&market_name=${betType}`;

@@ -1,3 +1,15 @@
+const {
+  MONEYLINE,
+  ASIAN_HANDICAP,
+  POINT_SPREAD,
+  TOTAL_POINTS,
+  RUN_LINE,
+  TOTAL_RUNS,
+  TOTAL_GOALS,
+  GAME_SPREAD,
+  TOTAL_GAMES,
+} = require("overtime-live-trading-utils");
+
 const Sport = {
   SOCCER: "Soccer",
   FOOTBALL: "Football",
@@ -174,8 +186,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.NFL]: {
     sport: Sport.FOOTBALL,
@@ -187,8 +197,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
+    betTypesForLiveTestnet: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
   },
   [League.MLB]: {
     sport: Sport.BASEBALL,
@@ -200,8 +210,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.INNING,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, RUN_LINE, TOTAL_RUNS],
+    betTypesForLiveTestnet: [MONEYLINE, RUN_LINE, TOTAL_RUNS],
   },
   [League.NBA]: {
     sport: Sport.BASKETBALL,
@@ -213,8 +223,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
+    betTypesForLiveTestnet: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
   },
   [League.NCAAB]: {
     sport: Sport.BASKETBALL,
@@ -225,21 +235,21 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
+    betTypesForLiveTestnet: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
   },
   [League.NHL]: {
     sport: Sport.HOCKEY,
     id: League.NHL,
     label: "NHL",
     opticOddsName: "NHL",
-    provider: Provider.RUNDOWN,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.GOALS,
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.PERIOD,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE],
+    betTypesForLiveTestnet: [MONEYLINE],
   },
   [League.UFC]: {
     sport: Sport.FIGHTING,
@@ -250,8 +260,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.WNBA]: {
     sport: Sport.BASKETBALL,
@@ -263,8 +271,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
+    betTypesForLiveTestnet: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
   },
   [League.MLS]: {
     sport: Sport.SOCCER,
@@ -276,8 +284,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.EPL]: {
     sport: Sport.SOCCER,
@@ -289,8 +297,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.LIGUE_ONE]: {
     sport: Sport.SOCCER,
@@ -302,8 +310,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.BUNDESLIGA]: {
     sport: Sport.SOCCER,
@@ -315,8 +323,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.LA_LIGA]: {
     sport: Sport.SOCCER,
@@ -328,8 +336,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.SERIE_A]: {
     sport: Sport.SOCCER,
@@ -341,9 +349,10 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
+
   [League.UEFA_CL]: {
     sport: Sport.SOCCER,
     id: League.UEFA_CL,
@@ -354,8 +363,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.UEFA_EL]: {
     sport: Sport.SOCCER,
@@ -367,8 +376,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.FIFA_WC]: {
     sport: Sport.SOCCER,
@@ -380,8 +389,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.J1_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -393,8 +402,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.IPL]: {
     sport: Sport.CRICKET,
@@ -405,8 +414,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.INNING,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.T20_BLAST]: {
     sport: Sport.CRICKET,
@@ -417,8 +424,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.INNING,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.IIHF_WORLD_CHAMPIONSHIP]: {
     sport: Sport.HOCKEY,
@@ -429,8 +434,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.PERIOD,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.COPA_AMERICA]: {
     sport: Sport.SOCCER,
@@ -442,8 +445,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.COPA_LIBERTADORES]: {
     sport: Sport.SOCCER,
@@ -455,8 +458,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.UEFA_EURO]: {
     sport: Sport.SOCCER,
@@ -468,8 +471,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.EREDIVISIE]: {
     sport: Sport.SOCCER,
@@ -481,8 +484,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.PRIMEIRA_LIGA]: {
     sport: Sport.SOCCER,
@@ -494,8 +497,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.SUMMER_OLYMPICS_SOCCER_WOMEN]: {
     sport: Sport.SOCCER,
@@ -507,8 +510,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.SUMMER_OLYMPICS_SOCCER]: {
     sport: Sport.SOCCER,
@@ -520,8 +523,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.FIFA_WC_WOMEN]: {
     sport: Sport.SOCCER,
@@ -532,8 +535,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.ENGLAND_CUP]: {
     sport: Sport.SOCCER,
@@ -545,8 +548,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.FRANCE_CUP]: {
     sport: Sport.SOCCER,
@@ -557,8 +560,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.SPAIN_CUP]: {
     sport: Sport.SOCCER,
@@ -569,8 +572,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.ITALY_CUP]: {
     sport: Sport.SOCCER,
@@ -581,8 +584,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.TENNIS_WTA]: {
     sport: Sport.TENNIS,
@@ -593,8 +596,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, GAME_SPREAD, TOTAL_GAMES],
+    betTypesForLiveTestnet: [MONEYLINE, GAME_SPREAD, TOTAL_GAMES],
   },
   [League.TENNIS_GS]: {
     sport: Sport.TENNIS,
@@ -606,8 +609,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, GAME_SPREAD, TOTAL_GAMES],
+    betTypesForLiveTestnet: [MONEYLINE, GAME_SPREAD, TOTAL_GAMES],
   },
   [League.TENNIS_MASTERS]: {
     sport: Sport.TENNIS,
@@ -618,8 +621,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, GAME_SPREAD, TOTAL_GAMES],
+    betTypesForLiveTestnet: [MONEYLINE, GAME_SPREAD, TOTAL_GAMES],
   },
   [League.SUMMER_OLYMPICS_TENNIS]: {
     sport: Sport.TENNIS,
@@ -630,8 +633,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, GAME_SPREAD, TOTAL_GAMES],
+    betTypesForLiveTestnet: [MONEYLINE, GAME_SPREAD, TOTAL_GAMES],
   },
   [League.GERMANY_CUP]: {
     sport: Sport.SOCCER,
@@ -642,8 +645,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.LIGA_MX]: {
     sport: Sport.SOCCER,
@@ -655,8 +658,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.BRAZIL_1]: {
     sport: Sport.SOCCER,
@@ -668,8 +671,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.UEFA_EURO_U21]: {
     sport: Sport.SOCCER,
@@ -680,8 +683,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.FIFA_WORLD_CUP_U20]: {
     sport: Sport.SOCCER,
@@ -692,8 +695,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.SUMMER_OLYMPICS_HANDBALL_WOMEN]: {
     sport: Sport.HANDBALL,
@@ -705,8 +708,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_HANDBALL]: {
     sport: Sport.HANDBALL,
@@ -718,21 +719,19 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.EUROLEAGUE]: {
     sport: Sport.BASKETBALL,
     id: League.EUROLEAGUE,
     label: "Euroleague",
     opticOddsName: "Euroleague",
-    provider: Provider.ENETPULSE,
+    provider: Provider.OPTICODDS,
     scoringType: ScoringType.POINTS,
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
+    betTypesForLiveTestnet: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
   },
   [League.SUMMER_OLYMPICS_BASKETBALL]: {
     sport: Sport.BASKETBALL,
@@ -744,8 +743,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
+    betTypesForLiveTestnet: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
   },
   [League.SUMMER_OLYMPICS_BASKETBALL_WOMEN]: {
     sport: Sport.BASKETBALL,
@@ -757,8 +756,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
+    betTypesForLiveTestnet: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
   },
   [League.FIBA_WORLD_CUP]: {
     sport: Sport.BASKETBALL,
@@ -769,8 +768,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
+    betTypesForLiveTestnet: [MONEYLINE, POINT_SPREAD, TOTAL_POINTS],
   },
   [League.FORMULA1]: {
     sport: Sport.MOTOSPORT,
@@ -781,8 +780,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.EMPTY,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SUMMER_OLYMPICS_BEACH_VOLEYBALL_WOMEN]: {
     sport: Sport.VOLLEYBALL,
@@ -793,8 +790,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SUMMER_OLYMPICS_BEACH_VOLEYBALL]: {
     sport: Sport.VOLLEYBALL,
@@ -805,8 +800,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SUMMER_OLYMPICS_TABLE_TENNIS]: {
     sport: Sport.TABLE_TENNIS,
@@ -817,8 +810,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.MOTOGP]: {
     sport: Sport.MOTOSPORT,
@@ -829,8 +820,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.EMPTY,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SAUDI_PROFESSIONAL_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -842,8 +831,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.SUMMER_OLYMPICS_WATERPOLO]: {
     sport: Sport.WATERPOLO,
@@ -855,8 +844,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_VOLEYBALL_WOMEN]: {
     sport: Sport.VOLLEYBALL,
@@ -868,8 +855,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_VOLEYBALL]: {
     sport: Sport.VOLLEYBALL,
@@ -881,8 +866,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.SET,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.BOXING]: {
     sport: Sport.FIGHTING,
@@ -893,8 +876,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SUMMER_OLYMPICS_RUGBY]: {
     sport: Sport.RUGBY,
@@ -906,8 +887,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SUMMER_OLYMPICS_RUGBY_WOMEN]: {
     sport: Sport.RUGBY,
@@ -919,8 +898,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SUMMER_OLYMPICS_HOCKEY_WOMEN]: {
     sport: Sport.HOCKEY,
@@ -931,8 +908,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.PERIOD,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SUMMER_OLYMPICS_HOCKEY]: {
     sport: Sport.HOCKEY,
@@ -943,8 +918,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.PERIOD,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.UEFA_NATIONS_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -956,8 +929,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.CONCACAF_NATIONS_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -968,8 +941,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.CSGO]: {
     sport: Sport.ESPORTS,
@@ -981,8 +954,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.DOTA2]: {
     sport: Sport.ESPORTS,
@@ -994,8 +965,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SUMMER_OLYMPICS_BASKETBALL_3X3]: {
     sport: Sport.BASKETBALL,
@@ -1007,8 +976,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_BASKETBALL_3X3_WOMEN]: {
     sport: Sport.BASKETBALL,
@@ -1020,8 +987,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_QUALIFICATION]: {
     sport: Sport.BASKETBALL,
@@ -1032,8 +997,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.LOL]: {
     sport: Sport.ESPORTS,
@@ -1045,8 +1008,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.CONMEBOL_WC_QUALIFICATIONS]: {
     sport: Sport.SOCCER,
@@ -1057,8 +1018,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.UEFA_CONFERENCE_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1070,8 +1029,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.NON_TITLE_BOXING]: {
     sport: Sport.FIGHTING,
@@ -1082,8 +1041,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.ROUND,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.UEFA_CHAMPIONS_LEAGUE_QUALIFICATION]: {
     sport: Sport.SOCCER,
@@ -1095,8 +1052,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.UEFA_EUROPA_LEAGUE_QUALIFICATION]: {
     sport: Sport.SOCCER,
@@ -1108,8 +1065,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.UEFA_CONFERENCE_LEAGUE_QUALIFICATION]: {
     sport: Sport.SOCCER,
@@ -1121,8 +1078,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.US_ELECTION]: {
     sport: Sport.POLITICS,
@@ -1133,8 +1090,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.EMPTY,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.UEFA_SUPER_CUP]: {
     sport: Sport.SOCCER,
@@ -1146,8 +1101,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.BRAZIL_CUP]: {
     sport: Sport.SOCCER,
@@ -1159,8 +1112,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.ENGLAND_CHAMPIONSHIP]: {
     sport: Sport.SOCCER,
@@ -1172,8 +1123,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.SCOTLAND_PREMIERSHIP]: {
     sport: Sport.SOCCER,
@@ -1185,8 +1134,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.BELGIUM_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1198,8 +1145,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.CZECH_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1211,8 +1156,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.CHILE_PRIMERA]: {
     sport: Sport.SOCCER,
@@ -1224,8 +1167,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.FINLAND_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1237,8 +1178,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.ARGENTINA_PRIMERA]: {
     sport: Sport.SOCCER,
@@ -1250,8 +1189,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.RUSSIA_PREMIER]: {
     sport: Sport.SOCCER,
@@ -1263,8 +1200,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.TURKEY_SUPER_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1276,8 +1211,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
+    betTypesForLive: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
+    betTypesForLiveTestnet: [MONEYLINE, ASIAN_HANDICAP, TOTAL_GOALS],
   },
   [League.SERBIA_SUPER_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1289,8 +1224,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.GREECE_SUPER_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1302,8 +1235,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.INDIA_PREMIER]: {
     sport: Sport.SOCCER,
@@ -1315,8 +1246,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.CHINA_SUPER_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1328,8 +1257,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.AUSTRALIA_A_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1341,8 +1268,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SWITZERLAND_SUPER_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1354,8 +1279,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.BUNDESLIGA_2]: {
     sport: Sport.SOCCER,
@@ -1367,8 +1290,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.LA_LIGA_2]: {
     sport: Sport.SOCCER,
@@ -1380,8 +1301,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SERIE_B]: {
     sport: Sport.SOCCER,
@@ -1393,8 +1312,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.INDIA_SUPER_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1406,8 +1323,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.LIGUE_2]: {
     sport: Sport.SOCCER,
@@ -1419,8 +1334,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.AUSTRIA_BUNDESLIGA]: {
     sport: Sport.SOCCER,
@@ -1432,8 +1345,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.DENMARK_SUPER_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1445,8 +1356,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.POLAND_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1458,8 +1367,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.SWEDEN_LEAGUE]: {
     sport: Sport.SOCCER,
@@ -1471,8 +1378,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.COLOMBIA_PRIMERA_A]: {
     sport: Sport.SOCCER,
@@ -1484,8 +1389,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.ENGLAND_EFL_CUP]: {
     sport: Sport.SOCCER,
@@ -1497,8 +1400,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: true,
-    isLiveTestnet: true,
   },
   [League.ENGLAND_LEGAUE_1]: {
     sport: Sport.SOCCER,
@@ -1510,8 +1411,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.URUGUAY_PRIMERA_DIVISION]: {
     sport: Sport.SOCCER,
@@ -1523,8 +1422,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.REGULAR,
     periodType: PeriodType.HALF,
     isDrawAvailable: true,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.EUROCUP]: {
     sport: Sport.BASKETBALL,
@@ -1536,8 +1433,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.GOLF_H2H]: {
     sport: Sport.GOLF,
@@ -1548,8 +1443,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.EMPTY,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
   [League.GOLF_WINNER]: {
     sport: Sport.GOLF,
@@ -1560,8 +1453,6 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.EMPTY,
     periodType: PeriodType.EMPTY,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
   },
 };
 
@@ -1690,6 +1581,7 @@ const SportIdMapOpticOdds = {
   1: "NCAAF",
   2: "NFL",
   3: "MLB",
+  6: "NHL",
   7: "UFC",
   8: "WNBA",
   10: "USA - Major League Soccer",
@@ -1707,6 +1599,7 @@ const SportIdMapOpticOdds = {
   61: "Portugal - Primeira Liga",
   230: "Mexico - Liga MX",
   268: "Brazil - Serie A",
+  399: "Euroleague",
   536: "Saudi Arabia - Saudi League",
   9806: "UEFA - Nations League",
   9977: "CS2",

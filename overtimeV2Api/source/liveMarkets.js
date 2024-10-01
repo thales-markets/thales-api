@@ -12,6 +12,7 @@ const {
   getLeagueSport,
   getLiveSupportedLeagues,
   getTestnetLiveSupportedLeagues,
+  getBetTypesForLeague,
 } = require("../utils/sports");
 const { Sport } = require("../constants/sports");
 const {

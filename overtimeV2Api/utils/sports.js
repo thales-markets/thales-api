@@ -22,17 +22,26 @@ const getLeagueIsDrawAvailable = (league) => {
 
 const getLiveSupportedLeagues = () => {
   const allLeagues = Object.values(LeagueMap);
-  return allLeagues.filter((league) => league.live).map((league) => league.id);
+  return allLeagues
+    .filter((league) => league.betTypesForLive && league.betTypesForLive.length > 0)
+    .map((league) => league.id);
 };
 
 const getTestnetLiveSupportedLeagues = () => {
   const allLeagues = Object.values(LeagueMap);
-  return allLeagues.filter((league) => league.isLiveTestnet).map((league) => league.id);
+  return allLeagues
+    .filter((league) => league.betTypesForLiveTestnet && league.betTypesForLiveTestnet.length > 0)
+    .map((league) => league.id);
 };
 
-const isLiveSupportedForLeague = (league) => {
+const getBetTypesForLeague = (league, testnet) => {
   const leagueInfo = LeagueMap[league];
-  return leagueInfo ? leagueInfo.live : false;
+  return leagueInfo ? (testnet ? leagueInfo.betTypesForLiveTestnet : leagueInfo.betTypesForLive) : [];
+};
+
+const getIsLiveSupported = (league) => {
+  const leagueInfo = LeagueMap[league];
+  return leagueInfo ? leagueInfo.betTypesForLive && leagueInfo.betTypesForLive > 0 : false;
 };
 
 const getLeagueOpticOddsName = (league) => {
@@ -51,8 +60,9 @@ module.exports = {
   getLeagueIsDrawAvailable,
   getLiveSupportedLeagues,
   getTestnetLiveSupportedLeagues,
+  getIsLiveSupported,
+  getBetTypesForLeague,
   getLeagueLabel,
-  isLiveSupportedForLeague,
   getLeagueOpticOddsName,
   getLeaguePeriodType,
 };
