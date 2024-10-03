@@ -113,7 +113,6 @@ const fetchOpticOddsGamesForLeague = async (leagueIds, isTestnet) => {
 
 module.exports = {
   fetchTeamsMap,
-  adjustSpreadAndReturnMarketWithOdds,
   persistErrorMessages,
   fetchOpticOddsGamesForLeague,
 };
