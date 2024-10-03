@@ -17,8 +17,8 @@ const {
   SportIdMapOpticOdds,
   PeriodType,
   Sport,
-} = require("../constants/sports");
-const { getLeaguePeriodType, getLeagueSport } = require("../utils/sports");
+} = require("overtime-live-trading-utils");
+const { getLeaguePeriodType, getLeagueSport } = require("overtime-live-trading-utils");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_FUTURE);

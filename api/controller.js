@@ -49,7 +49,7 @@ const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters")
 const overtimeV2Markets = require("../overtimeV2Api/source/markets");
 const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
-const { LeagueMap } = require("../overtimeV2Api/constants/sports");
+const { LeagueMap } = require("overtime-live-trading-utils");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
 const {
   initializeSportsAMMLPListener,

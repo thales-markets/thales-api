@@ -1,4 +1,4 @@
-const { LeagueMap, Sport } = require("../constants/sports");
+const { LeagueMap, Sport } = require("overtime-live-trading-utils");
 
 const getLeagueSport = (league) => {
   const leagueInfo = LeagueMap[league];

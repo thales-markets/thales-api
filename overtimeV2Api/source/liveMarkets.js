@@ -14,25 +14,19 @@ const {
   OPTIC_ODDS_API_SCORES_MAX_GAMES,
 } = require("../constants/opticodds");
 const { uniq } = require("lodash");
-const {
-  getLeagueIsDrawAvailable,
-  getLeagueSport,
-  getLiveSupportedLeagues,
-  getTestnetLiveSupportedLeagues,
-  getBetTypesForLeague,
-} = require("../utils/sports");
-const { Sport } = require("../constants/sports");
 const { readCsvFromUrl } = require("../utils/csvReader");
 const {
+  Sport,
   getBookmakersArray,
   teamNamesMatching,
   gamesDatesMatching,
   checkGameContraints,
-  getLeagueSpreadType,
   processMarket,
-  getLeagueTotalType,
   fetchResultInCurrentSet,
-  MONEYLINE,
+  getLeagueIsDrawAvailable,
+  getLeagueSport,
+  getLiveSupportedLeagues,
+  getBetTypesForLeague,
 } = require("overtime-live-trading-utils");
 const { fetchTeamsMap, persistErrorMessages, fetchOpticOddsGamesForLeague } = require("../utils/liveMarkets");
 
@@ -87,7 +81,7 @@ async function processAllMarkets(isTestnet) {
   const errorsMap = new Map();
 
   try {
-    const supportedLiveLeagueIds = isTestnet ? getTestnetLiveSupportedLeagues() : getLiveSupportedLeagues();
+    const supportedLiveLeagueIds = getLiveSupportedLeagues(isTestnet);
     // Read open markets only from one network as markets are the same on all networks
     const openMarketsMap = await getOpenMarkets(SUPPORTED_NETWORKS[0]);
 

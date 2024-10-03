@@ -7,9 +7,8 @@ const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
 const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
-const { getLeagueProvider } = require("../utils/sports");
-const { Provider } = require("../constants/sports");
 const { getOpticOddsScore } = require("./gamesInfo");
+const { getLeagueProvider, Provider } = require("overtime-live-trading-utils");
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {

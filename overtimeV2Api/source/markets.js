@@ -17,8 +17,14 @@ const { OddsType, Status, MarketTypeMap } = require("../constants/markets");
 const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { NETWORK } = require("../constants/networks");
-const { getLeagueSport, getLeagueLabel, getLeagueProvider } = require("../utils/sports");
-const { Provider, League, UFC_LEAGUE_IDS } = require("../constants/sports");
+const {
+  getLeagueSport,
+  getLeagueLabel,
+  getLeagueProvider,
+  Provider,
+  League,
+  UFC_LEAGUE_IDS,
+} = require("overtime-live-trading-utils");
 
 const awsS3Client = new S3Client({
   region: process.env.AWS_REGION,

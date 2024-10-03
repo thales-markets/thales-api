@@ -1,5 +1,3 @@
-const { League, Sport } = require("../constants/sports");
-const { getLeagueSport } = require("./sports");
 const {
   OddsType,
   PLAYER_PROPS_MARKET_TYPES,
@@ -8,6 +6,7 @@ const {
   COMBINED_POSITIONS_MARKET_TYPES,
 } = require("../constants/markets");
 const bytes32 = require("bytes32");
+const { getLeagueSport, League, Sport } = require("overtime-live-trading-utils");
 
 const fixDuplicatedTeamName = (name, isEnetpulseSport) => {
   if (isEnetpulseSport) return name;
