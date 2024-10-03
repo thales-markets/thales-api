@@ -62,25 +62,6 @@ const getIsCombinedPositionsMarket = (marketType) => {
   return COMBINED_POSITIONS_MARKET_TYPES.includes(marketType);
 };
 
-// DEPRECATE
-const getAverageOdds = (multipleOddsFromProviders) => {
-  let homeOdds;
-  let awayOdds;
-  let drawOdds;
-
-  multipleOddsFromProviders.forEach((oddsObject) => {
-    homeOdds += oddsObject;
-    awayOdds += oddsObject;
-    drawOdds += oddsObject;
-  });
-
-  homeOdds = homeOdds / multipleOddsFromProviders.length;
-  awayOdds = awayOdds / multipleOddsFromProviders.length;
-  drawOdds = drawOdds / multipleOddsFromProviders.length;
-
-  return { homeOdds: homeOdds, awayOdds: awayOdds, drawOdds: drawOdds };
-};
-
 const calculateImpliedOddsDifference = (impliedOddsA, impliedOddsB) => {
   const percentageDifference = (Math.abs(impliedOddsA - impliedOddsB) / impliedOddsA) * 100;
   console.log("% diff: " + percentageDifference);
@@ -99,7 +80,6 @@ module.exports = {
   isPlayerPropsMarket,
   isOneSidePlayerPropsMarket,
   isYesNoPlayerPropsMarket,
-  getAverageOdds,
   calculateImpliedOddsDifference,
   convertFromBytes32,
   getIsCombinedPositionsMarket,
