@@ -1321,7 +1321,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 
   redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], async function (err, obj) {
     const markets = JSON.parse(obj);
-
+    const errorsMap = await getLiveMarketsErrorsMap(network);
+    const errors = [];
     try {
       const filteredMarkets = markets.filter(
         (market) =>
@@ -1330,8 +1331,16 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
           (!typeId || Number(market.typeId) === Number(typeId)),
       );
 
+      filteredMarkets.forEach((market) => {
+        const errorsDetails = errorsMap.get(market.gameId);
+        if (errorsDetails != undefined) {
+          errors.push({ gameId: market.gameId, errorsDetails });
+        }
+      });
+
       res.send({
         markets: filteredMarkets,
+        errors,
       });
     } catch (e) {
       console.log(e);
