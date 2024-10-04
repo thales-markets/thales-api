@@ -731,8 +731,8 @@ const LeagueMap = {
     matchResolveType: MatchResolveType.OVERTIME,
     periodType: PeriodType.QUARTER,
     isDrawAvailable: false,
-    live: false,
-    isLiveTestnet: false,
+    live: true,
+    isLiveTestnet: true,
   },
   [League.SUMMER_OLYMPICS_BASKETBALL]: {
     sport: Sport.BASKETBALL,
