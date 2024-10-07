@@ -61,7 +61,7 @@ function getLiveScoresMap() {
 
 async function cleanMarkets(network) {
   const closedMarketsMap = await getClosedMarketsMap(network);
-  const cleanerNumberOfDaysInPast = Number(process.env.CLEANER_NUMBER_OF_DAYS_IN_PAST);
+  const cleanerNumberOfDaysInPast = Number(process.env.MARKETS_CLEANER_NUMBER_OF_DAYS_IN_PAST);
 
   const today = new Date();
   const maxMaturity = Math.round(
@@ -70,12 +70,12 @@ async function cleanMarkets(network) {
 
   let numberOfMarketsForClean = 0;
   closedMarketsMap.forEach((market, key) => {
-    if (Number(market.maturity) < Number(maxMaturity) && !!market.noTickets) {
+    if (Number(market.maturity) < Number(maxMaturity)) {
       closedMarketsMap.delete(key);
       numberOfMarketsForClean++;
     }
   });
-  console.log(`Cleaner: number of closed markets without tickets deleted: ${numberOfMarketsForClean}`);
+  console.log(`Cleaner: number of closed markets deleted ${network}: ${numberOfMarketsForClean}`);
 
   redisClient.set(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], JSON.stringify([...closedMarketsMap]), function () {});
 }
@@ -86,18 +86,23 @@ async function cleanGamesInfo() {
   const closedMarketsMapOp = await getClosedMarketsMap(NETWORK.Optimism);
   const closedMarketsMapArb = await getClosedMarketsMap(NETWORK.Arbitrum);
 
-  const allClosedMarketsMap = new Map([...closedMarketsMapOp, ...closedMarketsMapArb]);
-
-  const cleanerNumberOfDaysInPast = Number(process.env.CLEANER_NUMBER_OF_DAYS_IN_PAST);
+  const cleanerNumberOfDaysInPast = Number(process.env.GAMES_INFO_CLEANER_NUMBER_OF_DAYS_IN_PAST);
 
   const today = new Date();
   const maxLastUpdate = new Date(new Date().setDate(today.getDate() - cleanerNumberOfDaysInPast)).getTime();
 
   let numberOfGamesInfoForClean = 0;
   gamesInfoMap.forEach((gameInfo, key) => {
-    if (!allClosedMarketsMap.has(key) && Number(gameInfo.lastUpdate || 0) < Number(maxLastUpdate)) {
-      gamesInfoMap.delete(key);
-      numberOfGamesInfoForClean++;
+    if (!gameInfo.hasTickets) {
+      if (
+        (closedMarketsMapOp.has(key) && !closedMarketsMapOp.get(key).noTickets) ||
+        (closedMarketsMapArb.has(key) && !closedMarketsMapArb.get(key).noTickets)
+      ) {
+        gameInfo.hasTickets = true;
+      } else if (Number(gameInfo.lastUpdate || 0) < Number(maxLastUpdate)) {
+        gamesInfoMap.delete(key);
+        numberOfGamesInfoForClean++;
+      }
     }
   });
   console.log(`Cleaner: number of games info without tickets deleted: ${numberOfGamesInfoForClean}`);
@@ -107,7 +112,7 @@ async function cleanGamesInfo() {
 
 async function cleanLiveScores() {
   const liveScoresMap = await getLiveScoresMap();
-  const cleanerNumberOfDaysInPast = Number(process.env.CLEANER_NUMBER_OF_DAYS_IN_PAST);
+  const cleanerNumberOfDaysInPast = Number(process.env.LIVE_SCORES_CLEANER_NUMBER_OF_DAYS_IN_PAST);
 
   const today = new Date();
   const maxLastUpdate = new Date(new Date().setDate(today.getDate() - cleanerNumberOfDaysInPast)).getTime();

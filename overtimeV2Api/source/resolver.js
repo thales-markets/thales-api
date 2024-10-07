@@ -120,11 +120,13 @@ async function resolveMarkets(network) {
           ongoingMarket.isResolved = true;
           ongoingMarket.isCancelled = false;
           ongoingMarket.statusCode = "resolved";
+          ongoingMarket.proof = [];
         } else {
           ongoingMarket.status = Status.CANCELLED;
           ongoingMarket.isResolved = false;
           ongoingMarket.isCancelled = true;
           ongoingMarket.statusCode = "cancelled";
+          ongoingMarket.proof = [];
         }
         ongoingMarket.isPaused = false;
         ongoingMarket.isOpen = false;
@@ -218,6 +220,7 @@ async function resolveMarkets(network) {
             unresolvedChildMarket.isResolved = true;
             unresolvedChildMarket.isCancelled = false;
             unresolvedChildMarket.statusCode = "resolved";
+            unresolvedChildMarket.proof = [];
 
             const resultType = MarketTypeMap[unresolvedChildMarket.typeId].resultType;
             if (resultType === ResultType.EXACT_POSITION) {
@@ -230,6 +233,7 @@ async function resolveMarkets(network) {
                 unresolvedChildMarket.isCancelled = true;
                 unresolvedChildMarket.statusCode = "cancelled";
                 unresolvedChildMarket.winningPositions = [];
+                unresolvedChildMarket.proof = [];
               } else {
                 const winningPosition =
                   resultType === ResultType.SPREAD
@@ -257,6 +261,7 @@ async function resolveMarkets(network) {
             unresolvedChildMarket.isCancelled = true;
             unresolvedChildMarket.statusCode = "cancelled";
             unresolvedChildMarket.winningPositions = [];
+            unresolvedChildMarket.proof = [];
           }
           unresolvedChildMarket.isPaused = false;
           unresolvedChildMarket.isOpen = false;
@@ -322,6 +327,7 @@ async function resolveMarkets(network) {
         cpUnresolvdeCildMarket.isPaused = false;
         cpUnresolvdeCildMarket.isOpen = false;
         cpUnresolvdeCildMarket.winningPositions = winningPositions;
+        cpUnresolvdeCildMarket.proof = [];
       } else if (status === Status.CANCELLED) {
         cpUnresolvdeCildMarket.status = Status.CANCELLED;
         cpUnresolvdeCildMarket.isResolved = false;
@@ -330,6 +336,7 @@ async function resolveMarkets(network) {
         cpUnresolvdeCildMarket.isOpen = false;
         cpUnresolvdeCildMarket.statusCode = "cancelled";
         cpUnresolvdeCildMarket.winningPositions = [];
+        cpUnresolvdeCildMarket.proof = [];
       }
     }
 
