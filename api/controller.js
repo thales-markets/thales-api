@@ -1273,10 +1273,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           (!typeId || Number(market.typeId) === Number(typeId)),
       );
 
-      res.send({
-        markets: filteredMarkets,
-        errors,
-      });
+      res.send({ markets: filteredMarkets });
     } catch (e) {
       console.log(e);
     }
