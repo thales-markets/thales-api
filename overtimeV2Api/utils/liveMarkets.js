@@ -1,6 +1,5 @@
 const axios = require("axios");
-const { getBookmakersArray, MONEYLINE } = require("overtime-live-trading-utils");
-const { getBetTypesForLeague } = require("./sports");
+const { getBookmakersArray, MONEYLINE, getBetTypesForLeague } = require("overtime-live-trading-utils");
 const {
   OPTIC_ODDS_API_GAMES_URL,
   OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS,
@@ -17,8 +16,6 @@ const { readCsvFromUrl } = require("./csvReader");
 const { connectToOpticOddsStreamOdds } = require("./streams");
 const { groupBy } = require("lodash");
 const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
-
-// TODO: remove oddslib from package.json
 
 const fetchTeamsMap = async (timeout) => {
   const teamsMap = new Map();
