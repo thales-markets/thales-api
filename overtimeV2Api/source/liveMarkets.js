@@ -359,6 +359,7 @@ async function processAllMarkets(isTestnet) {
                 getLeagueIsDrawAvailable(market.leagueId),
                 Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
                 Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
+                isTestnet,
               );
 
               if (processedMarket.errorMessage) {
