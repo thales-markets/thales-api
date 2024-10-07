@@ -591,6 +591,7 @@ const LeagueMap = {
     sport: Sport.TENNIS,
     id: League.TENNIS_WTA,
     label: "WTA Events",
+    opticOddsName: "WTA",
     provider: Provider.ENETPULSE,
     scoringType: ScoringType.SETS,
     matchResolveType: MatchResolveType.REGULAR,
@@ -603,7 +604,7 @@ const LeagueMap = {
     sport: Sport.TENNIS,
     id: League.TENNIS_GS,
     label: "Grand Slam",
-    opticOddsName: "atp",
+    opticOddsName: "ATP,WTA",
     provider: Provider.ENETPULSE,
     scoringType: ScoringType.SETS,
     matchResolveType: MatchResolveType.REGULAR,
@@ -616,6 +617,7 @@ const LeagueMap = {
     sport: Sport.TENNIS,
     id: League.TENNIS_MASTERS,
     label: "ATP Events",
+    opticOddsName: "ATP",
     provider: Provider.ENETPULSE,
     scoringType: ScoringType.SETS,
     matchResolveType: MatchResolveType.REGULAR,
@@ -1482,7 +1484,7 @@ const AMERICAN_LEAGUES = [
 
 const UFC_LEAGUE_IDS = [701, 702, 703, 704];
 
-const SportIdMapRundown = {
+const LeagueIdMapRundown = {
   1: 1, // NCAAF
   2: 2, // NFL
   3: 3, // MLB
@@ -1505,7 +1507,7 @@ const SportIdMapRundown = {
   21: 21, // T20
 };
 
-const SportIdMapEnetpulse = {
+const LeagueIdMapEnetpulse = {
   320: 18, // Hockey Norway
   6: 24, // NHL
   33: 33, // Hockey World Championship
@@ -1577,7 +1579,7 @@ const SportIdMapEnetpulse = {
   10615: 10615, // Conference League Qualification
 };
 
-const SportIdMapOpticOdds = {
+const LeagueIdMapOpticOdds = {
   1: "NCAAF",
   2: "NFL",
   3: "MLB",
@@ -1639,6 +1641,28 @@ const SportIdMapOpticOdds = {
   20200: "Eurocup",
 };
 
+// V3 mapping
+const SportMapOpticOdds = {
+  SOCCER: "soccer",
+  FOOTBALL: "football",
+  BASKETBALL: "basketball",
+  BASEBALL: "baseball",
+  HOCKEY: "hockey",
+  FIGHTING: "boxing", // TODO: mma is also present on Optic Odds
+  TENNIS: "tennis",
+  TABLE_TENNIS: "table_tennis",
+  ESPORTS: "esports",
+  RUGBY: "olympics", // TODO: Currently we have rugby only for Olympics (rugby_league and rugby_union are also present on Optic Odds)
+  VOLLEYBALL: "volleyball",
+  HANDBALL: "olympics", // Currently we have handball only for Olympics
+  WATERPOLO: "water_polo",
+  CRICKET: "cricket",
+  MOTOSPORT: "motorsports",
+  GOLF: "golf",
+  POLITICS: "politics",
+  EMPTY: "",
+};
+
 module.exports = {
   Sport,
   League,
@@ -1648,10 +1672,11 @@ module.exports = {
   Provider,
   LeagueMap,
   LEAGUES_NO_FORMAL_HOME_AWAY,
-  SportIdMapRundown,
-  SportIdMapEnetpulse,
+  LeagueIdMapRundown,
+  LeagueIdMapEnetpulse,
+  LeagueIdMapOpticOdds,
+  SportMapOpticOdds,
   AMERICAN_LEAGUES,
-  SportIdMapOpticOdds,
   LEAGUES_NO_LIVE_CONSTRAINTS,
   UFC_LEAGUE_IDS,
 };

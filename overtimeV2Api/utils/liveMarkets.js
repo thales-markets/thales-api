@@ -1,8 +1,6 @@
 const axios = require("axios");
-const { getSpreadData, adjustSpreadOnOdds } = require("overtime-live-trading-utils");
-const { getLeagueIsDrawAvailable, getLeagueSport, getBetTypesForLeague } = require("./sports");
-const oddslib = require("oddslib");
-const { Sport } = require("../constants/sports");
+const { getBookmakersArray, MONEYLINE } = require("overtime-live-trading-utils");
+const { getBetTypesForLeague } = require("./sports");
 const {
   OPTIC_ODDS_API_GAMES_URL,
   OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS,
@@ -12,10 +10,15 @@ const {
   OPTIC_ODDS_API_TIMEOUT,
 } = require("../constants/opticodds");
 const teamsMapping = require("../assets/teamsMapping.json");
-const { redisClient } = require("../../redis/client");
+const { redisClient, getValuesFromRedisAsync } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 const { getLeagueOpticOddsName } = require("./sports");
 const { readCsvFromUrl } = require("./csvReader");
+const { connectToOpticOddsStreamOdds } = require("./streams");
+const { omit, groupBy } = require("lodash");
+const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
+
+// TODO: remove oddslib from package.json
 
 const fetchTeamsMap = async (timeout) => {
   const teamsMap = new Map();
@@ -35,7 +38,7 @@ const fetchTeamsMap = async (timeout) => {
   return teamsMap;
 };
 
-const fetchGitHubConfig = async () => {
+const fetchRiskManagementConfig = async () => {
   const TIMEOUT = 2000;
 
   const teamsMapPromise = fetchTeamsMap(TIMEOUT);
@@ -49,32 +52,41 @@ const fetchGitHubConfig = async () => {
       bookmakersDataPromise,
       spreadDataPromise,
     ]);
+
+    redisClient.mset(
+      [
+        KEYS.RISK_MANAGEMENT_TEAMS_MAP,
+        JSON.stringify(Array.from(teamsMap.entries())),
+        KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA,
+        JSON.stringify(bookmakersData),
+        KEYS.RISK_MANAGEMENT_SPREAD_DATA,
+        JSON.stringify(spreadData),
+      ],
+      () => {},
+    );
   } catch (e) {
-    console.log(`Live markets: Fetching from Github config data error: ${e}`);
-    teamsMap = new Map();
-    bookmakersData = spreadData = [];
+    console.log(`Live markets: Fetching from Github config data error: ${e.message}`);
+    [teamsMap, bookmakersData, spreadData] = await getValuesFromRedisAsync(
+      [KEYS.RISK_MANAGEMENT_TEAMS_MAP, KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA, KEYS.RISK_MANAGEMENT_SPREAD_DATA],
+      false,
+    );
+    teamsMap = new Map(teamsMap);
   }
 
-  return {
-    teamsMap,
-    bookmakersData,
-    spreadData,
-  };
+  return { teamsMap, bookmakersData, spreadData };
 };
 
 const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
   const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
 
-  // TODO: check tennis leagues
-  const queryParams =
-    getLeagueSport(leagueId) === Sport.TENNIS ? "sport=tennis" : `league=${getLeagueOpticOddsName(leagueId)}`;
+  const leagueIds = getLeagueOpticOddsName(leagueId).split(",");
+  const queryParams = `is_live=true&league=${leagueIds.join("&league=")}`;
+
+  const url = `${OPTIC_ODDS_API_GAMES_URL}${queryParams}`;
 
   let opticOddsResponseData = [];
   try {
-    const opticOddsGamesResponse = await axios.get(`${OPTIC_ODDS_API_GAMES_URL}${queryParams}`, {
-      headers,
-      timeout: OPTIC_ODDS_API_TIMEOUT,
-    });
+    const opticOddsGamesResponse = await axios.get(url, { headers, timeout: OPTIC_ODDS_API_TIMEOUT });
     opticOddsResponseData = opticOddsGamesResponse.data.data;
   } catch (e) {
     console.log(`Live markets: Fetching Optic Odds games error: ${e}`);
@@ -92,7 +104,7 @@ const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
   }
 };
 
-const fetchOpticOddsGameOddsForMarkets = async (markets, oddsProviders) => {
+const fetchOpticOddsGameOddsForMarkets = async (markets, oddsProviders, isTestnet) => {
   const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
   let oddsRequestUrl = OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS;
   const opticOddsGameOddsPromises = [];
@@ -163,6 +175,133 @@ const fetchOpticOddsScoresForMarkets = async (markets) => {
   return scoresPerGame;
 };
 
+// Start stream for league ID or re-start when param (sportsbooks) is updated
+const startOddsStreams = (leagueId, bookmakersData, oddsStreamsInfoByLeagueMap, isTestnet) => {
+  // Extracting bookmakers (sportsbooks), bet types (markets) for league and Optic Odds league names
+  const bookmakers = getBookmakersArray(bookmakersData, leagueId, process.env.LIVE_ODDS_PROVIDERS.split(","));
+  const betTypes = getBetTypesForLeague(leagueId, isTestnet);
+  const streamLeagues = getLeagueOpticOddsName(leagueId).split(",");
+
+  // Start one stream for each league except for tennis GS where starting multiple leagues
+  const oddsStreamInfo = oddsStreamsInfoByLeagueMap.get(leagueId);
+  const isBookmakersUpdated =
+    oddsStreamInfo && oddsStreamInfo.bookmakers.sort().join().toLowerCase() !== bookmakers.sort().join().toLowerCase();
+
+  // Start new stream for new league or start again when param is updated
+  if (!oddsStreamInfo) {
+    // start new stream
+    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, streamLeagues);
+    oddsStreamsInfoByLeagueMap.set(leagueId, { bookmakers, betTypes, streamSource });
+  } else if (isBookmakersUpdated) {
+    // close and start with new bookmakers
+    oddsStreamInfo.streamSource.close();
+    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, streamLeagues);
+    oddsStreamsInfoByLeagueMap.set(leagueId, { bookmakers, betTypes, streamSource });
+  }
+};
+
+// Close streams that are not active
+const closeInactiveOddsStreams = (oddsStreamsInfoByLeagueMap, activeLeagues) => {
+  oddsStreamsInfoByLeagueMap.forEach((oddsStreamInfo, oddsStreamLeagueId) => {
+    const isStreamInactive = !activeLeagues.includes(oddsStreamLeagueId);
+    if (isStreamInactive) {
+      oddsStreamInfo.streamSource.close();
+      oddsStreamsInfoByLeagueMap.delete(oddsStreamLeagueId);
+    }
+  });
+};
+
+const mapOddsStreamEventToApiOddsObject = (streamEvent) => ({
+  id: streamEvent.id,
+  sports_book_name: streamEvent.sportsbook,
+  name: streamEvent.bet_name,
+  price: streamEvent.bet_price,
+  timestamp: streamEvent.timestamp,
+  bet_points: streamEvent.bet_points,
+  is_main: streamEvent.is_main,
+  is_live: streamEvent.is_live,
+  market_name: streamEvent.bet_type,
+  player_id: !streamEvent.player_id ? null : streamEvent.player_id,
+  selection: streamEvent.selection,
+  selection_line: streamEvent.selection_line,
+  selection_points: streamEvent.selection_points,
+});
+
+const mapOddsStreamEvents = (streamEvents, initialOdds, gamesInfo) => {
+  // map existing game IDs
+  const mappedOdds = initialOdds.map((initialOdd) => {
+    const updatedOddsEvents = streamEvents
+      .filter((event) => event.game_id === initialOdd.id)
+      .map((event) => mapOddsStreamEventToApiOddsObject(event));
+
+    if (updatedOddsEvents.length > 0) {
+      const odds = initialOdd.odds
+        ? initialOdd.odds
+            .filter((odd) => updatedOddsEvents.every((updatedOddsEvent) => updatedOddsEvent.id !== odd.id))
+            .concat(updatedOddsEvents)
+        : updatedOddsEvents;
+
+      return { ...initialOdd, odds };
+    } else {
+      return initialOdd;
+    }
+  });
+
+  // map new game IDs
+  const newOdds = streamEvents
+    .filter((event) => initialOdds.every((initialOdd) => initialOdd.id !== event.game_id))
+    .map((event) => mapOddsStreamEventToApiOddsObject(event));
+
+  const groupedOddsByGame = groupBy(newOdds, (newOdd) => newOdd.game_id);
+
+  const newMappedOdds = Object.keys(groupedOddsByGame)
+    .filter((gameId) => gamesInfo.some((gameInfo) => gameInfo.id === gameId))
+    .map((gameId) => {
+      const gameInfoData = gamesInfo.find((gameInfo) => gameInfo.id === gameId);
+
+      const oddsHeader = {
+        id: gameInfoData.id,
+        start_date: gameInfoData.start_date,
+        home_team: gameInfoData.home_team,
+        away_team: gameInfoData.away_team,
+        is_live: true, // gameInfo.is_live should be always true
+        is_popular: gameInfoData.is_popular,
+        tournament: gameInfoData.tournament,
+        status: gameInfoData.status,
+        sport: gameInfoData.sport,
+        league: gameInfoData.league,
+      };
+      return { ...oddsHeader, odds: groupedOddsByGame[gameId] };
+    });
+
+  return mappedOdds.concat(newMappedOdds);
+};
+
+const isOddsTimeStale = (timestamp) => {
+  if (typeof timestamp !== "number") {
+    return true;
+  }
+  const now = new Date();
+  const oddsDate = new Date(timestamp * 1000);
+  const timeDiff = now.getTime() - oddsDate.getTime();
+  return timeDiff > MAX_ALLOWED_STALE_ODDS_DELAY;
+};
+
+// Filter out non MONEYLINE stale odds
+const filterStaleOdds = (gameOddsArray) =>
+  gameOddsArray.map((gameOdds) => {
+    const odds = gameOdds.odds
+      ? gameOdds.odds.filter(
+          (odd) => odd.market_name === MONEYLINE || (odd.market_name !== MONEYLINE && !isOddsTimeStale(odd.timestamp)),
+        )
+      : gameOdds.odds;
+
+    return { ...gameOdds, odds };
+  });
+
+const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS_BY_LEAGUE}${leagueId}`;
+const getRedisKeyForOpticOddsApiScores = (leagueId) => `${KEYS.OPTIC_ODDS_API_SCORES_BY_LEAGUE}${leagueId}`;
+
 const persistErrorMessages = (errorsMap, network) => {
   redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
     const messagesMap = new Map(JSON.parse(obj));
@@ -210,63 +349,17 @@ const persistErrorMessages = (errorsMap, network) => {
   });
 };
 
-// DEPRECATE
-const adjustSpreadAndReturnMarketWithOdds = (market, spreadData, odds, marketType) => {
-  // CURRENTLY ONLY SUPPORTING MONEYLINE
-  const spreadDataForSport = getSpreadData(
-    spreadData,
-    market.leagueId,
-    marketType,
-    Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
-  );
-
-  const oddsArrayWithSpread = getLeagueIsDrawAvailable(Number(market.leagueId))
-    ? adjustSpreadOnOdds(
-        [
-          oddslib.from("decimal", odds.homeOdds).to("impliedProbability"),
-          oddslib.from("decimal", odds.awayOdds).to("impliedProbability"),
-          oddslib.from("decimal", odds.drawOdds).to("impliedProbability"),
-        ],
-        spreadDataForSport.minSpread,
-        spreadDataForSport.targetSpread,
-      )
-    : adjustSpreadOnOdds(
-        [
-          oddslib.from("decimal", odds.homeOdds).to("impliedProbability"),
-          oddslib.from("decimal", odds.awayOdds).to("impliedProbability"),
-        ],
-        spreadDataForSport.minSpread,
-        spreadDataForSport.targetSpread,
-      );
-
-  market.odds = market.odds.map((_odd, index) => {
-    let positionOdds;
-    switch (index) {
-      case 0:
-        positionOdds = oddsArrayWithSpread[0];
-        break;
-      case 1:
-        positionOdds = oddsArrayWithSpread[1];
-        break;
-      case 2:
-        positionOdds = oddsArrayWithSpread[2];
-        break;
-    }
-    return {
-      american: oddslib.from("impliedProbability", positionOdds).to("moneyline"),
-      decimal: oddslib.from("impliedProbability", positionOdds).to("decimal"),
-      normalizedImplied: positionOdds,
-    };
-  });
-
-  return market;
-};
-
 module.exports = {
-  adjustSpreadAndReturnMarketWithOdds,
-  persistErrorMessages,
-  fetchGitHubConfig,
+  fetchRiskManagementConfig,
   fetchOpticOddsGamesForLeague,
   fetchOpticOddsGameOddsForMarkets,
   fetchOpticOddsScoresForMarkets,
+  startOddsStreams,
+  closeInactiveOddsStreams,
+  mapOddsStreamEvents,
+  isOddsTimeStale,
+  filterStaleOdds,
+  getRedisKeyForOpticOddsApiOdds,
+  getRedisKeyForOpticOddsApiScores,
+  persistErrorMessages,
 };

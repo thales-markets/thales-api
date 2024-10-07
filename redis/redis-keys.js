@@ -65,6 +65,12 @@ const KEYS = {
     42161: "overtimeV2ArbLiveMarketsApiErrorMessages",
     8453: "overtimeV2BaseLiveMarketsApiErrorMessages",
   },
+  OPTIC_ODDS_API_ODDS_BY_LEAGUE: "opticOddsApiOddsByLeagueId",
+  OPTIC_ODDS_API_SCORES_BY_LEAGUE: "opticOddsApiScoresByLeagueId",
+  OPTIC_ODDS_STREAM_EVENT_ODDS_BY_GAME: "opticOddsStreamEventOddsByGameId",
+  RISK_MANAGEMENT_SPREAD_DATA: "riskManagementSpreadData",
+  RISK_MANAGEMENT_BOOKMAKERS_DATA: "riskManagementBookmakersData",
+  RISK_MANAGEMENT_TEAMS_MAP: "riskManagementTeamsMap",
   SOLANA_ADDRESSES: "solanaAddresses",
 };
 

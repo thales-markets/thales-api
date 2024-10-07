@@ -1,4 +1,5 @@
 const OPTIC_ODDS_API_BASE_URL = "https://api.opticodds.com/api/v2/";
+const OPTIC_ODDS_STREAM_ODDS_BASE_URL = "https://api.opticodds.com/api/v2/stream/odds";
 
 const OPTIC_ODDS_API_GAMES_URL = OPTIC_ODDS_API_BASE_URL + "games?";
 const OPTIC_ODDS_API_ODDS_URL = OPTIC_ODDS_API_BASE_URL + "game-odds?";
@@ -12,6 +13,7 @@ const OPTIC_ODDS_API_SCORES_MAX_GAMES = 25;
 const OPTIC_ODDS_API_TIMEOUT = 5000; // 5s
 
 module.exports = {
+  OPTIC_ODDS_STREAM_ODDS_BASE_URL,
   OPTIC_ODDS_API_GAMES_URL,
   OPTIC_ODDS_API_ODDS_URL,
   OPTIC_ODDS_API_SCORES_URL,

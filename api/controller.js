@@ -1267,7 +1267,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   });
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
   const network = req.params.networkParam;
   const typeId = req.query.typeId;
   const sport = req.query.sport;
@@ -1319,7 +1319,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
     return;
   }
 
-  redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], async function (err, obj) {
+  redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], function (err, obj) {
     const markets = JSON.parse(obj);
 
     try {

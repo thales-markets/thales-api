@@ -22,7 +22,7 @@ async function readCsvFromUrl(url, timeout) {
     const data = await parseCsv(csvStream);
     return data;
   } catch (error) {
-    console.error(`Failed to read CSV from URL: ${url}`, error);
+    console.error(`Failed to read CSV from URL: ${url}, Error message ${error.message}`);
     throw error;
   }
 }
