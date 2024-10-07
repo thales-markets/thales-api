@@ -4,22 +4,12 @@ const KEYS = {
   USER_REFFERER_IDS: "userReffererIDsMap",
   THALES_IO_DAILY_STATS: "thalesIOStats",
   THALES_IO_WEEKLY_STATS: "thalesIOWeeklyStats",
-  OP_REWARDS: {
-    10: "opRewards",
-  },
-  OP_REWARDS_V2: {
-    10: "opRewardsV2",
-  },
-  OVERTIME_REWARDS: {
-    10: "overtimeOpRewards",
-  },
   PARLAY_LEADERBOARD: {
     10: "overtimeOpParlayLeaderboard",
     420: "overtimeGoerliParlayLeaderboard",
     42161: "overtimeArbitrumParlayLeaderboard",
     8453: "overtimeBaseParlayLeaderboard",
   },
-  TWAP_FOR_PERIOD: "twapMap",
   THALES_MARKETS: {
     10: "thalesOpMarkets",
     137: "thalesPolygonMarkets",

@@ -16,9 +16,8 @@ const stakingThalesBettingProxyContract = require("../contracts/stakingThalesBet
 const { getProvider } = require("../utils/provider");
 const { ethers } = require("ethers");
 const KEYS = require("../../redis/redis-keys");
-const { League, UFC_LEAGUE_IDS } = require("../constants/sports");
 const { getCollateralDecimals, getCollateralSymbolByAddress } = require("../utils/collaterals");
-const { getLeagueSport, getLeagueLabel } = require("../utils/sports");
+const { getLeagueSport, getLeagueLabel, League, UFC_LEAGUE_IDS } = require("overtime-live-trading-utils");
 const { orderBy } = require("lodash");
 const positionNamesMap = require("../assets/positionNamesMap.json");
 

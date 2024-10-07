@@ -12,10 +12,10 @@ const {
 const teamsMapping = require("../assets/teamsMapping.json");
 const { redisClient, getValuesFromRedisAsync } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
-const { getLeagueOpticOddsName } = require("./sports");
+const { getLeagueOpticOddsName } = require("overtime-live-trading-utils");
 const { readCsvFromUrl } = require("./csvReader");
 const { connectToOpticOddsStreamOdds } = require("./streams");
-const { omit, groupBy } = require("lodash");
+const { groupBy } = require("lodash");
 const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
 
 // TODO: remove oddslib from package.json

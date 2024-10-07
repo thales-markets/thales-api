@@ -49,7 +49,7 @@ const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters")
 const overtimeV2Markets = require("../overtimeV2Api/source/markets");
 const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
-const { LeagueMap } = require("../overtimeV2Api/constants/sports");
+const { LeagueMap } = require("overtime-live-trading-utils");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
 const {
   initializeSportsAMMLPListener,
@@ -63,63 +63,6 @@ app.listen(process.env.PORT || 3002, () => {
 
 app.get(ENDPOINTS.ROOT, (req, res) => {
   res.sendStatus(200);
-});
-
-app.get(ENDPOINTS.OP_REWARDS, (req, res) => {
-  const network = req.params.networkParam;
-  const period = req.params.period;
-  if (
-    [10, 69].includes(Number(network)) &&
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].includes(Number(period))
-  ) {
-    redisClient.get(KEYS.OP_REWARDS[network], function (err, obj) {
-      const rewards = new Map(JSON.parse(obj));
-      try {
-        res.send(Array.from(rewards.get(Number(period))));
-      } catch (e) {
-        console.log(e);
-      }
-    });
-  } else {
-    res.send("Bad Network or bad period");
-  }
-});
-
-app.get(ENDPOINTS.OP_REWARDS_V2, (req, res) => {
-  const network = req.params.networkParam;
-  const period = req.params.period;
-  if (
-    [10].includes(Number(network)) &&
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].includes(Number(period))
-  ) {
-    redisClient.get(KEYS.OP_REWARDS_V2[network], function (err, obj) {
-      const rewards = new Map(JSON.parse(obj));
-      try {
-        res.send(Array.from(rewards.get(Number(period))));
-      } catch (e) {
-        console.log(e);
-      }
-    });
-  } else {
-    res.send("Bad Network or bad period");
-  }
-});
-
-app.get(ENDPOINTS.OVERTIME_REWARDS, (req, res) => {
-  const network = req.params.networkParam;
-  const period = req.params.period;
-  if ([10, 42].includes(Number(network))) {
-    redisClient.get(KEYS.OVERTIME_REWARDS[network], function (err, obj) {
-      const rewards = new Map(JSON.parse(obj));
-      try {
-        res.send(rewards.get(Number(period)));
-      } catch (e) {
-        console.log(e);
-      }
-    });
-  } else {
-    res.send("Bad Network or bad period");
-  }
 });
 
 app.get(ENDPOINTS.PARLAY_LEADERBOARD, (req, res) => {
@@ -1321,7 +1264,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
   redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], function (err, obj) {
     const markets = JSON.parse(obj);
-
+    const errorsMap = await getLiveMarketsErrorsMap(network);
+    const errors = [];
     try {
       const filteredMarkets = markets.filter(
         (market) =>
@@ -1330,8 +1274,16 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
           (!typeId || Number(market.typeId) === Number(typeId)),
       );
 
+      filteredMarkets.forEach((market) => {
+        const errorsDetails = errorsMap.get(market.gameId);
+        if (errorsDetails != undefined) {
+          errors.push({ gameId: market.gameId, errorsDetails });
+        }
+      });
+
       res.send({
         markets: filteredMarkets,
+        errors,
       });
     } catch (e) {
       console.log(e);

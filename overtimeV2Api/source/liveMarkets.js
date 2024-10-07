@@ -2,24 +2,20 @@ require("dotenv").config();
 const { delay } = require("../utils/general");
 const { redisClient, getValuesFromRedisAsync, getValueFromRedisAsync } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
-const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const { uniq } = require("lodash");
 const {
-  getLeagueIsDrawAvailable,
-  getLeagueSport,
-  getLiveSupportedLeagues,
-  getTestnetLiveSupportedLeagues,
-} = require("../utils/sports");
-const { Sport } = require("../constants/sports");
-const {
+  Sport,
   getBookmakersArray,
   teamNamesMatching,
   gamesDatesMatching,
   checkGameContraints,
   processMarket,
   fetchResultInCurrentSet,
+  getLeagueIsDrawAvailable,
+  getLeagueSport,
+  getLiveSupportedLeagues,
 } = require("overtime-live-trading-utils");
 const {
   fetchRiskManagementConfig,
@@ -94,7 +90,7 @@ async function processAllMarkets(
   const SUPPORTED_NETWORKS = isTestnet ? [NETWORK.OptimismSepolia] : [NETWORK.Optimism, NETWORK.Arbitrum];
 
   // Get supported live leagues
-  const supportedLiveLeagueIds = isTestnet ? getTestnetLiveSupportedLeagues() : getLiveSupportedLeagues();
+  const supportedLiveLeagueIds = getLiveSupportedLeagues(isTestnet);
   // Read open markets only from one network as markets are the same on all networks
   const openMarketsMap = await getOpenMarkets(SUPPORTED_NETWORKS[0]);
 
@@ -368,6 +364,7 @@ async function processMarketsByLeague(
               getLeagueIsDrawAvailable(market.leagueId),
               Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
               Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
+              isTestnet,
             );
 
             if (processedMarket.errorMessage) {
