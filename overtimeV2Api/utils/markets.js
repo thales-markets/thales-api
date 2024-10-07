@@ -1,5 +1,3 @@
-const { League, Sport } = require("../constants/sports");
-const { getLeagueSport } = require("./sports");
 const {
   OddsType,
   PLAYER_PROPS_MARKET_TYPES,
@@ -8,6 +6,7 @@ const {
   COMBINED_POSITIONS_MARKET_TYPES,
 } = require("../constants/markets");
 const bytes32 = require("bytes32");
+const { getLeagueSport, League, Sport } = require("overtime-live-trading-utils");
 
 const fixDuplicatedTeamName = (name, isEnetpulseSport) => {
   if (isEnetpulseSport) return name;
@@ -63,24 +62,6 @@ const getIsCombinedPositionsMarket = (marketType) => {
   return COMBINED_POSITIONS_MARKET_TYPES.includes(marketType);
 };
 
-const getAverageOdds = (multipleOddsFromProviders) => {
-  let homeOdds;
-  let awayOdds;
-  let drawOdds;
-
-  multipleOddsFromProviders.forEach((oddsObject) => {
-    homeOdds += oddsObject;
-    awayOdds += oddsObject;
-    drawOdds += oddsObject;
-  });
-
-  homeOdds = homeOdds / multipleOddsFromProviders.length;
-  awayOdds = awayOdds / multipleOddsFromProviders.length;
-  drawOdds = drawOdds / multipleOddsFromProviders.length;
-
-  return { homeOdds: homeOdds, awayOdds: awayOdds, drawOdds: drawOdds };
-};
-
 const calculateImpliedOddsDifference = (impliedOddsA, impliedOddsB) => {
   const percentageDifference = (Math.abs(impliedOddsA - impliedOddsB) / impliedOddsA) * 100;
   console.log("% diff: " + percentageDifference);
@@ -99,7 +80,6 @@ module.exports = {
   isPlayerPropsMarket,
   isOneSidePlayerPropsMarket,
   isYesNoPlayerPropsMarket,
-  getAverageOdds,
   calculateImpliedOddsDifference,
   convertFromBytes32,
   getIsCombinedPositionsMarket,

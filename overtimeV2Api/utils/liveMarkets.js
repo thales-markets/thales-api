@@ -1,13 +1,9 @@
 const axios = require("axios");
-const { getSpreadData, adjustSpreadOnOdds } = require("overtime-live-trading-utils");
-const { getLeagueIsDrawAvailable, getLeagueSport } = require("./sports");
-const oddslib = require("oddslib");
-const { Sport } = require("../constants/sports");
 const { OPTIC_ODDS_API_GAMES_URL } = require("../constants/opticodds");
 const teamsMapping = require("../assets/teamsMapping.json");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
-const { getLeagueOpticOddsName } = require("./sports");
+const { getLeagueSport, getLeagueOpticOddsName, Sport } = require("overtime-live-trading-utils");
 
 const fetchTeamsMap = async () => {
   const teamsMap = new Map();
@@ -25,57 +21,6 @@ const fetchTeamsMap = async () => {
   });
 
   return teamsMap;
-};
-
-const adjustSpreadAndReturnMarketWithOdds = (market, spreadData, odds, marketType) => {
-  // CURRENTLY ONLY SUPPORTING MONEYLINE
-  const spreadDataForSport = getSpreadData(
-    spreadData,
-    market.leagueId,
-    marketType,
-    Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
-  );
-
-  const oddsArrayWithSpread = getLeagueIsDrawAvailable(Number(market.leagueId))
-    ? adjustSpreadOnOdds(
-        [
-          oddslib.from("decimal", odds.homeOdds).to("impliedProbability"),
-          oddslib.from("decimal", odds.awayOdds).to("impliedProbability"),
-          oddslib.from("decimal", odds.drawOdds).to("impliedProbability"),
-        ],
-        spreadDataForSport.minSpread,
-        spreadDataForSport.targetSpread,
-      )
-    : adjustSpreadOnOdds(
-        [
-          oddslib.from("decimal", odds.homeOdds).to("impliedProbability"),
-          oddslib.from("decimal", odds.awayOdds).to("impliedProbability"),
-        ],
-        spreadDataForSport.minSpread,
-        spreadDataForSport.targetSpread,
-      );
-
-  market.odds = market.odds.map((_odd, index) => {
-    let positionOdds;
-    switch (index) {
-      case 0:
-        positionOdds = oddsArrayWithSpread[0];
-        break;
-      case 1:
-        positionOdds = oddsArrayWithSpread[1];
-        break;
-      case 2:
-        positionOdds = oddsArrayWithSpread[2];
-        break;
-    }
-    return {
-      american: oddslib.from("impliedProbability", positionOdds).to("moneyline"),
-      decimal: oddslib.from("impliedProbability", positionOdds).to("decimal"),
-      normalizedImplied: positionOdds,
-    };
-  });
-
-  return market;
 };
 
 const persistErrorMessages = (errorsMap, network) => {
@@ -168,7 +113,6 @@ const fetchOpticOddsGamesForLeague = async (leagueIds, isTestnet) => {
 
 module.exports = {
   fetchTeamsMap,
-  adjustSpreadAndReturnMarketWithOdds,
   persistErrorMessages,
   fetchOpticOddsGamesForLeague,
 };

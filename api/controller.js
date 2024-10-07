@@ -49,7 +49,7 @@ const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters")
 const overtimeV2Markets = require("../overtimeV2Api/source/markets");
 const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
-const { LeagueMap } = require("../overtimeV2Api/constants/sports");
+const { LeagueMap } = require("overtime-live-trading-utils");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
 const {
   initializeSportsAMMLPListener,
@@ -1237,8 +1237,10 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
     return;
   }
 
-  const allLiveLeagues = Object.values(LeagueMap).filter((league) =>
-    Number(network) == 11155420 ? league.isLiveTestnet : league.live,
+  const allLiveLeagues = Object.values(LeagueMap).filter((leagueInfo) =>
+    Number(network) == 11155420
+      ? leagueInfo.betTypesForLiveTestnet && leagueInfo.betTypesForLiveTestnet.length > 0
+      : leagueInfo.betTypesForLive && leagueInfo.betTypesForLive.length > 0,
   );
   const allLiveLeagueIds = allLiveLeagues.map((league) => league.id);
   const allLiveSports = uniqBy(allLiveLeagues.map((league) => league.sport.toLowerCase()));
@@ -1260,11 +1262,10 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
     return;
   }
 
-  const errorsMap = await getLiveMarketsErrorsMap(network);
-  const errors = [];
   redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], async function (err, obj) {
     const markets = JSON.parse(obj);
-
+    const errorsMap = await getLiveMarketsErrorsMap(network);
+    const errors = [];
     try {
       const filteredMarkets = markets.filter(
         (market) =>

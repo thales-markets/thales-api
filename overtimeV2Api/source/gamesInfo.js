@@ -10,15 +10,15 @@ const { EnetpulseRounds } = require("../constants/markets");
 const {
   LeagueMap,
   Provider,
-  SportIdMapEnetpulse,
-  SportIdMapRundown,
+  LeagueIdMapEnetpulse,
+  LeagueIdMapRundown,
   AMERICAN_LEAGUES,
   League,
-  SportIdMapOpticOdds,
+  LeagueIdMapOpticOdds,
   PeriodType,
   Sport,
-} = require("../constants/sports");
-const { getLeaguePeriodType, getLeagueSport } = require("../utils/sports");
+} = require("overtime-live-trading-utils");
+const { getLeaguePeriodType, getLeagueSport } = require("overtime-live-trading-utils");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_FUTURE);
@@ -83,7 +83,7 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
     const sport = sportId;
-    const rundownSport = SportIdMapRundown[sport];
+    const rundownSport = LeagueIdMapRundown[sport];
 
     // console.log(`Getting games info for Rundown sport: ${rundownSport}, ${sport} and date ${formattedDate}`);
     const apiUrl = `https://therundown.io/api/v1/sports/${rundownSport}/events/${formattedDate}?key=${process.env.RUNDOWN_API_KEY}`;
@@ -173,7 +173,7 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
     const sport = sportId;
-    const enetpulseSport = SportIdMapEnetpulse[sport];
+    const enetpulseSport = LeagueIdMapEnetpulse[sport];
 
     // console.log(`Getting games info for Enetpulse sport: ${enetpulseSport}, ${sport} and date ${formattedDate}`);
     const apiUrl = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${enetpulseSport}&date=${formattedDate}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&includeEventProperties=no`;
@@ -267,7 +267,7 @@ const procesOpticOdssGamesInfo = async (sports, formattedDate, gamesInfoMap) => 
   for (let j = 0; j < sports.length; j++) {
     const sportId = Number(sports[j]);
     const sport = sportId;
-    const opticOddsSport = SportIdMapOpticOdds[sport];
+    const opticOddsSport = LeagueIdMapOpticOdds[sport];
 
     let page = 1;
     let totalPages = 1;

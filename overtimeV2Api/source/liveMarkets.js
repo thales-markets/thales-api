@@ -4,8 +4,7 @@ require("dotenv").config();
 const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const axios = require("axios");
-const { getAverageOdds } = require("../utils/markets");
-const { LIVE_TYPE_ID_BASE, MIN_ODDS_FOR_DIFF_CHECKING, MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
+const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
 const {
@@ -15,29 +14,21 @@ const {
   OPTIC_ODDS_API_SCORES_MAX_GAMES,
 } = require("../constants/opticodds");
 const { uniq } = require("lodash");
-const {
-  getLeagueIsDrawAvailable,
-  getLeagueSport,
-  getLiveSupportedLeagues,
-  getTestnetLiveSupportedLeagues,
-} = require("../utils/sports");
-const { Sport } = require("../constants/sports");
 const { readCsvFromUrl } = require("../utils/csvReader");
 const {
+  Sport,
   getBookmakersArray,
   teamNamesMatching,
   gamesDatesMatching,
   checkGameContraints,
-  extractOddsForGamePerProvider,
-  checkOddsFromBookmakers,
+  processMarket,
   fetchResultInCurrentSet,
+  getLeagueIsDrawAvailable,
+  getLeagueSport,
+  getLiveSupportedLeagues,
+  getBetTypesForLeague,
 } = require("overtime-live-trading-utils");
-const {
-  fetchTeamsMap,
-  adjustSpreadAndReturnMarketWithOdds,
-  persistErrorMessages,
-  fetchOpticOddsGamesForLeague,
-} = require("../utils/liveMarkets");
+const { fetchTeamsMap, persistErrorMessages, fetchOpticOddsGamesForLeague } = require("../utils/liveMarkets");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
@@ -90,7 +81,7 @@ async function processAllMarkets(isTestnet) {
   const errorsMap = new Map();
 
   try {
-    const supportedLiveLeagueIds = isTestnet ? getTestnetLiveSupportedLeagues() : getLiveSupportedLeagues();
+    const supportedLiveLeagueIds = getLiveSupportedLeagues(isTestnet);
     // Read open markets only from one network as markets are the same on all networks
     const openMarketsMap = await getOpenMarkets(SUPPORTED_NETWORKS[0]);
 
@@ -179,6 +170,12 @@ async function processAllMarkets(isTestnet) {
               if (gameNumInRequest == 0 || index == markets.length - 1) {
                 const liveOddsProvider = liveOddsProvidersPerSport.get(uniqueProviderLeagueId);
                 oddsRequestUrl += `&sportsbook=${liveOddsProvider.join("&sportsbook=")}`;
+
+                const betTypes = getBetTypesForLeague(market.leagueId, isTestnet);
+
+                betTypes.forEach((betType) => {
+                  oddsRequestUrl += `&market_name=${betType}`;
+                });
 
                 opticOddsGameOddsPromises.push(axios.get(oddsRequestUrl, { headers }));
                 oddsRequestUrl = OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS;
@@ -317,11 +314,13 @@ async function processAllMarkets(isTestnet) {
           }
 
           if (gamePaused) {
+            const errorMessage = `Pausing game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} due to odds being stale`;
             errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
-              errorMessage: `Pausing game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} due to odds being stale`,
+              errorMessage,
             });
+            market.errorMessage = errorMessage;
             market.opticOddsGameOdds.odds = [];
           }
 
@@ -335,26 +334,7 @@ async function processAllMarkets(isTestnet) {
 
           const liveOddsProviders = liveOddsProvidersPerSport.get(Number(market.leagueId));
 
-          // EXTRACTING ODDS FROM THE RESPONSE
-          const linesMap = extractOddsForGamePerProvider(
-            liveOddsProviders,
-            market.opticOddsGameOdds,
-            market,
-            teamsMap,
-            getLeagueIsDrawAvailable(Number(market.leagueId)),
-          );
-
-          // CHECKING AND COMPARING ODDS FOR THE GIVEN BOOKMAKERS
-          const oddsList = checkOddsFromBookmakers(
-            linesMap,
-            liveOddsProviders,
-            !getLeagueIsDrawAvailable(Number(market.leagueId)),
-            Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
-            MIN_ODDS_FOR_DIFF_CHECKING,
-          );
-
-          const opticOddsHomeTeam = market.opticOddsGameOdds.home_team;
-          const opticOddsAwayTeam = market.opticOddsGameOdds.away_team;
+          const apiResponse = { ...market.opticOddsGameOdds };
 
           delete market.opticOddsGameEvent;
           delete market.opticOddsGameOdds;
@@ -369,39 +349,42 @@ async function processAllMarkets(isTestnet) {
           market.homeScoreByPeriod = gamesHomeScoreByPeriod;
           market.awayScoreByPeriod = gamesAwayScoreByPeriod;
 
-          const isThere100PercentOdd = oddsList.some(
-            (oddsObject) => oddsObject.homeOdds == 1 || oddsObject.awayOdds == 1 || oddsObject.drawOdds == 1,
-          );
-          const isZeroOdds = oddsList[0].homeOdds == 0 && oddsList[0].awayOdds == 0 && oddsList[0].drawOdds == 0;
+          if (!market.errorMessage) {
+            if (isLive) {
+              const processedMarket = processMarket(
+                market,
+                apiResponse,
+                liveOddsProviders,
+                spreadData,
+                getLeagueIsDrawAvailable(market.leagueId),
+                Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
+                Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
+                isTestnet,
+              );
 
-          if (isThere100PercentOdd || isZeroOdds || !isLive) {
-            errorsMap.set(market.gameId, {
-              processingTime: PROCESSING_START_TIME,
-              errorTime: new Date().toUTCString(),
-              errorMessage: isThere100PercentOdd
-                ? `Some odds returned by provider are 1 for game ${opticOddsHomeTeam} - ${opticOddsAwayTeam}`
-                : isZeroOdds
-                ? `Zero odds returned by provider for game ${opticOddsHomeTeam} - ${opticOddsAwayTeam}`
-                : `Provider marked game ${opticOddsHomeTeam} - ${opticOddsAwayTeam} as not live`,
-            });
+              if (processedMarket.errorMessage) {
+                errorsMap.set(market.gameId, {
+                  processingTime: PROCESSING_START_TIME,
+                  errorTime: new Date().toUTCString(),
+                  errorMessage: processedMarket.errorMessage,
+                });
+              }
 
-            // RETURNING MARKET WITH ZERO ODDS IF CONDITIONS FOR ODDS ARE NOT MET OR LIVE FLAG ON OPTIC ODDS API IS FALSE BUT GAME IS IN PROGRESS
-            market.odds = market.odds.map(() => {
-              return { american: 0, decimal: 0, normalizedImplied: 0 };
-            });
-            return market;
-          } else {
-            const isAggregationEnabled = process.env.ODDS_AGGREGATION_ENABLED === "true";
-            if (isAggregationEnabled) {
-              const aggregatedOdds = getAverageOdds(oddsList);
-              // ADJUSTING SPREAD AND RETURNING MARKET WITH AGGREGATED LIVE ODDS
-              return adjustSpreadAndReturnMarketWithOdds(market, spreadData, aggregatedOdds, LIVE_TYPE_ID_BASE);
+              market = processedMarket;
             } else {
-              const primaryBookmakerOdds = oddsList[0];
-              // ADJUSTING SPREAD AND RETURNING MARKET WITH LIVE ODDS FROM PRIMARY BOOKMAKER
-              return adjustSpreadAndReturnMarketWithOdds(market, spreadData, primaryBookmakerOdds, LIVE_TYPE_ID_BASE);
+              const errorMessage = `Provider marked game ${apiResponse.home_team} - ${apiResponse.away_team} as not live`;
+              errorsMap.set(market.gameId, {
+                processingTime: PROCESSING_START_TIME,
+                errorTime: new Date().toUTCString(),
+                errorMessage,
+              });
+              market.errorMessage = errorMessage;
+
+              market.odds = market.odds.map(() => ({ american: 0, decimal: 0, normalizedImplied: 0 }));
             }
           }
+
+          return market;
         });
 
         if (isTestnet && isDummyMarketsEnabled) {

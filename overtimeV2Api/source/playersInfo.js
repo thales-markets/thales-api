@@ -6,8 +6,7 @@ const axios = require("axios");
 const KEYS = require("../../redis/redis-keys");
 const { isPlayerPropsMarket, convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
-const { getLeagueProvider } = require("../utils/sports");
-const { Provider } = require("../constants/sports");
+const { getLeagueProvider, Provider } = require("overtime-live-trading-utils");
 
 async function processPlayersInfo() {
   if (process.env.REDIS_URL) {
