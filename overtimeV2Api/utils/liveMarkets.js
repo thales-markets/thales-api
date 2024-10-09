@@ -245,10 +245,7 @@ const mapOddsStreamEvents = (streamEvents, initialOdds, gamesInfo) => {
   });
 
   // map new game IDs
-  const newOdds = streamEvents
-    .filter((event) => initialOdds.every((initialOdd) => initialOdd.id !== event.game_id))
-    .map((event) => mapOddsStreamEventToApiOddsObject(event));
-
+  const newOdds = streamEvents.filter((event) => initialOdds.every((initialOdd) => initialOdd.id !== event.game_id));
   const groupedOddsByGame = groupBy(newOdds, (newOdd) => newOdd.game_id);
 
   const newMappedOdds = Object.keys(groupedOddsByGame)
@@ -268,7 +265,10 @@ const mapOddsStreamEvents = (streamEvents, initialOdds, gamesInfo) => {
         sport: gameInfoData.sport,
         league: gameInfoData.league,
       };
-      return { ...oddsHeader, odds: groupedOddsByGame[gameId] };
+
+      const odds = groupedOddsByGame[gameId].map((event) => mapOddsStreamEventToApiOddsObject(event));
+
+      return { ...oddsHeader, odds };
     });
 
   return mappedOdds.concat(newMappedOdds);
