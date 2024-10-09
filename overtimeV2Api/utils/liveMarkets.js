@@ -6,7 +6,6 @@ const {
   OPTIC_ODDS_API_ODDS_MAX_GAMES,
   OPTIC_ODDS_API_SCORES_URL,
   OPTIC_ODDS_API_SCORES_MAX_GAMES,
-  OPTIC_ODDS_API_TIMEOUT,
 } = require("../constants/opticodds");
 const teamsMapping = require("../assets/teamsMapping.json");
 const { redisClient, getValuesFromRedisAsync } = require("../../redis/client");
@@ -84,7 +83,7 @@ const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
 
   let opticOddsResponseData = [];
   try {
-    const opticOddsGamesResponse = await axios.get(url, { headers, timeout: OPTIC_ODDS_API_TIMEOUT });
+    const opticOddsGamesResponse = await axios.get(url, { headers });
     opticOddsResponseData = opticOddsGamesResponse.data.data;
   } catch (e) {
     console.log(`Live markets: Fetching Optic Odds games error: ${e}`);
@@ -123,7 +122,7 @@ const fetchOpticOddsGameOddsForMarkets = async (markets, oddsProviders, isTestne
         oddsRequestUrl += `&market_name=${betType}`;
       });
 
-      opticOddsGameOddsPromises.push(axios.get(oddsRequestUrl, { headers, timeout: OPTIC_ODDS_API_TIMEOUT }));
+      opticOddsGameOddsPromises.push(axios.get(oddsRequestUrl, { headers }));
       oddsRequestUrl = OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS;
     }
   });
@@ -154,7 +153,7 @@ const fetchOpticOddsScoresForMarkets = async (markets) => {
 
     // creating new request after max num of games or when last game in request
     if (gameNumInRequest == 0 || index == allGameIds.length - 1) {
-      opticOddsScoresPromises.push(axios.get(opticOddsScoresRequestUrl, { headers, timeout: OPTIC_ODDS_API_TIMEOUT }));
+      opticOddsScoresPromises.push(axios.get(opticOddsScoresRequestUrl, { headers }));
       opticOddsScoresRequestUrl = OPTIC_ODDS_API_SCORES_URL;
     }
   });

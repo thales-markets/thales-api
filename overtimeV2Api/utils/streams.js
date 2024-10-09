@@ -65,8 +65,9 @@ const connectToOpticOddsStreamOdds = (sportsbooks, markets, leagues, lastEntryId
     redisClient.expire(redisGameKey, 60 * 60 * 12, () => {}); // delete after 12h
   });
 
+  // If an odd gets locked. You can use this to tell if an odd is no longer available on a sportsbook.
   eventSource.addEventListener("locked-odds", (event) => {
-    // If an odd gets locked. You can use this to tell if an odd is no longer available on a sportsbook.
+    return; // TODO: For now ignore locked-odds, delete if we need to set 0 price
     const data = JSON.parse(event.data);
 
     lastReceivedEntryId = data.entry_id;
