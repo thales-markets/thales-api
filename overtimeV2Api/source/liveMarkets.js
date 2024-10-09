@@ -30,6 +30,7 @@ const {
   getRedisKeyForOpticOddsApiScores,
   isOddsTimeStale,
   filterStaleOdds,
+  isMarketPaused,
 } = require("../utils/liveMarkets");
 const { getRedisKeyForOpticOddsStreamEventOdds } = require("../utils/streams");
 
@@ -327,7 +328,7 @@ async function processMarketsByLeague(
             errorMessage,
           });
           market.errorMessage = errorMessage;
-          market.opticOddsGameOdds.odds = [];
+          market.isPaused = true;
         }
 
         const leagueSport = getLeagueSport(Number(market.leagueId));
@@ -376,6 +377,7 @@ async function processMarketsByLeague(
             }
 
             market = processedMarket;
+            market.isPaused = isMarketPaused(market);
           } else {
             const errorMessage = `Provider marked game ${opticOddsGameOddsData.home_team} - ${opticOddsGameOddsData.away_team} as not live`;
             errorsMap.set(market.gameId, {

@@ -74,7 +74,8 @@ const fetchRiskManagementConfig = async () => {
 };
 
 const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
-  const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
+  const noCacheConfig = { "Cache-Control": "no-cache", Pragma: "no-cache", Expires: "0" };
+  const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY, ...noCacheConfig };
 
   const leagueIds = getLeagueOpticOddsName(leagueId).split(",");
   const queryParams = `is_live=true&league=${leagueIds.join("&league=")}`;
@@ -296,6 +297,23 @@ const filterStaleOdds = (gameOddsArray) =>
     return { ...gameOdds, odds };
   });
 
+const isMarketPaused = (market) => {
+  const parentOdds = market.odds;
+  const isParentWithoutOdds = !parentOdds || parentOdds.length === 0 || parentOdds.every((odds) => odds.decimal === 0);
+
+  const childMarkets = market.childMarkets;
+  const isChildMarketsWithoutOdds =
+    !childMarkets ||
+    childMarkets.length === 0 ||
+    childMarkets.every((childMarket) => {
+      const childOdds = childMarket.odds;
+      const isChildWithoutOdds = !childOdds || childOdds.length === 0 || childOdds.every((odds) => odds.decimal === 0);
+      return isChildWithoutOdds;
+    });
+
+  return isParentWithoutOdds && isChildMarketsWithoutOdds;
+};
+
 const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS_BY_LEAGUE}${leagueId}`;
 const getRedisKeyForOpticOddsApiScores = (leagueId) => `${KEYS.OPTIC_ODDS_API_SCORES_BY_LEAGUE}${leagueId}`;
 
@@ -356,6 +374,7 @@ module.exports = {
   mapOddsStreamEvents,
   isOddsTimeStale,
   filterStaleOdds,
+  isMarketPaused,
   getRedisKeyForOpticOddsApiOdds,
   getRedisKeyForOpticOddsApiScores,
   persistErrorMessages,
