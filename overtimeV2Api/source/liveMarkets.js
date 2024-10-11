@@ -81,10 +81,13 @@ async function processAllMarkets(isTestnet) {
   const errorsMap = new Map();
 
   try {
-    const supportedLiveLeagueIds = getLiveSupportedLeagues(isTestnet);
     // Read open markets only from one network as markets are the same on all networks
-    const openMarketsMap = await getOpenMarkets(SUPPORTED_NETWORKS[0]);
+    const [openMarketsMap, leagueMap] = await Promise.all([
+      getOpenMarkets(SUPPORTED_NETWORKS[0]),
+      readCsvFromUrl(isTestnet ? process.env.GITHUB_URL_LIVE_lEAGUES_CSV : process.env.GITHUB_URL_LIVE_lEAGUES_CSV),
+    ]);
 
+    const supportedLiveLeagueIds = getLiveSupportedLeagues(leagueMap);
     const supportedLiveMarkets = Array.from(openMarketsMap.values())
       .filter((market) => market.statusCode === "ongoing")
       .filter((market) => supportedLiveLeagueIds.includes(market.leagueId));
@@ -171,7 +174,7 @@ async function processAllMarkets(isTestnet) {
                 const liveOddsProvider = liveOddsProvidersPerSport.get(uniqueProviderLeagueId);
                 oddsRequestUrl += `&sportsbook=${liveOddsProvider.join("&sportsbook=")}`;
 
-                const betTypes = getBetTypesForLeague(market.leagueId, isTestnet);
+                const betTypes = getBetTypesForLeague(market.leagueId, leagueMap);
 
                 betTypes.forEach((betType) => {
                   oddsRequestUrl += `&market_name=${betType}`;
@@ -359,7 +362,7 @@ async function processAllMarkets(isTestnet) {
                 getLeagueIsDrawAvailable(market.leagueId),
                 Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
                 Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
-                isTestnet,
+                leagueMap,
               );
 
               if (processedMarket.errorMessage) {

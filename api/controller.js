@@ -46,10 +46,11 @@ const thalesSpeedUtilsMarkets = require("../thalesSpeedApi/utils/markets");
 const thalesSpeedUtilsNetworks = require("../thalesSpeedApi/utils/networks");
 const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters");
 
+const { readCsvFromUrl } = require("../overtimeV2Api/utils/csvReader");
 const overtimeV2Markets = require("../overtimeV2Api/source/markets");
 const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
-const { LeagueMap } = require("overtime-live-trading-utils");
+const { LeagueMap, getLiveSupportedLeagues } = require("overtime-live-trading-utils");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
 const {
   initializeSportsAMMLPListener,
@@ -1237,13 +1238,13 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
     return;
   }
 
-  const allLiveLeagues = Object.values(LeagueMap).filter((leagueInfo) =>
-    Number(network) == 11155420
-      ? leagueInfo.betTypesForLiveTestnet && leagueInfo.betTypesForLiveTestnet.length > 0
-      : leagueInfo.betTypesForLive && leagueInfo.betTypesForLive.length > 0,
+  // Read open markets only from one network as markets are the same on all networks
+  const leagueMap = await readCsvFromUrl(
+    Number(network) == 11155420 ? process.env.GITHUB_URL_LIVE_lEAGUES_CSV : process.env.GITHUB_URL_LIVE_lEAGUES_CSV,
   );
-  const allLiveLeagueIds = allLiveLeagues.map((league) => league.id);
-  const allLiveSports = uniqBy(allLiveLeagues.map((league) => league.sport.toLowerCase()));
+
+  const allLiveLeagueIds = getLiveSupportedLeagues(leagueMap);
+  const allLiveSports = uniqBy(allLiveLeagueIds.map((id) => LeagueMap[id].sport.toLowerCase()));
 
   if (sport && !allLiveSports.includes(sport.toLowerCase())) {
     res.send(
