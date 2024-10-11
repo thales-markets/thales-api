@@ -11,7 +11,9 @@ const lpPnl = async (req, res) => {
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedLpPnls = cache.get(getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [networkId]));
+    const cachedLpPnls = cache.get(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [networkId, liquidityPool]),
+    );
 
     if (cachedLpPnls !== undefined) return res.send(cachedLpPnls);
 
@@ -41,7 +43,7 @@ const lpTransactions = async (req, res) => {
     if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(
-      getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolTransactions, [networkId, account, round]),
+      getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolTransactions, [networkId, liquidityPool, account, round]),
     );
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
