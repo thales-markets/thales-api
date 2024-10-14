@@ -1240,7 +1240,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 
   // Read open markets only from one network as markets are the same on all networks
   const leagueMap = await readCsvFromUrl(
-    Number(network) == 11155420 ? process.env.GITHUB_URL_LIVE_lEAGUES_CSV : process.env.GITHUB_URL_LIVE_lEAGUES_CSV,
+    Number(network) == 11155420
+      ? process.env.GITHUB_URL_LIVE_lEAGUES_CSV_TESTNET
+      : process.env.GITHUB_URL_LIVE_lEAGUES_CSV,
   );
 
   const allLiveLeagueIds = getLiveSupportedLeagues(leagueMap);

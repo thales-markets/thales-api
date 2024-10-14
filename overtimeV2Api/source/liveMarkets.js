@@ -84,7 +84,9 @@ async function processAllMarkets(isTestnet) {
     // Read open markets only from one network as markets are the same on all networks
     const [openMarketsMap, leagueMap] = await Promise.all([
       getOpenMarkets(SUPPORTED_NETWORKS[0]),
-      readCsvFromUrl(isTestnet ? process.env.GITHUB_URL_LIVE_lEAGUES_CSV : process.env.GITHUB_URL_LIVE_lEAGUES_CSV),
+      readCsvFromUrl(
+        isTestnet ? process.env.GITHUB_URL_LIVE_lEAGUES_CSV_TESTNET : process.env.GITHUB_URL_LIVE_lEAGUES_CSV,
+      ),
     ]);
 
     const supportedLiveLeagueIds = getLiveSupportedLeagues(leagueMap);
