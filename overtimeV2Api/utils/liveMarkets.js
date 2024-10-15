@@ -6,15 +6,21 @@ const {
   OPTIC_ODDS_API_ODDS_MAX_GAMES,
   OPTIC_ODDS_API_SCORES_URL,
   OPTIC_ODDS_API_SCORES_MAX_GAMES,
-} = require("../constants/opticodds");
+  OPTIC_ODDS_API_TIMEOUT,
+  OPTIC_ODDS_API_KEY_HEADER,
+} = require("../constants/opticOdds");
 const teamsMapping = require("../assets/teamsMapping.json");
-const { redisClient, getValuesFromRedisAsync } = require("../../redis/client");
+const { redisClient, getValuesFromRedisAsync, getValueFromRedisAsync } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 const { getLeagueOpticOddsName } = require("overtime-live-trading-utils");
 const { readCsvFromUrl } = require("./csvReader");
-const { connectToOpticOddsStreamOdds } = require("./streams");
+const { connectToOpticOddsStreamOdds } = require("./opticOddsStreams");
 const { groupBy } = require("lodash");
 const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
+
+const getRedisKeyForOpticOddsApiGames = (leagueId) => `${KEYS.OPTIC_ODDS_API_GAMES_BY_LEAGUE}${leagueId}`;
+const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS_BY_LEAGUE}${leagueId}`;
+const getRedisKeyForOpticOddsApiScores = (leagueId) => `${KEYS.OPTIC_ODDS_API_SCORES_BY_LEAGUE}${leagueId}`;
 
 const fetchTeamsMap = async (timeout) => {
   const teamsMap = new Map();
@@ -74,35 +80,34 @@ const fetchRiskManagementConfig = async () => {
 
 const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
   const noCacheConfig = { "Cache-Control": "no-cache", Pragma: "no-cache", Expires: "0" };
-  const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY, ...noCacheConfig };
+  const headers = { ...OPTIC_ODDS_API_KEY_HEADER, ...noCacheConfig };
 
   const leagueIds = getLeagueOpticOddsName(leagueId).split(",");
   const queryParams = `is_live=true&league=${leagueIds.join("&league=")}`;
 
-  const url = `${OPTIC_ODDS_API_GAMES_URL}${queryParams}`;
+  const url = `${OPTIC_ODDS_API_GAMES_URL}?${queryParams}`;
 
   let opticOddsResponseData = [];
   try {
-    const opticOddsGamesResponse = await axios.get(url, { headers });
+    const opticOddsGamesResponse = await axios.get(url, { headers, timeout: OPTIC_ODDS_API_TIMEOUT });
     opticOddsResponseData = opticOddsGamesResponse.data.data;
-  } catch (e) {
-    console.log(`Live markets: Fetching Optic Odds games error: ${e}`);
-  }
 
-  if (opticOddsResponseData.length == 0) {
-    if (!isTestnet) {
+    if (opticOddsResponseData.length > 0) {
+      redisClient.set(getRedisKeyForOpticOddsApiGames(leagueId), JSON.stringify(opticOddsResponseData));
+    } else if (!isTestnet) {
       console.log(
         `Live markets: Could not find any live games on the provider side for the given league ID ${leagueId}`,
       );
     }
-    return [];
-  } else {
-    return opticOddsResponseData;
+  } catch (e) {
+    console.log(`Live markets: Fetching Optic Odds games error: ${e.message}`);
+    opticOddsResponseData = (await getValueFromRedisAsync(getRedisKeyForOpticOddsApiGames(leagueId))) || [];
   }
+
+  return opticOddsResponseData;
 };
 
 const fetchOpticOddsGameOddsForMarkets = async (markets, oddsProviders, isTestnet) => {
-  const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
   let oddsRequestUrl = OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS;
   const opticOddsGameOddsPromises = [];
 
@@ -122,7 +127,7 @@ const fetchOpticOddsGameOddsForMarkets = async (markets, oddsProviders, isTestne
         oddsRequestUrl += `&market_name=${betType}`;
       });
 
-      opticOddsGameOddsPromises.push(axios.get(oddsRequestUrl, { headers }));
+      opticOddsGameOddsPromises.push(axios.get(oddsRequestUrl, { headers: OPTIC_ODDS_API_KEY_HEADER }));
       oddsRequestUrl = OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS;
     }
   });
@@ -140,8 +145,7 @@ const fetchOpticOddsGameOddsForMarkets = async (markets, oddsProviders, isTestne
 };
 
 const fetchOpticOddsScoresForMarkets = async (markets) => {
-  const headers = { "x-api-key": process.env.OPTIC_ODDS_API_KEY };
-  let opticOddsScoresRequestUrl = OPTIC_ODDS_API_SCORES_URL;
+  let opticOddsScoresRequestUrl = `${OPTIC_ODDS_API_SCORES_URL}?`;
   const opticOddsScoresPromises = [];
 
   // Prepare request for scores
@@ -153,8 +157,10 @@ const fetchOpticOddsScoresForMarkets = async (markets) => {
 
     // creating new request after max num of games or when last game in request
     if (gameNumInRequest == 0 || index == allGameIds.length - 1) {
-      opticOddsScoresPromises.push(axios.get(opticOddsScoresRequestUrl, { headers }));
-      opticOddsScoresRequestUrl = OPTIC_ODDS_API_SCORES_URL;
+      opticOddsScoresPromises.push(
+        axios.get(opticOddsScoresRequestUrl, { headers: OPTIC_ODDS_API_KEY_HEADER, timeout: OPTIC_ODDS_API_TIMEOUT }),
+      );
+      opticOddsScoresRequestUrl = `${OPTIC_ODDS_API_SCORES_URL}?`;
     }
   });
 
@@ -162,7 +168,7 @@ const fetchOpticOddsScoresForMarkets = async (markets) => {
   try {
     opticOddsScoresResponses = await Promise.all(opticOddsScoresPromises);
   } catch (e) {
-    console.log(`Live markets: Fetching Optic Odds game scores data error: ${e}`);
+    console.log(`Live markets: Fetching Optic Odds game scores data error: ${e.message}`);
     opticOddsScoresResponses = [];
   }
 
@@ -312,9 +318,6 @@ const isMarketPaused = (market) => {
 
   return isParentWithoutOdds && isChildMarketsWithoutOdds;
 };
-
-const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS_BY_LEAGUE}${leagueId}`;
-const getRedisKeyForOpticOddsApiScores = (leagueId) => `${KEYS.OPTIC_ODDS_API_SCORES_BY_LEAGUE}${leagueId}`;
 
 const persistErrorMessages = (errorsMap, network) => {
   redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {

@@ -19,6 +19,10 @@ const {
   Sport,
 } = require("overtime-live-trading-utils");
 const { getLeaguePeriodType, getLeagueSport } = require("overtime-live-trading-utils");
+const { MAX_NUMBER_OF_SCORE_PERIODS } = require("../constants/opticOdds");
+const { upperFirst } = require("lodash");
+const { fetchOpticOddsResults, mapOpticOddsApiResults } = require("../utils/opticOddsResults");
+const { fetchOpticOddsFixtures } = require("../utils/opticOddsFixtures");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_FUTURE);
@@ -44,7 +48,7 @@ async function processGamesInfo() {
           console.log("Games info: games info error: ", error);
         }
 
-        await delay(10 * 60 * 1000);
+        await delay(10 * 60 * 1000); // 10min
       }
     }, 3000);
   }
@@ -234,8 +238,7 @@ const getOpticOddsScore = (gameScores, league, homeAwayType) => {
       score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`) == 1 ? numberOfRoundsResult : 0;
     } else if (leagueSport !== Sport.SOCCER) {
       score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`);
-      // set 50 as max number of periods
-      for (let i = 1; i <= 50; i++) {
+      for (let i = 1; i <= MAX_NUMBER_OF_SCORE_PERIODS; i++) {
         const code = `score_${homeAwayType}_period_${i}`;
         const periodScore = getOpticOddsScoreByCode(gameScores, code);
         if (periodScore !== undefined) {
@@ -273,47 +276,51 @@ const procesOpticOdssGamesInfo = async (leagues, formattedDate, gamesInfoMap) =>
       // console.log(
       //   `Getting games info for OpticOdds league: ${opticOddsLeague}, ${league}, date ${formattedDate} and page ${page}`,
       // );
-      const schedulesApiUrl = `https://api.opticodds.com/api/v2/schedules/list?game_date=${formattedDate}&league=${opticOddsLeague}&page=${page}`;
-      const schedulesResponse = await axios.get(schedulesApiUrl, {
-        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-      });
+
+      // API call for fixtures
+      const opticOddsApiFixturesResponseData = await fetchOpticOddsFixtures(opticOddsLeague, formattedDate, page);
+      if (opticOddsApiFixturesResponseData === null) {
+        break; // continue with next league
+      }
+
       page++;
-      totalPages = Number(schedulesResponse.data.total_pages);
+      totalPages = Number(opticOddsApiFixturesResponseData.total_pages);
 
-      const gameIds = schedulesResponse.data.data.map((data) => `game_id=${data.game_id}`);
-      const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?${gameIds.join("&")}`;
-      const scoresResponse = await axios.get(scoresApiUrl, {
-        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-      });
+      // API call for results
+      const opticOddsFixtureIds = opticOddsApiFixturesResponseData.data.map((data) => data.id);
+      const opticOddsApiResults = await fetchOpticOddsResults(opticOddsFixtureIds);
+      const opticOddsResult = mapOpticOddsApiResults(opticOddsApiResults);
 
-      schedulesResponse.data.data.forEach((event) => {
-        if (event.game_id) {
-          const gameId = bytes32({ input: event.game_id });
-          const gameScores = scoresResponse.data.data.find((score) => score.game_id === event.game_id);
+      opticOddsApiFixturesResponseData.data.forEach((fixtureEvent) => {
+        if (fixtureEvent.game_id) {
+          const gameId = bytes32({ input: fixtureEvent.game_id });
+          const gameResults = opticOddsResult.find((result) => result.fixture_id === fixtureEvent.id);
+          const fixtureStatus = upperFirst(fixtureEvent.status); // adjust V3 to V2 format, from completed to Completed
 
           gamesInfoMap.set(gameId, {
+            fixtureId: fixtureEvent.id,
             lastUpdate: new Date().getTime(),
-            gameStatus: event.status,
-            isGameFinished: event.status === "Completed" || event.status === "Cancelled",
+            gameStatus: fixtureStatus,
+            isGameFinished: fixtureStatus === "Completed" || fixtureStatus === "Cancelled",
             tournamentName: "",
             tournamentRound: "",
             provider: Provider.OPTICODDS,
             teams: [
               {
-                name: event.home_team,
+                name: fixtureEvent.home_team_display,
                 isHome: true,
-                ...(gameScores
-                  ? getOpticOddsScore(gameScores, league, "home")
+                ...(gameResults
+                  ? getOpticOddsScore(gameResults, league, "home")
                   : {
                       score: undefined,
                       scoreByPeriod: [],
                     }),
               },
               {
-                name: event.away_team,
+                name: fixtureEvent.away_team_display,
                 isHome: false,
-                ...(gameScores
-                  ? getOpticOddsScore(gameScores, league, "away")
+                ...(gameResults
+                  ? getOpticOddsScore(gameResults, league, "away")
                   : {
                       score: undefined,
                       scoreByPeriod: [],
@@ -360,6 +367,11 @@ async function processAllGamesInfo() {
       procesEnetpulseGamesInfoPerDate(enetpulseLeagues, formattedDate, gamesInfoMap),
       procesOpticOdssGamesInfo(opticOddsLeagues, formattedDate, gamesInfoMap),
     ]);
+
+    console.log(
+      `Games info: Number of games info for date ${formattedDate}: ${Array.from(gamesInfoMap.values()).length}`,
+    );
+    redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
   }
 
   // TODO hardcode US Election 2024
@@ -386,11 +398,11 @@ async function processAllGamesInfo() {
     ],
   });
 
-  console.log(`Games info: Number of games info: ${Array.from(gamesInfoMap.values()).length}`);
+  console.log(`Games info: Total number of games info: ${Array.from(gamesInfoMap.values()).length}`);
   redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
 }
 
 module.exports = {
   processGamesInfo,
-  getOpticOddsScore,
+  getOpticOddsScore: getOpticOddsScore,
 };

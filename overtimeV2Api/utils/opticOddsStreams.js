@@ -1,10 +1,12 @@
 const EventSource = require("eventsource");
-const { OPTIC_ODDS_STREAM_ODDS_BASE_URL } = require("../constants/opticodds");
+const { OPTIC_ODDS_STREAM_ODDS_BASE_URL, OPTIC_ODDS_API_BASE_URL_V3 } = require("../constants/opticOdds");
 const { redisClient, getValueFromRedisAsync } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 
-const getRedisKeyForOpticOddsStreamEventOdds = (gameId) => `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_BY_GAME}${gameId}`;
+const getRedisKeyForOpticOddsStreamEventOddsId = (gameId) => `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME}${gameId}`;
+const getRedisKeyForOpticOddsApiResults = (fixtureId) => `${KEYS.OPTIC_ODDS_STREAM_EVENT_RESULTS_BY_GAME}${fixtureId}`;
 
+// Optic Odds V2
 const connectToOpticOddsStreamOdds = (sportsbooks, markets, leagues, lastEntryId = "") => {
   // Construct the query string with repeated parameters
   const queryString = new URLSearchParams();
@@ -15,8 +17,9 @@ const connectToOpticOddsStreamOdds = (sportsbooks, markets, leagues, lastEntryId
   leagues.forEach((league) => queryString.append("league", league));
   lastEntryId && queryString.append("last_entry_id", lastEntryId);
 
-  console.log(`Stream for odds: Connecting to stream ${OPTIC_ODDS_STREAM_ODDS_BASE_URL}?${queryString.toString()}`);
-  const eventSource = new EventSource(`${OPTIC_ODDS_STREAM_ODDS_BASE_URL}?${queryString.toString()}`);
+  const url = `${OPTIC_ODDS_STREAM_ODDS_BASE_URL}?${queryString.toString()}`;
+  console.log(`Stream for odds: Connecting to stream ${url}`);
+  const eventSource = new EventSource(url);
 
   eventSource.onmessage = (event) => {
     try {
@@ -50,11 +53,11 @@ const connectToOpticOddsStreamOdds = (sportsbooks, markets, leagues, lastEntryId
 
     /*
      * Maintain redis key by game ID which containes list of redis odds keys per game, e.g:
-     * key = opticOddsStreamEventOddsByGameId31209-39104-2024-40
+     * key = opticOddsStreamEventOddsIdByGameId31209-39104-2024-40
      * value = [31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5, 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+1_5]
      */
     const gameId = oddsDataArray[0].game_id; // event contains only data for one game ID
-    const redisGameKey = getRedisKeyForOpticOddsStreamEventOdds(gameId);
+    const redisGameKey = getRedisKeyForOpticOddsStreamEventOddsId(gameId);
 
     const currentRedisKeysForOdds = await getValueFromRedisAsync(redisGameKey);
     const updatedRedisKeysForOdds = (currentRedisKeysForOdds !== null ? currentRedisKeysForOdds : [])
@@ -67,7 +70,7 @@ const connectToOpticOddsStreamOdds = (sportsbooks, markets, leagues, lastEntryId
 
   // If an odd gets locked. You can use this to tell if an odd is no longer available on a sportsbook.
   eventSource.addEventListener("locked-odds", (event) => {
-    return; // TODO: For now ignore locked-odds, delete if we need to set 0 price
+    return; // TODO: For now ignore locked-odds, delete return if we need to set 0 price
     const data = JSON.parse(event.data);
 
     lastReceivedEntryId = data.entry_id;
@@ -93,7 +96,52 @@ const connectToOpticOddsStreamOdds = (sportsbooks, markets, leagues, lastEntryId
   return eventSource;
 };
 
+// Optic Odds V3
+const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
+  // Construct the query string with repeated parameters
+  const queryString = new URLSearchParams();
+  queryString.append("key", process.env.OPTIC_ODDS_API_KEY);
+  queryString.append("is_live", isLive);
+  leagues.forEach((league) => queryString.append("league", league));
+
+  const url = `${OPTIC_ODDS_API_BASE_URL_V3}/stream/${sport}/results?${queryString.toString()}`;
+  console.log(`Stream for results: Connecting to stream ${url}`);
+  const eventSource = new EventSource(url);
+
+  eventSource.onmessage = (event) => {
+    try {
+      // TODO: check when this happens
+      const data = JSON.parse(event.data);
+      console.log("Stream for results: message data:", data);
+    } catch (e) {
+      console.log("Stream for results: Error parsing message data:", e);
+    }
+  };
+
+  eventSource.addEventListener("fixture-results", async (event) => {
+    const data = JSON.parse(event.data);
+
+    const resultsData = data.data;
+
+    // Save each object from event data to redis with key: Fixture ID (e.g. opticOddsStreamEventResultsByGameId2E4AB315ABD9)
+    const redisGameKey = getRedisKeyForOpticOddsApiResults(resultsData.fixture_id);
+
+    redisClient.set(redisGameKey, JSON.stringify(resultsData), () => {});
+    redisClient.expire(redisGameKey, 60 * 60 * 12, () => {}); // delete after 12h TODO: check if longer needed
+  });
+
+  eventSource.onerror = (event) => {
+    console.error("Stream for results: EventSource error:", event);
+    eventSource.close();
+    setTimeout(() => connectToOpticOddsStreamResults(sport, leagues, isLive), 1000); // Attempt to reconnect after 1 second
+  };
+
+  return eventSource;
+};
+
 module.exports = {
   connectToOpticOddsStreamOdds,
-  getRedisKeyForOpticOddsStreamEventOdds,
+  connectToOpticOddsStreamResults,
+  getRedisKeyForOpticOddsStreamEventOddsId,
+  getRedisKeyForOpticOddsApiResults,
 };

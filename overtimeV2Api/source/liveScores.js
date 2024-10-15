@@ -1,4 +1,4 @@
-const { redisClient } = require("../../redis/client");
+const { redisClient, getValuesFromRedisAsync } = require("../../redis/client");
 require("dotenv").config();
 
 const { delay } = require("../utils/general");
@@ -9,6 +9,12 @@ const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getOpticOddsScore } = require("./gamesInfo");
 const { getLeagueProvider, Provider } = require("overtime-live-trading-utils");
+const { getRedisKeyForOpticOddsApiResults } = require("../utils/opticOddsStreams");
+const {
+  mapOpticOddsStreamResults,
+  mapOpticOddsApiResults,
+  fetchOpticOddsResults,
+} = require("../utils/opticOddsResults");
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {
@@ -17,12 +23,15 @@ async function processLiveScores() {
     redisClient.on("error", function (error) {
       console.error(error);
     });
+
+    let isOpticOddsResultsInitialized = false;
+
     setTimeout(async () => {
       while (true) {
         try {
           const startTime = new Date().getTime();
           console.log("Lives scores: process lives scores");
-          await processAllLiveScores();
+          await processAllLiveResults(isOpticOddsResultsInitialized);
           const endTime = new Date().getTime();
           console.log(
             `Lives scores: === Seconds for processing lives scores: ${((endTime - startTime) / 1000).toFixed(0)} ===`,
@@ -64,18 +73,17 @@ function getGamesInfoMap() {
   });
 }
 
-async function processAllLiveScores() {
+async function processAllLiveResults(isOpticOddsResultsInitialized) {
   const liveScoresMap = await getLiveScoresMap();
   const gamesInfoMap = await getGamesInfoMap();
-  // TODO: take from OP and ARB for now
+  // take only from OP as markets are the same on all networks
   const openOpMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
-  const openArbMarketsMap = await getOpenMarketsMap(NETWORK.Arbitrum);
 
-  const allOngoingMarketsMap = [
-    ...Array.from(openOpMarketsMap.values()),
-    ...Array.from(openArbMarketsMap.values()),
-  ].filter((market) => market.statusCode === "ongoing");
+  const allOngoingMarketsMap = Array.from(openOpMarketsMap.values()).filter(
+    (market) => market.statusCode === "ongoing",
+  );
 
+  let opticOddsFixtureIds = [];
   for (let i = 0; i < allOngoingMarketsMap.length; i++) {
     const market = allOngoingMarketsMap[i];
     const leagueId = market.leagueId;
@@ -111,35 +119,8 @@ async function processAllLiveScores() {
     }
 
     if (leagueProvider === Provider.OPTICODDS) {
-      const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?game_id=${convertFromBytes32(market.gameId)}`;
-      const scoresResponse = await axios.get(scoresApiUrl, {
-        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-      });
-
-      const scoresResponseData = scoresResponse.data;
-
-      if (scoresResponseData !== null && scoresResponseData.data.length > 0) {
-        scoresResponseData.data.forEach((event) => {
-          if (event.game_id) {
-            const gameId = bytes32({ input: event.game_id });
-
-            const homeScores = getOpticOddsScore(event, market.leagueId, "home");
-            const awayScores = getOpticOddsScore(event, market.leagueId, "away");
-
-            const period = parseInt(event.period);
-
-            liveScoresMap.set(gameId, {
-              lastUpdate: new Date().getTime(),
-              period: Number.isNaN(period) ? undefined : period,
-              gameStatus: event.period === "HALF" ? "Half" : event.status,
-              displayClock: event.clock,
-              homeScore: homeScores.score,
-              awayScore: awayScores.score,
-              homeScoreByPeriod: homeScores.scoreByPeriod,
-              awayScoreByPeriod: awayScores.scoreByPeriod,
-            });
-          }
-        });
+      if (gameInfo && gameInfo.fixtureId) {
+        opticOddsFixtureIds.push(gameInfo.fixtureId);
       } else if (gameInfo) {
         liveScoresMap.set(market.gameId, {
           gameStatus: gameInfo.gameStatus,
@@ -150,6 +131,48 @@ async function processAllLiveScores() {
         });
       }
     }
+  }
+
+  if (opticOddsFixtureIds.length > 0) {
+    let liveResults = [];
+
+    if (isOpticOddsResultsInitialized) {
+      // Read from Redis
+      const redisKeysForStreamResults = opticOddsFixtureIds.map((fixtureId) =>
+        getRedisKeyForOpticOddsApiResults(fixtureId),
+      );
+      const opticOddsStreamResults = await getValuesFromRedisAsync(redisKeysForStreamResults);
+      liveResults = mapOpticOddsStreamResults(opticOddsStreamResults);
+    } else {
+      // Fetch from API
+      const opticOddsApiResults = await fetchOpticOddsResults(opticOddsFixtureIds);
+      if (opticOddsApiResults.length > 0) {
+        liveResults = mapOpticOddsApiResults(opticOddsApiResults);
+        isOpticOddsResultsInitialized = true;
+      }
+    }
+
+    liveResults.forEach((event) => {
+      if (event.game_id) {
+        const gameId = bytes32({ input: event.game_id });
+
+        const homeScores = getOpticOddsScore(event, market.leagueId, "home");
+        const awayScores = getOpticOddsScore(event, market.leagueId, "away");
+
+        const period = parseInt(event.period);
+
+        liveScoresMap.set(gameId, {
+          lastUpdate: new Date().getTime(),
+          period: Number.isNaN(period) ? undefined : period,
+          gameStatus: event.period === "HALF" ? "Half" : event.status,
+          displayClock: event.clock,
+          homeScore: homeScores.score,
+          awayScore: awayScores.score,
+          homeScoreByPeriod: homeScores.scoreByPeriod,
+          awayScoreByPeriod: awayScores.scoreByPeriod,
+        });
+      }
+    });
   }
 
   console.log(`Lives scores: Number of lives scores: ${Array.from(liveScoresMap.values()).length}`);
