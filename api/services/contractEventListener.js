@@ -8,6 +8,7 @@ const { wait } = require("../utils/helpers");
 const { sportsAMMLiquidityPoolContract } = require("../../abi/sportsAMMLiquidityPool");
 const { parlayAMMLiquidityPoolContract } = require("../../abi/parlayAMMLiquidityPool");
 const liquidityPoolContract = require("../../abi/thalesLPContract");
+const liquidityPoolUSDCContract = require("../../abi/thalesLPUSDCContract");
 
 const invalidationMechanism = async (cacheKeys) => {
   try {
@@ -40,10 +41,41 @@ const initThalesAMMEventListenerByNetwork = (networkId) => {
     thalesAMMContractInstance.on("RoundClosed", async () => {
       console.log("Event thalesAMMContractInstance");
 
-      await invalidationMechanism([getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [networkId])]);
+      await invalidationMechanism([
+        getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [
+          networkId,
+          liquidityPoolContract.addresses[networkId],
+        ]),
+      ]);
     });
   } catch (e) {
     console.log("Error while trying to initialize thalesAMM contract listener -> ", e);
+  }
+};
+
+const initThalesAMMUSDCEventListenerByNetwork = (networkId) => {
+  try {
+    console.log("initThalesAMMUSDCEventListenerByNetwork ", networkId);
+    const provider = getProvider(networkId);
+
+    const thalesAMMUSDCContractInstance = new ethers.Contract(
+      liquidityPoolUSDCContract.addresses[networkId],
+      liquidityPoolUSDCContract.abi,
+      provider,
+    );
+
+    thalesAMMUSDCContractInstance.on("RoundClosed", async () => {
+      console.log("Event thalesAMMUSDCContractInstance");
+
+      await invalidationMechanism([
+        getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [
+          networkId,
+          liquidityPoolUSDCContract.addresses[networkId],
+        ]),
+      ]);
+    });
+  } catch (e) {
+    console.log("Error while trying to initialize thalesAMM USDC contract listener -> ", e);
   }
 };
 
@@ -141,6 +173,7 @@ const initializeThalesAMMLPListener = () => {
   initThalesAMMEventListenerByNetwork(NETWORK.Optimism);
   initThalesAMMEventListenerByNetwork(NETWORK.Arbitrum);
   initThalesAMMEventListenerByNetwork(NETWORK.Base);
+  initThalesAMMUSDCEventListenerByNetwork(NETWORK.Optimism);
 };
 
 module.exports = {

@@ -7,18 +7,22 @@ const { getCacheKey, getQueryProperty, getQueryParam } = require("../../utils/ge
 const lpPnl = async (req, res) => {
   try {
     const networkId = getQueryParam(req, "networkId");
+    const liquidityPool = getQueryProperty(req, "liquidityPool");
 
     if (!networkId) return res.sendStatus(400);
 
-    const cachedLpPnls = cache.get(getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [networkId]));
+    const cachedLpPnls = cache.get(
+      getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [networkId, liquidityPool]),
+    );
 
     if (cachedLpPnls !== undefined) return res.send(cachedLpPnls);
 
     const lpPnls = await thalesData.binaryOptions.liquidityPoolPnls({
       network: networkId,
+      liquidityPool: liquidityPool ? liquidityPool : undefined,
     });
 
-    cache.set(getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [networkId]), lpPnls, TTL.LP_PNL);
+    cache.set(getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolPnl, [networkId, liquidityPool]), lpPnls, TTL.LP_PNL);
 
     if (!lpPnls) return res.sendStatus(204);
 
@@ -32,25 +36,26 @@ const lpPnl = async (req, res) => {
 const lpTransactions = async (req, res) => {
   try {
     const networkId = getQueryParam(req, "networkId");
-
+    const liquidityPool = getQueryProperty(req, "liquidityPool");
     const account = getQueryProperty(req, "account");
     const round = getQueryProperty(req, "round");
 
     if (!networkId) return res.sendStatus(400);
 
     const cachedResponse = cache.get(
-      getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolTransactions, [networkId, account, round]),
+      getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolTransactions, [networkId, liquidityPool, account, round]),
     );
     if (cachedResponse !== undefined) return res.send(cachedResponse);
 
     const transactions = await thalesData.binaryOptions.liquidityPoolUserTransactions({
       network: networkId,
+      liquidityPool: liquidityPool ? liquidityPool : undefined,
       account: account ? account : undefined,
       round: round ? round : undefined,
     });
 
     cache.set(
-      getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolTransactions, [networkId, account, round]),
+      getCacheKey(PREFIX_KEYS.DigitalOptions.LiquidityPoolTransactions, [networkId, liquidityPool, account, round]),
       transactions,
       TTL.LP_TRANSACTIONS,
     );
