@@ -322,8 +322,15 @@ async function processMarketsPerNetwork(network, lpCollateral) {
       }
     }
 
-    console.log(`${NETWORK_NAME[network]}: Number of contract calls for ${lpCollateral} is ${numberOfContractCalls}.`);
-    console.log(`${NETWORK_NAME[network]}: All Markets length fro ${lpCollateral} -> `, allMarkets.length);
+    console.log(
+      `${NETWORK_NAME[network]}: Number of contract calls for ${
+        lpCollateral || "default collateral"
+      } is ${numberOfContractCalls}.`,
+    );
+    console.log(
+      `${NETWORK_NAME[network]}: All Markets length for ${lpCollateral || "default collateral"} -> `,
+      allMarkets.length,
+    );
 
     redisClient.set(
       (isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network],
