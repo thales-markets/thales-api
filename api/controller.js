@@ -425,7 +425,7 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
 
 app.get(ENDPOINTS.THALES_MARKETS_COUNT, (req, res) => {
   const network = req.params.networkParam;
-  const lpCollateral = req.query.lpCollateral;
+  const lpCollateral = req.query.lpcollateral;
   const isUsdc = lpCollateral && lpCollateral.toLowerCase() === LP_COLLATERALS.USDC;
 
   try {
