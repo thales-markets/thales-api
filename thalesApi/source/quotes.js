@@ -1,8 +1,11 @@
 require("dotenv").config();
 const { getProvider } = require("../utils/provider");
 const positionalMarketDataContract = require("../contracts/positionalMarketDataContract");
+const positionalMarketDataUSDCContract = require("../contracts/positionalMarketDataUSDCContract");
 const ammContract = require("../contracts/ammContract");
+const ammUSDCContract = require("../contracts/ammUSDCContract");
 const rangedAmmContract = require("../contracts/rangedAmmContract");
+const rangedAmmUSDCContract = require("../contracts/rangedAmmUSDCContract");
 const { ethers } = require("ethers");
 const {
   RANGED_POSITION_TYPE,
@@ -24,6 +27,7 @@ const {
 } = require("../utils/formatters");
 const { getRangedAmmQuoteAndPriceImpactMethods, getAmmQuoteAndPriceImpactMethods } = require("../utils/amm");
 const { fetchAmountOfTokensForXsUSDAmount } = require("../utils/skewCalculator");
+const { getContractForInteraction } = require("../utils/markets");
 
 const MINIMUM_AMM_LIQUIDITY = 2;
 const MIN_SCEW_IMPACT = 0.0;
@@ -234,7 +238,7 @@ async function fetchAmmQuote(
 
 // for BUY: amount = collateralAmount
 // for SELL: amount = positionAmount (amountOfTokens)
-async function getAmmQuote(network, marketAddress, position, amount, collateral, isRangedMarket, isBuy) {
+async function getAmmQuote(network, marketAddress, position, amount, collateral, isRangedMarket, isBuy, isUsdc) {
   let payout = 0;
   let price = 0;
   let realCollateralAmount = 0;
@@ -242,14 +246,14 @@ async function getAmmQuote(network, marketAddress, position, amount, collateral,
   let skew = 0;
 
   // for SELL use always default collateral
-  const defaultCollateral = getDefaultCollateral(network);
+  const defaultCollateral = getDefaultCollateral(network, isUsdc);
   if (!isBuy && collateral) {
     collateral = defaultCollateral.symbol;
   }
-  const collateralAddress = getCollateralAddress(network, collateral);
-  const collateralDecimals = getCollateralDecimals(network, collateral);
+  const collateralAddress = getCollateralAddress(network, isUsdc, collateral);
+  const collateralDecimals = getCollateralDecimals(network, isUsdc, collateral);
   const isDefaultCollateral = collateralAddress === defaultCollateral.address;
-  const defaultCollateralDecimals = getDefaultCollateral(network).decimals;
+  const defaultCollateralDecimals = getDefaultCollateral(network, isUsdc).decimals;
 
   try {
     // const today = new Date();
@@ -275,13 +279,31 @@ async function getAmmQuote(network, marketAddress, position, amount, collateral,
     // }
 
     const provider = getProvider(network);
+
+    const positionalMarketDataContractForInteraction = getContractForInteraction(
+      isUsdc,
+      positionalMarketDataContract,
+      positionalMarketDataUSDCContract,
+    );
     const positionalMarketData = new ethers.Contract(
-      positionalMarketDataContract.addresses[network],
-      positionalMarketDataContract.abi,
+      positionalMarketDataContractForInteraction.addresses[network],
+      positionalMarketDataContractForInteraction.abi,
       provider,
     );
-    const amm = new ethers.Contract(ammContract.addresses[network], ammContract.abi, provider);
-    const rangedAmm = new ethers.Contract(rangedAmmContract.addresses[network], rangedAmmContract.abi, provider);
+
+    const ammContractForInteraction = getContractForInteraction(isUsdc, ammContract, ammUSDCContract);
+    const amm = new ethers.Contract(
+      ammContractForInteraction.addresses[network],
+      ammContractForInteraction.abi,
+      provider,
+    );
+
+    const rangedAmmContractForInteraction = getContractForInteraction(isUsdc, rangedAmmContract, rangedAmmUSDCContract);
+    const rangedAmm = new ethers.Contract(
+      rangedAmmContractForInteraction.addresses[network],
+      rangedAmmContractForInteraction.abi,
+      provider,
+    );
     const contract = isRangedMarket ? rangedAmm : amm;
 
     const { liquidity, liquidityPrice, basePrice, isAmmTradingDisabled, outOfLiquidity, insufficientLiquidity } =
@@ -305,7 +327,7 @@ async function getAmmQuote(network, marketAddress, position, amount, collateral,
     if (insufficientLiquidity) {
       return `Amount exceeded the amount available on AMM. Max amount ${isBuy ? liquidityPrice : liquidity} ${
         isBuy
-          ? getCollateral(network, collateral).symbol
+          ? getCollateral(network, isUsdc, collateral).symbol
           : isRangedMarket
           ? RANGED_POSITION_TYPE_NAME_MAP[position]
           : POSITION_TYPE_NAME_MAP[position]

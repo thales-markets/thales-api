@@ -6,9 +6,16 @@ const {
   POSITION_BALANCE_THRESHOLD,
   MIN_MATURITY,
   MAX_MATURITY,
+  TRANSACTION_POSITION_RESULT_MAP,
 } = require("../constants/markets");
 const { keyBy } = require("lodash");
-const { packTrade, packPosition, isMarketExpired, isRangedPosition } = require("../utils/markets");
+const {
+  packTrade,
+  packPosition,
+  isMarketExpired,
+  isRangedPosition,
+  getIsDeprecatedContract,
+} = require("../utils/markets");
 const { bigNumberParser, bigNumberFormatter } = require("../utils/formatters");
 const { formatBytes32String, parseEther } = require("ethers/lib/utils");
 
@@ -64,6 +71,7 @@ async function processUserPositions(network, walletAddress) {
     .map((market) => {
       const claimTransaction = claimTransactionsMap.get(market.address);
       const isRangedMarket = isRangedPosition(claimTransaction.side);
+      const isUsdc = !getIsDeprecatedContract(market.managerAddress);
 
       return {
         account: claimTransaction.account,
@@ -79,8 +87,10 @@ async function processUserPositions(network, walletAddress) {
             strikePrice: isRangedMarket ? 0 : parseEther(Number(market.strikePrice).toFixed(18)),
             leftPrice: isRangedMarket ? parseEther(Number(market.leftPrice).toFixed(18)) : 0,
             rightPrice: isRangedMarket ? parseEther(Number(market.rightPrice).toFixed(18)) : 0,
-            result: market.result,
+            result: TRANSACTION_POSITION_RESULT_MAP[market.result],
             finalPrice: market.result !== null ? parseEther(Number(market.finalPrice).toFixed(18)) : null,
+            isUsdc,
+            managerAddress: market.managerAddress,
           },
         },
       };

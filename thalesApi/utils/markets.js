@@ -11,7 +11,6 @@ const {
 } = require("../constants/markets");
 const { getDefaultCollateral } = require("./collaterals");
 const { bigNumberFormatter } = require("./formatters");
-const { NETWORK } = require("../constants/networks");
 
 const getCurrencyPriority = (currency) => {
   const currencyPriority = CRYPTO_CURRENCY.indexOf(currency);
@@ -43,8 +42,9 @@ const getTradeStatus = (trade, isBuy) =>
     : "SOLD";
 
 const packPosition = (position, network) => {
+  const isUsdc = !getIsDeprecatedContract(position.position.market.managerAddress);
   const isRangedMarket = isRangedPosition(position.position.side);
-  const defaultCollateralDecimals = getDefaultCollateral(network).decimals;
+  const defaultCollateralDecimals = getDefaultCollateral(network, isUsdc).decimals;
   const packedMarket = packPositionMarket(position.position.market, isRangedMarket);
 
   const packedPosition = {
@@ -53,10 +53,9 @@ const packPosition = (position, network) => {
     paid: bigNumberFormatter(position.paid, defaultCollateralDecimals),
     position: TRANSACTION_POSITION_MAP[position.position.side],
   };
-
   packedPosition.isOpen = packedMarket.isOpen;
   packedPosition.isClaimable =
-    packedMarket.isResolved && position.position === packedMarket.result && !position.isClaimed;
+    packedMarket.isResolved && packedPosition.position === packedMarket.result && !position.isClaimed;
   packedPosition.isClaimed = !!position.isClaimed;
   packedPosition.status = getPositionStatus(packedPosition);
   packedPosition.market = packedMarket;
@@ -93,11 +92,15 @@ const packTrade = (trade) => {
 };
 
 const packPositionMarket = (market, isRangedMarket) => {
+  const isUsdc = !getIsDeprecatedContract(market.managerAddress);
+
   let packedMarket = {
     address: market.id,
     asset: parseBytes32String(market.currencyKey),
     maturityDate: new Date(Number(market.maturityDate) * 1000).toISOString(),
     expiryDate: new Date(Number(market.expiryDate) * 1000).toISOString(),
+    isUsdc,
+    managerAddress: market.managerAddress,
   };
 
   if (isRangedMarket) {
@@ -124,11 +127,15 @@ const packPositionMarket = (market, isRangedMarket) => {
 };
 
 const packTradeMarket = (market, isRangedMarket) => {
+  const isUsdc = !getIsDeprecatedContract(market.managerAddress);
+
   let packedMarket = {
     address: market.address,
     asset: market.currencyKey,
     maturityDate: new Date(market.maturityDate).toISOString(),
     expiryDate: new Date(market.expiryDate).toISOString(),
+    isUsdc,
+    managerAddress: market.managerAddress,
   };
 
   if (isRangedMarket) {
@@ -150,11 +157,10 @@ const packTradeMarket = (market, isRangedMarket) => {
   return packedMarket;
 };
 
-const getContractForInteraction = (network, isDeprecatedCurrency, deprecatedContract, newContract) =>
-  network === NETWORK.Optimism && !isDeprecatedCurrency ? newContract : deprecatedContract;
+const getContractForInteraction = (isUsdc, deprecatedContract, newContract) =>
+  isUsdc ? newContract : deprecatedContract;
 
-const getIsDeprecatedCurrency = (network, address) =>
-  network === NETWORK.Optimism && DEPRECATED_CONTRACT_ADDRESSES.includes(address.toLowerCase());
+const getIsDeprecatedContract = (address) => DEPRECATED_CONTRACT_ADDRESSES.includes(address.toLowerCase());
 
 module.exports = {
   getCurrencyPriority,
@@ -165,5 +171,5 @@ module.exports = {
   packPosition,
   packTrade,
   getContractForInteraction,
-  getIsDeprecatedCurrency,
+  getIsDeprecatedContract,
 };
