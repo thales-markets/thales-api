@@ -1,6 +1,7 @@
-const { COLLATERALS } = require("../constants/collaterals");
+const { COLLATERALS, USDC_COLLATERALS } = require("../constants/collaterals");
 
-const getDefaultCollateral = (network) => COLLATERALS[network].find((collateral) => collateral.default);
+const getDefaultCollateral = (network, isUsdc) =>
+  (isUsdc ? USDC_COLLATERALS : COLLATERALS)[network].find((collateral) => collateral.default);
 
 const getNonDefaultCollateralSymbols = (network) =>
   COLLATERALS[network].filter((collateral) => !collateral.default).map((collateral) => collateral.symbol);
