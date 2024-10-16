@@ -1,0 +1,9 @@
+[
+  {
+    "symbol": "USDC",
+    "name": "USD Coin",
+    "address": "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
+    "decimals": 6,
+    "default": true
+  }
+]

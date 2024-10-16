@@ -6,6 +6,7 @@ const { ethers } = require("ethers");
 const { uniq } = require("lodash");
 
 const positionalMarketDataContract = require("../contracts/positionalMarketDataContract");
+const positionalMarketDataUSDCContract = require("../contracts/positionalMarketDataUSDCContract");
 const { getProvider } = require("../utils/provider");
 const { NETWORK, NETWORK_NAME } = require("../constants/networks");
 const { delay } = require("../utils/general");
@@ -20,8 +21,15 @@ const {
 const { bigNumberFormatter } = require("../utils/formatters");
 const { getDefaultCollateral } = require("../utils/collaterals");
 const KEYS = require("../../redis/redis-keys");
-const { getCurrencyPriority, convertPriceImpactToBonus, calculatRoi } = require("../utils/markets");
+const {
+  getCurrencyPriority,
+  convertPriceImpactToBonus,
+  calculatRoi,
+  getContractForInteraction,
+  getIsDeprecatedCurrency,
+} = require("../utils/markets");
 const thalesData = require("thales-data");
+const { LP_COLLATERALS } = require("../constants/collaterals");
 
 async function processMarkets() {
   if (process.env.REDIS_URL) {
@@ -34,6 +42,7 @@ async function processMarkets() {
       while (true) {
         try {
           console.log("process markets on optimism");
+          await processMarketsPerNetwork(NETWORK.Optimism, LP_COLLATERALS.USDC);
           await processMarketsPerNetwork(NETWORK.Optimism);
         } catch (error) {
           console.log("markets on optimism error: ", error);
@@ -72,7 +81,7 @@ async function processMarkets() {
   }
 }
 
-const mapMarketsInfo = (marketsInfo, positionType, isRangedMarket, asset, maturityDate, network) => {
+const mapMarketsInfo = (marketsInfo, positionType, isRangedMarket, asset, maturityDate, network, isUsdc) => {
   const filteredMarketsInfo = marketsInfo.filter(
     (marketInfo) => bigNumberFormatter(marketInfo.liquidity) !== 0 && bigNumberFormatter(marketInfo.price) !== 0,
   );
@@ -80,7 +89,7 @@ const mapMarketsInfo = (marketsInfo, positionType, isRangedMarket, asset, maturi
   const mappedMarketsInfo = filteredMarketsInfo.map((marketInfo) => {
     const discount = bigNumberFormatter(marketInfo.priceImpact);
 
-    const price = bigNumberFormatter(marketInfo.price, getDefaultCollateral(network).decimals);
+    const price = bigNumberFormatter(marketInfo.price, getDefaultCollateral(network, isUsdc).decimals);
     const priceWithoutDiscount = (1 - discount) * price;
 
     const roi = calculatRoi(price);
@@ -140,12 +149,21 @@ const mapMarketsInfo = (marketsInfo, positionType, isRangedMarket, asset, maturi
   return finalData;
 };
 
-async function processMarketsPerNetwork(network) {
+async function processMarketsPerNetwork(network, lpCollateral) {
+  const isUsdc = lpCollateral === LP_COLLATERALS.USDC;
+  const isDeprecatedCurrency = !isUsdc;
+  const positionalMarketDataContractForInteraction = getContractForInteraction(
+    network,
+    isDeprecatedCurrency,
+    positionalMarketDataContract,
+    positionalMarketDataUSDCContract,
+  );
+
   try {
     const provider = getProvider(network);
     const positionalMarketData = new ethers.Contract(
-      positionalMarketDataContract.addresses[network],
-      positionalMarketDataContract.abi,
+      positionalMarketDataContractForInteraction.addresses[network],
+      positionalMarketDataContractForInteraction.abi,
       provider,
     );
 
@@ -227,7 +245,12 @@ async function processMarketsPerNetwork(network) {
           positionalMarketData.getActiveMarketsInfoPerPosition(filteredMarketsAddresses, POSITION_TYPE.Down),
         );
 
-        const rangedMarketsAddresses = rangedMarketsPromisesResult[j].map((market) => market.address);
+        const rangedMarketsAddresses = rangedMarketsPromisesResult[j]
+          .filter((market) => {
+            const isDeprecated = getIsDeprecatedCurrency(network, market.managerAddress);
+            return (isDeprecatedCurrency && isDeprecated) || (!isDeprecatedCurrency && !isDeprecated);
+          })
+          .map((market) => market.address);
 
         // contract call fails for more than 50 markets on most RPCs (Ankr and Blast), create batches for ranged markets
         const batchSize = process.env.BATCH_SIZE;
@@ -284,24 +307,41 @@ async function processMarketsPerNetwork(network) {
           .flat(1);
 
         const maturityDate = new Date(filteredMaturityDates[j] * 1000).toISOString();
-        allMarkets.push(...mapMarketsInfo(marketsInfoUp, POSITION_TYPE.Up, false, assets[i], maturityDate, network));
         allMarkets.push(
-          ...mapMarketsInfo(marketsInfoDown, POSITION_TYPE.Down, false, assets[i], maturityDate, network),
+          ...mapMarketsInfo(marketsInfoUp, POSITION_TYPE.Up, false, assets[i], maturityDate, network, isUsdc),
         );
         allMarkets.push(
-          ...mapMarketsInfo(marketsInfoIn, RANGED_POSITION_TYPE.In, true, assets[i], maturityDate, network),
+          ...mapMarketsInfo(marketsInfoDown, POSITION_TYPE.Down, false, assets[i], maturityDate, network, isUsdc),
         );
         allMarkets.push(
-          ...mapMarketsInfo(marketsInfoOut, RANGED_POSITION_TYPE.Out, true, assets[i], maturityDate, network),
+          ...mapMarketsInfo(marketsInfoIn, RANGED_POSITION_TYPE.In, true, assets[i], maturityDate, network, isUsdc),
+        );
+        allMarkets.push(
+          ...mapMarketsInfo(marketsInfoOut, RANGED_POSITION_TYPE.Out, true, assets[i], maturityDate, network, isUsdc),
         );
       }
     }
 
-    console.log(`${NETWORK_NAME[network]}: Number of contract calls is ${numberOfContractCalls}.`);
-    console.log(`${NETWORK_NAME[network]}: All Markets length -> `, allMarkets.length);
+    console.log(
+      `${NETWORK_NAME[network]}: Number of contract calls for ${
+        lpCollateral || "default collateral"
+      } is ${numberOfContractCalls}.`,
+    );
+    console.log(
+      `${NETWORK_NAME[network]}: All Markets length for ${lpCollateral || "default collateral"} -> `,
+      allMarkets.length,
+    );
 
-    redisClient.set(KEYS.THALES_MARKETS[network], JSON.stringify(allMarkets), function () {});
-    redisClient.set(KEYS.THALES_MARKETS_LAST_UPDATED_AT[network], new Date().toISOString(), function () {});
+    redisClient.set(
+      (isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network],
+      JSON.stringify(allMarkets),
+      function () {},
+    );
+    redisClient.set(
+      (isUsdc ? KEYS.THALES_USDC_MARKETS_LAST_UPDATED_AT : KEYS.THALES_MARKETS_LAST_UPDATED_AT)[network],
+      new Date().toISOString(),
+      function () {},
+    );
   } catch (e) {
     console.log("Error: could not process markets.", e);
   }

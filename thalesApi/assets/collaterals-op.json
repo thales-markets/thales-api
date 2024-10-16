@@ -14,8 +14,8 @@
     "default": false
   },
   {
-    "symbol": "USDC",
-    "name": "USD Coin",
+    "symbol": "USDCe",
+    "name": "USD Coin (Bridged from Ethereum)",
     "address": "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
     "decimals": 6,
     "default": false

@@ -7,9 +7,11 @@ const {
   TRANSACTION_POSITION_MAP,
   RANGED_POSITION_TYPE_NAME_MAP,
   POSITION_TYPE_NAME_MAP,
+  DEPRECATED_CONTRACT_ADDRESSES,
 } = require("../constants/markets");
 const { getDefaultCollateral } = require("./collaterals");
 const { bigNumberFormatter } = require("./formatters");
+const { NETWORK } = require("../constants/networks");
 
 const getCurrencyPriority = (currency) => {
   const currencyPriority = CRYPTO_CURRENCY.indexOf(currency);
@@ -148,6 +150,12 @@ const packTradeMarket = (market, isRangedMarket) => {
   return packedMarket;
 };
 
+const getContractForInteraction = (network, isDeprecatedCurrency, deprecatedContract, newContract) =>
+  network === NETWORK.Optimism && !isDeprecatedCurrency ? newContract : deprecatedContract;
+
+const getIsDeprecatedCurrency = (network, address) =>
+  network === NETWORK.Optimism && DEPRECATED_CONTRACT_ADDRESSES.includes(address.toLowerCase());
+
 module.exports = {
   getCurrencyPriority,
   convertPriceImpactToBonus,
@@ -156,4 +164,6 @@ module.exports = {
   isMarketExpired,
   packPosition,
   packTrade,
+  getContractForInteraction,
+  getIsDeprecatedCurrency,
 };
