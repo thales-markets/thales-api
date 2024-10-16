@@ -26,7 +26,7 @@ const {
   convertPriceImpactToBonus,
   calculatRoi,
   getContractForInteraction,
-  getIsDeprecatedCurrency,
+  getIsDeprecatedContract,
 } = require("../utils/markets");
 const thalesData = require("thales-data");
 const { LP_COLLATERALS } = require("../constants/collaterals");
@@ -151,10 +151,8 @@ const mapMarketsInfo = (marketsInfo, positionType, isRangedMarket, asset, maturi
 
 async function processMarketsPerNetwork(network, lpCollateral) {
   const isUsdc = lpCollateral === LP_COLLATERALS.USDC;
-  const isDeprecatedCurrency = !isUsdc;
   const positionalMarketDataContractForInteraction = getContractForInteraction(
-    network,
-    isDeprecatedCurrency,
+    isUsdc,
     positionalMarketDataContract,
     positionalMarketDataUSDCContract,
   );
@@ -247,8 +245,8 @@ async function processMarketsPerNetwork(network, lpCollateral) {
 
         const rangedMarketsAddresses = rangedMarketsPromisesResult[j]
           .filter((market) => {
-            const isDeprecated = getIsDeprecatedCurrency(network, market.managerAddress);
-            return (isDeprecatedCurrency && isDeprecated) || (!isDeprecatedCurrency && !isDeprecated);
+            const isDeprecated = getIsDeprecatedContract(market.managerAddress);
+            return (!isUsdc && isDeprecated) || (isUsdc && !isDeprecated);
           })
           .map((market) => market.address);
 

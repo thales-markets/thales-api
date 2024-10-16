@@ -1,6 +1,6 @@
 const { NETWORK } = require("../constants/networks");
 
-const ammContractUSDC = {
+const ammUSDCContract = {
   addresses: {
     [NETWORK.Optimism]: "0x9Ce94cdf8eCd57cec0835767528DC88628891dd9",
     [NETWORK.Polygon]: "",
@@ -1769,4 +1769,4 @@ const ammContractUSDC = {
   ],
 };
 
-module.exports = ammContractUSDC;
+module.exports = ammUSDCContract;
