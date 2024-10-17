@@ -1131,6 +1131,9 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
+  const startTime = new Date().getTime();
+
+  const requestId = req.params.requestId;
   const network = req.params.networkParam;
   let status = req.query.status;
   const typeId = req.query.typeId;
@@ -1194,7 +1197,19 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       ? KEYS.OVERTIME_V2_CLOSED_MARKETS[network]
       : KEYS.OVERTIME_V2_OPEN_MARKETS[network];
 
+  const beforeRedisReadTime = new Date().getTime();
+  console.log(
+    `${requestId} - Time passed from request received to Redis read start: ${beforeRedisReadTime - startTime}`,
+  );
+
   redisClient.get(redisKey, async function (err, obj) {
+    const afterRedisReadTime = new Date().getTime();
+    console.log(
+      `${requestId} - Time passed from Redis read start to Redis returned data: ${
+        afterRedisReadTime - beforeRedisReadTime
+      }`,
+    );
+
     const markets = new Map(JSON.parse(obj));
 
     try {
@@ -1228,6 +1243,13 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       Object.keys(groupMarkets).forEach((key) => {
         groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
       });
+
+      const marketsProcessedTime = new Date().getTime();
+      console.log(
+        `${requestId} - Time passed from Redis returned data to markets processed (response send): ${
+          marketsProcessedTime - afterRedisReadTime
+        }`,
+      );
 
       res.send(groupMarkets);
     } catch (e) {
