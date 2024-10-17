@@ -1133,7 +1133,7 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
 app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const startTime = new Date().getTime();
 
-  const requestId = req.params.requestId;
+  const requestId = req.query.requestId;
   const network = req.params.networkParam;
   let status = req.query.status;
   const typeId = req.query.typeId;
