@@ -1131,6 +1131,9 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
+  const startTime = new Date().getTime();
+
+  const requestId = req.query.requestId;
   const network = req.params.networkParam;
   let status = req.query.status;
   const typeId = req.query.typeId;
@@ -1194,7 +1197,21 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       ? KEYS.OVERTIME_V2_CLOSED_MARKETS[network]
       : KEYS.OVERTIME_V2_OPEN_MARKETS[network];
 
+  const beforeRedisReadTime = new Date().getTime();
+  requestId &&
+    console.log(
+      `${requestId} - Time passed from request received to Redis read start: ${beforeRedisReadTime - startTime}`,
+    );
+
   redisClient.get(redisKey, async function (err, obj) {
+    const afterRedisReadTime = new Date().getTime();
+    requestId &&
+      console.log(
+        `${requestId} - Time passed from Redis read start to Redis returned data: ${
+          afterRedisReadTime - beforeRedisReadTime
+        }`,
+      );
+
     const markets = new Map(JSON.parse(obj));
 
     try {
@@ -1220,6 +1237,13 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       );
 
       if (ungroup && ungroup.toLowerCase() === "true") {
+        const marketsProcessedTime = new Date().getTime();
+        requestId &&
+          console.log(
+            `${requestId} - Time passed from Redis returned data to markets processed 1 (response send): ${
+              marketsProcessedTime - afterRedisReadTime
+            }. Total time: ${marketsProcessedTime - startTime}`,
+          );
         res.send(filteredMarkets);
         return;
       }
@@ -1228,6 +1252,14 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       Object.keys(groupMarkets).forEach((key) => {
         groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
       });
+
+      const marketsProcessedTime2 = new Date().getTime();
+      requestId &&
+        console.log(
+          `${requestId} - Time passed from Redis returned data to markets processed 2 (response send): ${
+            marketsProcessedTime2 - afterRedisReadTime
+          }. Total time: ${marketsProcessedTime2 - startTime}`,
+        );
 
       res.send(groupMarkets);
     } catch (e) {
@@ -1601,6 +1633,57 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ, async (req, 
     console.log(e);
   }
 });
+
+app.get(ENDPOINTS.REDIS_PROXY, (req, res) => {
+  const startTime = new Date().getTime();
+
+  const key = req.query.key;
+  const requestId = req.query.requestId;
+
+  redisClient.get(key, function (err, obj) {
+    const afterRedisReadTime = new Date().getTime();
+
+    console.log(
+      `REDIS_PROXY: Request ID: ${requestId} - Time passed from request start to Redis read returned: ${
+        afterRedisReadTime - startTime
+      }`,
+    );
+
+    res.send(JSON.parse(obj));
+  });
+});
+
+app.get(ENDPOINTS.REDIS_PROXY_2, async (req, res) => {
+  const startTime = new Date().getTime();
+
+  const key = req.query.key;
+  const requestId = req.query.requestId;
+
+  const value = await getValueFromRedisAsync(key);
+
+  const afterRedisReadTime = new Date().getTime();
+
+  console.log(
+    `REDIS_PROXY_2: Request ID: ${requestId} - Time passed from request start to Redis read returned: ${
+      afterRedisReadTime - startTime
+    }`,
+  );
+
+  res.send(value);
+});
+
+const getValueFromRedisAsync = (key) => {
+  return new Promise((resolve, reject) => {
+    redisClient.get(key, async (err, obj) => {
+      if (err) {
+        reject(err);
+      } else {
+        const value = JSON.parse(obj);
+        resolve(value);
+      }
+    });
+  });
+};
 
 // V1 Digital Options and Sport Markets API with cache response logic
 app.use("/v1/stakers", stakersRoutes);
