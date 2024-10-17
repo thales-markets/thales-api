@@ -1198,17 +1198,19 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       : KEYS.OVERTIME_V2_OPEN_MARKETS[network];
 
   const beforeRedisReadTime = new Date().getTime();
-  console.log(
-    `${requestId} - Time passed from request received to Redis read start: ${beforeRedisReadTime - startTime}`,
-  );
+  requestId &&
+    console.log(
+      `${requestId} - Time passed from request received to Redis read start: ${beforeRedisReadTime - startTime}`,
+    );
 
   redisClient.get(redisKey, async function (err, obj) {
     const afterRedisReadTime = new Date().getTime();
-    console.log(
-      `${requestId} - Time passed from Redis read start to Redis returned data: ${
-        afterRedisReadTime - beforeRedisReadTime
-      }`,
-    );
+    requestId &&
+      console.log(
+        `${requestId} - Time passed from Redis read start to Redis returned data: ${
+          afterRedisReadTime - beforeRedisReadTime
+        }`,
+      );
 
     const markets = new Map(JSON.parse(obj));
 
@@ -1235,6 +1237,13 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       );
 
       if (ungroup && ungroup.toLowerCase() === "true") {
+        const marketsProcessedTime = new Date().getTime();
+        requestId &&
+          console.log(
+            `${requestId} - Time passed from Redis returned data to markets processed 1 (response send): ${
+              marketsProcessedTime - afterRedisReadTime
+            }. Total time: ${marketsProcessedTime - startTime}`,
+          );
         res.send(filteredMarkets);
         return;
       }
@@ -1244,12 +1253,13 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
         groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
       });
 
-      const marketsProcessedTime = new Date().getTime();
-      console.log(
-        `${requestId} - Time passed from Redis returned data to markets processed (response send): ${
-          marketsProcessedTime - afterRedisReadTime
-        }`,
-      );
+      const marketsProcessedTime2 = new Date().getTime();
+      requestId &&
+        console.log(
+          `${requestId} - Time passed from Redis returned data to markets processed 2 (response send): ${
+            marketsProcessedTime2 - afterRedisReadTime
+          }. Total time: ${marketsProcessedTime2 - startTime}`,
+        );
 
       res.send(groupMarkets);
     } catch (e) {
