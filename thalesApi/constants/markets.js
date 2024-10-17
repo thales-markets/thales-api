@@ -102,6 +102,13 @@ const TRANSACTION_POSITION_MAP = {
   out: RANGED_POSITION_NAME.Out,
 };
 
+const TRANSACTION_POSITION_RESULT_MAP = {
+  long: POSITION_TYPE.Up,
+  short: POSITION_TYPE.Down,
+  in: RANGED_POSITION_TYPE.In,
+  out: RANGED_POSITION_TYPE.Out,
+};
+
 const POSITION_BALANCE_THRESHOLD = 0.01;
 
 const MARKET_DURATION_IN_DAYS = 90;
@@ -110,6 +117,15 @@ const MIN_MATURITY = Math.round(
   new Date(new Date().setDate(TODAY.getDate() - MARKET_DURATION_IN_DAYS)).getTime() / 1000,
 ); // show history for 90 days in the past
 const MAX_MATURITY = Math.round(Number(TODAY.getTime() / 1000)); // show history until today
+
+const DEPRECATED_CONTRACT_ADDRESSES = [
+  // PositionalMarketManager
+  "0x9227334352a890e51e980beb7a56bbdd01499b54",
+  // ThalesAMM
+  "0x278b5a44397c9d8e52743fedec263c4760dc1a1a",
+  // RangedAMM
+  "0x2d356b114cbca8deff2d8783eac2a5a5324fe1df",
+];
 
 module.exports = {
   ZERO_ADDRESS,
@@ -126,4 +142,6 @@ module.exports = {
   POSITION_BALANCE_THRESHOLD,
   MIN_MATURITY,
   MAX_MATURITY,
+  DEPRECATED_CONTRACT_ADDRESSES,
+  TRANSACTION_POSITION_RESULT_MAP,
 };

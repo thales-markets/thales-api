@@ -22,6 +22,18 @@ const KEYS = {
     42161: "thalesArbMarketsLastUpdate",
     8453: "thalesBaseMarketsLastUpdate",
   },
+  THALES_USDC_MARKETS: {
+    10: "thalesUsdcOpMarkets",
+    137: "thalesUsdcPolygonMarkets",
+    42161: "thalesUsdcArbMarkets",
+    8453: "thalesUsdcBaseMarkets",
+  },
+  THALES_USDC_MARKETS_LAST_UPDATED_AT: {
+    10: "thalesUsdcOpMarketsLastUpdate",
+    137: "thalesUsdcPolygonMarketsLastUpdate",
+    42161: "thalesUsdcArbMarketsLastUpdate",
+    8453: "thalesUsdcBaseMarketsLastUpdate",
+  },
   OVERTIME_V2_OPEN_MARKETS: {
     10: "overtimeV2OpOpenMarkets",
     11155420: "overtimeV2OpSepoliaOpenMarkets",

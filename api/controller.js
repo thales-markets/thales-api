@@ -29,7 +29,11 @@ const { uniqBy, groupBy } = require("lodash");
 const thalesUsers = require("../thalesApi/source/users");
 const thalesQuotes = require("../thalesApi/source/quotes");
 const { COLLATERALS: OVERTIME_V2_COLLATERALS } = require("../overtimeV2Api/constants/collaterals");
-const { COLLATERALS: THALES_COLLATERALS } = require("../thalesApi/constants/collaterals");
+const {
+  COLLATERALS: THALES_COLLATERALS,
+  LP_COLLATERALS,
+  USDC_COLLATERALS,
+} = require("../thalesApi/constants/collaterals");
 const {
   getNonDefaultCollateralSymbols: getNonDefaultCollateralSymbolsThales,
 } = require("../thalesApi/utils/collaterals");
@@ -337,9 +341,12 @@ app.use(ENDPOINTS.ONE_INCH_PROXY, (req, res) => {
 
 app.get(ENDPOINTS.THALES_COLLATERALS, (req, res) => {
   const network = req.params.networkParam;
+  const lpCollateral = req.query.lpcollateral;
+  const isUsdc = lpCollateral && lpCollateral.toLowerCase() === LP_COLLATERALS.USDC;
+
   if ([10, 137, 8453, 42161].includes(Number(network))) {
     try {
-      res.send(THALES_COLLATERALS[Number(network)]);
+      res.send((isUsdc ? USDC_COLLATERALS : THALES_COLLATERALS)[Number(network)]);
     } catch (e) {
       console.log(e);
     }
@@ -355,6 +362,8 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
   const positions = req.query.positions;
   const onlyWithBonus = req.query.onlywithbonus;
   const ungroup = req.query.ungroup;
+  const lpCollateral = req.query.lpcollateral;
+  const isUsdc = lpCollateral && lpCollateral.toLowerCase() === LP_COLLATERALS.USDC;
 
   if (![10, 137, 8453, 42161].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
@@ -389,7 +398,7 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
     return;
   }
 
-  redisClient.get(KEYS.THALES_MARKETS[network], function (err, obj) {
+  redisClient.get((isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network], function (err, obj) {
     const markets = JSON.parse(obj);
     try {
       const filteredMarkets = markets.filter(
@@ -425,39 +434,47 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
 
 app.get(ENDPOINTS.THALES_MARKETS_COUNT, (req, res) => {
   const network = req.params.networkParam;
+  const lpCollateral = req.query.lpcollateral;
+  const isUsdc = lpCollateral && lpCollateral.toLowerCase() === LP_COLLATERALS.USDC;
 
   try {
-    redisClient.mget([KEYS.THALES_MARKETS[network], KEYS.THALES_MARKETS_LAST_UPDATED_AT[network]], function (err, obj) {
-      if (!obj) return res.sendStatus(204);
-      const markets = JSON.parse(obj[0]);
+    redisClient.mget(
+      [
+        (isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network],
+        (isUsdc ? KEYS.THALES_USDC_MARKETS_LAST_UPDATED_AT : KEYS.THALES_MARKETS_LAST_UPDATED_AT)[network],
+      ],
+      function (err, obj) {
+        if (!obj) return res.sendStatus(204);
+        const markets = JSON.parse(obj[0]);
 
-      const groupByAsset = groupBy(markets, "asset");
-      const data = [];
+        const groupByAsset = groupBy(markets, "asset");
+        const data = [];
 
-      Object.entries(groupByAsset).forEach(([assetKey, byAsset]) => {
-        const groupByMaturityDate = groupBy(JSON.parse(JSON.stringify(byAsset)), "maturityDate");
+        Object.entries(groupByAsset).forEach(([assetKey, byAsset]) => {
+          const groupByMaturityDate = groupBy(JSON.parse(JSON.stringify(byAsset)), "maturityDate");
 
-        const byMaturityData = [];
-        let totalCountByAsset = 0;
-        Object.entries(groupByMaturityDate).forEach(([maturityKey, byMaturity]) => {
-          const groupByPosition = groupBy(JSON.parse(JSON.stringify(byMaturity)), "position");
+          const byMaturityData = [];
+          let totalCountByAsset = 0;
+          Object.entries(groupByMaturityDate).forEach(([maturityKey, byMaturity]) => {
+            const groupByPosition = groupBy(JSON.parse(JSON.stringify(byMaturity)), "position");
 
-          const byPositionData = [];
-          let totalCountByPositions = 0;
-          Object.entries(groupByPosition).forEach(([positionKey, byPositions]) => {
-            byPositionData.push({ position: positionKey, count: byPositions.length });
-            totalCountByPositions += byPositions.length;
+            const byPositionData = [];
+            let totalCountByPositions = 0;
+            Object.entries(groupByPosition).forEach(([positionKey, byPositions]) => {
+              byPositionData.push({ position: positionKey, count: byPositions.length });
+              totalCountByPositions += byPositions.length;
+            });
+
+            totalCountByAsset += totalCountByPositions;
+            byMaturityData.push({ maturity: maturityKey, count: totalCountByPositions, positions: byPositionData });
           });
 
-          totalCountByAsset += totalCountByPositions;
-          byMaturityData.push({ maturity: maturityKey, count: totalCountByPositions, positions: byPositionData });
+          data.push({ asset: assetKey, count: totalCountByAsset, byMaturity: byMaturityData });
         });
 
-        data.push({ asset: assetKey, count: totalCountByAsset, byMaturity: byMaturityData });
-      });
-
-      return res.send({ data, lastUpdatedAt: obj[1] ? obj[1] : "" });
-    });
+        return res.send({ data, lastUpdatedAt: obj[1] ? obj[1] : "" });
+      },
+    );
   } catch (e) {
     console.log("Error ", e);
     return null;
@@ -467,13 +484,15 @@ app.get(ENDPOINTS.THALES_MARKETS_COUNT, (req, res) => {
 app.get(ENDPOINTS.THALES_MARKET, (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
+  const lpCollateral = req.query.lpcollateral;
+  const isUsdc = lpCollateral && lpCollateral.toLowerCase() === LP_COLLATERALS.USDC;
 
   if (![10, 137, 8453, 42161].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
     return;
   }
 
-  redisClient.get(KEYS.THALES_MARKETS[network], function (err, obj) {
+  redisClient.get((isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network], function (err, obj) {
     const markets = JSON.parse(obj);
     try {
       const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
@@ -490,6 +509,8 @@ app.get(ENDPOINTS.THALES_MARKET_BUY_QUOTE, async (req, res) => {
   const position = req.query.position;
   const buyin = req.query.buyin;
   const collateral = req.query.differentcollateral;
+  const lpCollateral = req.query.lpcollateral;
+  const isUsdc = lpCollateral && lpCollateral.toLowerCase() === LP_COLLATERALS.USDC;
 
   if (![10, 137, 8453, 42161].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
@@ -515,8 +536,12 @@ app.get(ENDPOINTS.THALES_MARKET_BUY_QUOTE, async (req, res) => {
     res.send("Polygon, Arbitrum and Base do not support buying with different collateral.");
     return;
   }
+  if (collateral && Number(network) === 10 && isUsdc) {
+    res.send("Optimism USDC LP do not support buying with different collateral.");
+    return;
+  }
 
-  const supportedCollaterals = getNonDefaultCollateralSymbolsThales(Number(network));
+  const supportedCollaterals = getNonDefaultCollateralSymbolsThales(Number(network), isUsdc);
   if (
     collateral &&
     !supportedCollaterals.map((c) => c.toLowerCase()).includes(collateral.toLowerCase()) &&
@@ -526,7 +551,7 @@ app.get(ENDPOINTS.THALES_MARKET_BUY_QUOTE, async (req, res) => {
     return;
   }
 
-  redisClient.get(KEYS.THALES_MARKETS[network], async function (err, obj) {
+  redisClient.get((isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network], async function (err, obj) {
     const markets = JSON.parse(obj);
     try {
       const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
@@ -555,6 +580,7 @@ app.get(ENDPOINTS.THALES_MARKET_BUY_QUOTE, async (req, res) => {
         collateral,
         isRangedMarket,
         true,
+        isUsdc,
       );
 
       return res.send(ammQuote);

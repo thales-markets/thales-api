@@ -31,7 +31,7 @@
     "lodash": "^4.17.21",
     "node-cache": "^5.1.2",
     "node-fetch": "^2.6.1",
-    "overtime-live-trading-utils": "0.2.6",
+    "overtime-live-trading-utils": "^0.2.7",
     "redis": "^3.0.2",
     "thales-data": "^3.0.13",
     "twitter-api-v2": "^1.4.1",
