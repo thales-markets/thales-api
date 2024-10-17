@@ -2,12 +2,20 @@ const EventSource = require("eventsource");
 const { OPTIC_ODDS_API_BASE_URL_V3 } = require("../constants/opticOdds");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
+const { uniq } = require("lodash");
 
 const getRedisKeyForOpticOddsStreamEventOddsId = (gameId) => `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME}${gameId}`;
-const getRedisKeyForOpticOddsStreamEventResultsId = (fixtureId) =>
-  `${KEYS.OPTIC_ODDS_STREAM_EVENT_RESULTS_BY_GAME}${fixtureId}`;
+const getRedisKeyForOpticOddsStreamEventResults = (fixtureId) =>
+  `${KEYS.OPTIC_ODDS_STREAM_EVENT_RESULTS_BY_FIXTURE}${fixtureId}`;
 
-const connectToOpticOddsStreamOdds = (sportsbooks, markets, sport, leagues, lastEntryId = "") => {
+const connectToOpticOddsStreamOdds = (
+  sportsbooks,
+  markets,
+  sport,
+  leagues,
+  lastEntryId = "",
+  lastRedisKeysMap = new Map(),
+) => {
   // Construct the query string with repeated parameters
   const queryString = new URLSearchParams();
   queryString.append("key", process.env.OPTIC_ODDS_API_KEY);
@@ -32,7 +40,7 @@ const connectToOpticOddsStreamOdds = (sportsbooks, markets, sport, leagues, last
   };
 
   let lastReceivedEntryId = lastEntryId;
-  const allRedisKeysByGameIdMap = new Map();
+  let allRedisKeysByGameIdMap = lastRedisKeysMap;
 
   eventSource.addEventListener("odds", (event) => {
     const data = JSON.parse(event.data);
@@ -59,11 +67,7 @@ const connectToOpticOddsStreamOdds = (sportsbooks, markets, sport, leagues, last
      * value = [31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5, 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+1_5]
      */
     const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
-
-    const updatedRedisKeysForOdds = prevRedisKeysForOdds
-      .filter((redisKeyForGame) => !currentRedisKeysForGameEvent.includes(redisKeyForGame))
-      .concat(currentRedisKeysForGameEvent);
-
+    const updatedRedisKeysForOdds = uniq([...prevRedisKeysForOdds, ...currentRedisKeysForGameEvent]);
     allRedisKeysByGameIdMap.set(gameId, updatedRedisKeysForOdds);
 
     const redisGameKey = getRedisKeyForOpticOddsStreamEventOddsId(gameId);
@@ -79,21 +83,40 @@ const connectToOpticOddsStreamOdds = (sportsbooks, markets, sport, leagues, last
     lastReceivedEntryId = data.entry_id;
 
     const oddsDataArray = data.data;
+    const currentRedisKeysForGameEvent = [];
+    const gameId = oddsDataArray[0].game_id; // event contains only data for one game ID
 
     oddsDataArray.forEach((oddsData) => {
       oddsData.isLocked = true;
 
       const redisOddsKey = oddsData.id;
+      currentRedisKeysForGameEvent.push(redisOddsKey);
 
       redisClient.set(redisOddsKey, JSON.stringify(oddsData), () => {});
       redisClient.expire(redisOddsKey, 60 * 60 * 12, () => {}); // delete after 12h
     });
+
+    const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
+    const updatedRedisKeysForOdds = uniq([...prevRedisKeysForOdds, ...currentRedisKeysForGameEvent]);
+    allRedisKeysByGameIdMap.set(gameId, updatedRedisKeysForOdds);
   });
 
   eventSource.onerror = (event) => {
     console.error("Stream for odds: EventSource error:", event);
     eventSource.close();
-    setTimeout(() => connectToOpticOddsStreamOdds(sportsbooks, markets, sport, leagues, lastReceivedEntryId), 1000); // Attempt to reconnect after 1 second
+    // Attempt to reconnect after 1 second
+    setTimeout(
+      () =>
+        connectToOpticOddsStreamOdds(
+          sportsbooks,
+          markets,
+          sport,
+          leagues,
+          lastReceivedEntryId,
+          allRedisKeysByGameIdMap,
+        ),
+      1000,
+    );
   };
 
   return eventSource;
@@ -125,8 +148,8 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
 
     const resultsData = data.data;
 
-    // Save each object from event data to redis with key: Fixture ID (e.g. opticOddsStreamEventResultsByGameId2E4AB315ABD9)
-    const redisGameKey = getRedisKeyForOpticOddsStreamEventResultsId(resultsData.fixture_id);
+    // Save each object from event data to redis with key: Fixture ID (e.g. opticOddsStreamEventResultsByFixtureId2E4AB315ABD9)
+    const redisGameKey = getRedisKeyForOpticOddsStreamEventResults(resultsData.fixture_id);
 
     redisClient.set(redisGameKey, JSON.stringify(resultsData), () => {});
     redisClient.expire(redisGameKey, 60 * 60 * 12, () => {}); // delete after 12h TODO: check if longer needed
@@ -145,5 +168,5 @@ module.exports = {
   connectToOpticOddsStreamOdds,
   connectToOpticOddsStreamResults,
   getRedisKeyForOpticOddsStreamEventOddsId,
-  getRedisKeyForOpticOddsStreamEventResultsId,
+  getRedisKeyForOpticOddsStreamEventResults,
 };

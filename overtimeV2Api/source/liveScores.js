@@ -9,7 +9,7 @@ const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getOpticOddsScore } = require("./gamesInfo");
 const { getLeagueProvider, Provider } = require("overtime-live-trading-utils");
-const { getRedisKeyForOpticOddsStreamEventResultsId } = require("../utils/opticOddsStreamsConnector");
+const { getRedisKeyForOpticOddsStreamEventResults } = require("../utils/opticOddsStreamsConnector");
 const {
   mapOpticOddsStreamResults,
   mapOpticOddsApiResults,
@@ -140,7 +140,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     if (isOpticOddsResultsInitialized) {
       // Read from Redis
       const redisKeysForStreamResults = opticOddsFixtureIds.map((fixtureId) =>
-        getRedisKeyForOpticOddsStreamEventResultsId(fixtureId),
+        getRedisKeyForOpticOddsStreamEventResults(fixtureId),
       );
       const opticOddsStreamResults = await getValuesFromRedisAsync(redisKeysForStreamResults);
       liveResults = mapOpticOddsStreamResults(opticOddsStreamResults);

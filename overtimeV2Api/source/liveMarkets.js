@@ -30,7 +30,7 @@ const {
 } = require("../utils/liveMarkets");
 const {
   getRedisKeyForOpticOddsStreamEventOddsId,
-  getRedisKeyForOpticOddsStreamEventResultsId,
+  getRedisKeyForOpticOddsStreamEventResults,
 } = require("../utils/opticOddsStreamsConnector");
 const {
   fetchOpticOddsFixtureOdds,
@@ -303,7 +303,7 @@ async function processMarketsByLeague(
 
         // Read scores received from stream by fixture ID
         const redisStreamScoresKeys = ongoingMarketsByOpticOddsOdds.map((market) =>
-          getRedisKeyForOpticOddsStreamEventResultsId(market.opticOddsGameEvent.fixture_id),
+          getRedisKeyForOpticOddsStreamEventResults(market.opticOddsGameEvent.fixture_id),
         );
         const scoresStreamEvents =
           redisStreamScoresKeys.length > 0 ? await getValuesFromRedisAsync(redisStreamScoresKeys) : [];
