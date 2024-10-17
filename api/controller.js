@@ -1634,6 +1634,57 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ, async (req, 
   }
 });
 
+app.get(ENDPOINTS.REDIS_PROXY, (req, res) => {
+  const startTime = new Date().getTime();
+
+  const key = req.query.key;
+  const requestId = req.query.requestId;
+
+  redisClient.get(key, function (err, obj) {
+    const afterRedisReadTime = new Date().getTime();
+
+    console.log(
+      `REDIS_PROXY: Request ID: ${requestId} - Time passed from request start to Redis read returned: ${
+        afterRedisReadTime - startTime
+      }`,
+    );
+
+    res.send(JSON.parse(obj));
+  });
+});
+
+app.get(ENDPOINTS.REDIS_PROXY_2, async (req, res) => {
+  const startTime = new Date().getTime();
+
+  const key = req.query.key;
+  const requestId = req.query.requestId;
+
+  const value = await getValueFromRedisAsync(key);
+
+  const afterRedisReadTime = new Date().getTime();
+
+  console.log(
+    `REDIS_PROXY_2: Request ID: ${requestId} - Time passed from request start to Redis read returned: ${
+      afterRedisReadTime - startTime
+    }`,
+  );
+
+  res.send(value);
+});
+
+const getValueFromRedisAsync = (key) => {
+  return new Promise((resolve, reject) => {
+    redisClient.get(key, async (err, obj) => {
+      if (err) {
+        reject(err);
+      } else {
+        const value = JSON.parse(obj);
+        resolve(value);
+      }
+    });
+  });
+};
+
 // V1 Digital Options and Sport Markets API with cache response logic
 app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/digital-options", digitalOptionsRoutes);
