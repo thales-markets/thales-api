@@ -9,7 +9,7 @@ const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getOpticOddsScore } = require("./gamesInfo");
 const { getLeagueProvider, Provider } = require("overtime-live-trading-utils");
-const { getRedisKeyForOpticOddsApiResults } = require("../utils/opticOddsStreams");
+const { getRedisKeyForOpticOddsStreamEventResultsId } = require("../utils/opticOddsStreamsConnector");
 const {
   mapOpticOddsStreamResults,
   mapOpticOddsApiResults,
@@ -83,7 +83,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     (market) => market.statusCode === "ongoing",
   );
 
-  let opticOddsFixtureIds = [];
+  let opticOddsFixtureIdsWithLeagueID = [];
   for (let i = 0; i < allOngoingMarketsMap.length; i++) {
     const market = allOngoingMarketsMap[i];
     const leagueId = market.leagueId;
@@ -120,7 +120,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
 
     if (leagueProvider === Provider.OPTICODDS) {
       if (gameInfo && gameInfo.fixtureId) {
-        opticOddsFixtureIds.push(gameInfo.fixtureId);
+        opticOddsFixtureIdsWithLeagueID.push({ fixtureId: gameInfo.fixtureId, leagueId });
       } else if (gameInfo) {
         liveScoresMap.set(market.gameId, {
           gameStatus: gameInfo.gameStatus,
@@ -133,13 +133,14 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     }
   }
 
-  if (opticOddsFixtureIds.length > 0) {
+  if (opticOddsFixtureIdsWithLeagueID.length > 0) {
     let liveResults = [];
+    const opticOddsFixtureIds = opticOddsFixtureIdsWithLeagueID.map((obj) => obj.fixtureId);
 
     if (isOpticOddsResultsInitialized) {
       // Read from Redis
       const redisKeysForStreamResults = opticOddsFixtureIds.map((fixtureId) =>
-        getRedisKeyForOpticOddsApiResults(fixtureId),
+        getRedisKeyForOpticOddsStreamEventResultsId(fixtureId),
       );
       const opticOddsStreamResults = await getValuesFromRedisAsync(redisKeysForStreamResults);
       liveResults = mapOpticOddsStreamResults(opticOddsStreamResults);
@@ -155,9 +156,10 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     liveResults.forEach((event) => {
       if (event.game_id) {
         const gameId = bytes32({ input: event.game_id });
+        const leagueId = opticOddsFixtureIdsWithLeagueID.find((obj) => obj.fixtureId === event.fixture_id).leagueId;
 
-        const homeScores = getOpticOddsScore(event, market.leagueId, "home");
-        const awayScores = getOpticOddsScore(event, market.leagueId, "away");
+        const homeScores = getOpticOddsScore(event, leagueId, "home");
+        const awayScores = getOpticOddsScore(event, leagueId, "away");
 
         const period = parseInt(event.period);
 

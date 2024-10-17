@@ -1,22 +1,12 @@
 const axios = require("axios");
-const { getBookmakersArray, MONEYLINE, getBetTypesForLeague } = require("overtime-live-trading-utils");
-const {
-  OPTIC_ODDS_API_GAMES_URL,
-  OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS,
-  OPTIC_ODDS_API_ODDS_MAX_GAMES,
-  OPTIC_ODDS_API_SCORES_URL,
-  OPTIC_ODDS_API_SCORES_MAX_GAMES,
-  OPTIC_ODDS_API_TIMEOUT,
-  OPTIC_ODDS_API_KEY_HEADER,
-} = require("../constants/opticOdds");
+const { OPTIC_ODDS_API_TIMEOUT } = require("../constants/opticOdds");
 const teamsMapping = require("../assets/teamsMapping.json");
 const { redisClient, getValuesFromRedisAsync, getValueFromRedisAsync } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
-const { getLeagueOpticOddsName } = require("overtime-live-trading-utils");
+const { getLeagueOpticOddsName, MoneylineTypes } = require("overtime-live-trading-utils");
 const { readCsvFromUrl } = require("./csvReader");
-const { connectToOpticOddsStreamOdds } = require("./opticOddsStreams");
-const { groupBy } = require("lodash");
 const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
+const { fetchOpticOddsFixturesActive, mapOpticOddsApiFixtures } = require("./opticOddsFixtures");
 
 const getRedisKeyForOpticOddsApiGames = (leagueId) => `${KEYS.OPTIC_ODDS_API_GAMES_BY_LEAGUE}${leagueId}`;
 const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS_BY_LEAGUE}${leagueId}`;
@@ -79,205 +69,25 @@ const fetchRiskManagementConfig = async () => {
 };
 
 const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
-  const noCacheConfig = { "Cache-Control": "no-cache", Pragma: "no-cache", Expires: "0" };
-  const headers = { ...OPTIC_ODDS_API_KEY_HEADER, ...noCacheConfig };
-
   const leagueIds = getLeagueOpticOddsName(leagueId).split(",");
-  const queryParams = `is_live=true&league=${leagueIds.join("&league=")}`;
 
-  const url = `${OPTIC_ODDS_API_GAMES_URL}?${queryParams}`;
+  const opticOddsGamesResponse = await fetchOpticOddsFixturesActive(leagueIds, true, null, 1, OPTIC_ODDS_API_TIMEOUT);
 
   let opticOddsResponseData = [];
-  try {
-    const opticOddsGamesResponse = await axios.get(url, { headers, timeout: OPTIC_ODDS_API_TIMEOUT });
-    opticOddsResponseData = opticOddsGamesResponse.data.data;
 
+  if (opticOddsGamesResponse) {
+    opticOddsResponseData = mapOpticOddsApiFixtures(opticOddsGamesResponse.data);
     if (opticOddsResponseData.length > 0) {
       redisClient.set(getRedisKeyForOpticOddsApiGames(leagueId), JSON.stringify(opticOddsResponseData));
     } else if (!isTestnet) {
-      console.log(
-        `Live markets: Could not find any live games on the provider side for the given league ID ${leagueId}`,
-      );
+      console.log(`Live markets: Could not find any Optic Odds fixtures/active for the given league ID ${leagueId}`);
     }
-  } catch (e) {
-    console.log(`Live markets: Fetching Optic Odds games error: ${e.message}`);
+  } else {
+    // read previous games from cache
     opticOddsResponseData = (await getValueFromRedisAsync(getRedisKeyForOpticOddsApiGames(leagueId))) || [];
   }
 
   return opticOddsResponseData;
-};
-
-const fetchOpticOddsGameOddsForMarkets = async (markets, oddsProviders, isTestnet) => {
-  let oddsRequestUrl = OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS;
-  const opticOddsGameOddsPromises = [];
-
-  const marketsLength = markets.length;
-
-  markets.forEach((market, index) => {
-    oddsRequestUrl += `&game_id=${market.opticOddsGameEvent.id}`;
-
-    const gameNumInRequest = (index + 1) % OPTIC_ODDS_API_ODDS_MAX_GAMES;
-    // creating new request after max num of games or when last game in request
-    if (gameNumInRequest == 0 || index == marketsLength - 1) {
-      oddsRequestUrl += `&sportsbook=${oddsProviders.join("&sportsbook=")}`;
-
-      const betTypes = getBetTypesForLeague(market.leagueId, isTestnet);
-
-      betTypes.forEach((betType) => {
-        oddsRequestUrl += `&market_name=${betType}`;
-      });
-
-      opticOddsGameOddsPromises.push(axios.get(oddsRequestUrl, { headers: OPTIC_ODDS_API_KEY_HEADER }));
-      oddsRequestUrl = OPTIC_ODDS_API_ODDS_URL_WITH_PARAMS;
-    }
-  });
-
-  let oddsPerGamesResponses = [];
-  try {
-    oddsPerGamesResponses = await Promise.all(opticOddsGameOddsPromises);
-  } catch (e) {
-    console.log(`Live markets: Fetching Optic Odds game odds data error: ${e}`);
-    oddsPerGamesResponses = [];
-  }
-
-  const oddsPerGame = oddsPerGamesResponses.map((oddsPerGameResponse) => oddsPerGameResponse.data.data).flat();
-  return oddsPerGame;
-};
-
-const fetchOpticOddsScoresForMarkets = async (markets) => {
-  let opticOddsScoresRequestUrl = `${OPTIC_ODDS_API_SCORES_URL}?`;
-  const opticOddsScoresPromises = [];
-
-  // Prepare request for scores
-  // For each game ID prepare separate request with max num of games
-  const opticOddsGameIds = markets.map((market) => market.opticOddsGameOdds.id);
-  opticOddsGameIds.forEach((gameId, index, allGameIds) => {
-    const gameNumInRequest = (index + 1) % OPTIC_ODDS_API_SCORES_MAX_GAMES;
-    opticOddsScoresRequestUrl += `${gameNumInRequest > 1 ? "&" : ""}game_id=${gameId}`;
-
-    // creating new request after max num of games or when last game in request
-    if (gameNumInRequest == 0 || index == allGameIds.length - 1) {
-      opticOddsScoresPromises.push(
-        axios.get(opticOddsScoresRequestUrl, { headers: OPTIC_ODDS_API_KEY_HEADER, timeout: OPTIC_ODDS_API_TIMEOUT }),
-      );
-      opticOddsScoresRequestUrl = `${OPTIC_ODDS_API_SCORES_URL}?`;
-    }
-  });
-
-  let opticOddsScoresResponses = [];
-  try {
-    opticOddsScoresResponses = await Promise.all(opticOddsScoresPromises);
-  } catch (e) {
-    console.log(`Live markets: Fetching Optic Odds game scores data error: ${e.message}`);
-    opticOddsScoresResponses = [];
-  }
-
-  const scoresPerGame = opticOddsScoresResponses
-    .map((opticOddsScoresResponse) => opticOddsScoresResponse.data.data)
-    .flat();
-  return scoresPerGame;
-};
-
-// Start stream for league ID or re-start when param (sportsbooks) is updated
-const startOddsStreams = (leagueId, bookmakersData, oddsStreamsInfoByLeagueMap, isTestnet) => {
-  // Extracting bookmakers (sportsbooks), bet types (markets) for league and Optic Odds league names
-  const bookmakers = getBookmakersArray(bookmakersData, leagueId, process.env.LIVE_ODDS_PROVIDERS.split(","));
-  const betTypes = getBetTypesForLeague(leagueId, isTestnet);
-  const streamLeagues = getLeagueOpticOddsName(leagueId).split(",");
-
-  // Start one stream for each league except for tennis GS where starting multiple leagues
-  const oddsStreamInfo = oddsStreamsInfoByLeagueMap.get(leagueId);
-  const isBookmakersUpdated =
-    oddsStreamInfo && oddsStreamInfo.bookmakers.sort().join().toLowerCase() !== bookmakers.sort().join().toLowerCase();
-
-  // Start new stream for new league or start again when param is updated
-  if (!oddsStreamInfo) {
-    // start new stream
-    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, streamLeagues);
-    oddsStreamsInfoByLeagueMap.set(leagueId, { bookmakers, betTypes, streamSource });
-  } else if (isBookmakersUpdated) {
-    // close and start with new bookmakers
-    oddsStreamInfo.streamSource.close();
-    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, streamLeagues);
-    oddsStreamsInfoByLeagueMap.set(leagueId, { bookmakers, betTypes, streamSource });
-  }
-};
-
-// Close streams that are not active
-const closeInactiveOddsStreams = (oddsStreamsInfoByLeagueMap, activeLeagues) => {
-  oddsStreamsInfoByLeagueMap.forEach((oddsStreamInfo, oddsStreamLeagueId) => {
-    const isStreamInactive = !activeLeagues.includes(oddsStreamLeagueId);
-    if (isStreamInactive) {
-      oddsStreamInfo.streamSource.close();
-      oddsStreamsInfoByLeagueMap.delete(oddsStreamLeagueId);
-    }
-  });
-};
-
-const mapOddsStreamEventToApiOddsObject = (streamEvent) => ({
-  id: streamEvent.id,
-  sports_book_name: streamEvent.sportsbook,
-  name: streamEvent.bet_name,
-  price: streamEvent.bet_price,
-  timestamp: streamEvent.timestamp,
-  bet_points: streamEvent.bet_points,
-  is_main: streamEvent.is_main,
-  is_live: streamEvent.is_live,
-  market_name: streamEvent.bet_type,
-  player_id: !streamEvent.player_id ? null : streamEvent.player_id,
-  selection: streamEvent.selection,
-  selection_line: streamEvent.selection_line,
-  selection_points: streamEvent.selection_points,
-});
-
-const mapOddsStreamEvents = (streamEvents, initialOdds, gamesInfo) => {
-  // map existing game IDs
-  const mappedOdds = initialOdds.map((initialOdd) => {
-    const updatedOddsEvents = streamEvents
-      .filter((event) => event.game_id === initialOdd.id)
-      .map((event) => mapOddsStreamEventToApiOddsObject(event));
-
-    if (updatedOddsEvents.length > 0) {
-      const odds = initialOdd.odds
-        ? initialOdd.odds
-            .filter((odd) => updatedOddsEvents.every((updatedOddsEvent) => updatedOddsEvent.id !== odd.id))
-            .concat(updatedOddsEvents)
-        : updatedOddsEvents;
-
-      return { ...initialOdd, odds };
-    } else {
-      return initialOdd;
-    }
-  });
-
-  // map new game IDs
-  const newOdds = streamEvents.filter((event) => initialOdds.every((initialOdd) => initialOdd.id !== event.game_id));
-  const groupedOddsByGame = groupBy(newOdds, (newOdd) => newOdd.game_id);
-
-  const newMappedOdds = Object.keys(groupedOddsByGame)
-    .filter((gameId) => gamesInfo.some((gameInfo) => gameInfo.id === gameId))
-    .map((gameId) => {
-      const gameInfoData = gamesInfo.find((gameInfo) => gameInfo.id === gameId);
-
-      const oddsHeader = {
-        id: gameInfoData.id,
-        start_date: gameInfoData.start_date,
-        home_team: gameInfoData.home_team,
-        away_team: gameInfoData.away_team,
-        is_live: true, // gameInfo.is_live should be always true
-        is_popular: gameInfoData.is_popular,
-        tournament: gameInfoData.tournament,
-        status: gameInfoData.status,
-        sport: gameInfoData.sport,
-        league: gameInfoData.league,
-      };
-
-      const odds = groupedOddsByGame[gameId].map((event) => mapOddsStreamEventToApiOddsObject(event));
-
-      return { ...oddsHeader, odds };
-    });
-
-  return mappedOdds.concat(newMappedOdds);
 };
 
 const isOddsTimeStale = (timestamp) => {
@@ -295,7 +105,10 @@ const filterStaleOdds = (gameOddsArray) =>
   gameOddsArray.map((gameOdds) => {
     const odds = gameOdds.odds
       ? gameOdds.odds.filter(
-          (odd) => odd.market_name === MONEYLINE || (odd.market_name !== MONEYLINE && !isOddsTimeStale(odd.timestamp)),
+          (oddsObj) =>
+            oddsObj.market_name.toLowerCase() === MoneylineTypes.MONEYLINE.toLowerCase() ||
+            (oddsObj.market_name.toLowerCase() !== MoneylineTypes.MONEYLINE.toLowerCase() &&
+              !isOddsTimeStale(oddsObj.timestamp)),
         )
       : gameOdds.odds;
 
@@ -369,11 +182,6 @@ const persistErrorMessages = (errorsMap, network) => {
 module.exports = {
   fetchRiskManagementConfig,
   fetchOpticOddsGamesForLeague,
-  fetchOpticOddsGameOddsForMarkets,
-  fetchOpticOddsScoresForMarkets,
-  startOddsStreams,
-  closeInactiveOddsStreams,
-  mapOddsStreamEvents,
   isOddsTimeStale,
   filterStaleOdds,
   isMarketPaused,

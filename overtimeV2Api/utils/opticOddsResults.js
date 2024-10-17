@@ -1,6 +1,6 @@
 const axios = require("axios");
 const { getLeagueOpticOddsName, getLeagueSport } = require("overtime-live-trading-utils");
-const { connectToOpticOddsStreamResults } = require("./opticOddsStreams");
+const { connectToOpticOddsStreamResults } = require("./opticOddsStreamsConnector");
 const { upperFirst } = require("lodash");
 const {
   OPTIC_ODDS_API_FIXTURES_RESULTS_URL,
@@ -12,7 +12,7 @@ const mapScorePeriods = (periods, homeAwayType) =>
   Object.values(periods).reduce(
     (acc, periodValue, index) => ({
       ...acc,
-      [`score_${homeAwayType}_period_${index}`]: periodValue,
+      [`score_${homeAwayType}_period_${index + 1}`]: periodValue,
     }),
     {},
   );
@@ -31,8 +31,8 @@ const mapOpticOddsStreamResults = (streamEvents) =>
     away_team: streamEvent.score.fixture.away_team_display,
     score_home_total: streamEvent.score.scores.home.total,
     score_away_total: streamEvent.score.scores.away.total,
-    ...mapScorePeriods(streamEvent.score.scores.home.periods),
-    ...mapScorePeriods(streamEvent.score.scores.away.periods),
+    ...mapScorePeriods(streamEvent.score.scores.home.periods, "home"),
+    ...mapScorePeriods(streamEvent.score.scores.away.periods, "away"),
   }));
 
 const mapOpticOddsApiResults = (resultsData) =>
@@ -49,9 +49,56 @@ const mapOpticOddsApiResults = (resultsData) =>
     away_team: resultData.fixture.away_team_display,
     score_home_total: resultData.scores.home.total,
     score_away_total: resultData.scores.away.total,
-    ...mapScorePeriods(resultData.scores.home.periods),
-    ...mapScorePeriods(resultData.scores.away.periods),
+    ...mapScorePeriods(resultData.scores.home.periods, "home"),
+    ...mapScorePeriods(resultData.scores.away.periods, "away"),
   }));
+
+// Update or add results to initial results from API
+const mapResultsStreamEvents = (streamEvents, initialResults) => {
+  // map existing game IDs
+  const mappedResults = initialResults.map((initialResult) => {
+    const updatedResultEvent = streamEvents.filter((event) => event.score.fixture.game_id === initialResult.game_id);
+    return updatedResultEvent.length > 0 ? mapOpticOddsStreamResults(updatedResultEvent)[0] : initialResult;
+  });
+
+  // map new game IDs
+  const newMappedResults = mapOpticOddsStreamResults(
+    streamEvents.filter(
+      (event) => !initialResults.some((initialResult) => initialResult.game_id === event.score.fixture.game_id),
+    ),
+  );
+
+  return mappedResults.concat(newMappedResults);
+};
+
+const fetchOpticOddsResults = async (fixtureIds) => {
+  const resultsPromises = [];
+  let requestUrl = `${OPTIC_ODDS_API_FIXTURES_RESULTS_URL}?`;
+
+  // Prepare request for results
+  // For each fixture ID prepare separate request with max num of games
+  fixtureIds.forEach((fixtureId, index, allFixtureIds) => {
+    const gameNumInRequest = (index + 1) % OPTIC_ODDS_API_RESULTS_MAX_GAMES;
+    requestUrl += `${gameNumInRequest > 1 ? "&" : ""}fixture_id=${fixtureId}`;
+
+    // creating new request after max num of games or when last game in request
+    if (gameNumInRequest == 0 || index == allFixtureIds.length - 1) {
+      resultsPromises.push(axios.get(requestUrl, { headers: OPTIC_ODDS_API_KEY_HEADER }));
+      requestUrl = `${OPTIC_ODDS_API_FIXTURES_RESULTS_URL}?`;
+    }
+  });
+
+  let resultsResponses = [];
+  try {
+    resultsResponses = await Promise.all(resultsPromises);
+  } catch (e) {
+    console.log(`Fetchng Optic Odds results error: ${e.message} ${e.error})`);
+    resultsResponses = [];
+  }
+
+  const results = resultsResponses.map((resultResponse) => resultResponse.data.data).flat();
+  return results;
+};
 
 // Start stream for league ID or re-start when param (sportsbooks) is updated
 const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap) => {
@@ -79,39 +126,11 @@ const closeInactiveResultsStreams = (resultsStreamSourcesByLeagueMap, activeLeag
   });
 };
 
-const fetchOpticOddsResults = async (fixtureIds) => {
-  const resultsPromises = [];
-  let requestUrl = `${OPTIC_ODDS_API_FIXTURES_RESULTS_URL}?`;
-
-  // Prepare request for results
-  // For each fixture ID prepare separate request with max num of games
-  fixtureIds.forEach((fixtureId, index, allFixtureIds) => {
-    const gameNumInRequest = (index + 1) % OPTIC_ODDS_API_RESULTS_MAX_GAMES;
-    requestUrl += `${gameNumInRequest > 1 ? "&" : ""}fixture_id=${fixtureId}`;
-
-    // creating new request after max num of games or when last game in request
-    if (gameNumInRequest == 0 || index == allFixtureIds.length - 1) {
-      resultsPromises.push(axios.get(requestUrl, { headers: OPTIC_ODDS_API_KEY_HEADER }));
-      requestUrl = `${OPTIC_ODDS_API_FIXTURES_RESULTS_URL}?`;
-    }
-  });
-
-  let resultsResponses = [];
-  try {
-    resultsResponses = await Promise.all(resultsPromises);
-  } catch (e) {
-    console.log(`Live results: Fetchng Optic Odds results error: ${e.message} ${e.error})`);
-    resultsResponses = [];
-  }
-
-  const results = resultsResponses.map((resultResponse) => resultResponse.data.data).flat();
-  return results;
-};
-
 module.exports = {
   mapOpticOddsStreamResults,
   mapOpticOddsApiResults,
+  mapResultsStreamEvents,
+  fetchOpticOddsResults,
   startResultsStreams,
   closeInactiveResultsStreams,
-  fetchOpticOddsResults,
 };

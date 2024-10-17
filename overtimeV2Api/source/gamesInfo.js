@@ -404,5 +404,5 @@ async function processAllGamesInfo() {
 
 module.exports = {
   processGamesInfo,
-  getOpticOddsScore: getOpticOddsScore,
+  getOpticOddsScore,
 };
