@@ -11,63 +11,53 @@ let thalesIOWeeklyDuneDataMap = new Map();
 let dailyStatsDisableFirstRunExecution = true;
 let weeklyStatsDisableFirstRunExecution = true;
 
-if (process.env.REDIS_URL && process.env.DUNE_API_KEY) {
-  console.log("create client from index");
-
-  redisClient.get(KEYS.THALES_IO_DAILY_STATS, function (err, obj) {
-    const thalesIOMapRaw = obj;
-    console.log("thalesIOMapRaw:" + thalesIOMapRaw);
+(async () => {
+  if (process.env.REDIS_URL && process.env.DUNE_API_KEY) {
+    const thalesIOMapRaw = await redisClient.get(KEYS.THALES_IO_DAILY_STATS);
     if (thalesIOMapRaw) {
       thalesIODuneDataMap = new Map(JSON.parse(thalesIOMapRaw));
     }
-  });
 
-  redisClient.get(KEYS.THALES_IO_WEEKLY_STATS, function (err, obj) {
-    const thalesIOMapRaw = obj;
-    console.log("thalesIOWeeklyMapRaw:" + thalesIOMapRaw);
+    const thalesIOMapRawWeekly = await redisClient.get(KEYS.THALES_IO_WEEKLY_STATS);
     if (thalesIOMapRaw) {
-      thalesIOWeeklyDuneDataMap = new Map(JSON.parse(thalesIOMapRaw));
+      thalesIOWeeklyDuneDataMap = new Map(JSON.parse(thalesIOMapRawWeekly));
     }
-  });
 
-  redisClient.on("error", function (error) {
-    console.error(error);
-  });
-
-  setTimeout(async () => {
-    while (true) {
-      try {
-        if (!dailyStatsDisableFirstRunExecution) {
-          console.log("fetch daily thales io data from dune");
-          await fetchDailyDuneData();
-        } else {
-          dailyStatsDisableFirstRunExecution = false;
+    setTimeout(async () => {
+      while (true) {
+        try {
+          if (!dailyStatsDisableFirstRunExecution) {
+            console.log("fetch daily thales io data from dune");
+            await fetchDailyDuneData();
+          } else {
+            dailyStatsDisableFirstRunExecution = false;
+          }
+        } catch (error) {
+          console.log("error fetching daily thales io data from dune: ", error);
         }
-      } catch (error) {
-        console.log("error fetching daily thales io data from dune: ", error);
+
+        await delay(24 * 60 * 60 * 1000); // 24h 24 * 60 * 60 * 1000
       }
+    }, 3000);
 
-      await delay(24 * 60 * 60 * 1000); // 24h 24 * 60 * 60 * 1000
-    }
-  }, 3000);
-
-  setTimeout(async () => {
-    while (true) {
-      try {
-        if (!weeklyStatsDisableFirstRunExecution) {
-          console.log("fetch weekly thales io data from dune");
-          await fetchWeeklyDuneData();
-        } else {
-          weeklyStatsDisableFirstRunExecution = false;
+    setTimeout(async () => {
+      while (true) {
+        try {
+          if (!weeklyStatsDisableFirstRunExecution) {
+            console.log("fetch weekly thales io data from dune");
+            await fetchWeeklyDuneData();
+          } else {
+            weeklyStatsDisableFirstRunExecution = false;
+          }
+        } catch (error) {
+          console.log("error fetching weekly thales io data from dune: ", error);
         }
-      } catch (error) {
-        console.log("error fetching weekly thales io data from dune: ", error);
-      }
 
-      await delay(60 * 60 * 1000); // 1h 60 * 60 * 1000
-    }
-  }, 3000);
-}
+        await delay(60 * 60 * 1000); // 1h 60 * 60 * 1000
+      }
+    }, 3000);
+  }
+})();
 
 async function fetchDailyDuneData() {
   try {
@@ -110,7 +100,7 @@ async function fetchDailyDuneData() {
       };
       thalesIODuneDataMap = new Map(Object.entries(allThalesStats));
 
-      redisClient.set(KEYS.THALES_IO_DAILY_STATS, JSON.stringify([...thalesIODuneDataMap]), function () {});
+      await redisClient.set(KEYS.THALES_IO_DAILY_STATS, JSON.stringify([...thalesIODuneDataMap]));
     }
   } catch (e) {
     console.log(e);
@@ -177,7 +167,7 @@ async function fetchWeeklyDuneData() {
         ["revShare", thalesRevShareJson.result.rows],
       ]);
 
-      redisClient.set(KEYS.THALES_IO_WEEKLY_STATS, JSON.stringify([...thalesIOWeeklyDuneDataMap]), function () {});
+      await redisClient.set(KEYS.THALES_IO_WEEKLY_STATS, JSON.stringify([...thalesIOWeeklyDuneDataMap]));
     }
   } catch (e) {
     console.log(e);

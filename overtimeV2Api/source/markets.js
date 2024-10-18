@@ -38,11 +38,6 @@ async function processMarkets() {
   if (process.env.REDIS_URL) {
     const isTestnet = process.env.IS_TESTNET === "true";
     const network = isTestnet ? "testnet" : "mainnets";
-    console.log(`Markets ${network}: create client from index`);
-
-    redisClient.on("error", function (error) {
-      console.error(error);
-    });
     setTimeout(async () => {
       while (true) {
         try {
@@ -215,22 +210,16 @@ const mapMarket = (market) => {
   return packedMarket;
 };
 
-function getClosedMarketsMap(network) {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
-      const closedMarketsMap = new Map(JSON.parse(obj));
-      resolve(closedMarketsMap);
-    });
-  });
+async function getOpenMarketsMap(network) {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
+  const openMarkets = new Map(JSON.parse(obj));
+  return openMarkets;
 }
 
-function getOpenMarketsMap(network) {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
-      const openMarketsMap = new Map(JSON.parse(obj));
-      resolve(openMarketsMap);
-    });
-  });
+async function getClosedMarketsMap(network) {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network]);
+  const closedMarketsMap = new Map(JSON.parse(obj));
+  return closedMarketsMap;
 }
 
 async function loadAndMapMarkets(isTestnet) {
@@ -253,7 +242,7 @@ async function processAllMarkets(markets, network) {
     }
   });
 
-  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[network], JSON.stringify([...openMarketsMap]), function () {});
+  await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[network], JSON.stringify([...openMarketsMap]));
 }
 
 async function updateMerkleTree(gameIds) {
@@ -285,17 +274,9 @@ async function updateMerkleTree(gameIds) {
     }
   }
 
-  redisClient.set(
-    KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism],
-    JSON.stringify([...opOpenMarketsMap]),
-    function () {},
-  );
-  redisClient.set(
-    KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum],
-    JSON.stringify([...arbOpenMarketsMap]),
-    function () {},
-  );
-  // redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Base], JSON.stringify([...baseOpenMarketsMap]), function () {});
+  await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify([...opOpenMarketsMap]));
+  await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum], JSON.stringify([...arbOpenMarketsMap]));
+  // await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Base], JSON.stringify([...baseOpenMarketsMap]));
 
   const endTime = new Date().getTime();
   console.log(`Markets mainnets: Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);

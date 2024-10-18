@@ -89,28 +89,24 @@ async function fetchTicketAmmQuote(
   }
 }
 
-function getCollateralRate(network, provider, collateral) {
+async function getCollateralRate(network, provider, collateral) {
   // eslint-disable-next-line no-async-promise-executor
-  return new Promise(async function (resolve) {
-    if (
-      !collateral ||
-      (collateral.toUpperCase() !== "ETH" &&
-        collateral.toUpperCase() !== "WETH" &&
-        collateral.toUpperCase() !== "THALES")
-    ) {
-      resolve(1);
-    } else if (collateral.toUpperCase() === "ETH" || collateral.toUpperCase() === "WETH") {
-      const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
-      const ethRate = bigNumberFormatter(await priceFeed.rateForCurrency(formatBytes32String("ETH")));
-      resolve(ethRate);
-    } else {
-      redisClient.get(KEYS.TOKEN, async function (err, obj) {
-        const tokenMap = new Map(JSON.parse(obj));
-        const thalesRate = Number(tokenMap.get("price"));
-        resolve(thalesRate);
-      });
-    }
-  });
+
+  if (
+    !collateral ||
+    (collateral.toUpperCase() !== "ETH" && collateral.toUpperCase() !== "WETH" && collateral.toUpperCase() !== "THALES")
+  ) {
+    resolve(1);
+  } else if (collateral.toUpperCase() === "ETH" || collateral.toUpperCase() === "WETH") {
+    const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
+    const ethRate = bigNumberFormatter(await priceFeed.rateForCurrency(formatBytes32String("ETH")));
+    return ethRate;
+  } else {
+    const obj = await redisClient.get(KEYS.TOKEN);
+    const tokenMap = new Map(JSON.parse(obj));
+    const thalesRate = Number(tokenMap.get("price"));
+    return thalesRate;
+  }
 }
 
 async function getQuoteData(network, tradeData, buyInAmount, collateral, provider) {
