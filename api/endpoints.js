@@ -71,6 +71,8 @@ const ENDPOINTS = {
   OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ:
     "/overtime-v2/networks/:networkParam/live-trading/read-message/request/:requestId",
   OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ: "/overtime-v2/networks/:networkParam/live-trading/error-messages",
+  REDIS_PROXY: "/overtime-v2/readKeyFromRedis",
+  REDIS_PROXY_2: "/overtime-v2/readKeyFromRedisSecond",
 };
 
 module.exports = ENDPOINTS;

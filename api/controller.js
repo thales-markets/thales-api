@@ -1,4 +1,8 @@
 const { redisClient } = require("../redis/client");
+const redis = require("redis");
+const redisClientOpenMarkets = redis.createClient(process.env.REDIS_URL);
+const redisClientClosedMarkets = redis.createClient(process.env.REDIS_URL);
+
 require("dotenv").config();
 const express = require("express");
 const request = require("request");
@@ -1189,12 +1193,16 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     return;
   }
 
+  const isClosedMarkets = status === "resolved" || status === "cancelled";
+
   const redisKey =
     status === "resolved" || status === "cancelled"
       ? KEYS.OVERTIME_V2_CLOSED_MARKETS[network]
       : KEYS.OVERTIME_V2_OPEN_MARKETS[network];
 
-  redisClient.get(redisKey, async function (err, obj) {
+  const clientTouse = isClosedMarkets ? redisClientClosedMarkets : redisClientOpenMarkets;
+
+  clientTouse.get(redisKey, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
 
     try {
@@ -1328,7 +1336,7 @@ function getLiveMarketsErrorsMap(network) {
 
 function getOpenMarketsMap(network) {
   return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
+    redisClientOpenMarkets.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
       const openMarketsMap = new Map(JSON.parse(obj));
       resolve(openMarketsMap);
     });
@@ -1346,7 +1354,7 @@ function getLiveMarketsMap(network) {
 
 function getClosedMarketsMap(network) {
   return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
+    redisClientClosedMarkets.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
       const openMarketsMap = new Map(JSON.parse(obj));
       resolve(openMarketsMap);
     });
@@ -1607,6 +1615,57 @@ app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/digital-options", digitalOptionsRoutes);
 app.use("/v1/sport-markets", sportMarketsRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
+
+app.get(ENDPOINTS.REDIS_PROXY, (req, res) => {
+  const startTime = new Date().getTime();
+
+  const key = req.query.key;
+  const requestId = req.query.requestId;
+
+  redisClient.get(key, function (err, obj) {
+    const afterRedisReadTime = new Date().getTime();
+
+    console.log(
+      `REDIS_PROXY: Request ID: ${requestId} - Time passed from request start to Redis read returned: ${
+        afterRedisReadTime - startTime
+      }`,
+    );
+
+    res.send(JSON.parse(obj));
+  });
+});
+
+app.get(ENDPOINTS.REDIS_PROXY_2, async (req, res) => {
+  const startTime = new Date().getTime();
+
+  const key = req.query.key;
+  const requestId = req.query.requestId;
+
+  const value = await getValueFromRedisAsync(key);
+
+  const afterRedisReadTime = new Date().getTime();
+
+  console.log(
+    `REDIS_PROXY_2: Request ID: ${requestId} - Time passed from request start to Redis read returned: ${
+      afterRedisReadTime - startTime
+    }`,
+  );
+
+  res.send(value);
+});
+
+const getValueFromRedisAsync = (key) => {
+  return new Promise((resolve, reject) => {
+    redisClient.get(key, async (err, obj) => {
+      if (err) {
+        reject(err);
+      } else {
+        const value = JSON.parse(obj);
+        resolve(value);
+      }
+    });
+  });
+};
 
 // Contract listeners
 initializeSportsAMMLPListener();
