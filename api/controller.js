@@ -1135,6 +1135,9 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
+  const startTime = new Date().getTime();
+
+  const requestId = req.query.requestId;
   const network = req.params.networkParam;
   let status = req.query.status;
   const typeId = req.query.typeId;
@@ -1202,7 +1205,21 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
   const clientTouse = isClosedMarkets ? redisClientClosedMarkets : redisClientOpenMarkets;
 
+  const beforeRedisReadTime = new Date().getTime();
+  requestId &&
+    console.log(
+      `${requestId} - Time passed from request received to Redis read start: ${beforeRedisReadTime - startTime}`,
+    );
+
   clientTouse.get(redisKey, async function (err, obj) {
+    const afterRedisReadTime = new Date().getTime();
+    requestId &&
+      console.log(
+        `${requestId} - Time passed from Redis read start to Redis returned data: ${
+          afterRedisReadTime - beforeRedisReadTime
+        }`,
+      );
+
     const markets = new Map(JSON.parse(obj));
 
     try {
@@ -1228,6 +1245,13 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       );
 
       if (ungroup && ungroup.toLowerCase() === "true") {
+        const marketsProcessedTime = new Date().getTime();
+        requestId &&
+          console.log(
+            `${requestId} - Time passed from Redis returned data to markets processed 1 (response send): ${
+              marketsProcessedTime - afterRedisReadTime
+            }. Total time: ${marketsProcessedTime - startTime}`,
+          );
         res.send(filteredMarkets);
         return;
       }
@@ -1236,6 +1260,14 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       Object.keys(groupMarkets).forEach((key) => {
         groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
       });
+
+      const marketsProcessedTime2 = new Date().getTime();
+      requestId &&
+        console.log(
+          `${requestId} - Time passed from Redis returned data to markets processed 2 (response send): ${
+            marketsProcessedTime2 - afterRedisReadTime
+          }. Total time: ${marketsProcessedTime2 - startTime}`,
+        );
 
       res.send(groupMarkets);
     } catch (e) {
