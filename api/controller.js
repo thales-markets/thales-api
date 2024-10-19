@@ -1,6 +1,10 @@
 const { redisClient } = require("../redis/client");
 const redis = require("redis");
-const redisClientOpenMarkets = redis.createClient(process.env.REDIS_URL);
+const redisClientsForMarkets = [
+  redis.createClient(process.env.REDIS_URL),
+  redis.createClient(process.env.REDIS_URL),
+  redis.createClient(process.env.REDIS_URL),
+];
 const redisClientClosedMarkets = redis.createClient(process.env.REDIS_URL);
 
 require("dotenv").config();
@@ -1134,7 +1138,7 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
   const startTime = new Date().getTime();
 
   const requestId = req.query.requestId;
@@ -1203,15 +1207,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       ? KEYS.OVERTIME_V2_CLOSED_MARKETS[network]
       : KEYS.OVERTIME_V2_OPEN_MARKETS[network];
 
-  const clientTouse = isClosedMarkets ? redisClientClosedMarkets : redisClientOpenMarkets;
-
-  redisClientOpenMarkets.send_command("CLIENT", ["INFO"], (err, reply) => {
-    if (err) {
-      console.error("Error:", err);
-    } else {
-      console.log("redisClientOpenMarkets: ", reply);
-    }
-  });
+  const clientToUse = await choseRedisClient(redisClientsForMarkets);
 
   const beforeRedisReadTime = new Date().getTime();
   requestId &&
@@ -1219,7 +1215,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       `${requestId} - Time passed from request received to Redis read start: ${beforeRedisReadTime - startTime}`,
     );
 
-  clientTouse.get(redisKey, async function (err, obj) {
+  clientToUse.get(redisKey, async function (err, obj) {
     const afterRedisReadTime = new Date().getTime();
     requestId &&
       console.log(
@@ -1366,8 +1362,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 });
 
 function getLiveMarketsErrorsMap(network) {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
+  return new Promise(async function (resolve) {
+    const clientToUse = await choseRedisClient(redisClientsForMarkets);
+    clientToUse.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
       const liveMarketsErrorsMap = new Map(JSON.parse(obj));
       resolve(liveMarketsErrorsMap);
     });
@@ -1375,8 +1372,9 @@ function getLiveMarketsErrorsMap(network) {
 }
 
 function getOpenMarketsMap(network) {
-  return new Promise(function (resolve) {
-    redisClientOpenMarkets.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
+  return new Promise(async function (resolve) {
+    const clientToUse = await choseRedisClient(redisClientsForMarkets);
+    clientToUse.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
       const openMarketsMap = new Map(JSON.parse(obj));
       resolve(openMarketsMap);
     });
@@ -1384,8 +1382,9 @@ function getOpenMarketsMap(network) {
 }
 
 function getLiveMarketsMap(network) {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], function (err, obj) {
+  return new Promise(async function (resolve) {
+    const clientToUse = await choseRedisClient(redisClientsForMarkets);
+    clientToUse.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], function (err, obj) {
       const markets = JSON.parse(obj);
       resolve(markets);
     });
@@ -1393,8 +1392,9 @@ function getLiveMarketsMap(network) {
 }
 
 function getClosedMarketsMap(network) {
-  return new Promise(function (resolve) {
-    redisClientClosedMarkets.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
+  return new Promise(async function (resolve) {
+    const clientToUse = await choseRedisClient(redisClientsForMarkets);
+    clientToUse.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
       const openMarketsMap = new Map(JSON.parse(obj));
       resolve(openMarketsMap);
     });
@@ -1705,6 +1705,41 @@ const getValueFromRedisAsync = (key) => {
       }
     });
   });
+};
+
+const choseRedisClient = async (redisClients) => {
+  const data = await Promise.all(
+    redisClients.map(async (client) => {
+      return new Promise(async function (resolve) {
+        client.send_command("CLIENT", ["INFO"], (err, reply) => {
+          if (err) {
+            console.error("Error:", err);
+          } else {
+            const inputSTR = reply.split(" ");
+            const result = {};
+            inputSTR.forEach((pair) => {
+              // Split each pair by '=' to separate keys from values
+              const [key, value] = pair.split("=");
+
+              // Only add valid key-value pairs to the result object
+              if (key) {
+                result[key] = value || ""; // Assign an empty string if value is missing
+              }
+            });
+            resolve(result);
+          }
+        });
+      });
+    }),
+  );
+  let clientToUse = redisClient;
+  let minOll = Number(data[0].oll);
+  data.forEach((obj, index) => {
+    if (Number(obj.oll) < minOll) {
+      clientToUse = redisClients[index];
+    }
+  });
+  return clientToUse;
 };
 
 // Contract listeners
