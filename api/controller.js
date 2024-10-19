@@ -1,5 +1,12 @@
 const { redisClient } = require("../redis/client");
 require("dotenv").config();
+const redis = require("redis");
+const REDIS_CONNECTIONS_COUNT = process.env.REDIS_CONNECTIONS_COUNT || 10;
+const redisClientsForMarkets = [];
+
+for (let index = 0; index < REDIS_CONNECTIONS_COUNT; index++) {
+  redisClientsForMarkets.push(redis.createClient(process.env.REDIS_URL));
+}
 const express = require("express");
 const request = require("request");
 const compression = require("compression");
@@ -1194,7 +1201,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       ? KEYS.OVERTIME_V2_CLOSED_MARKETS[network]
       : KEYS.OVERTIME_V2_OPEN_MARKETS[network];
 
-  redisClient.get(redisKey, async function (err, obj) {
+  choseRedisClient(redisClientsForMarkets).get(redisKey, async function (err, obj) {
     const markets = new Map(JSON.parse(obj));
 
     try {
@@ -1319,16 +1326,19 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 
 function getLiveMarketsErrorsMap(network) {
   return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network], function (err, obj) {
-      const liveMarketsErrorsMap = new Map(JSON.parse(obj));
-      resolve(liveMarketsErrorsMap);
-    });
+    choseRedisClient(redisClientsForMarkets).get(
+      KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network],
+      function (err, obj) {
+        const liveMarketsErrorsMap = new Map(JSON.parse(obj));
+        resolve(liveMarketsErrorsMap);
+      },
+    );
   });
 }
 
 function getOpenMarketsMap(network) {
   return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
+    choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
       const openMarketsMap = new Map(JSON.parse(obj));
       resolve(openMarketsMap);
     });
@@ -1337,7 +1347,7 @@ function getOpenMarketsMap(network) {
 
 function getLiveMarketsMap(network) {
   return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], function (err, obj) {
+    choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], function (err, obj) {
       const markets = JSON.parse(obj);
       resolve(markets);
     });
@@ -1346,7 +1356,7 @@ function getLiveMarketsMap(network) {
 
 function getClosedMarketsMap(network) {
   return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
+    choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
       const openMarketsMap = new Map(JSON.parse(obj));
       resolve(openMarketsMap);
     });
@@ -1612,3 +1622,9 @@ app.use("/v1/cache-control", cacheControlRoutes);
 initializeSportsAMMLPListener();
 initializeParlayAMMLPListener();
 initializeThalesAMMLPListener();
+
+// return random redis client fron array
+const choseRedisClient = (redisClients) => {
+  const index = Math.floor(Math.random() * redisClients.length);
+  return redisClients[index];
+};
