@@ -1205,6 +1205,14 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
   const clientTouse = isClosedMarkets ? redisClientClosedMarkets : redisClientOpenMarkets;
 
+  redisClientOpenMarkets.send_command("CLIENT", ["INFO"], (err, reply) => {
+    if (err) {
+      console.error("Error:", err);
+    } else {
+      console.log("redisClientOpenMarkets: ", reply);
+    }
+  });
+
   const beforeRedisReadTime = new Date().getTime();
   requestId &&
     console.log(
