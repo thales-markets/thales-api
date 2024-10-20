@@ -1137,7 +1137,7 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
   const network = req.params.networkParam;
   let status = req.query.status;
   const typeId = req.query.typeId;
@@ -1196,51 +1196,45 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     return;
   }
 
-  const redisKey =
-    status === "resolved" || status === "cancelled"
-      ? KEYS.OVERTIME_V2_CLOSED_MARKETS[network]
-      : KEYS.OVERTIME_V2_OPEN_MARKETS[network];
+  const isClosedMarkets = status === "resolved" || status === "cancelled";
+  const markets = isClosedMarkets ? await getClosedMarketsMap(network) : await getOpenMarketsMap(network);
 
-  choseRedisClient(redisClientsForMarkets).get(redisKey, async function (err, obj) {
-    const markets = new Map(JSON.parse(obj));
+  try {
+    const allMarkets = Array.from(markets.values());
+    const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
 
-    try {
-      const allMarkets = Array.from(markets.values());
-      const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
-
-      const marketsByStatus = groupMarketsByStatus[status] || [];
-      let marketsByType = marketsByStatus;
-      if (typeId) {
-        marketsByType = [];
-        marketsByStatus.forEach((market) => {
-          marketsByType.push(market);
-          marketsByType.push(...market.childMarkets);
-        });
-      }
-
-      const filteredMarkets = marketsByType.filter(
-        (market) =>
-          (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
-          (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
-          (!typeId || Number(market.typeId) === Number(typeId)) &&
-          (!minMaturity || Number(market.maturity) >= Number(minMaturity)),
-      );
-
-      if (ungroup && ungroup.toLowerCase() === "true") {
-        res.send(filteredMarkets);
-        return;
-      }
-
-      const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
-      Object.keys(groupMarkets).forEach((key) => {
-        groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
+    const marketsByStatus = groupMarketsByStatus[status] || [];
+    let marketsByType = marketsByStatus;
+    if (typeId) {
+      marketsByType = [];
+      marketsByStatus.forEach((market) => {
+        marketsByType.push(market);
+        marketsByType.push(...market.childMarkets);
       });
-
-      res.send(groupMarkets);
-    } catch (e) {
-      console.log(e);
     }
-  });
+
+    const filteredMarkets = marketsByType.filter(
+      (market) =>
+        (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
+        (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
+        (!typeId || Number(market.typeId) === Number(typeId)) &&
+        (!minMaturity || Number(market.maturity) >= Number(minMaturity)),
+    );
+
+    if (ungroup && ungroup.toLowerCase() === "true") {
+      res.send(filteredMarkets);
+      return;
+    }
+
+    const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
+    Object.keys(groupMarkets).forEach((key) => {
+      groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
+    });
+
+    res.send(groupMarkets);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
@@ -1336,12 +1330,26 @@ function getLiveMarketsErrorsMap(network) {
   });
 }
 
+let lastRedisReadOpenMarketsTime = 0;
+let cachedOpenMarketsMap = new Map();
+
 function getOpenMarketsMap(network) {
+  const now = new Date().getTime();
+  const isCacheStale = now - lastRedisReadOpenMarketsTime > process.env.REDIS_OPEN_MARKETS_STALE_TIME;
+
   return new Promise(function (resolve) {
-    choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
-      const openMarketsMap = new Map(JSON.parse(obj));
-      resolve(openMarketsMap);
-    });
+    if (isCacheStale) {
+      // read from redis
+      choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
+        lastRedisReadOpenMarketsTime = new Date().getTime();
+        const openMarketsMap = new Map(JSON.parse(obj));
+        cachedOpenMarketsMap = openMarketsMap;
+        resolve(openMarketsMap);
+      });
+    } else {
+      // read from cache
+      resolve(cachedOpenMarketsMap);
+    }
   });
 }
 
