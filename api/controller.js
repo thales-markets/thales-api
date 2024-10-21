@@ -1,5 +1,12 @@
 const { redisClient } = require("../redis/client");
 require("dotenv").config();
+const redis = require("redis");
+const REDIS_CONNECTIONS_COUNT = process.env.REDIS_CONNECTIONS_COUNT || 10;
+const redisClientsForMarkets = [];
+
+for (let index = 0; index < REDIS_CONNECTIONS_COUNT; index++) {
+  redisClientsForMarkets.push(redis.createClient(process.env.REDIS_URL));
+}
 const express = require("express");
 const request = require("request");
 const compression = require("compression");
@@ -1176,13 +1183,8 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
     return;
   }
 
-  const redisKey =
-    status === "resolved" || status === "cancelled"
-      ? KEYS.OVERTIME_V2_CLOSED_MARKETS[network]
-      : KEYS.OVERTIME_V2_OPEN_MARKETS[network];
-
-  const obj = await redisClient.get(redisKey);
-  const markets = new Map(JSON.parse(obj));
+  const isClosedMarkets = status === "resolved" || status === "cancelled";
+  const markets = isClosedMarkets ? await getClosedMarketsMap(network) : await getOpenMarketsMap(network);
 
   try {
     const allMarkets = Array.from(markets.values());
@@ -1308,10 +1310,20 @@ async function getLiveMarketsErrorsMap(network) {
   return liveMarketsErrorsMap;
 }
 
+let lastRedisReadOpenMarketsTime = 0;
+let cachedOpenMarketsMap = new Map();
+
 async function getOpenMarketsMap(network) {
-  const obj = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
-  const openMarkets = new Map(JSON.parse(obj));
-  return openMarkets;
+  const now = new Date().getTime();
+  const isCacheStale = now - lastRedisReadOpenMarketsTime > process.env.REDIS_OPEN_MARKETS_STALE_TIME;
+    if (isCacheStale) {
+      // read from redis
+      const obj = await choseRedisClient().get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
+      const openMarketsMap = new Map(JSON.parse(obj));
+      lastRedisReadOpenMarketsTime = new Date().getTime();
+      cachedOpenMarketsMap.set(network, openMarketsMap);
+    } 
+    return cachedOpenMarketsMap;
 }
 
 async function getLiveMarketsMap(network) {
@@ -1573,3 +1585,9 @@ app.use("/v1/cache-control", cacheControlRoutes);
 initializeSportsAMMLPListener();
 initializeParlayAMMLPListener();
 initializeThalesAMMLPListener();
+
+// return random redis client fron array
+const choseRedisClient = () => {
+  const index = Math.floor(Math.random() * redisClientsForMarkets.length);
+  return redisClientsForMarkets[index];
+};
