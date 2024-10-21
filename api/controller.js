@@ -1338,7 +1338,7 @@ function getOpenMarketsMap(network) {
   const isCacheStale = now - lastRedisReadOpenMarketsTime > process.env.REDIS_OPEN_MARKETS_STALE_TIME;
 
   return new Promise(function (resolve) {
-    if (isCacheStale) {
+    if (isCacheStale || cachedOpenMarketsMap.size === 0) {
       // read from redis
       choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
         lastRedisReadOpenMarketsTime = new Date().getTime();
