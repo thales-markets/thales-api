@@ -10,10 +10,12 @@ const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS
 const getRedisKeyForOpticOddsApiScores = (leagueId) => `${KEYS.OPTIC_ODDS_API_SCORES_BY_LEAGUE}${leagueId}`;
 
 const fetchRiskManagementConfig = async () => {
-  const [teamsMap, bookmakersData, spreadData] = await getValuesFromRedisAsync(
+  const [teams, bookmakersData, spreadData] = await getValuesFromRedisAsync(
     [KEYS.RISK_MANAGEMENT_TEAMS_MAP, KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA, KEYS.RISK_MANAGEMENT_SPREAD_DATA],
     false,
   );
+
+  const teamsMap = new Map(teams);
 
   return { teamsMap, bookmakersData, spreadData };
 };

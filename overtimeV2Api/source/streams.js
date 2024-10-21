@@ -6,7 +6,11 @@ const KEYS = require("../../redis/redis-keys");
 const { NETWORK } = require("../constants/networks");
 const { getLiveSupportedLeagues } = require("overtime-live-trading-utils");
 const { uniq } = require("lodash");
-const { startResultsStreams, closeInactiveResultsStreams } = require("../utils/opticOddsResults");
+const {
+  startResultsStreams,
+  closeInactiveResultsStreams,
+  isOpticOddsStreamResultsDisabled,
+} = require("../utils/opticOddsResults");
 
 async function processOpticOddsResults() {
   if (process.env.REDIS_URL) {
@@ -22,17 +26,19 @@ async function processOpticOddsResults() {
 
     setTimeout(async () => {
       while (true) {
-        try {
-          const startTime = new Date().getTime();
-          console.log(`Stream results ${network}: process Optic Odds results`);
+        if (!isOpticOddsStreamResultsDisabled) {
+          try {
+            const startTime = new Date().getTime();
+            console.log(`Stream results ${network}: process Optic Odds results`);
 
-          await processAllLiveResults(resultsStreamSourcesByLeagueMap, isTestnet);
+            await processAllLiveResults(resultsStreamSourcesByLeagueMap, isTestnet);
 
-          const endTime = new Date().getTime();
-          const duration = ((endTime - startTime) / 1000).toFixed(0);
-          console.log(`Stream results ${network}: === Seconds for processing Optic Odds results: ${duration} ===`);
-        } catch (error) {
-          console.log(`Stream results ${network}: lives Optic Odds results error: ${error}`);
+            const endTime = new Date().getTime();
+            const duration = ((endTime - startTime) / 1000).toFixed(0);
+            console.log(`Stream results ${network}: === Seconds for processing Optic Odds results: ${duration} ===`);
+          } catch (error) {
+            console.log(`Stream results ${network}: lives Optic Odds results error: ${error}`);
+          }
         }
 
         await delay(5 * 1000);

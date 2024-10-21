@@ -40,7 +40,12 @@ const {
   closeInactiveOddsStreams,
   isOpticOddsStreamOddsDisabled,
 } = require("../utils/opticOddsFixtureOdds");
-const { fetchOpticOddsResults, mapOpticOddsApiResults, mapResultsStreamEvents } = require("../utils/opticOddsResults");
+const {
+  fetchOpticOddsResults,
+  mapOpticOddsApiResults,
+  mapResultsStreamEvents,
+  isOpticOddsStreamResultsDisabled,
+} = require("../utils/opticOddsResults");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
@@ -192,7 +197,7 @@ async function processMarketsByLeague(
 
         return { ...market, opticOddsGameEvent };
       })
-      .filter((market) => market.opticOddsGameEvent != undefined);
+      .filter((market) => market.opticOddsGameEvent !== undefined);
 
     const isDummyMarketsEnabled = isTestnet && process.env.LIVE_DUMMY_MARKETS_ENABLED === "true";
 
@@ -220,7 +225,7 @@ async function processMarketsByLeague(
       );
       const redisStreamOddsKeys = (await getValuesFromRedisAsync(redisStreamGameKeys)).flat();
 
-      if (process.env.DISABLE_OPTIC_ODDS_STREAM_ODDS === "true" || !isOddsInitialized) {
+      if (isOpticOddsStreamOddsDisabled || !isOddsInitialized) {
         // Initially fetch game odds from Optic Odds API for given markets
         const betTypes = getBetTypesForLeague(leagueId, isTestnet);
         const fixtureIds = ongoingMarketsByOpticOddsGames.map((market) => market.opticOddsGameEvent.fixture_id);
@@ -281,7 +286,7 @@ async function processMarketsByLeague(
       let scoresPerGame = [];
       const isScoresInitialized = !!scoresInitializedByLeagueMap.get(leagueId);
 
-      if (isOpticOddsStreamOddsDisabled || !isScoresInitialized) {
+      if (isOpticOddsStreamResultsDisabled || !isScoresInitialized) {
         // Initially fetch game scores from Optic Odds API for given markets
         const fixtureIds = ongoingMarketsByOpticOddsOdds.map((market) => market.opticOddsGameOdds.fixture_id);
 
