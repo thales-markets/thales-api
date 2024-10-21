@@ -446,7 +446,7 @@ app.get(ENDPOINTS.THALES_MARKETS_COUNT, async (req, res) => {
   const isUsdc = lpCollateral && lpCollateral.toLowerCase() === LP_COLLATERALS.USDC;
 
   try {
-    const obj = await redisClient.mget([
+    const obj = await redisClient.mGet([
       (isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network],
       (isUsdc ? KEYS.THALES_USDC_MARKETS_LAST_UPDATED_AT : KEYS.THALES_MARKETS_LAST_UPDATED_AT)[network],
     ]);
@@ -1324,7 +1324,7 @@ async function getOpenMarketsMap(network) {
   const isCacheStale = now - lastRedisReadOpenMarketsTime > process.env.REDIS_OPEN_MARKETS_STALE_TIME;
   const cachedOpenMarketsMap = cachedOpenMarketsByNetworkMap.get(network);
 
-  if (isCacheStale || !cachedOpenMarketsMap.size) {
+  if (isCacheStale || !cachedOpenMarketsMap?.size) {
     // read from redis
     const obj = await choseRedisClient().get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
     lastRedisReadOpenMarketsTime = new Date().getTime();
