@@ -21,22 +21,26 @@ const fetchRiskManagementConfig = async () => {
 };
 
 const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
-  const leagueIds = getLeagueOpticOddsName(leagueId).split(",");
-
-  const opticOddsGamesResponse = await fetchOpticOddsFixturesActive(leagueIds, true, null, 1, OPTIC_ODDS_API_TIMEOUT);
-
   let opticOddsGames = [];
 
-  if (opticOddsGamesResponse) {
-    opticOddsGames = mapOpticOddsApiFixtures(opticOddsGamesResponse.data);
-    if (opticOddsGames.length > 0) {
-      redisClient.set(getRedisKeyForOpticOddsApiGames(leagueId), JSON.stringify(opticOddsGames));
-    } else if (!isTestnet) {
-      console.log(`Live markets: Could not find any Optic Odds fixtures/active for the given league ID ${leagueId}`);
+  const opticOddsLeagueName = getLeagueOpticOddsName(leagueId);
+
+  if (opticOddsLeagueName) {
+    const leagueIds = opticOddsLeagueName.split(",");
+
+    const opticOddsGamesResponse = await fetchOpticOddsFixturesActive(leagueIds, true, null, 1, OPTIC_ODDS_API_TIMEOUT);
+
+    if (opticOddsGamesResponse) {
+      opticOddsGames = mapOpticOddsApiFixtures(opticOddsGamesResponse.data);
+      if (opticOddsGames.length > 0) {
+        redisClient.set(getRedisKeyForOpticOddsApiGames(leagueId), JSON.stringify(opticOddsGames));
+      } else if (!isTestnet) {
+        console.log(`Live markets: Could not find any Optic Odds fixtures/active for the given league ID ${leagueId}`);
+      }
+    } else {
+      // read previous games from cache
+      opticOddsGames = (await getValueFromRedisAsync(getRedisKeyForOpticOddsApiGames(leagueId))) || [];
     }
-  } else {
-    // read previous games from cache
-    opticOddsGames = (await getValueFromRedisAsync(getRedisKeyForOpticOddsApiGames(leagueId))) || [];
   }
 
   return opticOddsGames;

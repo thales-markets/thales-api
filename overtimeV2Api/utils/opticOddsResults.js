@@ -104,7 +104,9 @@ const fetchOpticOddsResults = async (fixtureIds) => {
 
 // Start stream for league ID or re-start when param (sportsbooks) is updated
 const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap) => {
-  if (isOpticOddsStreamResultsDisabled) {
+  const opticOddsLeagueName = getLeagueOpticOddsName(leagueId);
+
+  if (isOpticOddsStreamResultsDisabled || !opticOddsLeagueName) {
     return;
   }
   // Start one stream for each league except for tennis GS where starting multiple leagues
@@ -113,7 +115,7 @@ const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap) => {
   // Start new stream for new league
   if (!resultsStreamSource) {
     const sport = getLeagueSport(leagueId);
-    const streamLeagues = getLeagueOpticOddsName(leagueId).split(",");
+    const streamLeagues = opticOddsLeagueName.split(",");
     // start new stream
     const streamSource = connectToOpticOddsStreamResults(sport, streamLeagues);
     resultsStreamSourcesByLeagueMap.set(leagueId, streamSource);

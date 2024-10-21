@@ -143,13 +143,15 @@ const fetchOpticOddsFixtureOdds = async (sportsbooks, markets, fixtureIds) => {
 
 // Start stream for league ID or re-start when param (sportsbooks) is updated
 const startOddsStreams = (leagueId, bookmakersData, oddsStreamsInfoByLeagueMap, isTestnet) => {
-  if (isOpticOddsStreamOddsDisabled) {
+  const opticOddsLeagueName = getLeagueOpticOddsName(leagueId);
+
+  if (isOpticOddsStreamOddsDisabled || !opticOddsLeagueName) {
     return;
   }
   // Extracting bookmakers (sportsbooks), bet types (markets) for league and Optic Odds league names
   const bookmakers = getBookmakersArray(bookmakersData, leagueId, process.env.LIVE_ODDS_PROVIDERS.split(","));
   const betTypes = getBetTypesForLeague(leagueId, isTestnet);
-  const streamLeagues = getLeagueOpticOddsName(leagueId).split(",");
+  const streamLeagues = opticOddsLeagueName.split(",");
 
   const oddsStreamInfo = oddsStreamsInfoByLeagueMap.get(leagueId);
   const isBookmakersUpdated =
