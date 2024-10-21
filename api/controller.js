@@ -1332,7 +1332,7 @@ async function getOpenMarketsMap(network) {
     cachedOpenMarketsByNetworkMap.set(network, openMarketsMap);
     return openMarketsMap;
   }
-  return cachedOpenMarketsMap.get(network);
+  return cachedOpenMarketsMap;
 }
 
 async function getLiveMarketsMap(network) {
