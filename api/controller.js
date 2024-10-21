@@ -7,6 +7,7 @@ const redisClientsForMarkets = [];
 (async () => {
   for (let index = 0; index < REDIS_CONNECTIONS_COUNT; index++) {
     const redisClientLocal = redis.createClient({ url: process.env.REDIS_URL });
+    redisClientLocal.on("error", (err) => console.log("Redis Client Error", err));
     await redisClientLocal.connect();
     redisClientsForMarkets.push(redisClient);
   }
