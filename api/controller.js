@@ -1375,7 +1375,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKET, async (req, res) => {
   const marketAddress = req.params.marketAddress;
   try {
     const openMarkets = await getLiveMarketsMap(network);
-    const market = Array.from(openMarkets).find(
+    const market = Array.from(openMarkets.values()).find(
       (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
     );
 
