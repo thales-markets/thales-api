@@ -4,7 +4,7 @@ const redisClient = redis.createClient(process.env.REDIS_URL);
 
 const getValueFromRedisAsync = (key) => {
   return new Promise((resolve, reject) => {
-    redisClient.get(key, async (err, obj) => {
+    redisClient.get(key, (err, obj) => {
       if (err) {
         reject(err);
       } else {
@@ -17,7 +17,7 @@ const getValueFromRedisAsync = (key) => {
 
 const getValuesFromRedisAsync = (keys, removeNulls = true) => {
   return new Promise((resolve, reject) => {
-    redisClient.mget(keys, async (err, objArray) => {
+    redisClient.mget(keys, (err, objArray) => {
       if (err) {
         reject(err);
       } else {
