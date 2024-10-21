@@ -14,6 +14,7 @@ const {
   mapOpticOddsStreamResults,
   mapOpticOddsApiResults,
   fetchOpticOddsResults,
+  isOpticOddsStreamResultsDisabled,
 } = require("../utils/opticOddsResults");
 
 async function processLiveScores() {
@@ -137,7 +138,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     let liveResults = [];
     const opticOddsFixtureIds = opticOddsFixtureIdsWithLeagueID.map((obj) => obj.fixtureId);
 
-    if (isOpticOddsResultsInitialized) {
+    if (!isOpticOddsStreamResultsDisabled && isOpticOddsResultsInitialized) {
       // Read from Redis
       const redisKeysForStreamResults = opticOddsFixtureIds.map((fixtureId) =>
         getRedisKeyForOpticOddsStreamEventResults(fixtureId),

@@ -13,6 +13,8 @@ const {
 } = require("overtime-live-trading-utils");
 const { connectToOpticOddsStreamOdds } = require("./opticOddsStreamsConnector");
 
+const isOpticOddsStreamOddsDisabled = process.env.DISABLE_OPTIC_ODDS_STREAM_ODDS === "true";
+
 const mapOpticOddsApiFixtureOdds = (oddsDataArray) =>
   oddsDataArray.map((oddsData) => ({
     id: oddsData.game_id, // deafult ID
@@ -141,6 +143,9 @@ const fetchOpticOddsFixtureOdds = async (sportsbooks, markets, fixtureIds) => {
 
 // Start stream for league ID or re-start when param (sportsbooks) is updated
 const startOddsStreams = (leagueId, bookmakersData, oddsStreamsInfoByLeagueMap, isTestnet) => {
+  if (isOpticOddsStreamOddsDisabled) {
+    return;
+  }
   // Extracting bookmakers (sportsbooks), bet types (markets) for league and Optic Odds league names
   const bookmakers = getBookmakersArray(bookmakersData, leagueId, process.env.LIVE_ODDS_PROVIDERS.split(","));
   const betTypes = getBetTypesForLeague(leagueId, isTestnet);
@@ -176,6 +181,7 @@ const closeInactiveOddsStreams = (oddsStreamsInfoByLeagueMap, activeLeagues) => 
 };
 
 module.exports = {
+  isOpticOddsStreamOddsDisabled,
   mapOpticOddsApiFixtureOdds,
   mapOddsStreamEvents,
   fetchOpticOddsFixtureOdds,

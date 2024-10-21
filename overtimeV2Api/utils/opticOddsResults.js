@@ -8,6 +8,8 @@ const {
   OPTIC_ODDS_API_RESULTS_MAX_GAMES,
 } = require("../constants/opticOdds");
 
+const isOpticOddsStreamResultsDisabled = process.env.DISABLE_OPTIC_ODDS_STREAM_RESULTS === "true";
+
 const mapScorePeriods = (periods, homeAwayType) =>
   Object.values(periods).reduce(
     (acc, periodValue, index) => ({
@@ -102,6 +104,9 @@ const fetchOpticOddsResults = async (fixtureIds) => {
 
 // Start stream for league ID or re-start when param (sportsbooks) is updated
 const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap) => {
+  if (isOpticOddsStreamResultsDisabled) {
+    return;
+  }
   // Start one stream for each league except for tennis GS where starting multiple leagues
   const resultsStreamSource = resultsStreamSourcesByLeagueMap.get(leagueId);
 
@@ -127,6 +132,7 @@ const closeInactiveResultsStreams = (resultsStreamSourcesByLeagueMap, activeLeag
 };
 
 module.exports = {
+  isOpticOddsStreamResultsDisabled,
   mapOpticOddsStreamResults,
   mapOpticOddsApiResults,
   mapResultsStreamEvents,
