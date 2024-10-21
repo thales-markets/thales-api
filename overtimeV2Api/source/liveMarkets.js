@@ -34,11 +34,7 @@ async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
     const isTestnet = process.env.IS_TESTNET === "true";
     const network = isTestnet ? "testnet" : "mainnets";
-    console.log(`Live markets ${network}: create client from index`);
 
-    redisClient.on("error", function (error) {
-      console.error(error);
-    });
     setTimeout(async () => {
       while (true) {
         try {
@@ -406,26 +402,23 @@ async function processAllMarkets(isTestnet) {
       }
     }
 
-    SUPPORTED_NETWORKS.forEach((network) => {
+    SUPPORTED_NETWORKS.forEach(async (network) => {
       // PERSISTING ERROR MESSAGES
       if (errorsMap.size > 0) {
-        persistErrorMessages(errorsMap, network);
+        await persistErrorMessages(errorsMap, network);
       }
 
-      redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets), function () {});
+      await redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets));
     });
   } catch (e) {
     console.log(`Live markets: Processing error: ${e}`);
   }
 }
 
-function getOpenMarkets(network) {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], async function (err, obj) {
-      const openMarkets = new Map(JSON.parse(obj));
-      resolve(openMarkets);
-    });
-  });
+async function getOpenMarkets(network) {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
+  const openMarkets = new Map(JSON.parse(obj));
+  return openMarkets;
 }
 
 module.exports = {

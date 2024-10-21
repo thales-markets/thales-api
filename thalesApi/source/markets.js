@@ -33,11 +33,6 @@ const { LP_COLLATERALS } = require("../constants/collaterals");
 
 async function processMarkets() {
   if (process.env.REDIS_URL) {
-    console.log("create client from index");
-
-    redisClient.on("error", function (error) {
-      console.error(error);
-    });
     setTimeout(async () => {
       while (true) {
         try {
@@ -330,15 +325,13 @@ async function processMarketsPerNetwork(network, lpCollateral) {
       allMarkets.length,
     );
 
-    redisClient.set(
+    await redisClient.set(
       (isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network],
       JSON.stringify(allMarkets),
-      function () {},
     );
-    redisClient.set(
+    await redisClient.set(
       (isUsdc ? KEYS.THALES_USDC_MARKETS_LAST_UPDATED_AT : KEYS.THALES_MARKETS_LAST_UPDATED_AT)[network],
       new Date().toISOString(),
-      function () {},
     );
   } catch (e) {
     console.log("Error: could not process markets.", e);

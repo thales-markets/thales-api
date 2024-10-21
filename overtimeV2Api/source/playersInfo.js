@@ -10,11 +10,6 @@ const { getLeagueProvider, Provider } = require("overtime-live-trading-utils");
 
 async function processPlayersInfo() {
   if (process.env.REDIS_URL) {
-    console.log("Players info: create client from index");
-
-    redisClient.on("error", function (error) {
-      console.error(error);
-    });
     setTimeout(async () => {
       while (true) {
         try {
@@ -35,31 +30,22 @@ async function processPlayersInfo() {
   }
 }
 
-function getPlayersInfoMap() {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO, function (err, obj) {
-      const playersInfoMap = new Map(JSON.parse(obj));
-      resolve(playersInfoMap);
-    });
-  });
+async function getPlayersInfoMap() {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO);
+  const playersInfoMap = new Map(JSON.parse(obj));
+  return playersInfoMap;
 }
 
-function getOpenMarketsMap(network) {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
-      const openMarketsMap = new Map(JSON.parse(obj));
-      resolve(openMarketsMap);
-    });
-  });
+async function getGamesInfoMap() {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO);
+  const gamesInfoMap = new Map(JSON.parse(obj));
+  return gamesInfoMap;
 }
 
-function getGamesInfoMap() {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
-      const gamesInfoMap = new Map(JSON.parse(obj));
-      resolve(gamesInfoMap);
-    });
-  });
+async function getOpenMarketsMap(network) {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
+  const openMarkets = new Map(JSON.parse(obj));
+  return openMarkets;
 }
 
 async function processAllPlayersInfo() {
@@ -133,7 +119,7 @@ async function processAllPlayersInfo() {
   }
 
   console.log(`Players info: Number of players info: ${Array.from(playersInfoMap.values()).length}`);
-  redisClient.set(KEYS.OVERTIME_V2_PLAYERS_INFO, JSON.stringify([...playersInfoMap]), function () {});
+  await redisClient.set(KEYS.OVERTIME_V2_PLAYERS_INFO, JSON.stringify([...playersInfoMap]));
 }
 
 module.exports = {
