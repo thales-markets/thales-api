@@ -1331,11 +1331,12 @@ function getLiveMarketsErrorsMap(network) {
 }
 
 let lastRedisReadOpenMarketsTime = 0;
-let cachedOpenMarketsMap = new Map();
+let cachedOpenMarketsByNetworkMap = new Map();
 
 function getOpenMarketsMap(network) {
   const now = new Date().getTime();
   const isCacheStale = now - lastRedisReadOpenMarketsTime > process.env.REDIS_OPEN_MARKETS_STALE_TIME;
+  const cachedOpenMarketsMap = cachedOpenMarketsByNetworkMap.get(network);
 
   return new Promise(function (resolve) {
     if (isCacheStale || cachedOpenMarketsMap.size === 0) {
@@ -1343,12 +1344,12 @@ function getOpenMarketsMap(network) {
       choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
         lastRedisReadOpenMarketsTime = new Date().getTime();
         const openMarketsMap = new Map(JSON.parse(obj));
-        cachedOpenMarketsMap.set(network, openMarketsMap);
+        cachedOpenMarketsByNetworkMap.set(network, openMarketsMap);
         resolve(openMarketsMap);
       });
     } else {
       // read from cache
-      resolve(cachedOpenMarketsMap.get(network));
+      resolve(cachedOpenMarketsMap);
     }
   });
 }
