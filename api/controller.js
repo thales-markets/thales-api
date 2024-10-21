@@ -1343,12 +1343,12 @@ function getOpenMarketsMap(network) {
       choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
         lastRedisReadOpenMarketsTime = new Date().getTime();
         const openMarketsMap = new Map(JSON.parse(obj));
-        cachedOpenMarketsMap = openMarketsMap;
+        cachedOpenMarketsMap.set(network, openMarketsMap);
         resolve(openMarketsMap);
       });
     } else {
       // read from cache
-      resolve(cachedOpenMarketsMap);
+      resolve(cachedOpenMarketsMap.get(network));
     }
   });
 }
