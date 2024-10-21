@@ -91,12 +91,11 @@ async function fetchTicketAmmQuote(
 
 async function getCollateralRate(network, provider, collateral) {
   // eslint-disable-next-line no-async-promise-executor
-
   if (
     !collateral ||
     (collateral.toUpperCase() !== "ETH" && collateral.toUpperCase() !== "WETH" && collateral.toUpperCase() !== "THALES")
   ) {
-    resolve(1);
+    return 1;
   } else if (collateral.toUpperCase() === "ETH" || collateral.toUpperCase() === "WETH") {
     const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
     const ethRate = bigNumberFormatter(await priceFeed.rateForCurrency(formatBytes32String("ETH")));

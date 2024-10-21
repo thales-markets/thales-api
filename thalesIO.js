@@ -19,7 +19,7 @@ let weeklyStatsDisableFirstRunExecution = true;
     }
 
     const thalesIOMapRawWeekly = await redisClient.get(KEYS.THALES_IO_WEEKLY_STATS);
-    if (thalesIOMapRaw) {
+    if (thalesIOMapRawWeekly) {
       thalesIOWeeklyDuneDataMap = new Map(JSON.parse(thalesIOMapRawWeekly));
     }
 
