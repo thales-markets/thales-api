@@ -1,21 +1,28 @@
-FROM node:16
-
-# Create app directory
+# First stage: build dependencies using slim image and required build tools
+FROM node:16-slim AS builder
 WORKDIR /usr/src/app
 
-# Install app dependencies
-# A wildcard is used to ensure both package-orig.json AND package-lock.json are copied
-# where available (npm@5+)
+# Install dependencies for native modules
+RUN apt-get update && apt-get install -y python3 build-essential
+
+# Copy package files and install production dependencies
 COPY package*.json ./
+RUN npm ci --only=production
 
-RUN npm install
-# If you are building your code for production
-# RUN npm ci --only=production
+# Second stage: production image
+FROM node:16-slim
+WORKDIR /usr/src/app
 
-# Bundle app source
+# Copy node_modules from builder stage
+COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY . .
 
+# Expose the application port
 EXPOSE 3003
 
+# Health check for the container
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl --fail http://localhost:3002/health || exit 1
+
+# Start the application
 CMD [ "node", "thalesIO.js" ]
 
