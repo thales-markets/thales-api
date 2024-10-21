@@ -1317,17 +1317,20 @@ async function getLiveMarketsErrorsMap(network) {
 }
 
 let lastRedisReadOpenMarketsTime = 0;
-let cachedOpenMarketsMap = new Map();
+let cachedOpenMarketsByNetworkMap = new Map();
 
 async function getOpenMarketsMap(network) {
   const now = new Date().getTime();
   const isCacheStale = now - lastRedisReadOpenMarketsTime > process.env.REDIS_OPEN_MARKETS_STALE_TIME;
-  if (isCacheStale) {
+  const cachedOpenMarketsMap = cachedOpenMarketsByNetworkMap.get(network);
+
+  if (isCacheStale || !cachedOpenMarketsMap.size) {
     // read from redis
     const obj = await choseRedisClient().get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
-    const openMarketsMap = new Map(JSON.parse(obj));
     lastRedisReadOpenMarketsTime = new Date().getTime();
-    cachedOpenMarketsMap.set(network, openMarketsMap);
+    const openMarketsMap = new Map(JSON.parse(obj));
+    cachedOpenMarketsByNetworkMap.set(network, openMarketsMap);
+    return openMarketsMap;
   }
   return cachedOpenMarketsMap.get(network);
 }
