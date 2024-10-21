@@ -1335,12 +1335,6 @@ async function getOpenMarketsMap(network) {
   return cachedOpenMarketsMap;
 }
 
-async function getLiveMarketsMap(network) {
-  const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network]);
-  const markets = new Map(JSON.parse(obj));
-  return markets;
-}
-
 async function getClosedMarketsMap(network) {
   const obj = await redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network]);
   const markets = new Map(JSON.parse(obj));
@@ -1374,10 +1368,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKET, async (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
   try {
-    const openMarkets = await getLiveMarketsMap(network);
-    const market = Array.from(openMarkets.values()).find(
-      (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
-    );
+    const markets = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network]));
+    const market = markets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
 
     if (market) {
       return res.send(market);
