@@ -4,9 +4,14 @@ const redis = require("redis");
 const REDIS_CONNECTIONS_COUNT = process.env.REDIS_CONNECTIONS_COUNT || 10;
 const redisClientsForMarkets = [];
 
-for (let index = 0; index < REDIS_CONNECTIONS_COUNT; index++) {
-  redisClientsForMarkets.push(redis.createClient(process.env.REDIS_URL));
-}
+(async () => {
+  for (let index = 0; index < REDIS_CONNECTIONS_COUNT; index++) {
+    const redisClientLocal = redis.createClient({ url: process.env.REDIS_URL });
+    await redisClientLocal.connect();
+    redisClientsForMarkets.push(redisClient);
+  }
+})();
+
 const express = require("express");
 const request = require("request");
 const compression = require("compression");
@@ -1316,14 +1321,14 @@ let cachedOpenMarketsMap = new Map();
 async function getOpenMarketsMap(network) {
   const now = new Date().getTime();
   const isCacheStale = now - lastRedisReadOpenMarketsTime > process.env.REDIS_OPEN_MARKETS_STALE_TIME;
-    if (isCacheStale) {
-      // read from redis
-      const obj = await choseRedisClient().get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
-      const openMarketsMap = new Map(JSON.parse(obj));
-      lastRedisReadOpenMarketsTime = new Date().getTime();
-      cachedOpenMarketsMap.set(network, openMarketsMap);
-    } 
-    return cachedOpenMarketsMap;
+  if (isCacheStale) {
+    // read from redis
+    const obj = await choseRedisClient().get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
+    const openMarketsMap = new Map(JSON.parse(obj));
+    lastRedisReadOpenMarketsTime = new Date().getTime();
+    cachedOpenMarketsMap.set(network, openMarketsMap);
+  }
+  return cachedOpenMarketsMap.get(network);
 }
 
 async function getLiveMarketsMap(network) {
