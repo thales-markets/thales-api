@@ -1,17 +1,5 @@
 const { redisClient } = require("../redis/client");
 require("dotenv").config();
-const redis = require("redis");
-const REDIS_CONNECTIONS_COUNT = process.env.REDIS_CONNECTIONS_COUNT || 10;
-const redisClientsForMarkets = [];
-
-(async () => {
-  for (let index = 0; index < REDIS_CONNECTIONS_COUNT; index++) {
-    const redisClientLocal = redis.createClient({ url: process.env.REDIS_URL });
-    redisClientLocal.on("error", (err) => console.log("Redis Client Error", err));
-    await redisClientLocal.connect();
-    redisClientsForMarkets.push(redisClient);
-  }
-})();
 
 const express = require("express");
 const request = require("request");
@@ -26,7 +14,9 @@ const sportMarketsRoutes = require("./routes/sportMarkets.route");
 const cors = require("cors");
 app.use(cors());
 app.use(express.json());
-app.use(compression());
+if (process.env.DISABLE_COMPRESSION !== "true") {
+  app.use(compression());
+}
 app.use(function (req, res, next) {
   for (const key in req.query) {
     req.query[key.toLowerCase()] = req.query[key];
@@ -73,6 +63,11 @@ const {
   initializeParlayAMMLPListener,
   initializeThalesAMMLPListener,
 } = require("./services/contractEventListener");
+const { SUPPORTED_NETWORKS } = require("./constants/networks");
+const {
+  getCachedOpenMarketsByNetworkMap,
+  getCachedClosedMarketsByNetworkMap,
+} = require("./services/overtimeMarketsCache");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -1130,7 +1125,7 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const network = req.params.networkParam;
   let status = req.query.status;
   const typeId = req.query.typeId;
@@ -1144,7 +1139,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
   }
   status = status.toLowerCase();
 
-  if (![10, 42161, 11155420].includes(Number(network))) {
+  if (!SUPPORTED_NETWORKS.includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
     return;
   }
@@ -1159,7 +1154,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
 
   if (typeId && !allTypeIds.includes(Number(typeId))) {
     res.send(
-      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: /overtime-v2/market-types.`,
+      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_MARKET_TYPES
+      }.`,
     );
     return;
   }
@@ -1179,18 +1176,24 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
   const allSports = uniqBy(allLeagues.map((league) => league.sport.toLowerCase()));
 
   if (sport && !allSports.includes(sport.toLowerCase())) {
-    res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime-v2/sports.`);
+    res.send(
+      `Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: ${ENDPOINTS.OVERTIME_V2_SPORTS}.`,
+    );
     return;
   }
   if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
     res.send(
-      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime-v2/sports.`,
+      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_SPORTS
+      }.`,
     );
     return;
   }
 
   const isClosedMarkets = status === "resolved" || status === "cancelled";
-  const markets = isClosedMarkets ? await getClosedMarketsMap(network) : await getOpenMarketsMap(network);
+  const markets = isClosedMarkets
+    ? getCachedClosedMarketsByNetworkMap(network)
+    : getCachedOpenMarketsByNetworkMap(network);
 
   try {
     const allMarkets = Array.from(markets.values());
@@ -1247,7 +1250,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 
   if (typeId && !allTypeIds.includes(Number(typeId))) {
     res.send(
-      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: /overtime-v2/market-types.`,
+      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_MARKET_TYPES
+      }.`,
     );
     return;
   }
@@ -1267,17 +1272,17 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 
   if (sport && !allLiveSports.includes(sport.toLowerCase())) {
     res.send(
-      `Unsupported live sport. Supported live sports: ${allLiveSports.join(
-        ", ",
-      )}. See details on: /overtime-v2/sports.`,
+      `Unsupported live sport. Supported live sports: ${allLiveSports.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_SPORTS
+      }.`,
     );
     return;
   }
   if (leagueId && !allLiveLeagueIds.includes(Number(leagueId))) {
     res.send(
-      `Unsupported live league ID. Supported live league IDs: ${allLiveLeagueIds.join(
-        ", ",
-      )}. See details on: /overtime-v2/sports.`,
+      `Unsupported live league ID. Supported live league IDs: ${allLiveLeagueIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_SPORTS
+      }.`,
     );
     return;
   }
@@ -1316,36 +1321,11 @@ async function getLiveMarketsErrorsMap(network) {
   return liveMarketsErrorsMap;
 }
 
-let lastRedisReadOpenMarketsTime = 0;
-let cachedOpenMarketsByNetworkMap = new Map();
-
-async function getOpenMarketsMap(network) {
-  const now = new Date().getTime();
-  const isCacheStale = now - lastRedisReadOpenMarketsTime > process.env.REDIS_OPEN_MARKETS_STALE_TIME;
-  const cachedOpenMarketsMap = cachedOpenMarketsByNetworkMap.get(network);
-
-  if (isCacheStale || !cachedOpenMarketsMap?.size) {
-    // read from redis
-    const obj = await choseRedisClient().get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
-    lastRedisReadOpenMarketsTime = new Date().getTime();
-    const openMarketsMap = new Map(JSON.parse(obj));
-    cachedOpenMarketsByNetworkMap.set(network, openMarketsMap);
-    return openMarketsMap;
-  }
-  return cachedOpenMarketsMap;
-}
-
-async function getClosedMarketsMap(network) {
-  const obj = await redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network]);
-  const markets = new Map(JSON.parse(obj));
-  return markets;
-}
-
-app.get(ENDPOINTS.OVERTIME_V2_MARKET, async (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
   try {
-    const openMarkets = await getOpenMarketsMap(network);
+    const openMarkets = getCachedOpenMarketsByNetworkMap(network);
     let market = Array.from(openMarkets.values()).find(
       (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
     );
@@ -1353,7 +1333,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, async (req, res) => {
     if (market) {
       return res.send(market);
     } else {
-      const closedMarkets = await getClosedMarketsMap(network);
+      const closedMarkets = getCachedClosedMarketsByNetworkMap(network);
       market = Array.from(closedMarkets.values()).find(
         (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
       );
@@ -1586,9 +1566,3 @@ app.use("/v1/cache-control", cacheControlRoutes);
 initializeSportsAMMLPListener();
 initializeParlayAMMLPListener();
 initializeThalesAMMLPListener();
-
-// return random redis client fron array
-const choseRedisClient = () => {
-  const index = Math.floor(Math.random() * redisClientsForMarkets.length);
-  return redisClientsForMarkets[index];
-};
