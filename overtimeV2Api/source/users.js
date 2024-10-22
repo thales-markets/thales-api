@@ -21,22 +21,16 @@ const { getLeagueSport, getLeagueLabel, League, UFC_LEAGUE_IDS } = require("over
 const { orderBy } = require("lodash");
 const positionNamesMap = require("../assets/positionNamesMap.json");
 
-function getPlayersInfoMap() {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO, function (err, obj) {
-      const playersInfoMap = new Map(JSON.parse(obj));
-      resolve(playersInfoMap);
-    });
-  });
+async function getPlayersInfoMap() {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO);
+  const playersInfoMap = new Map(JSON.parse(obj));
+  return playersInfoMap;
 }
 
-function getGamesInfoMap() {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
-      const gamesInfoMap = new Map(JSON.parse(obj));
-      resolve(gamesInfoMap);
-    });
-  });
+async function getGamesInfoMap() {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO);
+  const gamesInfoMap = new Map(JSON.parse(obj));
+  return gamesInfoMap;
 }
 
 const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
