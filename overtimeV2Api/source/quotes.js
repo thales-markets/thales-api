@@ -19,7 +19,7 @@ const {
 } = require("../utils/collaterals");
 const { bigNumberFormatter, ceilNumberToDecimals, bigNumberParser, getPrecision } = require("../utils/formatters");
 const KEYS = require("../../redis/redis-keys");
-const { formatBytes32String } = require("ethers/lib/utils");
+const { formatBytes32String, parseEther } = require("ethers/lib/utils");
 
 const MIN_COLLATERAL_MULTIPLIER = 1.01;
 
@@ -90,7 +90,6 @@ async function fetchTicketAmmQuote(
 }
 
 async function getCollateralRate(network, provider, collateral) {
-  // eslint-disable-next-line no-async-promise-executor
   if (
     !collateral ||
     (collateral.toUpperCase() !== "ETH" && collateral.toUpperCase() !== "WETH" && collateral.toUpperCase() !== "THALES")
@@ -296,7 +295,7 @@ async function getAmmQuote(network, tradeData, buyInAmount, collateral) {
   const mappedTradeData = tradeData.map((data) => ({
     ...data,
     line: data.line * 100,
-    odds: data.odds.map((odd) => bigNumberParser(odd.toString()).toString()),
+    odds: data.odds.map((odd) => parseEther(odd.toString()).toString()),
     combinedPositions: data.combinedPositions.map((combinedPositions) =>
       combinedPositions.map((combinedPosition) => ({
         ...combinedPosition,
