@@ -1,17 +1,5 @@
 const { redisClient } = require("../redis/client");
 require("dotenv").config();
-const redis = require("redis");
-const REDIS_CONNECTIONS_COUNT = process.env.REDIS_CONNECTIONS_COUNT || 10;
-const redisClientsForMarkets = [];
-
-(async () => {
-  for (let index = 0; index < REDIS_CONNECTIONS_COUNT; index++) {
-    const redisClientLocal = redis.createClient({ url: process.env.REDIS_URL });
-    redisClientLocal.on("error", (err) => console.log("Redis Client Error", err));
-    await redisClientLocal.connect();
-    redisClientsForMarkets.push(redisClient);
-  }
-})();
 
 const express = require("express");
 const request = require("request");
@@ -73,6 +61,11 @@ const {
   initializeParlayAMMLPListener,
   initializeThalesAMMLPListener,
 } = require("./services/contractEventListener");
+const { SUPPORTED_NETWORKS } = require("./constants/networks");
+const {
+  getCachedOpenMarketsByNetworkMap,
+  getCachedClosedMarketsByNetworkMap,
+} = require("./services/overtimeMarketsCache");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -1130,7 +1123,7 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const network = req.params.networkParam;
   let status = req.query.status;
   const typeId = req.query.typeId;
@@ -1144,7 +1137,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
   }
   status = status.toLowerCase();
 
-  if (![10, 42161, 11155420].includes(Number(network))) {
+  if (!SUPPORTED_NETWORKS.includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
     return;
   }
@@ -1196,7 +1189,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
   }
 
   const isClosedMarkets = status === "resolved" || status === "cancelled";
-  const markets = isClosedMarkets ? await getClosedMarketsMap(network) : await getOpenMarketsMap(network);
+  const markets = isClosedMarkets
+    ? getCachedClosedMarketsByNetworkMap(network)
+    : getCachedOpenMarketsByNetworkMap(network);
 
   try {
     const allMarkets = Array.from(markets.values());
@@ -1324,36 +1319,11 @@ async function getLiveMarketsErrorsMap(network) {
   return liveMarketsErrorsMap;
 }
 
-let lastRedisReadOpenMarketsTime = 0;
-let cachedOpenMarketsByNetworkMap = new Map();
-
-async function getOpenMarketsMap(network) {
-  const now = new Date().getTime();
-  const isCacheStale = now - lastRedisReadOpenMarketsTime > process.env.REDIS_OPEN_MARKETS_STALE_TIME;
-  const cachedOpenMarketsMap = cachedOpenMarketsByNetworkMap.get(network);
-
-  if (isCacheStale || !cachedOpenMarketsMap?.size) {
-    // read from redis
-    const obj = await choseRedisClient().get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
-    lastRedisReadOpenMarketsTime = new Date().getTime();
-    const openMarketsMap = new Map(JSON.parse(obj));
-    cachedOpenMarketsByNetworkMap.set(network, openMarketsMap);
-    return openMarketsMap;
-  }
-  return cachedOpenMarketsMap;
-}
-
-async function getClosedMarketsMap(network) {
-  const obj = await redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network]);
-  const markets = new Map(JSON.parse(obj));
-  return markets;
-}
-
-app.get(ENDPOINTS.OVERTIME_V2_MARKET, async (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
   try {
-    const openMarkets = await getOpenMarketsMap(network);
+    const openMarkets = getCachedOpenMarketsByNetworkMap(network);
     let market = Array.from(openMarkets.values()).find(
       (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
     );
@@ -1361,7 +1331,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, async (req, res) => {
     if (market) {
       return res.send(market);
     } else {
-      const closedMarkets = await getClosedMarketsMap(network);
+      const closedMarkets = getCachedClosedMarketsByNetworkMap(network);
       market = Array.from(closedMarkets.values()).find(
         (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
       );
@@ -1594,9 +1564,3 @@ app.use("/v1/cache-control", cacheControlRoutes);
 initializeSportsAMMLPListener();
 initializeParlayAMMLPListener();
 initializeThalesAMMLPListener();
-
-// return random redis client fron array
-const choseRedisClient = () => {
-  const index = Math.floor(Math.random() * redisClientsForMarkets.length);
-  return redisClientsForMarkets[index];
-};
