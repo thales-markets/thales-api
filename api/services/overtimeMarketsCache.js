@@ -1,8 +1,8 @@
 const redis = require("redis");
-const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 const { delay } = require("../../services/utils");
 const { SUPPORTED_NETWORKS } = require("../constants/networks");
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
 const REDIS_CONNECTIONS_COUNT = process.env.REDIS_CONNECTIONS_COUNT || 10;
@@ -19,14 +19,18 @@ let cachedClosedMarketsByNetworkMap = new Map();
     const redisClientLocal = redis.createClient({ url: process.env.REDIS_URL });
     redisClientLocal.on("error", (err) => console.log("Redis Client Error", err));
     await redisClientLocal.connect();
-    redisClientsForMarkets.push(redisClient);
+    redisClientsForMarkets.push(redisClientLocal);
   }
 })();
 
 // Return random redis client fron array
 const choseRedisClient = () => {
   const index = Math.floor(Math.random() * redisClientsForMarkets.length);
-  return redisClientsForMarkets[index];
+  let randomClient = redisClientsForMarkets[index];
+  if (!randomClient) {
+    randomClient = redisClientsForMarkets.find((client) => !client);
+  }
+  return randomClient || redisClient;
 };
 
 // Cache open markets for all networks

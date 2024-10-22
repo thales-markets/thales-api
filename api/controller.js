@@ -14,7 +14,9 @@ const sportMarketsRoutes = require("./routes/sportMarkets.route");
 const cors = require("cors");
 app.use(cors());
 app.use(express.json());
-app.use(compression());
+if (process.env.DISABLE_COMPRESSION !== "true") {
+  app.use(compression());
+}
 app.use(function (req, res, next) {
   for (const key in req.query) {
     req.query[key.toLowerCase()] = req.query[key];
