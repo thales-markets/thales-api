@@ -103,8 +103,9 @@ const cacheClosedMarkets = async () => {
   }, 3000);
 })();
 
-const getCachedOpenMarketsByNetworkMap = (network) => cachedOpenMarketsByNetworkMap.get(Number(network));
-const getCachedClosedMarketsByNetworkMap = (network) => cachedClosedMarketsByNetworkMap.get(Number(network));
+const getCachedOpenMarketsByNetworkMap = (network) => cachedOpenMarketsByNetworkMap.get(Number(network)) || new Map();
+const getCachedClosedMarketsByNetworkMap = (network) =>
+  cachedClosedMarketsByNetworkMap.get(Number(network)) || new Map();
 
 module.exports = {
   getCachedOpenMarketsByNetworkMap,
