@@ -12,7 +12,10 @@ const NETWORK_NAME = {
   [NETWORK.Base]: "base",
 };
 
+const SUPPORTED_NETWORKS = [NETWORK.Optimism, NETWORK.Arbitrum, NETWORK.OptimismSepolia];
+
 module.exports = {
   NETWORK,
   NETWORK_NAME,
+  SUPPORTED_NETWORKS,
 };
