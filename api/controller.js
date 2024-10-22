@@ -1446,10 +1446,13 @@ app.get(ENDPOINTS.OVERTIME_V2_USER_HISTORY, async (req, res) => {
     return;
   }
 
-  const userHistory = await overtimeV2Users.processUserHistory(network, userAddress.toLowerCase());
-  const history = status ? userHistory[status.toLowerCase()] : userHistory;
-
-  return res.send(history);
+  try {
+    const userHistory = await overtimeV2Users.processUserHistory(network, userAddress.toLowerCase());
+    const history = status ? userHistory[status.toLowerCase()] : userHistory;
+    return res.send(history);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, async (req, res) => {
@@ -1503,8 +1506,12 @@ app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
     return;
   }
 
-  const quote = await overtimeV2Quotes.getAmmQuote(Number(network), tradeData, Number(buyInAmount), collateral);
-  res.send(quote);
+  try {
+    const quote = await overtimeV2Quotes.getAmmQuote(Number(network), tradeData, Number(buyInAmount), collateral);
+    res.send(quote);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.put(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_WRITE, async (req, res) => {
