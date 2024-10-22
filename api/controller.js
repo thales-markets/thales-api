@@ -1159,7 +1159,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
 
   if (typeId && !allTypeIds.includes(Number(typeId))) {
     res.send(
-      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: /overtime-v2/market-types.`,
+      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_MARKET_TYPES
+      }.`,
     );
     return;
   }
@@ -1179,12 +1181,16 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
   const allSports = uniqBy(allLeagues.map((league) => league.sport.toLowerCase()));
 
   if (sport && !allSports.includes(sport.toLowerCase())) {
-    res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime-v2/sports.`);
+    res.send(
+      `Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: ${ENDPOINTS.OVERTIME_V2_SPORTS}.`,
+    );
     return;
   }
   if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
     res.send(
-      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime-v2/sports.`,
+      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_SPORTS
+      }.`,
     );
     return;
   }
@@ -1247,7 +1253,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 
   if (typeId && !allTypeIds.includes(Number(typeId))) {
     res.send(
-      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: /overtime-v2/market-types.`,
+      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_MARKET_TYPES
+      }.`,
     );
     return;
   }
@@ -1267,17 +1275,17 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 
   if (sport && !allLiveSports.includes(sport.toLowerCase())) {
     res.send(
-      `Unsupported live sport. Supported live sports: ${allLiveSports.join(
-        ", ",
-      )}. See details on: /overtime-v2/sports.`,
+      `Unsupported live sport. Supported live sports: ${allLiveSports.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_SPORTS
+      }.`,
     );
     return;
   }
   if (leagueId && !allLiveLeagueIds.includes(Number(leagueId))) {
     res.send(
-      `Unsupported live league ID. Supported live league IDs: ${allLiveLeagueIds.join(
-        ", ",
-      )}. See details on: /overtime-v2/sports.`,
+      `Unsupported live league ID. Supported live league IDs: ${allLiveLeagueIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_SPORTS
+      }.`,
     );
     return;
   }
