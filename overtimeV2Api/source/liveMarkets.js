@@ -149,8 +149,8 @@ async function processAllMarkets(
   Processing steps:
     - Get OpticOdds games for supported live leagues from OpticOdds API by league
     - Filter by OpticOdds games (teams name and date)
-    - Get OpticOdds odds for games from OpticOdds API by game IDs and league providers
-    - Get OpticOdds scores from OpticOdds API
+    - Get OpticOdds odds for games from OpticOdds API (initially and then from stream) by game IDs and league providers
+    - Get OpticOdds scores for games from OpticOdds API (initially and then from stream)
     - Returns processed matched live markets
 */
 async function processMarketsByLeague(
