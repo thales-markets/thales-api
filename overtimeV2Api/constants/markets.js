@@ -247,6 +247,7 @@ const MarketType = {
   US_ELECTION_WINNING_PARTY_NEVADA: 10905,
   US_ELECTION_WINNING_PARTY_PENNSYLVANIA: 10906,
   US_ELECTION_WINNING_PARTY_WINSCONSIN: 10907,
+  US_ELECTION_WINNING_PARTY_NORTH_CAROLINA: 10908,
 
   // Correct score
   CORRECT_SCORE: 10100,
@@ -1439,6 +1440,12 @@ const MarketTypeMap = {
     id: MarketType.US_ELECTION_WINNING_PARTY_WINSCONSIN,
     key: "winningPartyWinsconsin",
     name: "Winning party Winsconsin",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.US_ELECTION_WINNING_PARTY_NORTH_CAROLINA]: {
+    id: MarketType.US_ELECTION_WINNING_PARTY_NORTH_CAROLINA,
+    key: "winningPartyNorthCarolina",
+    name: "Winning party North Carolina",
     resultType: ResultType.EXACT_POSITION,
   },
   [MarketType.CORRECT_SCORE]: {
