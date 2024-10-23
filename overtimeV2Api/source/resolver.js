@@ -17,11 +17,6 @@ const {
 
 async function processResolve() {
   if (process.env.REDIS_URL) {
-    console.log("Resolver: create client from index");
-
-    redisClient.on("error", function (error) {
-      console.error(error);
-    });
     setTimeout(async () => {
       while (true) {
         try {
@@ -43,31 +38,22 @@ async function processResolve() {
   }
 }
 
-function getOpenMarketsMap(network) {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
-      const openMarketsMap = new Map(JSON.parse(obj));
-      resolve(openMarketsMap);
-    });
-  });
+async function getClosedMarketsMap(network) {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network]);
+  const closedMarketsMap = new Map(JSON.parse(obj));
+  return closedMarketsMap;
 }
 
-function getClosedMarketsMap(network) {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
-      const closedMarketsMap = new Map(JSON.parse(obj));
-      resolve(closedMarketsMap);
-    });
-  });
+async function getOpenMarketsMap(network) {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
+  const openMarkets = new Map(JSON.parse(obj));
+  return openMarkets;
 }
 
-function getGamesInfoMap() {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
-      const gamesInfoMap = new Map(JSON.parse(obj));
-      resolve(gamesInfoMap);
-    });
-  });
+async function getGamesInfoMap() {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO);
+  const gamesInfoMap = new Map(JSON.parse(obj));
+  return gamesInfoMap;
 }
 
 async function resolveMarkets(network) {
@@ -346,7 +332,7 @@ async function resolveMarkets(network) {
     closedMarketsMap.set(allUnresolvedClosedMarkets[i].gameId, allUnresolvedClosedMarkets[i]);
   }
 
-  redisClient.set(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], JSON.stringify([...closedMarketsMap]), function () {});
+  await redisClient.set(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], JSON.stringify([...closedMarketsMap]));
 }
 
 module.exports = {

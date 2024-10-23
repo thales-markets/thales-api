@@ -1,12 +1,6 @@
 const { redisClient } = require("../redis/client");
 require("dotenv").config();
-const redis = require("redis");
-const REDIS_CONNECTIONS_COUNT = process.env.REDIS_CONNECTIONS_COUNT || 10;
-const redisClientsForMarkets = [];
 
-for (let index = 0; index < REDIS_CONNECTIONS_COUNT; index++) {
-  redisClientsForMarkets.push(redis.createClient(process.env.REDIS_URL));
-}
 const express = require("express");
 const request = require("request");
 const compression = require("compression");
@@ -67,6 +61,11 @@ const {
   initializeParlayAMMLPListener,
   initializeThalesAMMLPListener,
 } = require("./services/contractEventListener");
+const { SUPPORTED_NETWORKS } = require("./constants/networks");
+const {
+  getCachedOpenMarketsByNetworkMap,
+  getCachedClosedMarketsByNetworkMap,
+} = require("./services/overtimeMarketsCache");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -76,45 +75,41 @@ app.get(ENDPOINTS.ROOT, (req, res) => {
   res.sendStatus(200);
 });
 
-app.get(ENDPOINTS.PARLAY_LEADERBOARD, (req, res) => {
+app.get(ENDPOINTS.PARLAY_LEADERBOARD, async (req, res) => {
   const network = req.params.networkParam;
   const period = req.params.period;
   if ([10, 420, 8453, 42161].includes(Number(network))) {
-    redisClient.get(KEYS.PARLAY_LEADERBOARD[network], function (err, obj) {
-      const rewards = new Map(JSON.parse(obj));
-      try {
-        res.send(rewards.get(Number(period)));
-      } catch (e) {
-        console.log(e);
-      }
-    });
+    const obj = await redisClient.get(KEYS.PARLAY_LEADERBOARD[network]);
+    const rewards = new Map(JSON.parse(obj));
+    try {
+      res.send(rewards.get(Number(period)));
+    } catch (e) {
+      console.log(e);
+    }
   } else {
     res.send("Bad Network ");
   }
 });
 
-app.get(ENDPOINTS.TOKEN_PRICE, (req, res) => {
-  redisClient.get(KEYS.TOKEN, function (err, obj) {
-    const tokenMap = new Map(JSON.parse(obj));
-    res.send(tokenMap.get("price") + "");
-  });
+app.get(ENDPOINTS.TOKEN_PRICE, async (req, res) => {
+  const obj = await redisClient.get(KEYS.TOKEN);
+  const tokenMap = new Map(JSON.parse(obj));
+  res.send(tokenMap.get("price") + "");
 });
 
-app.get(ENDPOINTS.TOKEN_SUPLY, (req, res) => {
-  redisClient.get(KEYS.TOKEN, function (err, obj) {
-    const tokenMap = new Map(JSON.parse(obj));
-    res.send(tokenMap.get("circulatingsupply") + "");
-  });
+app.get(ENDPOINTS.TOKEN_SUPLY, async (req, res) => {
+  const obj = await redisClient.get(KEYS.TOKEN);
+  const tokenMap = new Map(JSON.parse(obj));
+  res.send(tokenMap.get("circulatingsupply") + "");
 });
 
-app.get(ENDPOINTS.TOKEN_CAP, (req, res) => {
-  redisClient.get(KEYS.TOKEN, function (err, obj) {
-    const tokenMap = new Map(JSON.parse(obj));
-    res.send(tokenMap.get("marketcap") + "");
-  });
+app.get(ENDPOINTS.TOKEN_CAP, async (req, res) => {
+  const obj = await redisClient.get(KEYS.TOKEN);
+  const tokenMap = new Map(JSON.parse(obj));
+  res.send(tokenMap.get("marketcap") + "");
 });
 
-app.post(ENDPOINTS.GAME_STARTED, (req, res) => {
+app.post(ENDPOINTS.GAME_STARTED, async (req, res) => {
   const walletAddress = req.body.walletAddress;
   const gameStartedCount = gameFinishersMap.get("gameStartedCount") || 0;
   gameFinishersMap.set("gameStartedCount", gameStartedCount + 1);
@@ -124,11 +119,11 @@ app.post(ENDPOINTS.GAME_STARTED, (req, res) => {
     gameFinishersMap.set(walletAddress, { ...userObject, startedTime: Date.now() });
   }
 
-  redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]), function () {});
+  await redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]));
   res.send();
 });
 
-app.post(ENDPOINTS.GAME_ENDED, (req, res) => {
+app.post(ENDPOINTS.GAME_ENDED, async (req, res) => {
   const walletAddress = req.body.walletAddress;
   const gameFinishedCount = gameFinishersMap.get("gameFinishedCount") || 0;
   gameFinishersMap.set("gameFinishedCount", gameFinishedCount + 1);
@@ -143,7 +138,7 @@ app.post(ENDPOINTS.GAME_ENDED, (req, res) => {
     });
   }
 
-  redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]), function () {});
+  await redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]));
   res.send();
 });
 
@@ -224,7 +219,7 @@ app.get(ENDPOINTS.LIVE_RESULT, (req, res) => {
   request.get(url).pipe(res);
 });
 
-app.post(ENDPOINTS.UPDATE_REFFERER_ID, (req, res) => {
+app.post(ENDPOINTS.UPDATE_REFFERER_ID, async (req, res) => {
   const walletAddress = req.body.walletAddress;
   const reffererID = req.body.reffererID;
   const previousReffererID = req.body.previousReffererID;
@@ -252,7 +247,7 @@ app.post(ENDPOINTS.UPDATE_REFFERER_ID, (req, res) => {
     userReffererIDsMap.set(reffererID, walletAddress);
   }
 
-  redisClient.set(KEYS.USER_REFFERER_IDS, JSON.stringify([...userReffererIDsMap]), function () {});
+  await redisClient.set(KEYS.USER_REFFERER_IDS, JSON.stringify([...userReffererIDsMap]));
   res.send(JSON.stringify({ error: false }));
 });
 
@@ -278,7 +273,7 @@ app.get(ENDPOINTS.GET_ADDRESS_REFFERER_ID, (req, res) => {
   }
 });
 
-app.post(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, (req, res) => {
+app.post(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, async (req, res) => {
   const walletAddress = req.body.walletAddress;
   const solanaAddress = req.body.solanaAddress;
   const smartAccountAddress = req.body.smartAccountAddress;
@@ -293,7 +288,7 @@ app.post(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, (req, res) => {
     solanaAddressesMap.set(smartAccountAddress ?? walletAddress, solanaAddress);
   }
 
-  redisClient.set(KEYS.SOLANA_ADDRESSES, JSON.stringify([...solanaAddressesMap]), function () {});
+  await redisClient.set(KEYS.SOLANA_ADDRESSES, JSON.stringify([...solanaAddressesMap]));
   res.send(JSON.stringify({ error: false }));
 });
 
@@ -362,7 +357,7 @@ app.get(ENDPOINTS.THALES_COLLATERALS, (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
+app.get(ENDPOINTS.THALES_MARKETS, async (req, res) => {
   const network = req.params.networkParam;
   const asset = req.query.asset;
   const maturityDate = req.query.maturitydate;
@@ -405,90 +400,86 @@ app.get(ENDPOINTS.THALES_MARKETS, (req, res) => {
     return;
   }
 
-  redisClient.get((isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network], function (err, obj) {
-    const markets = JSON.parse(obj);
-    try {
-      const filteredMarkets = markets.filter(
-        (market) =>
-          (!asset || market.asset.toLowerCase() === asset.toLowerCase()) &&
-          (!maturityDate || market.maturityDate.startsWith(maturityDate)) &&
-          (!positions || positionsArray.includes(market.position.toLowerCase())) &&
-          (!onlyWithBonus || (onlyWithBonus.toLowerCase() === "true" && market.bonus > 0)),
-      );
+  const obj = await redisClient.get((isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network]);
+  const markets = JSON.parse(obj);
+  try {
+    const filteredMarkets = markets.filter(
+      (market) =>
+        (!asset || market.asset.toLowerCase() === asset.toLowerCase()) &&
+        (!maturityDate || market.maturityDate.startsWith(maturityDate)) &&
+        (!positions || positionsArray.includes(market.position.toLowerCase())) &&
+        (!onlyWithBonus || (onlyWithBonus.toLowerCase() === "true" && market.bonus > 0)),
+    );
 
-      if (ungroup && ungroup.toLowerCase() === "true") {
-        res.send(filteredMarkets);
-        return;
-      }
-
-      const groupMarkets = groupBy(JSON.parse(JSON.stringify(filteredMarkets)), (market) => market.asset);
-      Object.keys(groupMarkets).forEach((assetKey) => {
-        groupMarkets[assetKey] = groupBy(groupMarkets[assetKey], (market) => market.maturityDate);
-        Object.keys(groupMarkets[assetKey]).forEach((maturityDateKey) => {
-          groupMarkets[assetKey][maturityDateKey] = groupBy(
-            groupMarkets[assetKey][maturityDateKey],
-            (market) => market.position,
-          );
-        });
-      });
-
-      res.send(groupMarkets);
-    } catch (e) {
-      console.log(e);
+    if (ungroup && ungroup.toLowerCase() === "true") {
+      res.send(filteredMarkets);
+      return;
     }
-  });
+
+    const groupMarkets = groupBy(JSON.parse(JSON.stringify(filteredMarkets)), (market) => market.asset);
+    Object.keys(groupMarkets).forEach((assetKey) => {
+      groupMarkets[assetKey] = groupBy(groupMarkets[assetKey], (market) => market.maturityDate);
+      Object.keys(groupMarkets[assetKey]).forEach((maturityDateKey) => {
+        groupMarkets[assetKey][maturityDateKey] = groupBy(
+          groupMarkets[assetKey][maturityDateKey],
+          (market) => market.position,
+        );
+      });
+    });
+
+    res.send(groupMarkets);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
-app.get(ENDPOINTS.THALES_MARKETS_COUNT, (req, res) => {
+app.get(ENDPOINTS.THALES_MARKETS_COUNT, async (req, res) => {
   const network = req.params.networkParam;
   const lpCollateral = req.query.lpcollateral;
   const isUsdc = lpCollateral && lpCollateral.toLowerCase() === LP_COLLATERALS.USDC;
 
   try {
-    redisClient.mget(
-      [
-        (isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network],
-        (isUsdc ? KEYS.THALES_USDC_MARKETS_LAST_UPDATED_AT : KEYS.THALES_MARKETS_LAST_UPDATED_AT)[network],
-      ],
-      function (err, obj) {
-        if (!obj) return res.sendStatus(204);
-        const markets = JSON.parse(obj[0]);
+    const obj = await redisClient.mGet([
+      (isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network],
+      (isUsdc ? KEYS.THALES_USDC_MARKETS_LAST_UPDATED_AT : KEYS.THALES_MARKETS_LAST_UPDATED_AT)[network],
+    ]);
 
-        const groupByAsset = groupBy(markets, "asset");
-        const data = [];
+    if (!obj) return res.sendStatus(204);
+    const markets = JSON.parse(obj[0]);
 
-        Object.entries(groupByAsset).forEach(([assetKey, byAsset]) => {
-          const groupByMaturityDate = groupBy(JSON.parse(JSON.stringify(byAsset)), "maturityDate");
+    const groupByAsset = groupBy(markets, "asset");
+    const data = [];
 
-          const byMaturityData = [];
-          let totalCountByAsset = 0;
-          Object.entries(groupByMaturityDate).forEach(([maturityKey, byMaturity]) => {
-            const groupByPosition = groupBy(JSON.parse(JSON.stringify(byMaturity)), "position");
+    Object.entries(groupByAsset).forEach(([assetKey, byAsset]) => {
+      const groupByMaturityDate = groupBy(JSON.parse(JSON.stringify(byAsset)), "maturityDate");
 
-            const byPositionData = [];
-            let totalCountByPositions = 0;
-            Object.entries(groupByPosition).forEach(([positionKey, byPositions]) => {
-              byPositionData.push({ position: positionKey, count: byPositions.length });
-              totalCountByPositions += byPositions.length;
-            });
+      const byMaturityData = [];
+      let totalCountByAsset = 0;
+      Object.entries(groupByMaturityDate).forEach(([maturityKey, byMaturity]) => {
+        const groupByPosition = groupBy(JSON.parse(JSON.stringify(byMaturity)), "position");
 
-            totalCountByAsset += totalCountByPositions;
-            byMaturityData.push({ maturity: maturityKey, count: totalCountByPositions, positions: byPositionData });
-          });
-
-          data.push({ asset: assetKey, count: totalCountByAsset, byMaturity: byMaturityData });
+        const byPositionData = [];
+        let totalCountByPositions = 0;
+        Object.entries(groupByPosition).forEach(([positionKey, byPositions]) => {
+          byPositionData.push({ position: positionKey, count: byPositions.length });
+          totalCountByPositions += byPositions.length;
         });
 
-        return res.send({ data, lastUpdatedAt: obj[1] ? obj[1] : "" });
-      },
-    );
+        totalCountByAsset += totalCountByPositions;
+        byMaturityData.push({ maturity: maturityKey, count: totalCountByPositions, positions: byPositionData });
+      });
+
+      data.push({ asset: assetKey, count: totalCountByAsset, byMaturity: byMaturityData });
+    });
+
+    return res.send({ data, lastUpdatedAt: obj[1] ? obj[1] : "" });
   } catch (e) {
     console.log("Error ", e);
     return null;
   }
 });
 
-app.get(ENDPOINTS.THALES_MARKET, (req, res) => {
+app.get(ENDPOINTS.THALES_MARKET, async (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
   const lpCollateral = req.query.lpcollateral;
@@ -499,15 +490,14 @@ app.get(ENDPOINTS.THALES_MARKET, (req, res) => {
     return;
   }
 
-  redisClient.get((isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network], function (err, obj) {
-    const markets = JSON.parse(obj);
-    try {
-      const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
-      return res.send(market || `Market with address ${marketAddress} not found or not open.`);
-    } catch (e) {
-      console.log(e);
-    }
-  });
+  const obj = await redisClient.get((isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network]);
+  const markets = JSON.parse(obj);
+  try {
+    const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
+    return res.send(market || `Market with address ${marketAddress} not found or not open.`);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get(ENDPOINTS.THALES_MARKET_BUY_QUOTE, async (req, res) => {
@@ -558,43 +548,42 @@ app.get(ENDPOINTS.THALES_MARKET_BUY_QUOTE, async (req, res) => {
     return;
   }
 
-  redisClient.get((isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network], async function (err, obj) {
-    const markets = JSON.parse(obj);
-    try {
-      const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
+  const obj = await redisClient.get((isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network]);
+  const markets = JSON.parse(obj);
+  try {
+    const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
 
-      if (!market) {
-        res.send(`Market with address ${marketAddress} not found or not open.`);
-        return;
-      }
-
-      const isRangedMarket = isRangedPosition(market.position);
-
-      if (![0, 1].includes(Number(position))) {
-        res.send(
-          `Unsupported position for market with address ${marketAddress}. Supported positions: 0 (${
-            isRangedMarket ? "IN" : "UP"
-          }) or 1 (${isRangedMarket ? "OUT" : "DOWN"}).`,
-        );
-        return;
-      }
-
-      const ammQuote = await thalesQuotes.getAmmQuote(
-        Number(network),
-        marketAddress.toLowerCase(),
-        Number(position),
-        Number(buyin),
-        collateral,
-        isRangedMarket,
-        true,
-        isUsdc,
-      );
-
-      return res.send(ammQuote);
-    } catch (e) {
-      console.log(e);
+    if (!market) {
+      res.send(`Market with address ${marketAddress} not found or not open.`);
+      return;
     }
-  });
+
+    const isRangedMarket = isRangedPosition(market.position);
+
+    if (![0, 1].includes(Number(position))) {
+      res.send(
+        `Unsupported position for market with address ${marketAddress}. Supported positions: 0 (${
+          isRangedMarket ? "IN" : "UP"
+        }) or 1 (${isRangedMarket ? "OUT" : "DOWN"}).`,
+      );
+      return;
+    }
+
+    const ammQuote = await thalesQuotes.getAmmQuote(
+      Number(network),
+      marketAddress.toLowerCase(),
+      Number(position),
+      Number(buyin),
+      collateral,
+      isRangedMarket,
+      true,
+      isUsdc,
+    );
+
+    return res.send(ammQuote);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get(ENDPOINTS.THALES_MARKET_SELL_QUOTE, async (req, res) => {
@@ -629,42 +618,41 @@ app.get(ENDPOINTS.THALES_MARKET_SELL_QUOTE, async (req, res) => {
     return;
   }
 
-  redisClient.get(KEYS.THALES_MARKETS[network], async function (err, obj) {
-    const markets = JSON.parse(obj);
-    try {
-      const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
+  const obj = await redisClient.get(KEYS.THALES_MARKETS[network]);
+  const markets = JSON.parse(obj);
+  try {
+    const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
 
-      if (!market) {
-        res.send(`Market with address ${marketAddress} not found or not open.`);
-        return;
-      }
-
-      const isRangedMarket = isRangedPosition(market.position);
-
-      if (![0, 1].includes(Number(position))) {
-        res.send(
-          `Unsupported position for market with address ${marketAddress}. Supported positions: 0 (${
-            isRangedMarket ? "IN" : "UP"
-          }) or 1 (${isRangedMarket ? "OUT" : "DOWN"}).`,
-        );
-        return;
-      }
-
-      const ammQuote = await thalesQuotes.getAmmQuote(
-        Number(network),
-        marketAddress.toLowerCase(),
-        Number(position),
-        Number(sellAmount),
-        undefined,
-        isRangedMarket,
-        false,
-      );
-
-      return res.send(ammQuote);
-    } catch (e) {
-      console.log(e);
+    if (!market) {
+      res.send(`Market with address ${marketAddress} not found or not open.`);
+      return;
     }
-  });
+
+    const isRangedMarket = isRangedPosition(market.position);
+
+    if (![0, 1].includes(Number(position))) {
+      res.send(
+        `Unsupported position for market with address ${marketAddress}. Supported positions: 0 (${
+          isRangedMarket ? "IN" : "UP"
+        }) or 1 (${isRangedMarket ? "OUT" : "DOWN"}).`,
+      );
+      return;
+    }
+
+    const ammQuote = await thalesQuotes.getAmmQuote(
+      Number(network),
+      marketAddress.toLowerCase(),
+      Number(position),
+      Number(sellAmount),
+      undefined,
+      isRangedMarket,
+      false,
+    );
+
+    return res.send(ammQuote);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get(ENDPOINTS.THALES_USER_POSITIONS, async (req, res) => {
@@ -1087,25 +1075,23 @@ app.get(ENDPOINTS.THALES_IO_ECOSYSTEM_APPS, async (req, res) => {
 });
 
 app.get(ENDPOINTS.THALES_IO_DAILY_STATS, async (req, res) => {
-  redisClient.get(KEYS.THALES_IO_DAILY_STATS, function (err, obj) {
-    const stats = new Map(JSON.parse(obj));
-    try {
-      res.send(Object.fromEntries(stats));
-    } catch (e) {
-      console.log(e);
-    }
-  });
+  const obj = await redisClient.get(KEYS.THALES_IO_DAILY_STATS);
+  const stats = new Map(JSON.parse(obj));
+  try {
+    res.send(Object.fromEntries(stats));
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get(ENDPOINTS.THALES_IO_WEEKLY_STATS, async (req, res) => {
-  redisClient.get(KEYS.THALES_IO_WEEKLY_STATS, function (err, obj) {
-    const stats = new Map(JSON.parse(obj));
-    try {
-      res.send(Object.fromEntries(stats));
-    } catch (e) {
-      console.log(e);
-    }
-  });
+  const obj = await redisClient.get(KEYS.THALES_IO_WEEKLY_STATS);
+  const stats = new Map(JSON.parse(obj));
+  try {
+    res.send(Object.fromEntries(stats));
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_SPORTS, (req, res) => {
@@ -1137,7 +1123,7 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const network = req.params.networkParam;
   let status = req.query.status;
   const typeId = req.query.typeId;
@@ -1151,7 +1137,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
   }
   status = status.toLowerCase();
 
-  if (![10, 42161, 11155420].includes(Number(network))) {
+  if (!SUPPORTED_NETWORKS.includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
     return;
   }
@@ -1166,7 +1152,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
 
   if (typeId && !allTypeIds.includes(Number(typeId))) {
     res.send(
-      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: /overtime-v2/market-types.`,
+      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_MARKET_TYPES
+      }.`,
     );
     return;
   }
@@ -1186,18 +1174,24 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
   const allSports = uniqBy(allLeagues.map((league) => league.sport.toLowerCase()));
 
   if (sport && !allSports.includes(sport.toLowerCase())) {
-    res.send(`Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: /overtime-v2/sports.`);
+    res.send(
+      `Unsupported sport. Supported sports: ${allSports.join(", ")}. See details on: ${ENDPOINTS.OVERTIME_V2_SPORTS}.`,
+    );
     return;
   }
   if (leagueId && !allLeagueIds.includes(Number(leagueId))) {
     res.send(
-      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: /overtime-v2/sports.`,
+      `Unsupported league ID. Supported league IDs: ${allLeagueIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_SPORTS
+      }.`,
     );
     return;
   }
 
   const isClosedMarkets = status === "resolved" || status === "cancelled";
-  const markets = isClosedMarkets ? await getClosedMarketsMap(network) : await getOpenMarketsMap(network);
+  const markets = isClosedMarkets
+    ? getCachedClosedMarketsByNetworkMap(network)
+    : getCachedOpenMarketsByNetworkMap(network);
 
   try {
     const allMarkets = Array.from(markets.values());
@@ -1237,7 +1231,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, async (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
   const network = req.params.networkParam;
   const typeId = req.query.typeId;
   const sport = req.query.sport;
@@ -1254,7 +1248,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
   if (typeId && !allTypeIds.includes(Number(typeId))) {
     res.send(
-      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: /overtime-v2/market-types.`,
+      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_MARKET_TYPES
+      }.`,
     );
     return;
   }
@@ -1274,97 +1270,43 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, (req, res) => {
 
   if (sport && !allLiveSports.includes(sport.toLowerCase())) {
     res.send(
-      `Unsupported live sport. Supported live sports: ${allLiveSports.join(
-        ", ",
-      )}. See details on: /overtime-v2/sports.`,
+      `Unsupported live sport. Supported live sports: ${allLiveSports.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_SPORTS
+      }.`,
     );
     return;
   }
   if (leagueId && !allLiveLeagueIds.includes(Number(leagueId))) {
     res.send(
-      `Unsupported live league ID. Supported live league IDs: ${allLiveLeagueIds.join(
-        ", ",
-      )}. See details on: /overtime-v2/sports.`,
+      `Unsupported live league ID. Supported live league IDs: ${allLiveLeagueIds.join(", ")}. See details on: ${
+        ENDPOINTS.OVERTIME_V2_SPORTS
+      }.`,
     );
     return;
   }
 
-  redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], function (err, obj) {
-    const markets = JSON.parse(obj);
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network]);
+  const markets = JSON.parse(obj);
 
-    try {
-      const filteredMarkets = markets.filter(
-        (market) =>
-          (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
-          (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
-          (!typeId || Number(market.typeId) === Number(typeId)),
-      );
+  try {
+    const filteredMarkets = markets.filter(
+      (market) =>
+        (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
+        (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
+        (!typeId || Number(market.typeId) === Number(typeId)),
+    );
 
-      res.send({ markets: filteredMarkets });
-    } catch (e) {
-      console.log(e);
-    }
-  });
+    res.send({ markets: filteredMarkets });
+  } catch (e) {
+    console.log(e);
+  }
 });
 
-function getLiveMarketsErrorsMap(network) {
-  return new Promise(function (resolve) {
-    choseRedisClient(redisClientsForMarkets).get(
-      KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network],
-      function (err, obj) {
-        const liveMarketsErrorsMap = new Map(JSON.parse(obj));
-        resolve(liveMarketsErrorsMap);
-      },
-    );
-  });
-}
-
-let lastRedisReadOpenMarketsTime = 0;
-let cachedOpenMarketsMap = new Map();
-
-function getOpenMarketsMap(network) {
-  const now = new Date().getTime();
-  const isCacheStale = now - lastRedisReadOpenMarketsTime > process.env.REDIS_OPEN_MARKETS_STALE_TIME;
-
-  return new Promise(function (resolve) {
-    if (isCacheStale) {
-      // read from redis
-      choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], function (err, obj) {
-        lastRedisReadOpenMarketsTime = new Date().getTime();
-        const openMarketsMap = new Map(JSON.parse(obj));
-        cachedOpenMarketsMap.set(network, openMarketsMap);
-        resolve(openMarketsMap);
-      });
-    } else {
-      // read from cache
-      resolve(cachedOpenMarketsMap.get(network));
-    }
-  });
-}
-
-function getLiveMarketsMap(network) {
-  return new Promise(function (resolve) {
-    choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_LIVE_MARKETS[network], function (err, obj) {
-      const markets = JSON.parse(obj);
-      resolve(markets);
-    });
-  });
-}
-
-function getClosedMarketsMap(network) {
-  return new Promise(function (resolve) {
-    choseRedisClient(redisClientsForMarkets).get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], function (err, obj) {
-      const openMarketsMap = new Map(JSON.parse(obj));
-      resolve(openMarketsMap);
-    });
-  });
-}
-
-app.get(ENDPOINTS.OVERTIME_V2_MARKET, async (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
   try {
-    const openMarkets = await getOpenMarketsMap(network);
+    const openMarkets = getCachedOpenMarketsByNetworkMap(network);
     let market = Array.from(openMarkets.values()).find(
       (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
     );
@@ -1372,7 +1314,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, async (req, res) => {
     if (market) {
       return res.send(market);
     } else {
-      const closedMarkets = await getClosedMarketsMap(network);
+      const closedMarkets = getCachedClosedMarketsByNetworkMap(network);
       market = Array.from(closedMarkets.values()).find(
         (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
       );
@@ -1387,10 +1329,8 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKET, async (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
   try {
-    const openMarkets = await getLiveMarketsMap(network);
-    const market = Array.from(openMarkets).find(
-      (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
-    );
+    const markets = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network]));
+    const market = markets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
 
     if (market) {
       return res.send(market);
@@ -1402,82 +1342,76 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKET, async (req, res) => {
   }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_GAMES_INFO, (req, res) => {
-  redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
-    const gamesInfo = new Map(JSON.parse(obj));
-    try {
-      res.send(Object.fromEntries(gamesInfo));
-    } catch (e) {
-      console.log(e);
-    }
-  });
+app.get(ENDPOINTS.OVERTIME_V2_GAMES_INFO, async (req, res) => {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO);
+  const gamesInfo = new Map(JSON.parse(obj));
+  try {
+    res.send(Object.fromEntries(gamesInfo));
+  } catch (e) {
+    console.log(e);
+  }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_GAME_INFO, (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_GAME_INFO, async (req, res) => {
   const gameId = req.params.gameId;
 
-  redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, async function (err, obj) {
-    const gamesInfo = new Map(JSON.parse(obj));
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO);
+  const gamesInfo = new Map(JSON.parse(obj));
 
-    try {
-      const gameInfo = gamesInfo.get(gameId);
-      return res.send(gameInfo);
-    } catch (e) {
-      console.log(e);
-    }
-  });
+  try {
+    const gameInfo = gamesInfo.get(gameId);
+    return res.send(gameInfo);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_PLAYERS_INFO, (req, res) => {
-  redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO, function (err, obj) {
-    const playersInfo = new Map(JSON.parse(obj));
-    try {
-      res.send(Object.fromEntries(playersInfo));
-    } catch (e) {
-      console.log(e);
-    }
-  });
+app.get(ENDPOINTS.OVERTIME_V2_PLAYERS_INFO, async (req, res) => {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO);
+  const playersInfo = new Map(JSON.parse(obj));
+  try {
+    res.send(Object.fromEntries(playersInfo));
+  } catch (e) {
+    console.log(e);
+  }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_PLAYER_INFO, (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_PLAYER_INFO, async (req, res) => {
   const playerId = req.params.playerId;
 
-  redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO, async function (err, obj) {
-    const playersInfo = new Map(JSON.parse(obj));
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO);
+  const playersInfo = new Map(JSON.parse(obj));
 
-    try {
-      const playerInfo = playersInfo.get(playerId);
-      return res.send(playerInfo);
-    } catch (e) {
-      console.log(e);
-    }
-  });
+  try {
+    const playerInfo = playersInfo.get(playerId);
+    return res.send(playerInfo);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORES, (req, res) => {
-  redisClient.get(KEYS.OVERTIME_V2_LIVE_SCORES, function (err, obj) {
-    const liveScores = new Map(JSON.parse(obj));
-    try {
-      res.send(Object.fromEntries(liveScores));
-    } catch (e) {
-      console.log(e);
-    }
-  });
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORES, async (req, res) => {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_SCORES);
+  const liveScores = new Map(JSON.parse(obj));
+  try {
+    res.send(Object.fromEntries(liveScores));
+  } catch (e) {
+    console.log(e);
+  }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORE, (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORE, async (req, res) => {
   const gameId = req.params.gameId;
 
-  redisClient.get(KEYS.OVERTIME_V2_LIVE_SCORES, async function (err, obj) {
-    const liveScores = new Map(JSON.parse(obj));
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_SCORES);
+  const liveScores = new Map(JSON.parse(obj));
 
-    try {
-      const liveScore = liveScores.get(gameId);
-      return res.send(liveScore);
-    } catch (e) {
-      console.log(e);
-    }
-  });
+  try {
+    const liveScore = liveScores.get(gameId);
+    return res.send(liveScore);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_USER_HISTORY, async (req, res) => {
@@ -1495,10 +1429,13 @@ app.get(ENDPOINTS.OVERTIME_V2_USER_HISTORY, async (req, res) => {
     return;
   }
 
-  const userHistory = await overtimeV2Users.processUserHistory(network, userAddress.toLowerCase());
-  const history = status ? userHistory[status.toLowerCase()] : userHistory;
-
-  return res.send(history);
+  try {
+    const userHistory = await overtimeV2Users.processUserHistory(network, userAddress.toLowerCase());
+    const history = status ? userHistory[status.toLowerCase()] : userHistory;
+    return res.send(history);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, async (req, res) => {
@@ -1552,11 +1489,15 @@ app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
     return;
   }
 
-  const quote = await overtimeV2Quotes.getAmmQuote(Number(network), tradeData, Number(buyInAmount), collateral);
-  res.send(quote);
+  try {
+    const quote = await overtimeV2Quotes.getAmmQuote(Number(network), tradeData, Number(buyInAmount), collateral);
+    res.send(quote);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
-app.put(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_WRITE, (req, res) => {
+app.put(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_WRITE, async (req, res) => {
   const requestId = req.body.requestId;
   const message = req.body.message;
   const allow = req.body.allow;
@@ -1564,43 +1505,38 @@ app.put(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_WRITE, (req, res) => 
   const apiKey = req.body.key;
 
   if (apiKey == process.env.LIVE_TRADING_MESSAGE_API_KEY) {
-    redisClient.get(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId], function (err, obj) {
-      const messagesMap = new Map(JSON.parse(obj));
-      messagesMap.set(requestId, { message: message, allow: allow });
-      redisClient.set(
-        KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId],
-        JSON.stringify([...messagesMap]),
-        function () {},
-      );
-      try {
-        res.send();
-      } catch (e) {
-        console.log(e);
-      }
-    });
+    const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId]);
+    const messagesMap = new Map(JSON.parse(obj));
+    messagesMap.set(requestId, { message: message, allow: allow });
+    await redisClient.set(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId], JSON.stringify([...messagesMap]));
+    try {
+      res.send();
+    } catch (e) {
+      console.log(e);
+    }
   } else {
     res.send("Wrong API key for writing live trading error message");
   }
 });
 
-app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ, (req, res) => {
+app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ, async (req, res) => {
   const requestId = req.params.requestId;
   const networkId = req.params.networkParam;
 
-  redisClient.get(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId], function (err, obj) {
-    const messagesMap = new Map(JSON.parse(obj));
-    const message = messagesMap.get(requestId);
-    try {
-      res.send(message);
-    } catch (e) {
-      console.log(e);
-    }
-  });
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId]);
+  const messagesMap = new Map(JSON.parse(obj));
+  const message = messagesMap.get(requestId);
+  try {
+    res.send(message);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ, async (req, res) => {
   const networkId = req.params.networkParam;
-  const errorsMap = await getLiveMarketsErrorsMap(networkId);
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId]);
+  const errorsMap = new Map(JSON.parse(obj));
 
   try {
     res.send(Object.fromEntries(errorsMap));
@@ -1619,9 +1555,3 @@ app.use("/v1/cache-control", cacheControlRoutes);
 initializeSportsAMMLPListener();
 initializeParlayAMMLPListener();
 initializeThalesAMMLPListener();
-
-// return random redis client fron array
-const choseRedisClient = (redisClients) => {
-  const index = Math.floor(Math.random() * redisClients.length);
-  return redisClients[index];
-};

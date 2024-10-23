@@ -3,6 +3,7 @@ const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 const MAX_SUPPLY = 100000000;
 const circulatingSupplyList = require("./assets/circulating-supply.json");
 const erc20Contract = require("./abi/erc20Contract.js");
+const { redisClient } = require("./redis/client");
 
 require("dotenv").config();
 const express = require("express");
@@ -16,13 +17,10 @@ app.listen(process.env.PORT || 3003, () => {
   console.log("Server running on port " + (process.env.PORT || 3003));
 });
 
-const redis = require("redis");
 const Web3 = require("web3");
 const Web3Client = new Web3(new Web3.providers.HttpProvider(process.env.INFURA_URL));
 
 const fetch = require("node-fetch");
-
-let redisClient = null;
 
 let tokenMap = new Map();
 
@@ -35,22 +33,16 @@ app.get("/", (_, res) => {
   res.sendStatus(200);
 });
 
-if (process.env.REDIS_URL) {
-  redisClient = redis.createClient(process.env.REDIS_URL);
-  console.log("create client from index");
-  redisClient.on("error", function (error) {
-    console.error(error);
-  });
-
-  redisClient.get("tokenMap", function (err, obj) {
-    const tokenMapRaw = obj;
+(async () => {
+  if (process.env.REDIS_URL) {
+    const tokenMapRaw = await redisClient.get("tokenMap");
     console.log("tokenMapRaw:" + tokenMapRaw);
     if (tokenMapRaw) {
       tokenMap = new Map(JSON.parse(tokenMapRaw));
       console.log("tokenMap:" + tokenMap);
     }
-  });
-}
+  }
+})();
 
 async function processToken() {
   try {
@@ -85,7 +77,7 @@ async function processToken() {
   }
 
   if (process.env.REDIS_URL) {
-    redisClient.set("tokenMap", JSON.stringify([...tokenMap]), function () {});
+    await redisClient.set("tokenMap", JSON.stringify([...tokenMap]));
   }
 }
 

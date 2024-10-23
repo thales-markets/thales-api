@@ -19,7 +19,7 @@ const {
 } = require("../utils/collaterals");
 const { bigNumberFormatter, ceilNumberToDecimals, bigNumberParser, getPrecision } = require("../utils/formatters");
 const KEYS = require("../../redis/redis-keys");
-const { formatBytes32String } = require("ethers/lib/utils");
+const { formatBytes32String, parseEther } = require("ethers/lib/utils");
 
 const MIN_COLLATERAL_MULTIPLIER = 1.01;
 
@@ -89,28 +89,22 @@ async function fetchTicketAmmQuote(
   }
 }
 
-function getCollateralRate(network, provider, collateral) {
-  // eslint-disable-next-line no-async-promise-executor
-  return new Promise(async function (resolve) {
-    if (
-      !collateral ||
-      (collateral.toUpperCase() !== "ETH" &&
-        collateral.toUpperCase() !== "WETH" &&
-        collateral.toUpperCase() !== "THALES")
-    ) {
-      resolve(1);
-    } else if (collateral.toUpperCase() === "ETH" || collateral.toUpperCase() === "WETH") {
-      const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
-      const ethRate = bigNumberFormatter(await priceFeed.rateForCurrency(formatBytes32String("ETH")));
-      resolve(ethRate);
-    } else {
-      redisClient.get(KEYS.TOKEN, async function (err, obj) {
-        const tokenMap = new Map(JSON.parse(obj));
-        const thalesRate = Number(tokenMap.get("price"));
-        resolve(thalesRate);
-      });
-    }
-  });
+async function getCollateralRate(network, provider, collateral) {
+  if (
+    !collateral ||
+    (collateral.toUpperCase() !== "ETH" && collateral.toUpperCase() !== "WETH" && collateral.toUpperCase() !== "THALES")
+  ) {
+    return 1;
+  } else if (collateral.toUpperCase() === "ETH" || collateral.toUpperCase() === "WETH") {
+    const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
+    const ethRate = bigNumberFormatter(await priceFeed.rateForCurrency(formatBytes32String("ETH")));
+    return ethRate;
+  } else {
+    const obj = await redisClient.get(KEYS.TOKEN);
+    const tokenMap = new Map(JSON.parse(obj));
+    const thalesRate = Number(tokenMap.get("price"));
+    return thalesRate;
+  }
 }
 
 async function getQuoteData(network, tradeData, buyInAmount, collateral, provider) {
@@ -301,7 +295,7 @@ async function getAmmQuote(network, tradeData, buyInAmount, collateral) {
   const mappedTradeData = tradeData.map((data) => ({
     ...data,
     line: data.line * 100,
-    odds: data.odds.map((odd) => bigNumberParser(odd.toString()).toString()),
+    odds: data.odds.map((odd) => parseEther(odd.toString()).toString()),
     combinedPositions: data.combinedPositions.map((combinedPositions) =>
       combinedPositions.map((combinedPosition) => ({
         ...combinedPosition,

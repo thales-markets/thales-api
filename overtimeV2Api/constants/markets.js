@@ -223,6 +223,9 @@ const MarketType = {
   PLAYER_PROPS_POINTS_ASSISTS: 11225,
   PLAYER_PROPS_POINTS_REBOUNDS: 11226,
   PLAYER_PROPS_POINTS_REBOUNDS_ASSISTS: 11227,
+  PLAYER_PROPS_REBOUNDS_ASSISTS: 11228,
+  PLAYER_PROPS_STEALS: 11229,
+  PLAYER_PROPS_STEALS_BLOCKS: 11230,
 
   // UFC market types
   WINNING_ROUND: 10151,
@@ -1317,6 +1320,24 @@ const MarketTypeMap = {
     name: "Points + Rebounds + Assists",
     resultType: ResultType.OVER_UNDER,
   },
+  [MarketType.PLAYER_PROPS_REBOUNDS_ASSISTS]: {
+    id: MarketType.PLAYER_PROPS_REBOUNDS_ASSISTS,
+    key: "reboundsAssists",
+    name: "Rebounds + Assists",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_STEALS]: {
+    id: MarketType.PLAYER_PROPS_STEALS,
+    key: "steals",
+    name: "Steals",
+    resultType: ResultType.OVER_UNDER,
+  },
+  [MarketType.PLAYER_PROPS_STEALS_BLOCKS]: {
+    id: MarketType.PLAYER_PROPS_STEALS_BLOCKS,
+    key: "stealsBlocks",
+    name: "Steals + Blocks",
+    resultType: ResultType.OVER_UNDER,
+  },
 
   // UFC market types
   [MarketType.WINNING_ROUND]: {
@@ -1520,6 +1541,9 @@ const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_POINTS_ASSISTS,
   MarketType.PLAYER_PROPS_POINTS_REBOUNDS,
   MarketType.PLAYER_PROPS_POINTS_REBOUNDS_ASSISTS,
+  MarketType.PLAYER_PROPS_REBOUNDS_ASSISTS,
+  MarketType.PLAYER_PROPS_STEALS,
+  MarketType.PLAYER_PROPS_STEALS_BLOCKS,
 ];
 
 const ONE_SIDE_PLAYER_PROPS_MARKET_TYPES = [

@@ -29,11 +29,6 @@ const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAY
 
 async function processGamesInfo() {
   if (process.env.REDIS_URL) {
-    console.log("Games info: create client from index");
-
-    redisClient.on("error", function (error) {
-      console.error(error);
-    });
     setTimeout(async () => {
       while (true) {
         try {
@@ -336,13 +331,10 @@ const procesOpticOdssGamesInfo = async (leagues, formattedDate, gamesInfoMap) =>
   }
 };
 
-function getGamesInfoMap() {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO, function (err, obj) {
-      const gamesInfoMap = new Map(JSON.parse(obj));
-      resolve(gamesInfoMap);
-    });
-  });
+async function getGamesInfoMap() {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO);
+  const gamesInfoMap = new Map(JSON.parse(obj));
+  return gamesInfoMap;
 }
 
 async function processAllGamesInfo() {
@@ -399,7 +391,7 @@ async function processAllGamesInfo() {
   });
 
   console.log(`Games info: Total number of games info: ${Array.from(gamesInfoMap.values()).length}`);
-  redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
+  redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]));
 }
 
 module.exports = {

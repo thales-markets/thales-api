@@ -51,11 +51,6 @@ async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
     const isTestnet = process.env.IS_TESTNET === "true";
     const network = isTestnet ? "testnet" : "mainnets";
-    console.log(`Live markets ${network}: create client from index`);
-
-    redisClient.on("error", function (error) {
-      console.error(error);
-    });
 
     const oddsStreamsInfoByLeagueMap = new Map();
     const oddsInitializedByLeagueMap = new Map();
@@ -495,13 +490,10 @@ async function processMarketsByLeague(
   return liveMarkets;
 }
 
-function getOpenMarkets(network) {
-  return new Promise(function (resolve) {
-    redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network], async function (err, obj) {
-      const openMarkets = new Map(JSON.parse(obj));
-      resolve(openMarkets);
-    });
-  });
+async function getOpenMarkets(network) {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
+  const openMarkets = new Map(JSON.parse(obj));
+  return openMarkets;
 }
 
 module.exports = {
