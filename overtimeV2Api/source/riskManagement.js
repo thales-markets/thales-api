@@ -38,17 +38,14 @@ const processAllRisks = async () => {
       spreadDataPromise,
     ]);
 
-    redisClient.mset(
-      [
-        KEYS.RISK_MANAGEMENT_TEAMS_MAP,
-        JSON.stringify(Array.from(teamsMap.entries())),
-        KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA,
-        JSON.stringify(bookmakersData),
-        KEYS.RISK_MANAGEMENT_SPREAD_DATA,
-        JSON.stringify(spreadData),
-      ],
-      () => {},
-    );
+    redisClient.mSet([
+      KEYS.RISK_MANAGEMENT_TEAMS_MAP,
+      JSON.stringify(Array.from(teamsMap.entries())),
+      KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA,
+      JSON.stringify(bookmakersData),
+      KEYS.RISK_MANAGEMENT_SPREAD_DATA,
+      JSON.stringify(spreadData),
+    ]);
   } catch (e) {
     console.log(`Risk management: Fetching from Github config data error: ${e.message}`);
   }

@@ -1,4 +1,4 @@
-const { redisClient, getValuesFromRedisAsync } = require("../../redis/client");
+const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
 const { delay } = require("../utils/general");
@@ -19,6 +19,8 @@ const {
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {
+    let isOpticOddsResultsInitialized = false;
+
     setTimeout(async () => {
       while (true) {
         try {
@@ -126,7 +128,8 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
       const redisKeysForStreamResults = opticOddsFixtureIds.map((fixtureId) =>
         getRedisKeyForOpticOddsStreamEventResults(fixtureId),
       );
-      const opticOddsStreamResults = await getValuesFromRedisAsync(redisKeysForStreamResults);
+      const objArray = await redisClient.mGet(redisKeysForStreamResults);
+      const opticOddsStreamResults = objArray.filter((obj) => obj !== null).map((obj) => JSON.parse(obj));
       liveResults = mapOpticOddsStreamResults(opticOddsStreamResults);
     } else {
       // Fetch from API
@@ -162,7 +165,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
   }
 
   console.log(`Lives scores: Number of lives scores: ${Array.from(liveScoresMap.values()).length}`);
-  await redisClient.set(KEYS.OVERTIME_V2_LIVE_SCORES, JSON.stringify([...liveScoresMap]));
+  redisClient.set(KEYS.OVERTIME_V2_LIVE_SCORES, JSON.stringify([...liveScoresMap]));
 }
 
 module.exports = {

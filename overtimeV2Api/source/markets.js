@@ -242,7 +242,7 @@ async function processAllMarkets(markets, network) {
     }
   });
 
-  await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[network], JSON.stringify([...openMarketsMap]));
+  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[network], JSON.stringify([...openMarketsMap]));
 }
 
 async function updateMerkleTree(gameIds) {
@@ -274,9 +274,9 @@ async function updateMerkleTree(gameIds) {
     }
   }
 
-  await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify([...opOpenMarketsMap]));
-  await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum], JSON.stringify([...arbOpenMarketsMap]));
-  // await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Base], JSON.stringify([...baseOpenMarketsMap]));
+  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify([...opOpenMarketsMap]));
+  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum], JSON.stringify([...arbOpenMarketsMap]));
+  // redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Base], JSON.stringify([...baseOpenMarketsMap]));
 
   const endTime = new Date().getTime();
   console.log(`Markets mainnets: Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);

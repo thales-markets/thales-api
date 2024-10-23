@@ -363,7 +363,7 @@ async function processAllGamesInfo() {
     console.log(
       `Games info: Number of games info for date ${formattedDate}: ${Array.from(gamesInfoMap.values()).length}`,
     );
-    redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]), function () {});
+    redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]));
   }
 
   // TODO hardcode US Election 2024

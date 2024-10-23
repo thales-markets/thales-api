@@ -1,6 +1,6 @@
 require("dotenv").config();
 const { delay } = require("../utils/general");
-const { redisClient, getValuesFromRedisAsync, getValueFromRedisAsync } = require("../../redis/client");
+const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 const dummyMarketsLive = require("../utils/dummy/dummyMarketsLive.json");
 const { NETWORK } = require("../constants/networks");
@@ -101,7 +101,8 @@ async function processAllMarkets(
   // Get supported live leagues
   const supportedLiveLeagueIds = getLiveSupportedLeagues(isTestnet);
   // Read open markets only from one network as markets are the same on all networks
-  const openMarketsMap = await getOpenMarkets(SUPPORTED_NETWORKS[0]);
+  const openMarkets = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[SUPPORTED_NETWORKS[0]]);
+  const openMarketsMap = new Map(JSON.parse(openMarkets));
 
   const supportedLiveMarkets = Array.from(openMarketsMap.values())
     .filter((market) => market.statusCode === "ongoing" && !market.isWholeGameResolved && !market.noTickets)
@@ -136,7 +137,7 @@ async function processAllMarkets(
   const liveMarkets = processedMarketsResponses.flat();
 
   SUPPORTED_NETWORKS.forEach((network) =>
-    redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets), function () {}),
+    redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets)),
   );
 }
 
@@ -218,9 +219,12 @@ async function processMarketsByLeague(
       const redisStreamGameKeys = opticOddsGameEvents.map((opticOddsGameEvent) =>
         getRedisKeyForOpticOddsStreamEventOddsId(opticOddsGameEvent.id),
       );
-      const redisStreamOddsKeys = (await getValuesFromRedisAsync(redisStreamGameKeys)).flat();
+      const redisStreamOddsKeys = (await redisClient.mGet(redisStreamGameKeys))
+        .filter((obj) => obj !== null)
+        .map((obj) => JSON.parse(obj))
+        .flat();
 
-      if (isOpticOddsStreamOddsDisabled || !isOddsInitialized) {
+      if (!isOddsInitialized) {
         // Initially fetch game odds from Optic Odds API for given markets
         const betTypes = getBetTypesForLeague(leagueId, isTestnet);
         const fixtureIds = ongoingMarketsByOpticOddsGames.map((market) => market.opticOddsGameEvent.fixture_id);
@@ -228,19 +232,19 @@ async function processMarketsByLeague(
         const oddsFromApi = await fetchOpticOddsFixtureOdds(bookmakers, betTypes, fixtureIds);
         oddsPerGame = mapOpticOddsApiFixtureOdds(oddsFromApi);
 
-        if (oddsPerGame.length > 0) {
-          redisClient.set(getRedisKeyForOpticOddsApiOdds(leagueId), JSON.stringify(oddsPerGame));
+        if (!isOpticOddsStreamOddsDisabled && oddsPerGame.length > 0) {
+          await redisClient.set(getRedisKeyForOpticOddsApiOdds(leagueId), JSON.stringify(oddsPerGame));
           oddsInitializedByLeagueMap.set(leagueId, true);
 
           // clean up old odds from stream
-          const cleanUpArray = redisStreamOddsKeys.flatMap((value) => [value, null]);
-          redisClient.mset(cleanUpArray, () => {});
+          const cleanUpArray = redisStreamOddsKeys.flatMap((value) => [value, ""]);
+          await redisClient.mSet(cleanUpArray);
         }
       } else {
         // Update odds using stream
 
         // get previous odds
-        const previousOddsPerGame = await getValueFromRedisAsync(getRedisKeyForOpticOddsApiOdds(leagueId));
+        const previousOddsPerGame = JSON.parse(await redisClient.get(getRedisKeyForOpticOddsApiOdds(leagueId))) || [];
         // filter odds only for matched live games
         const previousLiveOddsPerGame = previousOddsPerGame.filter((game) =>
           ongoingMarketsByOpticOddsGames.some((market) => market.opticOddsGameEvent.id === game.id),
@@ -248,7 +252,11 @@ async function processMarketsByLeague(
 
         // Read odds received from stream
         const oddsStreamEvents =
-          redisStreamOddsKeys.length > 0 ? await getValuesFromRedisAsync(redisStreamOddsKeys) : [];
+          redisStreamOddsKeys.length > 0
+            ? (await redisClient.mGet(redisStreamOddsKeys))
+                .filter((obj) => obj !== null && obj !== "")
+                .map((obj) => JSON.parse(obj))
+            : [];
 
         // Remove locked odds
         const lockedEventOddsIds = oddsStreamEvents
@@ -264,7 +272,7 @@ async function processMarketsByLeague(
 
         oddsPerGame = mapOddsStreamEvents(oddsStreamActiveEvents, previousLiveActiveOddsPerGame, opticOddsGameEvents);
 
-        redisClient.set(getRedisKeyForOpticOddsApiOdds(leagueId), JSON.stringify(oddsPerGame));
+        await redisClient.set(getRedisKeyForOpticOddsApiOdds(leagueId), JSON.stringify(oddsPerGame));
       }
 
       oddsPerGame = filterStaleOdds(oddsPerGame);
@@ -281,22 +289,23 @@ async function processMarketsByLeague(
       let scoresPerGame = [];
       const isScoresInitialized = !!scoresInitializedByLeagueMap.get(leagueId);
 
-      if (isOpticOddsStreamResultsDisabled || !isScoresInitialized) {
+      if (!isScoresInitialized) {
         // Initially fetch game scores from Optic Odds API for given markets
         const fixtureIds = ongoingMarketsByOpticOddsOdds.map((market) => market.opticOddsGameOdds.fixture_id);
 
         const scoresFromApi = await fetchOpticOddsResults(fixtureIds);
 
         scoresPerGame = mapOpticOddsApiResults(scoresFromApi);
-        if (scoresPerGame.length > 0) {
-          redisClient.set(getRedisKeyForOpticOddsApiScores(leagueId), JSON.stringify(scoresPerGame));
+        if (!isOpticOddsStreamResultsDisabled && scoresPerGame.length > 0) {
+          await redisClient.set(getRedisKeyForOpticOddsApiScores(leagueId), JSON.stringify(scoresPerGame));
           scoresInitializedByLeagueMap.set(leagueId, true);
         }
       } else {
         // Update scores using stream
 
         // get previous scores
-        const previousScoresPerGame = await getValueFromRedisAsync(getRedisKeyForOpticOddsApiScores(leagueId));
+        const previousScoresPerGame =
+          JSON.parse(await redisClient.get(getRedisKeyForOpticOddsApiScores(leagueId))) || [];
         // filter scores only for matched game odds
         const previousLiveScoresPerGame = previousScoresPerGame.filter((game) =>
           ongoingMarketsByOpticOddsOdds.some((market) => market.opticOddsGameOdds.id === game.game_id),
@@ -307,11 +316,15 @@ async function processMarketsByLeague(
           getRedisKeyForOpticOddsStreamEventResults(market.opticOddsGameEvent.fixture_id),
         );
         const scoresStreamEvents =
-          redisStreamScoresKeys.length > 0 ? await getValuesFromRedisAsync(redisStreamScoresKeys) : [];
+          redisStreamScoresKeys.length > 0
+            ? (await redisClient.mGet(redisStreamScoresKeys))
+                .filter((obj) => obj !== null)
+                .map((obj) => JSON.parse(obj))
+            : [];
 
         scoresPerGame = mapResultsStreamEvents(scoresStreamEvents, previousLiveScoresPerGame);
 
-        redisClient.set(getRedisKeyForOpticOddsApiScores(leagueId), JSON.stringify(scoresPerGame));
+        await redisClient.set(getRedisKeyForOpticOddsApiScores(leagueId), JSON.stringify(scoresPerGame));
       }
 
       // Add Optic Odds game scores data and filter it
@@ -488,12 +501,6 @@ async function processMarketsByLeague(
   }
 
   return liveMarkets;
-}
-
-async function getOpenMarkets(network) {
-  const obj = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
-  const openMarkets = new Map(JSON.parse(obj));
-  return openMarkets;
 }
 
 module.exports = {

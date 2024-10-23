@@ -119,7 +119,7 @@ async function processAllPlayersInfo() {
   }
 
   console.log(`Players info: Number of players info: ${Array.from(playersInfoMap.values()).length}`);
-  await redisClient.set(KEYS.OVERTIME_V2_PLAYERS_INFO, JSON.stringify([...playersInfoMap]));
+  redisClient.set(KEYS.OVERTIME_V2_PLAYERS_INFO, JSON.stringify([...playersInfoMap]));
 }
 
 module.exports = {

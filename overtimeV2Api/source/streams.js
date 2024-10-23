@@ -1,6 +1,4 @@
-const { redisClient, getValueFromRedisAsync } = require("../../redis/client");
-require("dotenv").config();
-
+const { redisClient } = require("../../redis/client");
 const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
 const { NETWORK } = require("../constants/networks");
@@ -11,16 +9,13 @@ const {
   closeInactiveResultsStreams,
   isOpticOddsStreamResultsDisabled,
 } = require("../utils/opticOddsResults");
+require("dotenv").config();
 
 async function processOpticOddsResults() {
   if (process.env.REDIS_URL) {
     const isTestnet = process.env.IS_TESTNET === "true";
     const network = isTestnet ? "testnet" : "mainnets";
     console.log(`Stream results ${network}: create client from index`);
-
-    redisClient.on("error", function (error) {
-      console.error(error);
-    });
 
     const resultsStreamSourcesByLeagueMap = new Map();
 
@@ -52,8 +47,8 @@ const processAllLiveResults = async (resultsStreamSourcesByLeagueMap, isTestnet)
   const supportedLiveLeagueIds = getLiveSupportedLeagues(isTestnet);
 
   // Read open markets only from one network as markets are the same on all networks
-  const openMarkets = await getValueFromRedisAsync(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism]);
-  const openMarketsMap = new Map(openMarkets);
+  const openMarkets = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism]);
+  const openMarketsMap = new Map(JSON.parse(openMarkets));
 
   const supportedLiveMarkets = Array.from(openMarketsMap.values())
     .filter((market) => market.statusCode === "ongoing" && !market.isWholeGameResolved && !market.noTickets)

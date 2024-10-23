@@ -1,5 +1,5 @@
 const { OPTIC_ODDS_API_TIMEOUT } = require("../constants/opticOdds");
-const { redisClient, getValuesFromRedisAsync, getValueFromRedisAsync } = require("../../redis/client");
+const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 const { getLeagueOpticOddsName, MoneylineTypes } = require("overtime-live-trading-utils");
 const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
@@ -10,14 +10,15 @@ const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS
 const getRedisKeyForOpticOddsApiScores = (leagueId) => `${KEYS.OPTIC_ODDS_API_SCORES_BY_LEAGUE}${leagueId}`;
 
 const fetchRiskManagementConfig = async () => {
-  const [teams, bookmakersData, spreadData] = await getValuesFromRedisAsync(
-    [KEYS.RISK_MANAGEMENT_TEAMS_MAP, KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA, KEYS.RISK_MANAGEMENT_SPREAD_DATA],
-    false,
-  );
+  const [teams, bookmakersData, spreadData] = await redisClient.mGet([
+    KEYS.RISK_MANAGEMENT_TEAMS_MAP,
+    KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA,
+    KEYS.RISK_MANAGEMENT_SPREAD_DATA,
+  ]);
 
-  const teamsMap = new Map(teams);
+  const teamsMap = new Map(JSON.parse(teams));
 
-  return { teamsMap, bookmakersData, spreadData };
+  return { teamsMap, bookmakersData: JSON.parse(bookmakersData), spreadData: JSON.parse(spreadData) };
 };
 
 const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
@@ -39,7 +40,7 @@ const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
       }
     } else {
       // read previous games from cache
-      opticOddsGames = (await getValueFromRedisAsync(getRedisKeyForOpticOddsApiGames(leagueId))) || [];
+      opticOddsGames = JSON.parse(await redisClient.get(getRedisKeyForOpticOddsApiGames(leagueId))) || [];
     }
   }
 

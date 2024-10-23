@@ -119,7 +119,7 @@ app.post(ENDPOINTS.GAME_STARTED, async (req, res) => {
     gameFinishersMap.set(walletAddress, { ...userObject, startedTime: Date.now() });
   }
 
-  await redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]));
+  redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]));
   res.send();
 });
 
@@ -138,7 +138,7 @@ app.post(ENDPOINTS.GAME_ENDED, async (req, res) => {
     });
   }
 
-  await redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]));
+  redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]));
   res.send();
 });
 
@@ -247,7 +247,7 @@ app.post(ENDPOINTS.UPDATE_REFFERER_ID, async (req, res) => {
     userReffererIDsMap.set(reffererID, walletAddress);
   }
 
-  await redisClient.set(KEYS.USER_REFFERER_IDS, JSON.stringify([...userReffererIDsMap]));
+  redisClient.set(KEYS.USER_REFFERER_IDS, JSON.stringify([...userReffererIDsMap]));
   res.send(JSON.stringify({ error: false }));
 });
 
@@ -288,7 +288,7 @@ app.post(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, async (req, res) => {
     solanaAddressesMap.set(smartAccountAddress ?? walletAddress, solanaAddress);
   }
 
-  await redisClient.set(KEYS.SOLANA_ADDRESSES, JSON.stringify([...solanaAddressesMap]));
+  redisClient.set(KEYS.SOLANA_ADDRESSES, JSON.stringify([...solanaAddressesMap]));
   res.send(JSON.stringify({ error: false }));
 });
 
@@ -1508,7 +1508,7 @@ app.put(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_WRITE, async (req, re
     const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId]);
     const messagesMap = new Map(JSON.parse(obj));
     messagesMap.set(requestId, { message: message, allow: allow });
-    await redisClient.set(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId], JSON.stringify([...messagesMap]));
+    redisClient.set(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId], JSON.stringify([...messagesMap]));
     try {
       res.send();
     } catch (e) {

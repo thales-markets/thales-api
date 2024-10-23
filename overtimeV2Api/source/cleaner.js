@@ -65,7 +65,7 @@ async function cleanMarkets(network) {
   });
   console.log(`Cleaner: number of closed markets deleted ${network}: ${numberOfMarketsForClean}`);
 
-  await redisClient.set(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], JSON.stringify([...closedMarketsMap]));
+  redisClient.set(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], JSON.stringify([...closedMarketsMap]));
 }
 
 async function cleanGamesInfo() {
@@ -95,7 +95,7 @@ async function cleanGamesInfo() {
   });
   console.log(`Cleaner: number of games info without tickets deleted: ${numberOfGamesInfoForClean}`);
 
-  await redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]));
+  redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]));
 }
 
 async function cleanLiveScores() {
@@ -114,7 +114,7 @@ async function cleanLiveScores() {
   });
   console.log(`Cleaner: number of live scores deleted: ${numberOfLiveScoresForClean}`);
 
-  await redisClient.set(KEYS.OVERTIME_V2_LIVE_SCORES, JSON.stringify([...liveScoresMap]));
+  redisClient.set(KEYS.OVERTIME_V2_LIVE_SCORES, JSON.stringify([...liveScoresMap]));
 }
 
 module.exports = {
