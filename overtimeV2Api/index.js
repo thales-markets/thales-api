@@ -1,3 +1,4 @@
+const { initServices } = require("./services/init");
 const markets = require("./source/markets");
 const liveMarkets = require("./source/liveMarkets");
 const gamesInfo = require("./source/gamesInfo");
@@ -10,12 +11,18 @@ const streams = require("./source/streams");
 
 require("dotenv").config();
 
-markets.processMarkets();
-liveMarkets.processLiveMarkets();
-gamesInfo.processGamesInfo();
-playersInfo.processPlayersInfo();
-resolver.processResolve();
-liveScores.processLiveScores();
-cleaner.processClean();
-riskManagement.processRiskManagement();
-streams.processOpticOddsResults();
+const app = async () => {
+  await initServices();
+
+  markets.processMarkets();
+  liveMarkets.processLiveMarkets();
+  gamesInfo.processGamesInfo();
+  playersInfo.processPlayersInfo();
+  resolver.processResolve();
+  liveScores.processLiveScores();
+  cleaner.processClean();
+  riskManagement.processRiskManagement();
+  streams.processOpticOddsResults();
+};
+
+app();

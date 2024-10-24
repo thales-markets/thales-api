@@ -1551,6 +1551,7 @@ app.use("/v1/digital-options", digitalOptionsRoutes);
 app.use("/v1/sport-markets", sportMarketsRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
 
+// TODO: move to services/init 
 // Contract listeners
 initializeSportsAMMLPListener();
 initializeParlayAMMLPListener();

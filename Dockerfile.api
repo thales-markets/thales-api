@@ -21,4 +21,4 @@ COPY . .
 EXPOSE 3002
 
 # Start the application
-CMD [ "node", "index.js" ]
+CMD [ "node", "api/index.js" ]

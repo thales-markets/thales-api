@@ -1,8 +1,8 @@
 const EventSource = require("eventsource");
 const { OPTIC_ODDS_API_BASE_URL_V3 } = require("../constants/opticOdds");
-const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 const { uniq } = require("lodash");
+const { redisClientForStreamOdds, redisClientForStreamResults } = require("../services/init");
 
 const getRedisKeyForOpticOddsStreamEventOddsId = (gameId) => `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME}${gameId}`;
 const getRedisKeyForOpticOddsStreamEventResults = (fixtureId) =>
@@ -57,7 +57,7 @@ const connectToOpticOddsStreamOdds = (
       const redisOddsKey = oddsData.id;
       currentRedisKeysForGameEvent.push(redisOddsKey);
 
-      redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
+      redisClientForStreamOdds.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
     });
 
     /*
@@ -71,7 +71,7 @@ const connectToOpticOddsStreamOdds = (
 
     const redisGameKey = getRedisKeyForOpticOddsStreamEventOddsId(gameId);
 
-    redisClient.set(redisGameKey, JSON.stringify(updatedRedisKeysForOdds), { EX: 60 * 60 * 12 }); // delete after 12h
+    redisClientForStreamOdds.set(redisGameKey, JSON.stringify(updatedRedisKeysForOdds), { EX: 60 * 60 * 12 }); // delete after 12h
   });
 
   // If an odds gets locked. You can use this to tell if an odds are no longer available on a sportsbook.
@@ -90,7 +90,7 @@ const connectToOpticOddsStreamOdds = (
       const redisOddsKey = oddsData.id;
       currentRedisKeysForGameEvent.push(redisOddsKey);
 
-      redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
+      redisClientForStreamOdds.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
     });
 
     const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
@@ -148,7 +148,7 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
     // Save each object from event data to redis with key: Fixture ID (e.g. opticOddsStreamEventResultsByFixtureId2E4AB315ABD9)
     const redisGameKey = getRedisKeyForOpticOddsStreamEventResults(resultsData.fixture_id);
 
-    redisClient.set(redisGameKey, JSON.stringify(resultsData), { EX: 60 * 60 * 12 }); // delete after 12h TODO: check if longer needed
+    redisClientForStreamResults.set(redisGameKey, JSON.stringify(resultsData), { EX: 60 * 60 * 12 }); // delete after 12h TODO: check if longer needed
   });
 
   eventSource.onerror = (event) => {
