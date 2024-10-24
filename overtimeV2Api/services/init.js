@@ -9,8 +9,11 @@ const initServices = async () => {
   redisClientForStreamResults = await createRedisClient();
 };
 
+const getRedisClientForStreamOdds = () => redisClientForStreamOdds;
+const getRedisClientForStreamResults = () => redisClientForStreamResults;
+
 module.exports = {
   initServices,
-  redisClientForStreamOdds,
-  redisClientForStreamResults,
+  getRedisClientForStreamOdds,
+  getRedisClientForStreamResults,
 };

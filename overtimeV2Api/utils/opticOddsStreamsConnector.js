@@ -2,7 +2,7 @@ const EventSource = require("eventsource");
 const { OPTIC_ODDS_API_BASE_URL_V3 } = require("../constants/opticOdds");
 const KEYS = require("../../redis/redis-keys");
 const { uniq } = require("lodash");
-const { redisClientForStreamOdds, redisClientForStreamResults } = require("../services/init");
+const { getRedisClientForStreamOdds, getRedisClientForStreamResults } = require("../services/init");
 
 const getRedisKeyForOpticOddsStreamEventOddsId = (gameId) => `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME}${gameId}`;
 const getRedisKeyForOpticOddsStreamEventResults = (fixtureId) =>
@@ -28,6 +28,8 @@ const connectToOpticOddsStreamOdds = (
   const url = `${OPTIC_ODDS_API_BASE_URL_V3}/stream/${sport}/odds?${queryString.toString()}`;
   console.log(`Stream for odds: Connecting to stream ${url}`);
   const eventSource = new EventSource(url);
+
+  const redisClient = getRedisClientForStreamOdds();
 
   eventSource.onmessage = (event) => {
     try {
@@ -57,7 +59,7 @@ const connectToOpticOddsStreamOdds = (
       const redisOddsKey = oddsData.id;
       currentRedisKeysForGameEvent.push(redisOddsKey);
 
-      redisClientForStreamOdds.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
+      redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
     });
 
     /*
@@ -71,7 +73,7 @@ const connectToOpticOddsStreamOdds = (
 
     const redisGameKey = getRedisKeyForOpticOddsStreamEventOddsId(gameId);
 
-    redisClientForStreamOdds.set(redisGameKey, JSON.stringify(updatedRedisKeysForOdds), { EX: 60 * 60 * 12 }); // delete after 12h
+    redisClient.set(redisGameKey, JSON.stringify(updatedRedisKeysForOdds), { EX: 60 * 60 * 12 }); // delete after 12h
   });
 
   // If an odds gets locked. You can use this to tell if an odds are no longer available on a sportsbook.
@@ -90,7 +92,7 @@ const connectToOpticOddsStreamOdds = (
       const redisOddsKey = oddsData.id;
       currentRedisKeysForGameEvent.push(redisOddsKey);
 
-      redisClientForStreamOdds.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
+      redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
     });
 
     const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
@@ -130,6 +132,8 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
   console.log(`Stream for results: Connecting to stream ${url}`);
   const eventSource = new EventSource(url);
 
+  const redisClient = getRedisClientForStreamResults();
+
   eventSource.onmessage = (event) => {
     try {
       // TODO: check when this happens
@@ -148,7 +152,7 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
     // Save each object from event data to redis with key: Fixture ID (e.g. opticOddsStreamEventResultsByFixtureId2E4AB315ABD9)
     const redisGameKey = getRedisKeyForOpticOddsStreamEventResults(resultsData.fixture_id);
 
-    redisClientForStreamResults.set(redisGameKey, JSON.stringify(resultsData), { EX: 60 * 60 * 12 }); // delete after 12h TODO: check if longer needed
+    redisClient.set(redisGameKey, JSON.stringify(resultsData), { EX: 60 * 60 * 12 }); // delete after 12h TODO: check if longer needed
   });
 
   eventSource.onerror = (event) => {

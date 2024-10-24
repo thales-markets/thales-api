@@ -56,11 +56,6 @@ const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
 const { LeagueMap } = require("overtime-live-trading-utils");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
-const {
-  initializeSportsAMMLPListener,
-  initializeParlayAMMLPListener,
-  initializeThalesAMMLPListener,
-} = require("./services/contractEventListener");
 const { SUPPORTED_NETWORKS } = require("./constants/networks");
 const {
   getCachedOpenMarketsByNetworkMap,

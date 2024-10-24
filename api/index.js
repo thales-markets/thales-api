@@ -1,13 +1,12 @@
 const { initServices } = require("./services/init");
 
 const app = async () => {
-  console.log("Initialize sevrices...");
+  console.log("Initialize services...");
   await initServices();
   console.log("Initialized!");
 
-  console.log("Import controller...");
+  console.log("Starting controller...");
   require("./controller");
-  console.log("Imported!");
 };
 
 app();

@@ -1,5 +1,5 @@
 const { redisClient } = require("../../redis/client");
-const KEYS = require("./redis-keys");
+const KEYS = require("../../redis/redis-keys");
 require("dotenv").config();
 
 let gameFinishersMap = new Map();

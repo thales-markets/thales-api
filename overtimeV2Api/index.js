@@ -12,7 +12,9 @@ const streams = require("./source/streams");
 require("dotenv").config();
 
 const app = async () => {
+  console.log("Initialize services...");
   await initServices();
+  console.log("Initialized!");
 
   markets.processMarkets();
   liveMarkets.processLiveMarkets();
