@@ -25,9 +25,13 @@ const loadData = async () => {
   }
 };
 
+const getGameFinishersMap = () => gameFinishersMap;
+const getUserReffererIDsMap = () => userReffererIDsMap;
+const getSolanaAddressesMap = () => solanaAddressesMap;
+
 module.exports = {
-  gameFinishersMap,
-  userReffererIDsMap,
-  solanaAddressesMap,
   loadData,
+  getGameFinishersMap,
+  getUserReffererIDsMap,
+  getSolanaAddressesMap,
 };

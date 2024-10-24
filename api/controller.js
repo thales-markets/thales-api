@@ -61,6 +61,7 @@ const {
   getCachedOpenMarketsByNetworkMap,
   getCachedClosedMarketsByNetworkMap,
 } = require("./services/overtimeMarketsCache");
+const { getGameFinishersMap, getUserReffererIDsMap, getSolanaAddressesMap } = require("./services/loadData");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -106,6 +107,7 @@ app.get(ENDPOINTS.TOKEN_CAP, async (req, res) => {
 
 app.post(ENDPOINTS.GAME_STARTED, async (req, res) => {
   const walletAddress = req.body.walletAddress;
+  const gameFinishersMap = getGameFinishersMap();
   const gameStartedCount = gameFinishersMap.get("gameStartedCount") || 0;
   gameFinishersMap.set("gameStartedCount", gameStartedCount + 1);
 
@@ -120,6 +122,7 @@ app.post(ENDPOINTS.GAME_STARTED, async (req, res) => {
 
 app.post(ENDPOINTS.GAME_ENDED, async (req, res) => {
   const walletAddress = req.body.walletAddress;
+  const gameFinishersMap = getGameFinishersMap();
   const gameFinishedCount = gameFinishersMap.get("gameFinishedCount") || 0;
   gameFinishersMap.set("gameFinishedCount", gameFinishedCount + 1);
 
@@ -138,6 +141,7 @@ app.post(ENDPOINTS.GAME_ENDED, async (req, res) => {
 });
 
 app.get(ENDPOINTS.GAME_FINISHERS, (req, res) => {
+  const gameFinishersMap = getGameFinishersMap();
   res.send(Array.from(gameFinishersMap));
 });
 
@@ -219,6 +223,7 @@ app.post(ENDPOINTS.UPDATE_REFFERER_ID, async (req, res) => {
   const reffererID = req.body.reffererID;
   const previousReffererID = req.body.previousReffererID;
 
+  const userReffererIDsMap = getUserReffererIDsMap();
   const existingID = userReffererIDsMap.get(reffererID);
 
   if (existingID) {
@@ -248,6 +253,7 @@ app.post(ENDPOINTS.UPDATE_REFFERER_ID, async (req, res) => {
 
 app.get(ENDPOINTS.GET_REFFERER_ID_ADDRESS, (req, res) => {
   const reffererID = req.params.reffererID;
+  const userReffererIDsMap = getUserReffererIDsMap();
   const IDAddress = userReffererIDsMap.get(reffererID);
   if (reffererID && IDAddress) {
     res.setHeader("content-type", "application/json");
@@ -259,6 +265,7 @@ app.get(ENDPOINTS.GET_REFFERER_ID_ADDRESS, (req, res) => {
 
 app.get(ENDPOINTS.GET_ADDRESS_REFFERER_ID, (req, res) => {
   const walletAddress = req.params.walletAddress;
+  const userReffererIDsMap = getUserReffererIDsMap();
   const reffererID = [...userReffererIDsMap].find(([, val]) => val == walletAddress);
   if (reffererID && walletAddress) {
     res.setHeader("content-type", "application/json");
@@ -279,6 +286,7 @@ app.post(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, async (req, res) => {
     sig: signature,
   });
 
+  const solanaAddressesMap = getSolanaAddressesMap();
   if (walletAddress && solanaAddress && recovered.toLowerCase() === walletAddress.toLowerCase()) {
     solanaAddressesMap.set(smartAccountAddress ?? walletAddress, solanaAddress);
   }
@@ -289,6 +297,7 @@ app.post(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, async (req, res) => {
 
 app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS_FOR_ADDRESS, (req, res) => {
   const walletAddress = req.params.walletAddress;
+  const solanaAddressesMap = getSolanaAddressesMap();
   const solanaAddress = solanaAddressesMap.get(walletAddress);
   if (walletAddress) {
     res.setHeader("content-type", "application/json");
@@ -300,6 +309,7 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS_FOR_ADDRESS, (req, res) =>
 
 app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, (req, res) => {
   res.setHeader("content-type", "application/json");
+  const solanaAddressesMap = getSolanaAddressesMap();
   res.send(Array.from(solanaAddressesMap));
 });
 
@@ -311,6 +321,7 @@ app.get(ENDPOINTS.ENETPULSE_RESULT, (req, res) => {
 });
 
 app.get(ENDPOINTS.GET_REFFERER_MAP, (req, res) => {
+  const userReffererIDsMap = getUserReffererIDsMap();
   res.send(Object.fromEntries(userReffererIDsMap));
 });
 
@@ -1119,6 +1130,7 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
+  const startTime = new Date().getTime();
   const network = req.params.networkParam;
   let status = req.query.status;
   const typeId = req.query.typeId;
@@ -1183,10 +1195,15 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     return;
   }
 
+  const beforeRead = new Date().getTime();
+  console.log(beforeRead - startTime);
   const isClosedMarkets = status === "resolved" || status === "cancelled";
   const markets = isClosedMarkets
     ? getCachedClosedMarketsByNetworkMap(network)
     : getCachedOpenMarketsByNetworkMap(network);
+
+  const afterRead = new Date().getTime();
+  console.log(afterRead - beforeRead);
 
   try {
     const allMarkets = Array.from(markets.values());
@@ -1211,6 +1228,8 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     );
 
     if (ungroup && ungroup.toLowerCase() === "true") {
+      const responseTime = new Date().getTime();
+      console.log(responseTime - afterRead);
       res.send(filteredMarkets);
       return;
     }
@@ -1545,9 +1564,3 @@ app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/digital-options", digitalOptionsRoutes);
 app.use("/v1/sport-markets", sportMarketsRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
-
-// TODO: move to services/init 
-// Contract listeners
-initializeSportsAMMLPListener();
-initializeParlayAMMLPListener();
-initializeThalesAMMLPListener();
