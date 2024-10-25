@@ -4,7 +4,8 @@ const KEYS = require("../../redis/redis-keys");
 const { uniq } = require("lodash");
 const { getRedisClientForStreamOdds, getRedisClientForStreamResults } = require("../services/init");
 
-const getRedisKeyForOpticOddsStreamEventOddsId = (gameId) => `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME}${gameId}`;
+const getRedisKeyForOpticOddsStreamEventOddsId = (fixtureId) =>
+  `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_FIXTURE}${fixtureId}`;
 const getRedisKeyForOpticOddsStreamEventResults = (fixtureId) =>
   `${KEYS.OPTIC_ODDS_STREAM_EVENT_RESULTS_BY_FIXTURE}${fixtureId}`;
 
@@ -42,7 +43,7 @@ const connectToOpticOddsStreamOdds = (
   };
 
   let lastReceivedEntryId = lastEntryId;
-  let allRedisKeysByGameIdMap = lastRedisKeysMap;
+  let allRedisKeysByFixtureIdMap = lastRedisKeysMap;
 
   eventSource.addEventListener("odds", (event) => {
     const data = JSON.parse(event.data);
@@ -51,27 +52,27 @@ const connectToOpticOddsStreamOdds = (
 
     const oddsDataArray = data.data;
     const currentRedisKeysForGameEvent = [];
-    const gameId = oddsDataArray[0].game_id; // event contains only data for one game ID
 
     // Save each object from event data array to redis with key: Game ID + Sportsbook + Market (Bet Type) + Bet Name
-    // e.g. 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5
+    // e.g. event id: 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5
     oddsDataArray.forEach((oddsData) => {
-      const redisOddsKey = oddsData.id;
+      const redisOddsKey = oddsData.id; // this is Optic Odds ID: 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5
       currentRedisKeysForGameEvent.push(redisOddsKey);
 
       redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
     });
 
     /*
-     * Maintain redis key by game ID which containes list of redis line odds keys per game, e.g:
-     * key = opticOddsStreamEventOddsIdByGameId31209-39104-2024-40
+     * Maintain redis key by fixture ID which containes list of redis line odds keys per game, e.g:
+     * key = opticOddsStreamEventOddsIdByFixtureId32C781DB02F8
      * value = [31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5, 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+1_5]
      */
-    const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
+    const fixtureId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
+    const prevRedisKeysForOdds = allRedisKeysByFixtureIdMap.get(fixtureId) || [];
     const updatedRedisKeysForOdds = uniq([...prevRedisKeysForOdds, ...currentRedisKeysForGameEvent]);
-    allRedisKeysByGameIdMap.set(gameId, updatedRedisKeysForOdds);
+    allRedisKeysByFixtureIdMap.set(fixtureId, updatedRedisKeysForOdds);
 
-    const redisGameKey = getRedisKeyForOpticOddsStreamEventOddsId(gameId);
+    const redisGameKey = getRedisKeyForOpticOddsStreamEventOddsId(fixtureId);
 
     redisClient.set(redisGameKey, JSON.stringify(updatedRedisKeysForOdds), { EX: 60 * 60 * 12 }); // delete after 12h
   });
@@ -84,7 +85,6 @@ const connectToOpticOddsStreamOdds = (
 
     const oddsDataArray = data.data;
     const currentRedisKeysForGameEvent = [];
-    const gameId = oddsDataArray[0].game_id; // event contains only data for one game ID
 
     oddsDataArray.forEach((oddsData) => {
       oddsData.isLocked = true;
@@ -95,9 +95,10 @@ const connectToOpticOddsStreamOdds = (
       redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
     });
 
-    const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
+    const fixtureId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
+    const prevRedisKeysForOdds = allRedisKeysByFixtureIdMap.get(fixtureId) || [];
     const updatedRedisKeysForOdds = uniq([...prevRedisKeysForOdds, ...currentRedisKeysForGameEvent]);
-    allRedisKeysByGameIdMap.set(gameId, updatedRedisKeysForOdds);
+    allRedisKeysByFixtureIdMap.set(fixtureId, updatedRedisKeysForOdds);
   });
 
   eventSource.onerror = (event) => {
@@ -112,7 +113,7 @@ const connectToOpticOddsStreamOdds = (
           sport,
           leagues,
           lastReceivedEntryId,
-          allRedisKeysByGameIdMap,
+          allRedisKeysByFixtureIdMap,
         ),
       1000,
     );

@@ -249,7 +249,7 @@ async function getLiquidityData(network, tradeData, provider) {
       const market = tradeData[i];
       riskPromises.push(
         sportsAMMV2RiskManager.riskPerMarketTypeAndPosition(
-          market.gameId,
+          market.fixtureId,
           market.typeId,
           market.playerId,
           market.position,
@@ -257,7 +257,7 @@ async function getLiquidityData(network, tradeData, provider) {
       );
       capPromises.push(
         sportsAMMV2RiskManager.calculateCapToBeUsed(
-          market.gameId,
+          market.fixtureId,
           market.sportId,
           market.typeId,
           market.playerId,

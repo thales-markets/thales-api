@@ -7,7 +7,6 @@ const {
 
 const mapOpticOddsApiFixtures = (fixturesData) =>
   fixturesData.map((fixtureData) => ({
-    id: fixtureData.game_id, // default ID
     fixture_id: fixtureData.id,
     game_id: fixtureData.game_id,
     start_date: fixtureData.start_date,

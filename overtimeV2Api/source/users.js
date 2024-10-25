@@ -81,7 +81,7 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
       const type = MarketTypeMap[typeId];
       const line = Number(market.line);
 
-      const gameInfo = gamesInfoMap.get(market.gameId);
+      const gameInfo = gamesInfoMap.get(market.fixtureId);
 
       const homeTeam = !!gameInfo && gameInfo.teams && gameInfo.teams.find((team) => team.isHome);
       const homeTeamName = homeTeam?.name ?? "Home Team";
@@ -103,7 +103,7 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
       const positionNames = positionNamesMap[typeId];
 
       return {
-        gameId: market.gameId,
+        fixtureId: market.fixtureId,
         sport: getLeagueSport(leagueId),
         leagueId: leagueId,
         subLeagueId: Number(market.sportId),

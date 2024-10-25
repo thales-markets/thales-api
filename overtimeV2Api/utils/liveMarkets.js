@@ -5,9 +5,9 @@ const { getLeagueOpticOddsName, MoneylineTypes } = require("overtime-live-tradin
 const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
 const { fetchOpticOddsFixturesActive, mapOpticOddsApiFixtures } = require("./opticOddsFixtures");
 
-const getRedisKeyForOpticOddsApiGames = (leagueId) => `${KEYS.OPTIC_ODDS_API_GAMES_BY_LEAGUE}${leagueId}`;
+const getRedisKeyForOpticOddsApiFixtures = (leagueId) => `${KEYS.OPTIC_ODDS_API_FIXTURES_BY_LEAGUE}${leagueId}`;
 const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS_BY_LEAGUE}${leagueId}`;
-const getRedisKeyForOpticOddsApiScores = (leagueId) => `${KEYS.OPTIC_ODDS_API_SCORES_BY_LEAGUE}${leagueId}`;
+const getRedisKeyForOpticOddsApiResults = (leagueId) => `${KEYS.OPTIC_ODDS_API_RESULTS_BY_LEAGUE}${leagueId}`;
 
 const fetchRiskManagementConfig = async () => {
   const [teams, bookmakersData, spreadData] = await redisClient.mGet([
@@ -34,13 +34,13 @@ const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
     if (opticOddsGamesResponse) {
       opticOddsGames = mapOpticOddsApiFixtures(opticOddsGamesResponse.data);
       if (opticOddsGames.length > 0) {
-        redisClient.set(getRedisKeyForOpticOddsApiGames(leagueId), JSON.stringify(opticOddsGames));
+        redisClient.set(getRedisKeyForOpticOddsApiFixtures(leagueId), JSON.stringify(opticOddsGames));
       } else if (!isTestnet) {
         console.log(`Live markets: Could not find any Optic Odds fixtures/active for the given league ID ${leagueId}`);
       }
     } else {
       // read previous games from cache
-      opticOddsGames = JSON.parse(await redisClient.get(getRedisKeyForOpticOddsApiGames(leagueId))) || [];
+      opticOddsGames = JSON.parse(await redisClient.get(getRedisKeyForOpticOddsApiFixtures(leagueId))) || [];
     }
   }
 
@@ -93,24 +93,24 @@ const persistErrorMessages = async (errorsMap, network) => {
   const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network]);
   const messagesMap = new Map(JSON.parse(obj));
 
-  const persistedGameIds = Array.from(messagesMap.keys());
-  const currentGameIds = Array.from(errorsMap.keys());
+  const persistedFixtureIds = Array.from(messagesMap.keys());
+  const currentFixtureIds = Array.from(errorsMap.keys());
 
   // DELETE ERROR MESSAGES OLDER THAN 24H
-  for (const gameId of persistedGameIds) {
-    const errorsForGameId = messagesMap.get(gameId);
-    const firstError = errorsForGameId[0];
+  for (const fixtureId of persistedFixtureIds) {
+    const errorsForFixtureId = messagesMap.get(fixtureId);
+    const firstError = errorsForFixtureId[0];
     const dayAgo = Date.now() - 1000 * 60 * 60 * 24;
     if (dayAgo >= new Date(firstError.errorTime).getTime()) {
-      messagesMap.delete(gameId);
+      messagesMap.delete(fixtureId);
     }
   }
 
   // ADD NEW MESSAGE ONLY IF IT IS DIFFERENT THAN THE LAST ONE
-  for (const currentKey of currentGameIds) {
+  for (const currentKey of currentFixtureIds) {
     const errorsArray = [];
     const newMessageObject = errorsMap.get(currentKey);
-    if (persistedGameIds.includes(currentKey)) {
+    if (persistedFixtureIds.includes(currentKey)) {
       const persistedValuesArray = messagesMap.get(currentKey);
       if (persistedValuesArray != undefined) {
         const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];
@@ -138,6 +138,6 @@ module.exports = {
   filterStaleOdds,
   isMarketPaused,
   getRedisKeyForOpticOddsApiOdds,
-  getRedisKeyForOpticOddsApiScores,
+  getRedisKeyForOpticOddsApiResults,
   persistErrorMessages,
 };

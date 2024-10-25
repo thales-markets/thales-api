@@ -20,7 +20,6 @@ const {
 } = require("overtime-live-trading-utils");
 const { getLeaguePeriodType, getLeagueSport } = require("overtime-live-trading-utils");
 const { MAX_NUMBER_OF_SCORE_PERIODS } = require("../constants/opticOdds");
-const { upperFirst } = require("lodash");
 const { fetchOpticOddsResults, mapOpticOddsApiResults } = require("../utils/opticOddsResults");
 const { fetchOpticOddsFixtures } = require("../utils/opticOddsFixtures");
 
@@ -287,12 +286,12 @@ const procesOpticOdssGamesInfo = async (leagues, formattedDate, gamesInfoMap) =>
       const opticOddsResult = mapOpticOddsApiResults(opticOddsApiResults);
 
       opticOddsApiFixturesResponseData.data.forEach((fixtureEvent) => {
-        if (fixtureEvent.game_id) {
-          const gameId = bytes32({ input: fixtureEvent.game_id });
+        if (fixtureEvent.id) {
+          const fixtureId = bytes32({ input: fixtureEvent.id });
           const gameResults = opticOddsResult.find((result) => result.fixture_id === fixtureEvent.id);
-          const fixtureStatus = upperFirst(fixtureEvent.status); // adjust V3 to V2 format, from completed to Completed
+          const fixtureStatus = fixtureEvent.status;
 
-          gamesInfoMap.set(gameId, {
+          gamesInfoMap.set(fixtureId, {
             fixtureId: fixtureEvent.id,
             lastUpdate: new Date().getTime(),
             gameStatus: fixtureStatus,

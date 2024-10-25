@@ -17,7 +17,6 @@ const isOpticOddsStreamOddsDisabled = process.env.DISABLE_OPTIC_ODDS_STREAM_ODDS
 
 const mapOpticOddsApiFixtureOdds = (oddsDataArray) =>
   oddsDataArray.map((oddsData) => ({
-    id: oddsData.game_id, // deafult ID
     fixture_id: oddsData.id,
     game_id: oddsData.game_id,
     start_date: oddsData.start_date,
@@ -28,7 +27,7 @@ const mapOpticOddsApiFixtureOdds = (oddsDataArray) =>
     sport: oddsData.sport.id,
     league: oddsData.league.name,
     odds: oddsData.odds.map((oddsObj) => ({
-      id: oddsObj.id,
+      id: oddsObj.id, // 39920-20584-2024-35:draftkings:2nd_set_moneyline:francisco_comesana
       sports_book_name: oddsObj.sportsbook,
       name: oddsObj.name,
       price: oddsObj.price,
@@ -45,7 +44,7 @@ const mapOpticOddsApiFixtureOdds = (oddsDataArray) =>
   }));
 
 const mapOddsStreamEventToApiOddsObject = (streamEvent) => ({
-  id: streamEvent.id,
+  id: streamEvent.id, // 39920-20584-2024-35:draftkings:2nd_set_moneyline:francisco_comesana
   sports_book_name: streamEvent.sportsbook,
   name: streamEvent.name,
   price: streamEvent.price,
@@ -62,10 +61,10 @@ const mapOddsStreamEventToApiOddsObject = (streamEvent) => ({
 
 // Update or add odds to initial odds from API
 const mapOddsStreamEvents = (streamEvents, initialOdds, gamesInfo) => {
-  // map existing game IDs
+  // map existing fixture IDs
   const mappedOdds = initialOdds.map((initialOdd) => {
     const updatedOddsEvents = streamEvents
-      .filter((event) => event.game_id === initialOdd.id)
+      .filter((event) => event.fixture_id === initialOdd.fixture_id)
       .map((event) => mapOddsStreamEventToApiOddsObject(event));
 
     if (updatedOddsEvents.length > 0) {
@@ -81,17 +80,20 @@ const mapOddsStreamEvents = (streamEvents, initialOdds, gamesInfo) => {
     }
   });
 
-  // map new game IDs
-  const newOdds = streamEvents.filter((event) => initialOdds.every((initialOdd) => initialOdd.id !== event.game_id));
-  const groupedOddsByGame = groupBy(newOdds, (newOdd) => newOdd.game_id);
+  // map new fixture IDs
+  const newOdds = streamEvents.filter((event) =>
+    initialOdds.every((initialOdd) => initialOdd.fixture_id !== event.fixture_id),
+  );
+  const groupedOddsByGame = groupBy(newOdds, (newOdd) => newOdd.fixture_id);
 
   const newMappedOdds = Object.keys(groupedOddsByGame)
-    .filter((gameId) => gamesInfo.some((gameInfo) => gameInfo.id === gameId))
-    .map((gameId) => {
-      const gameInfoData = gamesInfo.find((gameInfo) => gameInfo.id === gameId);
+    .filter((fixtureId) => gamesInfo.some((gameInfo) => gameInfo.fixture_id === fixtureId))
+    .map((fixtureId) => {
+      const gameInfoData = gamesInfo.find((gameInfo) => gameInfo.fixture_id === fixtureId);
 
       const oddsHeader = {
-        id: gameInfoData.id,
+        game_id: gameInfoData.game_id,
+        fixture_id: gameInfoData.fixture_id,
         start_date: gameInfoData.start_date,
         home_team: gameInfoData.home_team,
         away_team: gameInfoData.away_team,
@@ -103,7 +105,7 @@ const mapOddsStreamEvents = (streamEvents, initialOdds, gamesInfo) => {
         league: gameInfoData.league,
       };
 
-      const odds = groupedOddsByGame[gameId].map((event) => mapOddsStreamEventToApiOddsObject(event));
+      const odds = groupedOddsByGame[fixtureId].map((event) => mapOddsStreamEventToApiOddsObject(event));
 
       return { ...oddsHeader, odds };
     });

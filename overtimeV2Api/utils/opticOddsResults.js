@@ -1,7 +1,6 @@
 const axios = require("axios");
 const { getLeagueOpticOddsName, getLeagueSport } = require("overtime-live-trading-utils");
 const { connectToOpticOddsStreamResults } = require("./opticOddsStreamsConnector");
-const { upperFirst } = require("lodash");
 const {
   OPTIC_ODDS_API_FIXTURES_RESULTS_URL,
   OPTIC_ODDS_API_KEY_HEADER,
@@ -25,7 +24,7 @@ const mapOpticOddsStreamResults = (streamEvents) =>
     game_id: streamEvent.score.fixture.game_id,
     sport: streamEvent.score.sport.name,
     league: streamEvent.league,
-    status: upperFirst(streamEvent.score.fixture.status), // adjust V3 to V2 format, from live to Live
+    status: streamEvent.score.fixture.status,
     is_live: streamEvent.is_live,
     clock: streamEvent.score.in_play.clock,
     period: streamEvent.score.in_play.period,
@@ -43,7 +42,7 @@ const mapOpticOddsApiResults = (resultsData) =>
     game_id: resultData.fixture.game_id,
     sport: resultData.sport.name,
     league: resultData.league.name,
-    status: upperFirst(resultData.fixture.status), // adjust V3 to V2 format, from live to Live
+    status: resultData.fixture.status,
     is_live: resultData.fixture.is_live,
     clock: resultData.in_play.clock,
     period: resultData.in_play.period,
@@ -57,16 +56,16 @@ const mapOpticOddsApiResults = (resultsData) =>
 
 // Update or add results to initial results from API
 const mapResultsStreamEvents = (streamEvents, initialResults) => {
-  // map existing game IDs
+  // map existing fixture IDs
   const mappedResults = initialResults.map((initialResult) => {
-    const updatedResultEvent = streamEvents.filter((event) => event.score.fixture.game_id === initialResult.game_id);
+    const updatedResultEvent = streamEvents.filter((event) => event.fixture_id === initialResult.fixture_id);
     return updatedResultEvent.length > 0 ? mapOpticOddsStreamResults(updatedResultEvent)[0] : initialResult;
   });
 
-  // map new game IDs
+  // map new fixture IDs
   const newMappedResults = mapOpticOddsStreamResults(
     streamEvents.filter(
-      (event) => !initialResults.some((initialResult) => initialResult.game_id === event.score.fixture.game_id),
+      (event) => !initialResults.some((initialResult) => initialResult.fixture_id === event.fixture_id),
     ),
   );
 

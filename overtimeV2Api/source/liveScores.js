@@ -74,10 +74,10 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     const market = allOngoingMarketsMap[i];
     const leagueId = market.leagueId;
     const leagueProvider = getLeagueProvider(leagueId);
-    const gameInfo = gamesInfoMap.get(market.gameId);
+    const gameInfo = gamesInfoMap.get(market.fixtureId);
 
     if (leagueProvider === Provider.RUNDOWN && gameInfo && gameInfo.provider === Provider.RUNDOWN) {
-      const eventApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(market.gameId)}?key=${
+      const eventApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(market.fixtureId)}?key=${
         process.env.RUNDOWN_API_KEY
       }`;
 
@@ -108,7 +108,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
       if (gameInfo && gameInfo.fixtureId) {
         opticOddsFixtureIdsWithLeagueID.push({ fixtureId: gameInfo.fixtureId, leagueId });
       } else if (gameInfo) {
-        liveScoresMap.set(market.gameId, {
+        liveScoresMap.set(market.fixtureId, {
           gameStatus: gameInfo.gameStatus,
           homeScore: 0,
           awayScore: 0,
@@ -141,8 +141,8 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     }
 
     liveResults.forEach((event) => {
-      if (event.game_id) {
-        const gameId = bytes32({ input: event.game_id });
+      if (event.fixture_id) {
+        const fixtureId = bytes32({ input: event.fixture_id });
         const leagueId = opticOddsFixtureIdsWithLeagueID.find((obj) => obj.fixtureId === event.fixture_id).leagueId;
 
         const homeScores = getOpticOddsScore(event, leagueId, "home");
@@ -150,7 +150,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
 
         const period = parseInt(event.period);
 
-        liveScoresMap.set(gameId, {
+        liveScoresMap.set(fixtureId, {
           lastUpdate: new Date().getTime(),
           period: Number.isNaN(period) ? undefined : period,
           gameStatus: event.period === "HALF" ? "Half" : event.status,

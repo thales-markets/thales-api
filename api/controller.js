@@ -1322,7 +1322,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   try {
     const openMarkets = getCachedOpenMarketsByNetworkMap(network);
     let market = Array.from(openMarkets.values()).find(
-      (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
+      (market) => market.fixtureId.toLowerCase() === marketAddress.toLowerCase(),
     );
 
     if (market) {
@@ -1330,9 +1330,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
     } else {
       const closedMarkets = getCachedClosedMarketsByNetworkMap(network);
       market = Array.from(closedMarkets.values()).find(
-        (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
+        (market) => market.fixtureId.toLowerCase() === marketAddress.toLowerCase(),
       );
-      return res.send(market || `Market with gameId ${marketAddress} not found.`);
+      return res.send(market || `Market with fixtureId ${marketAddress} not found.`);
     }
   } catch (e) {
     console.log(e);
@@ -1344,12 +1344,12 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKET, async (req, res) => {
   const marketAddress = req.params.marketAddress;
   try {
     const markets = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network]));
-    const market = markets.find((market) => market.gameId.toLowerCase() === marketAddress.toLowerCase());
+    const market = markets.find((market) => market.fixtureId.toLowerCase() === marketAddress.toLowerCase());
 
     if (market) {
       return res.send(market);
     } else {
-      return res.send(market || `Market with gameId ${marketAddress} not found.`);
+      return res.send(market || `Market with fixtureId ${marketAddress} not found.`);
     }
   } catch (e) {
     console.log(e);
@@ -1367,13 +1367,13 @@ app.get(ENDPOINTS.OVERTIME_V2_GAMES_INFO, async (req, res) => {
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_GAME_INFO, async (req, res) => {
-  const gameId = req.params.gameId;
+  const fixtureId = req.params.fixtureId;
 
   const obj = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO);
   const gamesInfo = new Map(JSON.parse(obj));
 
   try {
-    const gameInfo = gamesInfo.get(gameId);
+    const gameInfo = gamesInfo.get(fixtureId);
     return res.send(gameInfo);
   } catch (e) {
     console.log(e);
@@ -1415,13 +1415,13 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORES, async (req, res) => {
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORE, async (req, res) => {
-  const gameId = req.params.gameId;
+  const fixtureId = req.params.fixtureId;
 
   const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_SCORES);
   const liveScores = new Map(JSON.parse(obj));
 
   try {
-    const liveScore = liveScores.get(gameId);
+    const liveScore = liveScores.get(fixtureId);
     return res.send(liveScore);
   } catch (e) {
     console.log(e);
@@ -1453,18 +1453,18 @@ app.get(ENDPOINTS.OVERTIME_V2_USER_HISTORY, async (req, res) => {
 });
 
 app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, async (req, res) => {
-  const gameIds = req.body.gameIds;
+  const fixtureIds = req.body.fixtureIds;
 
-  if (!gameIds) {
+  if (!fixtureIds) {
     res.send("Game IDs are required.");
     return;
   }
-  const gameIdsArray = gameIds.split(",");
-  if (!Array.isArray(gameIdsArray)) {
-    res.send("Invalid value for game IDs. The game IDs must be an array.");
+  const fixtureIdsArray = fixtureIds.split(",");
+  if (!Array.isArray(fixtureIdsArray)) {
+    res.send("Invalid value for fixture IDs. The fixture IDs must be an array.");
     return;
   }
-  await overtimeV2Markets.updateMerkleTree(gameIdsArray);
+  await overtimeV2Markets.updateMerkleTree(fixtureIdsArray);
   res.send();
 });
 
