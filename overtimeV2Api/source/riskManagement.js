@@ -3,7 +3,6 @@ const axios = require("axios");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 const { readCsvFromUrl } = require("../utils/csvReader");
-const teamsMapping = require("../assets/teamsMapping.json");
 
 const { delay } = require("../utils/general");
 
@@ -56,14 +55,10 @@ const fetchTeamsMap = async (timeout) => {
 
   const teamsMappingJsonResponse = await axios.get(process.env.GITHUB_URL_LIVE_TEAMS_MAPPING, { timeout });
 
-  let teamsMappingJson = teamsMappingJsonResponse.data;
+  const teamsMappingJsonData = teamsMappingJsonResponse.data;
 
-  if (teamsMappingJson === undefined || Object.keys(teamsMappingJson).length === 0) {
-    teamsMappingJson = teamsMapping; // TODO: remove default map file
-  }
-
-  Object.keys(teamsMappingJson).forEach(function (key) {
-    teamsMap.set(key.toString(), teamsMappingJson[key].toString());
+  Object.keys(teamsMappingJsonData).forEach((key) => {
+    teamsMap.set(key.toString(), teamsMappingJsonData[key].toString());
   });
 
   return teamsMap;
