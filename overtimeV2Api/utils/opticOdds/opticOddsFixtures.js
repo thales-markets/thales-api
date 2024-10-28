@@ -3,7 +3,7 @@ const {
   OPTIC_ODDS_API_FIXTURES_URL,
   OPTIC_ODDS_API_KEY_HEADER,
   OPTIC_ODDS_API_FIXTURES_ACTIVE_URL,
-} = require("../constants/opticOdds");
+} = require("../../constants/opticOdds");
 
 const mapOpticOddsApiFixtures = (fixturesData) =>
   fixturesData.map((fixtureData) => ({

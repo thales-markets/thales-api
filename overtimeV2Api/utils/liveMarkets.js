@@ -3,7 +3,7 @@ const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 const { getLeagueOpticOddsName, MoneylineTypes } = require("overtime-live-trading-utils");
 const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
-const { fetchOpticOddsFixturesActive, mapOpticOddsApiFixtures } = require("./opticOddsFixtures");
+const { fetchOpticOddsFixturesActive, mapOpticOddsApiFixtures } = require("./opticOdds/opticOddsFixtures");
 
 const getRedisKeyForOpticOddsApiFixtures = (leagueId) => `${KEYS.OPTIC_ODDS_API_FIXTURES_BY_LEAGUE}${leagueId}`;
 const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS_BY_LEAGUE}${leagueId}`;

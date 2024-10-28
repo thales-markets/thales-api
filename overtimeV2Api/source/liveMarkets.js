@@ -85,9 +85,9 @@ async function processLiveMarkets() {
 
 /*
   Processing steps:
-    - Get supported live league IDs from config(LeagueMap) and from env for tennis
+    - Get teams map, bookmakers, spread and leagues data from Github
+    - Get supported live league IDs from config
     - Get open markets from Redis and filter by ongoing and live supported
-    - Get teams map, bookmakers and spread data from Github
     - Process markets from each league
 */
 async function processAllMarkets(
@@ -99,8 +99,7 @@ async function processAllMarkets(
   const SUPPORTED_NETWORKS = isTestnet ? [NETWORK.OptimismSepolia] : [NETWORK.Optimism, NETWORK.Arbitrum];
 
   // Get teams map, bookmakers and spread data from Github
-  const config = uniqueLiveLeagueIds.length > 0 ? await fetchRiskManagementConfig(isTestnet) : {};
-
+  const config = await fetchRiskManagementConfig(isTestnet);
   // Get supported live leagues
   const supportedLiveLeagueIds = getLiveSupportedLeagues(config.leaguesData);
   // Read open markets only from one network as markets are the same on all networks

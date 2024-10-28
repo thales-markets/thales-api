@@ -5,7 +5,7 @@ const {
   OPTIC_ODDS_API_FIXTURES_RESULTS_URL,
   OPTIC_ODDS_API_KEY_HEADER,
   OPTIC_ODDS_API_RESULTS_MAX_GAMES,
-} = require("../constants/opticOdds");
+} = require("../../constants/opticOdds");
 
 const isOpticOddsStreamResultsDisabled = process.env.DISABLE_OPTIC_ODDS_STREAM_RESULTS === "true";
 
