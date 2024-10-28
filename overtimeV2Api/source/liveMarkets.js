@@ -343,7 +343,7 @@ async function processMarketsByLeague(
           const opticOddsAwayTeam = market.opticOddsGameOdds.away_team;
 
           if (opticOddsResultData == undefined) {
-            errorsMap.set(market.fixtureId, {
+            errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
               errorMessage: `Blocking game ${opticOddsHomeTeam} - ${opticOddsAwayTeam} due to game clock being unavailable`,
@@ -352,7 +352,7 @@ async function processMarketsByLeague(
           }
 
           if (opticOddsResultData.status.toLowerCase() == "completed") {
-            errorsMap.set(market.fixtureId, {
+            errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
               errorMessage: `Blocking game ${opticOddsHomeTeam} - ${opticOddsAwayTeam} because it is finished.`,
@@ -368,7 +368,7 @@ async function processMarketsByLeague(
             const passingConstraintsObject = checkGameContraints(opticOddsResultData, leagueId, constraintsMap);
 
             if (!passingConstraintsObject.allow) {
-              errorsMap.set(market.fixtureId, {
+              errorsMap.set(market.gameId, {
                 processingTime: PROCESSING_START_TIME,
                 errorTime: new Date().toUTCString(),
                 errorMessage: passingConstraintsObject.message,
@@ -404,7 +404,7 @@ async function processMarketsByLeague(
 
         if (gamePaused) {
           const errorMessage = `Pausing game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} due to odds being stale`;
-          errorsMap.set(market.fixtureId, {
+          errorsMap.set(market.gameId, {
             processingTime: PROCESSING_START_TIME,
             errorTime: new Date().toUTCString(),
             errorMessage,
@@ -451,7 +451,7 @@ async function processMarketsByLeague(
             );
 
             if (processedMarket.errorMessage) {
-              errorsMap.set(market.fixtureId, {
+              errorsMap.set(market.gameId, {
                 processingTime: PROCESSING_START_TIME,
                 errorTime: new Date().toUTCString(),
                 errorMessage: processedMarket.errorMessage,
@@ -462,7 +462,7 @@ async function processMarketsByLeague(
             market.isPaused = isMarketPaused(market);
           } else {
             const errorMessage = `Provider marked game ${opticOddsGameOddsData.home_team} - ${opticOddsGameOddsData.away_team} as not live`;
-            errorsMap.set(market.fixtureId, {
+            errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
               errorMessage,

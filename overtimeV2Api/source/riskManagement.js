@@ -17,7 +17,7 @@ const processRiskManagement = async () => {
           console.log(`Risk management: processing data error: ${error}`);
         }
 
-        await delay(30 * 1000);
+        await delay(60 * 1000); // 1 min
       }
     }, 3000);
   }
@@ -59,7 +59,7 @@ const fetchTeamsMap = async (timeout) => {
   let teamsMappingJson = teamsMappingJsonResponse.data;
 
   if (teamsMappingJson === undefined || Object.keys(teamsMappingJson).length === 0) {
-    teamsMappingJson = teamsMapping;
+    teamsMappingJson = teamsMapping; // TODO: remove default map file
   }
 
   Object.keys(teamsMappingJson).forEach(function (key) {

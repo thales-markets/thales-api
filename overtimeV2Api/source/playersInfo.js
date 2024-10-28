@@ -60,18 +60,18 @@ async function processAllPlayersInfo() {
     const market = allOpenMarkets[i];
     const leagueId = market.leagueId;
     const leagueProvider = getLeagueProvider(leagueId);
-    const gameInfo = gamesInfoMap.get(market.fixtureId);
+    const gameInfo = gamesInfoMap.get(market.gameId);
 
     if (leagueProvider === Provider.RUNDOWN && gameInfo && gameInfo.provider === Provider.RUNDOWN) {
       const hasPlayerPropsMarkets = market.childMarkets.some((childMarket) => childMarket.isPlayerPropsMarket);
 
       if (hasPlayerPropsMarkets) {
         // console.log(
-        //   `Getting players info for Rundown sport: ${rundownSport}, ${leagueId} and game ${market.fixtureId}`,
+        //   `Getting players info for Rundown sport: ${rundownSport}, ${leagueId} and game ${market.gameId}`,
         // );
 
         const optionsApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(
-          market.fixtureId,
+          market.gameId,
         )}/markets?participant_type=TYPE_PLAYER&key=${process.env.RUNDOWN_API_KEY}`;
 
         const optionsResponse = await axios.get(optionsApiUrl);
@@ -80,7 +80,7 @@ async function processAllPlayersInfo() {
           const optionsIds = optionsResponseData.map((options) => options.id).join(",");
 
           const apiUrl = `https://therundown.io/api/v2/markets/participants?market_ids=${optionsIds}&event_id=${convertFromBytes32(
-            market.fixtureId,
+            market.gameId,
           )}&key=${process.env.RUNDOWN_API_KEY}`;
           const response = await axios.get(apiUrl);
           const responseData = response.data;

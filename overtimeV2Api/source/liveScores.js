@@ -69,15 +69,15 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     (market) => market.statusCode === "ongoing",
   );
 
-  let opticOddsFixtureIdsWithLeagueID = [];
+  let opticOddsGameIdsWithLeagueID = [];
   for (let i = 0; i < allOngoingMarketsMap.length; i++) {
     const market = allOngoingMarketsMap[i];
     const leagueId = market.leagueId;
     const leagueProvider = getLeagueProvider(leagueId);
-    const gameInfo = gamesInfoMap.get(market.fixtureId);
+    const gameInfo = gamesInfoMap.get(market.gameId);
 
     if (leagueProvider === Provider.RUNDOWN && gameInfo && gameInfo.provider === Provider.RUNDOWN) {
-      const eventApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(market.fixtureId)}?key=${
+      const eventApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(market.gameId)}?key=${
         process.env.RUNDOWN_API_KEY
       }`;
 
@@ -105,60 +105,56 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     }
 
     if (leagueProvider === Provider.OPTICODDS) {
-      if (gameInfo && gameInfo.fixtureId) {
-        opticOddsFixtureIdsWithLeagueID.push({ fixtureId: gameInfo.fixtureId, leagueId });
-      } else if (gameInfo) {
-        liveScoresMap.set(market.fixtureId, {
-          gameStatus: gameInfo.gameStatus,
-          homeScore: 0,
-          awayScore: 0,
-          homeScoreByPeriod: [],
-          awayScoreByPeriod: [],
-        });
-      }
+      opticOddsGameIdsWithLeagueID.push({ gameId: market.gameId, leagueId, gameInfo });
     }
   }
 
-  if (opticOddsFixtureIdsWithLeagueID.length > 0) {
+  if (opticOddsGameIdsWithLeagueID.length > 0) {
     let liveResults = [];
-    const opticOddsFixtureIds = opticOddsFixtureIdsWithLeagueID.map((obj) => obj.fixtureId);
+    const opticOddsGameIds = opticOddsGameIdsWithLeagueID.map((obj) => obj.gameId);
 
     if (!isOpticOddsStreamResultsDisabled && isOpticOddsResultsInitialized) {
       // Read from Redis
-      const redisKeysForStreamResults = opticOddsFixtureIds.map((fixtureId) =>
-        getRedisKeyForOpticOddsStreamEventResults(fixtureId),
+      const redisKeysForStreamResults = opticOddsGameIds.map((gameId) =>
+        getRedisKeyForOpticOddsStreamEventResults(gameId),
       );
       const objArray = await redisClient.mGet(redisKeysForStreamResults);
       const opticOddsStreamResults = objArray.filter((obj) => obj !== null).map((obj) => JSON.parse(obj));
       liveResults = mapOpticOddsStreamResults(opticOddsStreamResults);
     } else {
       // Fetch from API
-      const opticOddsApiResults = await fetchOpticOddsResults(opticOddsFixtureIds);
+      const opticOddsApiResults = await fetchOpticOddsResults(opticOddsGameIds);
       if (opticOddsApiResults.length > 0) {
         liveResults = mapOpticOddsApiResults(opticOddsApiResults);
         isOpticOddsResultsInitialized = true;
       }
     }
 
-    liveResults.forEach((event) => {
-      if (event.fixture_id) {
-        const fixtureId = bytes32({ input: event.fixture_id });
-        const leagueId = opticOddsFixtureIdsWithLeagueID.find((obj) => obj.fixtureId === event.fixture_id).leagueId;
+    opticOddsGameIdsWithLeagueID.forEach((obj) => {
+      const opticOddsEvent = liveResults.find((event) => event.fixture_id === obj.gameId);
+      if (opticOddsEvent) {
+        const homeScores = getOpticOddsScore(opticOddsEvent, obj.leagueId, "home");
+        const awayScores = getOpticOddsScore(opticOddsEvent, obj.leagueId, "away");
 
-        const homeScores = getOpticOddsScore(event, leagueId, "home");
-        const awayScores = getOpticOddsScore(event, leagueId, "away");
+        const period = parseInt(opticOddsEvent.period);
 
-        const period = parseInt(event.period);
-
-        liveScoresMap.set(fixtureId, {
+        liveScoresMap.set(obj.gameId, {
           lastUpdate: new Date().getTime(),
           period: Number.isNaN(period) ? undefined : period,
-          gameStatus: event.period === "HALF" ? "Half" : event.status,
-          displayClock: event.clock,
+          gameStatus: opticOddsEvent.period === "HALF" ? "Half" : opticOddsEvent.status,
+          displayClock: opticOddsEvent.clock,
           homeScore: homeScores.score,
           awayScore: awayScores.score,
           homeScoreByPeriod: homeScores.scoreByPeriod,
           awayScoreByPeriod: awayScores.scoreByPeriod,
+        });
+      } else if (obj.gameInfo) {
+        liveScoresMap.set(obj.gameInfo.gameId, {
+          gameStatus: obj.gameInfo.gameStatus,
+          homeScore: 0,
+          awayScore: 0,
+          homeScoreByPeriod: [],
+          awayScoreByPeriod: [],
         });
       }
     });

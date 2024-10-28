@@ -150,6 +150,7 @@ const startOddsStreams = (leagueId, bookmakersData, oddsStreamsInfoByLeagueMap, 
   if (isOpticOddsStreamOddsDisabled || !opticOddsLeagueName) {
     return;
   }
+
   // Extracting bookmakers (sportsbooks), bet types (markets) for league and Optic Odds league names
   const bookmakers = getBookmakersArray(bookmakersData, leagueId, process.env.LIVE_ODDS_PROVIDERS.split(","));
   const betTypes = getBetTypesForLeague(leagueId, isTestnet);

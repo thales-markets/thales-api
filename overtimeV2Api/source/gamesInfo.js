@@ -287,15 +287,14 @@ const procesOpticOdssGamesInfo = async (leagues, formattedDate, gamesInfoMap) =>
 
       opticOddsApiFixturesResponseData.data.forEach((fixtureEvent) => {
         if (fixtureEvent.id) {
-          const fixtureId = bytes32({ input: fixtureEvent.id });
+          const gameId = bytes32({ input: fixtureEvent.id });
           const gameResults = opticOddsResult.find((result) => result.fixture_id === fixtureEvent.id);
-          const fixtureStatus = fixtureEvent.status;
+          const fixtureStatus = fixtureEvent.status.toLowerCase();
 
-          gamesInfoMap.set(fixtureId, {
-            fixtureId: fixtureEvent.id,
+          gamesInfoMap.set(gameId, {
             lastUpdate: new Date().getTime(),
             gameStatus: fixtureStatus,
-            isGameFinished: fixtureStatus === "Completed" || fixtureStatus === "Cancelled",
+            isGameFinished: fixtureStatus === "completed" || fixtureStatus === "cancelled",
             tournamentName: "",
             tournamentRound: "",
             provider: Provider.OPTICODDS,

@@ -70,36 +70,36 @@ async function resolveMarkets(network) {
   );
 
   const allOpenMarkets = Array.from(openMarketsMap.values());
-  const allOpenFixtureIds = allOpenMarkets.map((market) => market.fixtureId);
+  const allOpenGameIds = allOpenMarkets.map((market) => market.gameId);
 
-  if (allOpenFixtureIds.length > 0) {
-    let emptyArrays = Array(allOpenFixtureIds.length).fill(0);
+  if (allOpenGameIds.length > 0) {
+    let emptyArrays = Array(allOpenGameIds.length).fill(0);
     const gamesInfoMap = await getGamesInfoMap();
 
     // check are there any unresolved open markets
-    const [areMarketsResolved, onlyActiveFixtureIds] = await Promise.all([
-      sportsAmmData.areMarketsResolved(allOpenFixtureIds, emptyArrays, emptyArrays, emptyArrays),
-      sportsAmmData.getOnlyActiveGameIdsAndTicketsOf(allOpenFixtureIds, 0, allOpenFixtureIds.length),
+    const [areMarketsResolved, onlyActiveGameIds] = await Promise.all([
+      sportsAmmData.areMarketsResolved(allOpenGameIds, emptyArrays, emptyArrays, emptyArrays),
+      sportsAmmData.getOnlyActiveGameIdsAndTicketsOf(allOpenGameIds, 0, allOpenGameIds.length),
     ]);
-    const readyForResolveFixtureIds = allOpenFixtureIds.filter((_, index) => areMarketsResolved[index]);
-    const activeFixtureIdsWithoutTickets = allOpenFixtureIds.filter(
-      (fixtureId) => !onlyActiveFixtureIds.activeGameIds.includes(fixtureId),
+    const readyForResolveGameIds = allOpenGameIds.filter((_, index) => areMarketsResolved[index]);
+    const activeGameIdsWithoutTickets = allOpenGameIds.filter(
+      (gameId) => !onlyActiveGameIds.activeGameIds.includes(gameId),
     );
 
-    if (readyForResolveFixtureIds.length > 0) {
-      emptyArrays = Array(readyForResolveFixtureIds.length).fill(0);
+    if (readyForResolveGameIds.length > 0) {
+      emptyArrays = Array(readyForResolveGameIds.length).fill(0);
       // get results for unresolved markets
       const resultsForMarkets = await sportsAmmData.getResultsForMarkets(
-        readyForResolveFixtureIds,
+        readyForResolveGameIds,
         emptyArrays,
         emptyArrays,
       );
 
-      console.log(`Resolver ${NETWORK_NAME[network]}: Total ready for resolve: ${readyForResolveFixtureIds.length}`);
+      console.log(`Resolver ${NETWORK_NAME[network]}: Total ready for resolve: ${readyForResolveGameIds.length}`);
       // resolve parent markets - update status and move under closed markets map
-      for (let i = 0; i < readyForResolveFixtureIds.length; i++) {
-        const readyForResolveFixtureId = readyForResolveFixtureIds[i];
-        const ongoingMarket = openMarketsMap.get(readyForResolveFixtureId);
+      for (let i = 0; i < readyForResolveGameIds.length; i++) {
+        const readyForResolveGameId = readyForResolveGameIds[i];
+        const ongoingMarket = openMarketsMap.get(readyForResolveGameId);
 
         if (resultsForMarkets[i].length > 0) {
           ongoingMarket.status = Status.RESOLVED;
@@ -118,7 +118,7 @@ async function resolveMarkets(network) {
         ongoingMarket.isOpen = false;
         ongoingMarket.winningPositions = resultsForMarkets[i];
 
-        const gameInfo = gamesInfoMap.get(ongoingMarket.fixtureId);
+        const gameInfo = gamesInfoMap.get(ongoingMarket.gameId);
 
         const homeTeam = !!gameInfo && gameInfo.teams && gameInfo.teams.find((team) => team.isHome);
         const homeScore = homeTeam?.score;
@@ -133,21 +133,21 @@ async function resolveMarkets(network) {
         ongoingMarket.homeScoreByPeriod = homeScoreByPeriod;
         ongoingMarket.awayScoreByPeriod = awayScoreByPeriod;
 
-        closedMarketsMap.set(readyForResolveFixtureId, ongoingMarket);
+        closedMarketsMap.set(readyForResolveGameId, ongoingMarket);
       }
     }
 
-    if (activeFixtureIdsWithoutTickets.length > 0) {
-      for (let i = 0; i < activeFixtureIdsWithoutTickets.length; i++) {
-        const activeFixtureIdWithoutTickets = activeFixtureIdsWithoutTickets[i];
+    if (activeGameIdsWithoutTickets.length > 0) {
+      for (let i = 0; i < activeGameIdsWithoutTickets.length; i++) {
+        const activeGameIdWithoutTickets = activeGameIdsWithoutTickets[i];
 
-        const gameInfo = gamesInfoMap.get(activeFixtureIdWithoutTickets);
+        const gameInfo = gamesInfoMap.get(activeGameIdWithoutTickets);
         if (gameInfo && gameInfo.isGameFinished) {
-          const ongoingMarket = openMarketsMap.get(activeFixtureIdWithoutTickets);
+          const ongoingMarket = openMarketsMap.get(activeGameIdWithoutTickets);
           ongoingMarket.isWholeGameResolved = true;
           ongoingMarket.noTickets = true;
 
-          closedMarketsMap.set(activeFixtureIdWithoutTickets, ongoingMarket);
+          closedMarketsMap.set(activeGameIdWithoutTickets, ongoingMarket);
         }
       }
     }
@@ -174,7 +174,7 @@ async function resolveMarkets(network) {
     );
 
     if (unresolvedChildMarkets.length > 0) {
-      const unresolvedChildMarketsFixtureIds = unresolvedChildMarkets.map((childMarket) => childMarket.fixtureId);
+      const unresolvedChildMarketsGameIds = unresolvedChildMarkets.map((childMarket) => childMarket.gameId);
       const unresolvedChildMarketsTypeIds = unresolvedChildMarkets.map((childMarket) => childMarket.typeId);
       const unresolvedChildMarketsPlayerIds = unresolvedChildMarkets.map(
         (childMarket) => childMarket.playerProps.playerId,
@@ -183,13 +183,13 @@ async function resolveMarkets(network) {
 
       const [areMarketsResolved, resultsForMarkets] = await Promise.all([
         sportsAmmData.areMarketsResolved(
-          unresolvedChildMarketsFixtureIds,
+          unresolvedChildMarketsGameIds,
           unresolvedChildMarketsTypeIds,
           unresolvedChildMarketsPlayerIds,
           unresolvedChildMarketsLines,
         ),
         sportsAmmData.getResultsForMarkets(
-          unresolvedChildMarketsFixtureIds,
+          unresolvedChildMarketsGameIds,
           unresolvedChildMarketsTypeIds,
           unresolvedChildMarketsPlayerIds,
         ),
@@ -329,7 +329,7 @@ async function resolveMarkets(network) {
     allUnresolvedClosedMarkets[i].isWholeGameResolved = allUnresolvedClosedMarkets[i].childMarkets.every(
       (childMarket) => childMarket.isResolved || childMarket.isCancelled,
     );
-    closedMarketsMap.set(allUnresolvedClosedMarkets[i].fixtureId, allUnresolvedClosedMarkets[i]);
+    closedMarketsMap.set(allUnresolvedClosedMarkets[i].gameId, allUnresolvedClosedMarkets[i]);
   }
 
   redisClient.set(KEYS.OVERTIME_V2_CLOSED_MARKETS[network], JSON.stringify([...closedMarketsMap]));

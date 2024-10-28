@@ -97,7 +97,9 @@ const fetchOpticOddsResults = async (fixtureIds) => {
     resultsResponses = [];
   }
 
-  const results = resultsResponses.map((resultResponse) => resultResponse.data.data).flat();
+  const results = resultsResponses
+    .map((resultResponse) => (resultResponse.data ? resultResponse.data.data : []))
+    .flat();
   return results;
 };
 

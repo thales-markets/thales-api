@@ -93,24 +93,24 @@ const persistErrorMessages = async (errorsMap, network) => {
   const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network]);
   const messagesMap = new Map(JSON.parse(obj));
 
-  const persistedFixtureIds = Array.from(messagesMap.keys());
-  const currentFixtureIds = Array.from(errorsMap.keys());
+  const persistedGameIds = Array.from(messagesMap.keys());
+  const currentGameIds = Array.from(errorsMap.keys());
 
   // DELETE ERROR MESSAGES OLDER THAN 24H
-  for (const fixtureId of persistedFixtureIds) {
-    const errorsForFixtureId = messagesMap.get(fixtureId);
-    const firstError = errorsForFixtureId[0];
+  for (const gameId of persistedGameIds) {
+    const errorsForGameId = messagesMap.get(gameId);
+    const firstError = errorsForGameId[0];
     const dayAgo = Date.now() - 1000 * 60 * 60 * 24;
     if (dayAgo >= new Date(firstError.errorTime).getTime()) {
-      messagesMap.delete(fixtureId);
+      messagesMap.delete(gameId);
     }
   }
 
   // ADD NEW MESSAGE ONLY IF IT IS DIFFERENT THAN THE LAST ONE
-  for (const currentKey of currentFixtureIds) {
+  for (const currentKey of currentGameIds) {
     const errorsArray = [];
     const newMessageObject = errorsMap.get(currentKey);
-    if (persistedFixtureIds.includes(currentKey)) {
+    if (persistedGameIds.includes(currentKey)) {
       const persistedValuesArray = messagesMap.get(currentKey);
       if (persistedValuesArray != undefined) {
         const latestMessageObject = persistedValuesArray[persistedValuesArray.length - 1];

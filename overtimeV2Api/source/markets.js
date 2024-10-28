@@ -78,7 +78,7 @@ const packMarket = (market) => {
   const type = MarketTypeMap[market.typeId]?.key;
 
   return {
-    fixtureId: market.fixtureId,
+    gameId: market.gameId,
     sport: getLeagueSport(leagueId),
     leagueId: leagueId,
     leagueName: getLeagueLabel(leagueId),
@@ -233,21 +233,21 @@ async function processAllMarkets(markets, network) {
   const closedMarketsMap = await getClosedMarketsMap(network);
 
   markets.forEach((market) => {
-    const isMarketClosed = !!closedMarketsMap.get(market.fixtureId);
+    const isMarketClosed = !!closedMarketsMap.get(market.gameId);
     if (
       !isMarketClosed &&
       (market.statusCode === "open" || market.statusCode === "ongoing" || market.statusCode === "paused")
     ) {
-      openMarketsMap.set(market.fixtureId, market);
+      openMarketsMap.set(market.gameId, market);
     }
   });
 
   redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[network], JSON.stringify([...openMarketsMap]));
 }
 
-async function updateMerkleTree(fixtureIds) {
+async function updateMerkleTree(gameIds) {
   const startTime = new Date().getTime();
-  console.log(`Markets mainnets: Updating merkle tree for ${fixtureIds.length} games`);
+  console.log(`Markets mainnets: Updating merkle tree for ${gameIds.length} games`);
 
   const bucketName = process.env.AWS_BUCKET_NAME;
   const merkleTreesFolderName = process.env.AWS_FOLDER_NAME_MERKLES;
@@ -257,18 +257,18 @@ async function updateMerkleTree(fixtureIds) {
   const arbOpenMarketsMap = await getOpenMarketsMap(NETWORK.Arbitrum);
   // const baseOpenMarketsMap = await getOpenMarketsMap(NETWORK.Base);
 
-  for (let i = 0; i < fixtureIds.length; i++) {
-    const fixtureIdString = convertFromBytes32(fixtureIds[i]);
-    const marketFile = `${merkleTreesFolderName}/${fixtureIdString}.json`;
+  for (let i = 0; i < gameIds.length; i++) {
+    const gameIdString = convertFromBytes32(gameIds[i]);
+    const marketFile = `${merkleTreesFolderName}/${gameIdString}.json`;
     try {
       const marketFileContent = await readAwsS3File(bucketName, marketFile);
       const market = JSON.parse(marketFileContent)[0];
 
       const mappedMarket = mapMarket(market);
 
-      opOpenMarketsMap.set(mappedMarket.fixtureId, mappedMarket);
-      arbOpenMarketsMap.set(mappedMarket.fixtureId, mappedMarket);
-      // baseOpenMarketsMap.set(mappedMarket.fixtureId, mappedMarket);
+      opOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
+      arbOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
+      // baseOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
     } catch (e) {
       console.log(`Markets mainnets: Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
     }

@@ -22,7 +22,7 @@ const fetchOpticOddsFixtures = async (league, startDate, page) => {
   let fixturesResponseData = null;
 
   const urlQueryParams = `league=${league}&start_date=${startDate}&page=${page}`;
-  const url = `${OPTIC_ODDS_API_FIXTURES_URL}?${urlQueryParams}`; // TODO: fixtures or fixtures/active?
+  const url = `${OPTIC_ODDS_API_FIXTURES_URL}?${urlQueryParams}`;
   try {
     const fixturesResponse = await axios.get(url, { headers: OPTIC_ODDS_API_KEY_HEADER });
     fixturesResponseData = fixturesResponse.data;
