@@ -1130,7 +1130,6 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
-  const startTime = new Date().getTime();
   const network = req.params.networkParam;
   let status = req.query.status;
   const typeId = req.query.typeId;
@@ -1195,8 +1194,6 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     return;
   }
 
-  const beforeRead = new Date().getTime();
-  console.log(beforeRead - startTime);
   const isClosedMarkets = status === "resolved" || status === "cancelled";
   const markets = isClosedMarkets
     ? getCachedClosedMarketsByNetworkMap(network)
@@ -1228,8 +1225,6 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     );
 
     if (ungroup && ungroup.toLowerCase() === "true") {
-      const responseTime = new Date().getTime();
-      console.log(responseTime - afterRead);
       res.send(filteredMarkets);
       return;
     }
@@ -1461,7 +1456,7 @@ app.post(ENDPOINTS.OVERTIME_V2_UPDATE_MERKLE_TREE, async (req, res) => {
   }
   const gameIdsArray = gameIds.split(",");
   if (!Array.isArray(gameIdsArray)) {
-    res.send("Invalid value for fixture IDs. The fixture IDs must be an array.");
+    res.send("Invalid value for game IDs. The game IDs must be an array.");
     return;
   }
   await overtimeV2Markets.updateMerkleTree(gameIdsArray);
