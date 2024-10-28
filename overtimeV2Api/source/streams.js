@@ -8,7 +8,7 @@ const {
   startResultsStreams,
   closeInactiveResultsStreams,
   isOpticOddsStreamResultsDisabled,
-} = require("../utils/opticOddsResults");
+} = require("../utils/opticOdds/opticOddsResults");
 require("dotenv").config();
 
 async function processOpticOddsResults() {

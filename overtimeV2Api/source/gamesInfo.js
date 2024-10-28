@@ -20,8 +20,8 @@ const {
 } = require("overtime-live-trading-utils");
 const { getLeaguePeriodType, getLeagueSport } = require("overtime-live-trading-utils");
 const { MAX_NUMBER_OF_SCORE_PERIODS } = require("../constants/opticOdds");
-const { fetchOpticOddsResults, mapOpticOddsApiResults } = require("../utils/opticOddsResults");
-const { fetchOpticOddsFixtures } = require("../utils/opticOddsFixtures");
+const { fetchOpticOddsResults, mapOpticOddsApiResults } = require("../utils/opticOdds/opticOddsResults");
+const { fetchOpticOddsFixtures } = require("../utils/opticOdds/opticOddsFixtures");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_FUTURE);

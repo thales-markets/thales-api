@@ -1,8 +1,8 @@
 const EventSource = require("eventsource");
-const { OPTIC_ODDS_API_BASE_URL_V3 } = require("../constants/opticOdds");
-const KEYS = require("../../redis/redis-keys");
+const { OPTIC_ODDS_API_BASE_URL_V3 } = require("../../constants/opticOdds");
+const KEYS = require("../../../redis/redis-keys");
 const { uniq } = require("lodash");
-const { getRedisClientForStreamOdds, getRedisClientForStreamResults } = require("../services/init");
+const { getRedisClientForStreamOdds, getRedisClientForStreamResults } = require("../../services/init");
 
 const getRedisKeyForOpticOddsStreamEventOddsId = (fixtureId) =>
   `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_FIXTURE}${fixtureId}`;

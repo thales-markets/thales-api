@@ -4,7 +4,7 @@ const {
   OPTIC_ODDS_API_FIXTURE_ODDS_URL,
   OPTIC_ODDS_API_ODDS_MAX_GAMES,
   OPTIC_ODDS_API_KEY_HEADER,
-} = require("../constants/opticOdds");
+} = require("../../constants/opticOdds");
 const {
   getBookmakersArray,
   getBetTypesForLeague,

@@ -9,13 +9,13 @@ const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getOpticOddsScore } = require("./gamesInfo");
 const { getLeagueProvider, Provider } = require("overtime-live-trading-utils");
-const { getRedisKeyForOpticOddsStreamEventResults } = require("../utils/opticOddsStreamsConnector");
+const { getRedisKeyForOpticOddsStreamEventResults } = require("../utils/opticOdds/opticOddsStreamsConnector");
 const {
   mapOpticOddsStreamResults,
   mapOpticOddsApiResults,
   fetchOpticOddsResults,
   isOpticOddsStreamResultsDisabled,
-} = require("../utils/opticOddsResults");
+} = require("../utils/opticOdds/opticOddsResults");
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {

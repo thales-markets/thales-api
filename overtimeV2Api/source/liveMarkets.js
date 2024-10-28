@@ -31,7 +31,7 @@ const {
 const {
   getRedisKeyForOpticOddsStreamEventOddsId,
   getRedisKeyForOpticOddsStreamEventResults,
-} = require("../utils/opticOddsStreamsConnector");
+} = require("../utils/opticOdds/opticOddsStreamsConnector");
 const {
   fetchOpticOddsFixtureOdds,
   mapOpticOddsApiFixtureOdds,
@@ -39,13 +39,13 @@ const {
   startOddsStreams,
   closeInactiveOddsStreams,
   isOpticOddsStreamOddsDisabled,
-} = require("../utils/opticOddsFixtureOdds");
+} = require("../utils/opticOdds/opticOddsFixtureOdds");
 const {
   fetchOpticOddsResults,
   mapOpticOddsApiResults,
   mapResultsStreamEvents,
   isOpticOddsStreamResultsDisabled,
-} = require("../utils/opticOddsResults");
+} = require("../utils/opticOdds/opticOddsResults");
 
 async function processLiveMarkets() {
   if (process.env.REDIS_URL) {
