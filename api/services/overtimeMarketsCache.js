@@ -3,15 +3,19 @@ const KEYS = require("../../redis/redis-keys");
 const { delay } = require("../../services/utils");
 const { SUPPORTED_NETWORKS } = require("../constants/networks");
 const { redisClient } = require("../../redis/client");
+const { readCsvFromUrl } = require("../utils/csvReader");
+
 require("dotenv").config();
 
 const REDIS_CONNECTIONS_COUNT = process.env.REDIS_CONNECTIONS_COUNT || 10;
 const REDIS_OPEN_MARKETS_CACHE_INTERVAL = Number(process.env.REDIS_OVERTIME_OPEN_MARKETS_CACHE_INTERVAL);
 const REDIS_CLOSED_MARKETS_CACHE_INTERVAL = Number(process.env.REDIS_OVERTIME_CLOSED_MARKETS_CACHE_INTERVAL);
+const LEAGUES_MAP_CACHE_INTERVAL = Number(process.env.LEAGUES_MAP_CACHE_INTERVAL);
 
 const redisClientsForMarkets = [];
 let cachedOpenMarketsByNetworkMap = new Map();
 let cachedClosedMarketsByNetworkMap = new Map();
+let leaguesMapByNetworkMap = new Map();
 
 // Create redis clients pool
 (async () => {
@@ -50,6 +54,20 @@ const cacheClosedMarkets = async () => {
     const closedMarkets = await choseRedisClient().get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network]);
     const closedMarketsMap = new Map(JSON.parse(closedMarkets));
     cachedClosedMarketsByNetworkMap.set(network, closedMarketsMap);
+  }
+};
+
+// Cache leaguesMap for all networks
+const cacheLeaguesArray = async () => {
+  for (let i = 0; i < SUPPORTED_NETWORKS.length; i++) {
+    const network = SUPPORTED_NETWORKS[i];
+    // Read open markets only from one network as markets are the same on all networks
+    const leaguesInfo = await readCsvFromUrl(
+      Number(network) == 11155420
+        ? process.env.GITHUB_URL_LIVE_lEAGUES_CSV_TESTNET
+        : process.env.GITHUB_URL_LIVE_lEAGUES_CSV,
+    );
+    leaguesMapByNetworkMap.set(network, leaguesInfo);
   }
 };
 
@@ -103,11 +121,28 @@ const cacheClosedMarkets = async () => {
   }, 3000);
 })();
 
+// Start caching leagues map
+(async () => {
+  console.log("Caching leagues map: Started...");
+
+  while (true) {
+    try {
+      await cacheLeaguesArray();
+    } catch (error) {
+      console.log(`Caching leagues map error: ${error}`);
+    }
+
+    await delay(LEAGUES_MAP_CACHE_INTERVAL);
+  }
+})();
+
 const getCachedOpenMarketsByNetworkMap = (network) => cachedOpenMarketsByNetworkMap.get(Number(network)) || new Map();
 const getCachedClosedMarketsByNetworkMap = (network) =>
   cachedClosedMarketsByNetworkMap.get(Number(network)) || new Map();
+const getCachedLeaguesInfoArrayByNetworkMap = (network) => leaguesMapByNetworkMap.get(Number(network)) || new Map();
 
 module.exports = {
   getCachedOpenMarketsByNetworkMap,
   getCachedClosedMarketsByNetworkMap,
+  getCachedLeaguesInfoArrayByNetworkMap,
 };
