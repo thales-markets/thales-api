@@ -98,8 +98,11 @@ async function processAllMarkets(
 ) {
   const SUPPORTED_NETWORKS = isTestnet ? [NETWORK.OptimismSepolia] : [NETWORK.Optimism, NETWORK.Arbitrum];
 
+  // Get teams map, bookmakers and spread data from Github
+  const config = uniqueLiveLeagueIds.length > 0 ? await fetchRiskManagementConfig(isTestnet) : {};
+
   // Get supported live leagues
-  const supportedLiveLeagueIds = getLiveSupportedLeagues(isTestnet);
+  const supportedLiveLeagueIds = getLiveSupportedLeagues(config.leaguesData);
   // Read open markets only from one network as markets are the same on all networks
   const openMarkets = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[SUPPORTED_NETWORKS[0]]);
   const openMarketsMap = new Map(JSON.parse(openMarkets));
@@ -110,9 +113,6 @@ async function processAllMarkets(
   const uniqueLiveLeagueIds = uniq(supportedLiveMarkets.map((market) => market.leagueId));
 
   console.log(`Live markets: Number of ongoing leagues ${uniqueLiveLeagueIds.length}`);
-
-  // Get teams map, bookmakers and spread data from Github
-  const config = uniqueLiveLeagueIds.length > 0 ? await fetchRiskManagementConfig() : {};
 
   // Process games per league
   const processMarketsByLeaguePromises = uniqueLiveLeagueIds.map((leagueId) => {
@@ -226,7 +226,7 @@ async function processMarketsByLeague(
 
       if (!isOddsInitialized) {
         // Initially fetch game odds from Optic Odds API for given markets
-        const betTypes = getBetTypesForLeague(leagueId, isTestnet);
+        const betTypes = getBetTypesForLeague(leagueId, config.leaguesData);
         const fixtureIds = ongoingMarketsByOpticOddsGames.map((market) => market.opticOddsGameEvent.fixture_id);
 
         const oddsFromApi = await fetchOpticOddsFixtureOdds(bookmakers, betTypes, fixtureIds);
@@ -447,7 +447,7 @@ async function processMarketsByLeague(
               getLeagueIsDrawAvailable(market.leagueId),
               Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
               Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
-              isTestnet,
+              config.leaguesData,
             );
 
             if (processedMarket.errorMessage) {

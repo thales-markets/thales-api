@@ -54,9 +54,9 @@ const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters")
 const overtimeV2Markets = require("../overtimeV2Api/source/markets");
 const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
-const { LeagueMap } = require("overtime-live-trading-utils");
+const { LeagueMap, getLiveSupportedLeagues } = require("overtime-live-trading-utils");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
-const { SUPPORTED_NETWORKS } = require("./constants/networks");
+const { SUPPORTED_NETWORKS, NETWORK } = require("./constants/networks");
 const {
   getCachedOpenMarketsByNetworkMap,
   getCachedClosedMarketsByNetworkMap,
@@ -1247,7 +1247,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
   const ungroup = req.query.ungroup;
   const leagueId = req.query.leagueId;
 
-  if (![10, 42161, 11155420].includes(Number(network))) {
+  if (!SUPPORTED_NETWORKS.includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
     return;
   }
@@ -1269,13 +1269,15 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
     return;
   }
 
-  const allLiveLeagues = Object.values(LeagueMap).filter((leagueInfo) =>
-    Number(network) == 11155420
-      ? leagueInfo.betTypesForLiveTestnet && leagueInfo.betTypesForLiveTestnet.length > 0
-      : leagueInfo.betTypesForLive && leagueInfo.betTypesForLive.length > 0,
-  );
-  const allLiveLeagueIds = allLiveLeagues.map((league) => league.id);
-  const allLiveSports = uniqBy(allLiveLeagues.map((league) => league.sport.toLowerCase()));
+  const redisKeyForRiskManagementLeagues =
+    Number(network) === NETWORK.OptimismSepolia
+      ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET
+      : KEYS.RISK_MANAGEMENT_LEAGUES_DATA;
+
+  const riskManagementLeagues = JSON.parse(await redisClient.get(redisKeyForRiskManagementLeagues));
+
+  const allLiveLeagueIds = getLiveSupportedLeagues(riskManagementLeagues);
+  const allLiveSports = uniqBy(allLiveLeagueIds.map((id) => LeagueMap[id].sport.toLowerCase()));
 
   if (sport && !allLiveSports.includes(sport.toLowerCase())) {
     res.send(

@@ -9,16 +9,22 @@ const getRedisKeyForOpticOddsApiFixtures = (leagueId) => `${KEYS.OPTIC_ODDS_API_
 const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS_BY_LEAGUE}${leagueId}`;
 const getRedisKeyForOpticOddsApiResults = (leagueId) => `${KEYS.OPTIC_ODDS_API_RESULTS_BY_LEAGUE}${leagueId}`;
 
-const fetchRiskManagementConfig = async () => {
-  const [teams, bookmakersData, spreadData] = await redisClient.mGet([
+const fetchRiskManagementConfig = async (isTestnet) => {
+  const [teams, bookmakersData, spreadData, leaguesData] = await redisClient.mGet([
     KEYS.RISK_MANAGEMENT_TEAMS_MAP,
     KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA,
     KEYS.RISK_MANAGEMENT_SPREAD_DATA,
+    isTestnet ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET : KEYS.RISK_MANAGEMENT_LEAGUES_DATA,
   ]);
 
   const teamsMap = new Map(JSON.parse(teams));
 
-  return { teamsMap, bookmakersData: JSON.parse(bookmakersData), spreadData: JSON.parse(spreadData) };
+  return {
+    teamsMap,
+    bookmakersData: JSON.parse(bookmakersData),
+    spreadData: JSON.parse(spreadData),
+    leaguesData: JSON.parse(leaguesData),
+  };
 };
 
 const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {

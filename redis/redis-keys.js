@@ -74,6 +74,8 @@ const KEYS = {
   OPTIC_ODDS_STREAM_EVENT_RESULTS_BY_FIXTURE: "opticOddsStreamEventResultsByFixtureId",
   RISK_MANAGEMENT_SPREAD_DATA: "riskManagementSpreadData",
   RISK_MANAGEMENT_BOOKMAKERS_DATA: "riskManagementBookmakersData",
+  RISK_MANAGEMENT_LEAGUES_DATA: "riskManagementLeaguesData",
+  RISK_MANAGEMENT_LEAGUES_DATA_TESTNET: "riskManagementLeaguesDataTestnet",
   RISK_MANAGEMENT_TEAMS_MAP: "riskManagementTeamsMap",
   SOLANA_ADDRESSES: "solanaAddresses",
 };

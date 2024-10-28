@@ -5,13 +5,16 @@ const KEYS = require("../../redis/redis-keys");
 const { readCsvFromUrl } = require("../utils/csvReader");
 
 const { delay } = require("../utils/general");
+const { SUPPORTED_NETWORKS, NETWORK } = require("../constants/networks");
 
 const processRiskManagement = async () => {
   if (process.env.REDIS_URL) {
+    const isTestnet = process.env.IS_TESTNET === "true";
+
     setTimeout(async () => {
       while (true) {
         try {
-          await processAllRisks();
+          await processAllRisks(isTestnet);
         } catch (error) {
           console.log(`Risk management: processing data error: ${error}`);
         }
@@ -22,19 +25,24 @@ const processRiskManagement = async () => {
   }
 };
 
-const processAllRisks = async () => {
-  const TIMEOUT = process.env.GITHUB_API_TIMEOUT;
+const processAllRisks = async (isTestnet) => {
+  const TIMEOUT = Number(process.env.GITHUB_API_TIMEOUT);
 
   const teamsMapPromise = fetchTeamsMap(TIMEOUT);
   const bookmakersDataPromise = readCsvFromUrl(process.env.GITHUB_URL_LIVE_BOOKMAKERS_CSV, TIMEOUT);
   const spreadDataPromise = readCsvFromUrl(process.env.GITHUB_URL_SPREAD_CSV, TIMEOUT);
+  const liveLeaguesDataPromise = readCsvFromUrl(
+    isTestnet ? process.env.GITHUB_URL_LIVE_LEAGUES_CSV_TESTNET : process.env.GITHUB_URL_LIVE_LEAGUES_CSV,
+    TIMEOUT,
+  );
 
-  let teamsMap, bookmakersData, spreadData;
+  let teamsMap, bookmakersData, spreadData, leaguesData;
   try {
-    [teamsMap, bookmakersData, spreadData] = await Promise.all([
+    [teamsMap, bookmakersData, spreadData, leaguesData] = await Promise.all([
       teamsMapPromise,
       bookmakersDataPromise,
       spreadDataPromise,
+      liveLeaguesDataPromise,
     ]);
 
     redisClient.mSet([
@@ -44,6 +52,8 @@ const processAllRisks = async () => {
       JSON.stringify(bookmakersData),
       KEYS.RISK_MANAGEMENT_SPREAD_DATA,
       JSON.stringify(spreadData),
+      isTestnet ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET : KEYS.RISK_MANAGEMENT_LEAGUES_DATA,
+      JSON.stringify(leaguesData),
     ]);
   } catch (e) {
     console.log(`Risk management: Fetching from Github config data error: ${e.message}`);
@@ -51,12 +61,11 @@ const processAllRisks = async () => {
 };
 
 const fetchTeamsMap = async (timeout) => {
-  const teamsMap = new Map();
-
   const teamsMappingJsonResponse = await axios.get(process.env.GITHUB_URL_LIVE_TEAMS_MAPPING, { timeout });
 
   const teamsMappingJsonData = teamsMappingJsonResponse.data;
 
+  const teamsMap = new Map();
   Object.keys(teamsMappingJsonData).forEach((key) => {
     teamsMap.set(key.toString(), teamsMappingJsonData[key].toString());
   });

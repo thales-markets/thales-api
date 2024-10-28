@@ -10,7 +10,7 @@ const csvParser = require("csv-parser");
  * @returns {Promise<Array<Object>>} - A promise that resolves to an array of parsed CSV data objects.
  * @throws {Error} - Throws an error if the CSV data could not be fetched or parsed.
  */
-async function readCsvFromUrl(url, timeout) {
+async function readCsvFromUrl(url, timeout = 0) {
   try {
     const response = await axios.get(url, { timeout });
     const csvContent = response.data;

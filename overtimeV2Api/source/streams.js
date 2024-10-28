@@ -44,7 +44,11 @@ async function processOpticOddsResults() {
 
 const processAllLiveResults = async (resultsStreamSourcesByLeagueMap, isTestnet) => {
   // Get supported live leagues
-  const supportedLiveLeagueIds = getLiveSupportedLeagues(isTestnet);
+  const redisKeyForRiskManagementLeagues = isTestnet
+    ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET
+    : KEYS.RISK_MANAGEMENT_LEAGUES_DATA;
+  const riskManagementLeagues = JSON.parse(await redisClient.get(redisKeyForRiskManagementLeagues));
+  const supportedLiveLeagueIds = getLiveSupportedLeagues(riskManagementLeagues);
 
   // Read open markets only from one network as markets are the same on all networks
   const openMarkets = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism]);
