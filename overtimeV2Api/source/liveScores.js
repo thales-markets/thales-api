@@ -141,7 +141,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
         liveScoresMap.set(obj.gameId, {
           lastUpdate: new Date().getTime(),
           period: Number.isNaN(period) ? undefined : period,
-          gameStatus: opticOddsEvent.period === "half" ? "Half" : opticOddsEvent.status,
+          gameStatus: opticOddsEvent.period,
           displayClock: opticOddsEvent.clock,
           homeScore: homeScores.score,
           awayScore: awayScores.score,
