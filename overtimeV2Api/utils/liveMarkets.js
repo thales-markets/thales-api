@@ -69,9 +69,8 @@ const filterStaleOdds = (gameOddsArray) =>
     const odds = gameOdds.odds
       ? gameOdds.odds.filter(
           (oddsObj) =>
-            oddsObj.market_name.toLowerCase() === MoneylineTypes.MONEYLINE.toLowerCase() ||
-            (oddsObj.market_name.toLowerCase() !== MoneylineTypes.MONEYLINE.toLowerCase() &&
-              !isOddsTimeStale(oddsObj.timestamp)),
+            oddsObj.marketName === MoneylineTypes.MONEYLINE.toLowerCase() ||
+            (oddsObj.marketName !== MoneylineTypes.MONEYLINE.toLowerCase() && !isOddsTimeStale(oddsObj.timestamp)),
         )
       : gameOdds.odds;
 

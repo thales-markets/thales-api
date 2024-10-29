@@ -229,11 +229,11 @@ const getOpticOddsScore = (gameScores, league, homeAwayType) => {
       } else {
         numberOfRoundsResult = Number(numberOfRounds) == 1 ? numberOfRounds : numberOfRounds - 1;
       }
-      score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`) == 1 ? numberOfRoundsResult : 0;
+      score = getOpticOddsScoreByCode(gameScores, `${homeAwayType}Total`) == 1 ? numberOfRoundsResult : 0;
     } else if (leagueSport !== Sport.SOCCER) {
-      score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`);
+      score = getOpticOddsScoreByCode(gameScores, `${homeAwayType}Total`);
       for (let i = 1; i <= MAX_NUMBER_OF_SCORE_PERIODS; i++) {
-        const code = `score_${homeAwayType}_period_${i}`;
+        const code = `${homeAwayType}Period${i}`;
         const periodScore = getOpticOddsScoreByCode(gameScores, code);
         if (periodScore !== undefined) {
           scoreByPeriod.push(periodScore);
@@ -243,8 +243,8 @@ const getOpticOddsScore = (gameScores, league, homeAwayType) => {
       }
     } else {
       // soccer
-      const periodScore1 = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_period_1`);
-      const periodScore2 = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_period_2`);
+      const periodScore1 = getOpticOddsScoreByCode(gameScores, `${homeAwayType}Period1`);
+      const periodScore2 = getOpticOddsScoreByCode(gameScores, `${homeAwayType}Period2`);
       if (periodScore1 !== undefined) {
         scoreByPeriod.push(periodScore1);
       }
@@ -288,7 +288,7 @@ const procesOpticOdssGamesInfo = async (leagues, formattedDate, gamesInfoMap) =>
       opticOddsApiFixturesResponseData.data.forEach((fixtureEvent) => {
         if (fixtureEvent.id) {
           const gameId = bytes32({ input: fixtureEvent.id });
-          const gameResults = opticOddsResult.find((result) => result.fixture_id === fixtureEvent.id);
+          const gameResults = opticOddsResult.find((result) => result.gameId === fixtureEvent.id);
           const fixtureStatus = fixtureEvent.status.toLowerCase();
 
           gamesInfoMap.set(gameId, {

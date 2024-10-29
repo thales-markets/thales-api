@@ -13,60 +13,58 @@ const mapScorePeriods = (periods, homeAwayType) =>
   Object.values(periods).reduce(
     (acc, periodValue, index) => ({
       ...acc,
-      [`score_${homeAwayType}_period_${index + 1}`]: periodValue,
+      [`${homeAwayType}Period${index + 1}`]: periodValue,
     }),
     {},
   );
 
-const mapOpticOddsStreamResults = (streamEvents) =>
-  streamEvents.map((streamEvent) => ({
-    fixture_id: streamEvent.fixture_id,
-    game_id: streamEvent.score.fixture.game_id,
-    sport: streamEvent.score.sport.name,
-    league: streamEvent.league,
-    status: streamEvent.score.fixture.status,
-    is_live: streamEvent.is_live,
-    clock: streamEvent.score.in_play.clock,
-    period: streamEvent.score.in_play.period,
-    home_team: streamEvent.score.fixture.home_team_display,
-    away_team: streamEvent.score.fixture.away_team_display,
-    score_home_total: streamEvent.score.scores.home.total,
-    score_away_total: streamEvent.score.scores.away.total,
-    ...mapScorePeriods(streamEvent.score.scores.home.periods, "home"),
-    ...mapScorePeriods(streamEvent.score.scores.away.periods, "away"),
-  }));
-
 const mapOpticOddsApiResults = (resultsData) =>
   resultsData.map((resultData) => ({
-    fixture_id: resultData.fixture.id,
-    game_id: resultData.fixture.game_id,
+    gameId: resultData.fixture.id, // fixture_id
     sport: resultData.sport.name,
-    league: resultData.league.name,
-    status: resultData.fixture.status,
-    is_live: resultData.fixture.is_live,
+    league: resultData.league.name.toLowerCase(),
+    status: resultData.fixture.status.toLowerCase(),
+    isLive: resultData.fixture.is_live,
     clock: resultData.in_play.clock,
-    period: resultData.in_play.period,
-    home_team: resultData.fixture.home_team_display,
-    away_team: resultData.fixture.away_team_display,
-    score_home_total: resultData.scores.home.total,
-    score_away_total: resultData.scores.away.total,
+    period: resultData.in_play.period ? resultData.in_play.period.toLowerCase() : resultData.in_play.period,
+    homeTeam: resultData.fixture.home_team_display,
+    awayTeam: resultData.fixture.away_team_display,
+    homeTotal: resultData.scores.home.total,
+    awayTotal: resultData.scores.away.total,
     ...mapScorePeriods(resultData.scores.home.periods, "home"),
     ...mapScorePeriods(resultData.scores.away.periods, "away"),
   }));
 
+const mapOpticOddsStreamResults = (streamEvents) =>
+  streamEvents.map((streamEvent) => ({
+    gameId: streamEvent.fixture_id,
+    sport: streamEvent.score.sport.name,
+    league: streamEvent.league.toLowerCase(),
+    status: streamEvent.score.fixture.status.toLowerCase(),
+    isLive: streamEvent.is_live,
+    clock: streamEvent.score.in_play.clock,
+    period: streamEvent.score.in_play.period
+      ? streamEvent.score.in_play.period.toLowerCase()
+      : streamEvent.score.in_play.period,
+    homeTeam: streamEvent.score.fixture.home_team_display,
+    awayTeam: streamEvent.score.fixture.away_team_display,
+    homeTotal: streamEvent.score.scores.home.total,
+    awayTotal: streamEvent.score.scores.away.total,
+    ...mapScorePeriods(streamEvent.score.scores.home.periods, "home"),
+    ...mapScorePeriods(streamEvent.score.scores.away.periods, "away"),
+  }));
+
 // Update or add results to initial results from API
 const mapResultsStreamEvents = (streamEvents, initialResults) => {
-  // map existing fixture IDs
+  // map existing game IDs
   const mappedResults = initialResults.map((initialResult) => {
-    const updatedResultEvent = streamEvents.filter((event) => event.fixture_id === initialResult.fixture_id);
+    const updatedResultEvent = streamEvents.filter((event) => event.fixture_id === initialResult.gameId);
     return updatedResultEvent.length > 0 ? mapOpticOddsStreamResults(updatedResultEvent)[0] : initialResult;
   });
 
-  // map new fixture IDs
+  // map new game IDs
   const newMappedResults = mapOpticOddsStreamResults(
-    streamEvents.filter(
-      (event) => !initialResults.some((initialResult) => initialResult.fixture_id === event.fixture_id),
-    ),
+    streamEvents.filter((event) => !initialResults.some((initialResult) => initialResult.gameId === event.fixture_id)),
   );
 
   return mappedResults.concat(newMappedResults);

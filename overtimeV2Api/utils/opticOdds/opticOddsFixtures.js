@@ -7,15 +7,14 @@ const {
 
 const mapOpticOddsApiFixtures = (fixturesData) =>
   fixturesData.map((fixtureData) => ({
-    fixture_id: fixtureData.id,
-    game_id: fixtureData.game_id,
-    start_date: fixtureData.start_date,
-    home_team: fixtureData.home_team_display,
-    away_team: fixtureData.away_team_display,
-    is_live: fixtureData.is_live,
-    status: fixtureData.status,
-    sport: fixtureData.sport.id,
-    league: fixtureData.league.name,
+    gameId: fixtureData.id, // fixture_id
+    startDate: fixtureData.start_date,
+    homeTeam: fixtureData.home_team_display,
+    awayTeam: fixtureData.away_team_display,
+    // isLive: fixtureData.is_live,
+    // status: fixtureData.status,
+    // sport: fixtureData.sport.id,
+    // league: fixtureData.league.name,
   }));
 
 const fetchOpticOddsFixtures = async (league, startDate, page) => {

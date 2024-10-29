@@ -131,7 +131,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     }
 
     opticOddsGameIdsWithLeagueID.forEach((obj) => {
-      const opticOddsEvent = liveResults.find((event) => event.fixture_id === obj.gameId);
+      const opticOddsEvent = liveResults.find((event) => event.gameId === obj.gameId);
       if (opticOddsEvent) {
         const homeScores = getOpticOddsScore(opticOddsEvent, obj.leagueId, "home");
         const awayScores = getOpticOddsScore(opticOddsEvent, obj.leagueId, "away");
@@ -141,7 +141,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
         liveScoresMap.set(obj.gameId, {
           lastUpdate: new Date().getTime(),
           period: Number.isNaN(period) ? undefined : period,
-          gameStatus: opticOddsEvent.period.toLowerCase() === "half" ? "Half" : opticOddsEvent.status,
+          gameStatus: opticOddsEvent.period === "half" ? "Half" : opticOddsEvent.status,
           displayClock: opticOddsEvent.clock,
           homeScore: homeScores.score,
           awayScore: awayScores.score,

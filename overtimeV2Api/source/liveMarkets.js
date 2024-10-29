@@ -176,13 +176,13 @@ async function processMarketsByLeague(
             market.leagueId,
             market.homeTeam,
             market.awayTeam,
-            opticOddsGame.home_team,
-            opticOddsGame.away_team,
+            opticOddsGame.homeTeam,
+            opticOddsGame.awayTeam,
             teamsMap,
           );
           const datesMatching = gamesDatesMatching(
             new Date(market.maturityDate),
-            new Date(opticOddsGame.start_date),
+            new Date(opticOddsGame.startDate),
             market.leagueId,
             Number(process.env.TENNIS_MATCH_TIME_DIFFERENCE_MINUTES),
           );
@@ -206,7 +206,7 @@ async function processMarketsByLeague(
       /*
        * Read odds received from stream, example:
        *
-       * One fixture ID key="opticOddsStreamEventOddsIdByFixtureIdB176303C982E"
+       * One game ID key="opticOddsStreamEventOddsIdByGameIdB176303C982E"
        * contains multiple keys for game odds:
        * value=[
        *  "31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5",
@@ -216,7 +216,7 @@ async function processMarketsByLeague(
        */
       const opticOddsGameEvents = ongoingMarketsByOpticOddsGames.map((market) => market.opticOddsGameEvent);
       const redisStreamGameKeys = opticOddsGameEvents.map((opticOddsGameEvent) =>
-        getRedisKeyForOpticOddsStreamEventOddsId(opticOddsGameEvent.fixture_id),
+        getRedisKeyForOpticOddsStreamEventOddsId(opticOddsGameEvent.gameId),
       );
       const redisStreamOddsKeys = (await redisClient.mGet(redisStreamGameKeys))
         .filter((obj) => obj !== null)
@@ -226,9 +226,9 @@ async function processMarketsByLeague(
       if (!isOddsInitialized) {
         // Initially fetch game odds from Optic Odds API for given markets
         const betTypes = getBetTypesForLeague(leagueId, config.leaguesData);
-        const fixtureIds = ongoingMarketsByOpticOddsGames.map((market) => market.opticOddsGameEvent.fixture_id);
+        const gameIds = ongoingMarketsByOpticOddsGames.map((market) => market.opticOddsGameEvent.gameId);
 
-        const oddsFromApi = await fetchOpticOddsFixtureOdds(bookmakers, betTypes, fixtureIds);
+        const oddsFromApi = await fetchOpticOddsFixtureOdds(bookmakers, betTypes, gameIds);
         oddsPerGame = mapOpticOddsApiFixtureOdds(oddsFromApi);
 
         if (!isOpticOddsStreamOddsDisabled && oddsPerGame.length > 0) {
@@ -245,8 +245,8 @@ async function processMarketsByLeague(
         // get previous odds
         const previousOddsPerGame = JSON.parse(await redisClient.get(getRedisKeyForOpticOddsApiOdds(leagueId))) || [];
         // filter odds only for matched live games
-        const previousLiveOddsPerGame = previousOddsPerGame.filter((game) =>
-          ongoingMarketsByOpticOddsGames.some((market) => market.opticOddsGameEvent.fixture_id === game.fixture_id),
+        const previousLiveOddsPerGame = previousOddsPerGame.filter((gameOdds) =>
+          ongoingMarketsByOpticOddsGames.some((market) => market.opticOddsGameEvent.gameId === gameOdds.gameId),
         );
 
         // Read odds received from stream
@@ -280,7 +280,7 @@ async function processMarketsByLeague(
       const ongoingMarketsByOpticOddsOdds = ongoingMarketsByOpticOddsGames
         .map((market) => {
           const opticOddsGameOdds = oddsPerGame.find(
-            (game) => game.fixture_id === market.opticOddsGameEvent.fixture_id,
+            (gameOdds) => gameOdds.gameId === market.opticOddsGameEvent.gameId,
           );
           return { ...market, opticOddsGameOdds };
         })
@@ -292,9 +292,9 @@ async function processMarketsByLeague(
 
       if (!isResultsInitialized) {
         // Initially fetch game results from Optic Odds API for given markets
-        const fixtureIds = ongoingMarketsByOpticOddsOdds.map((market) => market.opticOddsGameOdds.fixture_id);
+        const gameIds = ongoingMarketsByOpticOddsOdds.map((market) => market.opticOddsGameOdds.gameId);
 
-        const resultsFromApi = await fetchOpticOddsResults(fixtureIds);
+        const resultsFromApi = await fetchOpticOddsResults(gameIds);
 
         resultsPerGame = mapOpticOddsApiResults(resultsFromApi);
         if (!isOpticOddsStreamResultsDisabled && resultsPerGame.length > 0) {
@@ -308,13 +308,13 @@ async function processMarketsByLeague(
         const previousResultsPerGame =
           JSON.parse(await redisClient.get(getRedisKeyForOpticOddsApiResults(leagueId))) || [];
         // filter results only for matched game odds
-        const previousLiveResultsPerGame = previousResultsPerGame.filter((game) =>
-          ongoingMarketsByOpticOddsOdds.some((market) => market.opticOddsGameOdds.fixture_id === game.fixture_id),
+        const previousLiveResultsPerGame = previousResultsPerGame.filter((result) =>
+          ongoingMarketsByOpticOddsOdds.some((market) => market.opticOddsGameOdds.gameId === result.gameId),
         );
 
-        // Read results received from stream by fixture ID
+        // Read results received from stream by game ID
         const redisStreamResultsKeys = ongoingMarketsByOpticOddsOdds.map((market) =>
-          getRedisKeyForOpticOddsStreamEventResults(market.opticOddsGameEvent.fixture_id),
+          getRedisKeyForOpticOddsStreamEventResults(market.opticOddsGameEvent.gameId),
         );
         const resultsStreamEvents =
           redisStreamResultsKeys.length > 0
@@ -331,17 +331,15 @@ async function processMarketsByLeague(
       // Add Optic Odds game results data and filter it
       const ongoingMarketsByResults = ongoingMarketsByOpticOddsOdds
         .map((market) => {
-          const opticOddsResultData = resultsPerGame.find(
-            (game) => game.fixture_id == market.opticOddsGameOdds.fixture_id,
-          );
+          const opticOddsResultData = resultsPerGame.find((result) => result.gameId == market.opticOddsGameOdds.gameId);
           return { ...market, opticOddsResultData };
         })
         .filter((market) => {
           const opticOddsResultData = market.opticOddsResultData;
-          const opticOddsHomeTeam = market.opticOddsGameOdds.home_team;
-          const opticOddsAwayTeam = market.opticOddsGameOdds.away_team;
+          const opticOddsHomeTeam = market.opticOddsGameOdds.homeTeam;
+          const opticOddsAwayTeam = market.opticOddsGameOdds.awayTeam;
 
-          if (opticOddsResultData == undefined) {
+          if (opticOddsResultData === undefined) {
             errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
@@ -350,7 +348,7 @@ async function processMarketsByLeague(
             return false;
           }
 
-          if (opticOddsResultData.status.toLowerCase() == "completed") {
+          if (opticOddsResultData.status === "completed") {
             errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
@@ -388,21 +386,21 @@ async function processMarketsByLeague(
         }
 
         // Reading clock, period and result data from results
-        const currentScoreHome = market.opticOddsResultData.score_home_total;
-        const currentScoreAway = market.opticOddsResultData.score_away_total;
+        const currentScoreHome = market.opticOddsResultData.homeTotal;
+        const currentScoreAway = market.opticOddsResultData.awayTotal;
         const currentClock = market.opticOddsResultData.clock;
         const currentPeriod = market.opticOddsResultData.period;
-        const isLive = market.opticOddsResultData.is_live;
+        const isLive = market.opticOddsResultData.isLive;
         const currentGameStatus = market.opticOddsResultData.status;
         const gamesHomeScoreByPeriod = [];
         const gamesAwayScoreByPeriod = [];
 
-        if (currentGameStatus.toLowerCase().includes("half") || ("" + currentPeriod).toLowerCase().includes("half")) {
+        if (currentGameStatus.includes("half") || currentPeriod.includes("half")) {
           gamePaused = false;
         }
 
         if (gamePaused) {
-          const errorMessage = `Pausing game ${market.opticOddsGameOdds.home_team} - ${market.opticOddsGameOdds.away_team} due to odds being stale`;
+          const errorMessage = `Pausing game ${market.opticOddsGameOdds.homeTeam} - ${market.opticOddsGameOdds.awayTeam} due to odds being stale`;
           errorsMap.set(market.gameId, {
             processingTime: PROCESSING_START_TIME,
             errorTime: new Date().toUTCString(),
@@ -460,7 +458,7 @@ async function processMarketsByLeague(
             market = processedMarket;
             market.isPaused = isMarketPaused(market);
           } else {
-            const errorMessage = `Provider marked game ${opticOddsGameOddsData.home_team} - ${opticOddsGameOddsData.away_team} as not live`;
+            const errorMessage = `Provider marked game ${opticOddsGameOddsData.homeTeam} - ${opticOddsGameOddsData.awayTeam} as not live`;
             errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),

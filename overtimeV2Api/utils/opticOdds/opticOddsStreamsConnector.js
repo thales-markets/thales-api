@@ -4,10 +4,9 @@ const KEYS = require("../../../redis/redis-keys");
 const { uniq } = require("lodash");
 const { getRedisClientForStreamOdds, getRedisClientForStreamResults } = require("../../services/init");
 
-const getRedisKeyForOpticOddsStreamEventOddsId = (fixtureId) =>
-  `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_FIXTURE}${fixtureId}`;
-const getRedisKeyForOpticOddsStreamEventResults = (fixtureId) =>
-  `${KEYS.OPTIC_ODDS_STREAM_EVENT_RESULTS_BY_FIXTURE}${fixtureId}`;
+const getRedisKeyForOpticOddsStreamEventOddsId = (gameId) => `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME}${gameId}`;
+const getRedisKeyForOpticOddsStreamEventResults = (gameId) =>
+  `${KEYS.OPTIC_ODDS_STREAM_EVENT_RESULTS_BY_GAME}${gameId}`;
 
 const connectToOpticOddsStreamOdds = (
   sportsbooks,
@@ -43,7 +42,7 @@ const connectToOpticOddsStreamOdds = (
   };
 
   let lastReceivedEntryId = lastEntryId;
-  let allRedisKeysByFixtureIdMap = lastRedisKeysMap;
+  let allRedisKeysByGameIdMap = lastRedisKeysMap;
 
   eventSource.addEventListener("odds", (event) => {
     const data = JSON.parse(event.data);
@@ -63,16 +62,16 @@ const connectToOpticOddsStreamOdds = (
     });
 
     /*
-     * Maintain redis key by fixture ID which containes list of redis line odds keys per game, e.g:
-     * key = opticOddsStreamEventOddsIdByFixtureId32C781DB02F8
+     * Maintain redis key by game ID which containes list of redis line odds keys per game, e.g:
+     * key = opticOddsStreamEventOddsIdByGameId32C781DB02F8
      * value = [31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5, 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+1_5]
      */
-    const fixtureId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
-    const prevRedisKeysForOdds = allRedisKeysByFixtureIdMap.get(fixtureId) || [];
+    const gameId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
+    const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
     const updatedRedisKeysForOdds = uniq([...prevRedisKeysForOdds, ...currentRedisKeysForGameEvent]);
-    allRedisKeysByFixtureIdMap.set(fixtureId, updatedRedisKeysForOdds);
+    allRedisKeysByGameIdMap.set(gameId, updatedRedisKeysForOdds);
 
-    const redisGameKey = getRedisKeyForOpticOddsStreamEventOddsId(fixtureId);
+    const redisGameKey = getRedisKeyForOpticOddsStreamEventOddsId(gameId);
 
     redisClient.set(redisGameKey, JSON.stringify(updatedRedisKeysForOdds), { EX: 60 * 60 * 12 }); // delete after 12h
   });
@@ -95,10 +94,10 @@ const connectToOpticOddsStreamOdds = (
       redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
     });
 
-    const fixtureId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
-    const prevRedisKeysForOdds = allRedisKeysByFixtureIdMap.get(fixtureId) || [];
+    const gameId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
+    const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
     const updatedRedisKeysForOdds = uniq([...prevRedisKeysForOdds, ...currentRedisKeysForGameEvent]);
-    allRedisKeysByFixtureIdMap.set(fixtureId, updatedRedisKeysForOdds);
+    allRedisKeysByGameIdMap.set(gameId, updatedRedisKeysForOdds);
   });
 
   eventSource.onerror = (event) => {
@@ -113,7 +112,7 @@ const connectToOpticOddsStreamOdds = (
           sport,
           leagues,
           lastReceivedEntryId,
-          allRedisKeysByFixtureIdMap,
+          allRedisKeysByGameIdMap,
         ),
       1000,
     );
@@ -150,7 +149,7 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
 
     const resultsData = data.data;
 
-    // Save each object from event data to redis with key: Fixture ID (e.g. opticOddsStreamEventResultsByFixtureId2E4AB315ABD9)
+    // Save each object from event data to redis with key by Game ID (e.g. opticOddsStreamEventResultsByGameId2E4AB315ABD9)
     const redisGameKey = getRedisKeyForOpticOddsStreamEventResults(resultsData.fixture_id);
 
     redisClient.set(redisGameKey, JSON.stringify(resultsData), { EX: 60 * 60 * 12 }); // delete after 12h TODO: check if longer needed
