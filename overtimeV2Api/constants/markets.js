@@ -260,6 +260,10 @@ const MarketType = {
   FIRST_PERIOD_TOTAL_EXACT_AWAY_TEAM: 10146,
   SECOND_PERIOD_TOTAL_EXACT_HOME_TEAM: 10147,
   SECOND_PERIOD_TOTAL_EXACT_AWAY_TEAM: 10148,
+
+  // Futures
+  LEAGUE_WINNER: 13001,
+  MVP: 13002,
 };
 
 const MarketTypeMap = {
@@ -1492,6 +1496,20 @@ const MarketTypeMap = {
     id: MarketType.SECOND_PERIOD_TOTAL_EXACT_AWAY_TEAM,
     key: "secondPeriodExactTotalAwayTeam",
     name: "Exact total 2nd",
+    resultType: ResultType.EXACT_POSITION,
+  },
+
+  // Futures
+  [MarketType.LEAGUE_WINNER]: {
+    id: MarketType.LEAGUE_WINNER,
+    key: "leagueWinner",
+    name: "Champion",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.MVP]: {
+    id: MarketType.MVP,
+    key: "mvp",
+    name: "MVP",
     resultType: ResultType.EXACT_POSITION,
   },
 };
