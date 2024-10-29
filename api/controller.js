@@ -1199,9 +1199,6 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     ? getCachedClosedMarketsByNetworkMap(network)
     : getCachedOpenMarketsByNetworkMap(network);
 
-  const afterRead = new Date().getTime();
-  console.log(afterRead - beforeRead);
-
   try {
     const allMarkets = Array.from(markets.values());
     const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
