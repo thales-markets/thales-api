@@ -6,6 +6,7 @@ const {
   isYesNoPlayerPropsMarket,
   isOneSideMarket,
   formatMarketOdds,
+  isFuturesMarket,
 } = require("../utils/markets");
 const { TicketMarketStatus, MarketTypeMap, OddsType } = require("../constants/markets");
 const { bigNumberFormatter } = require("../utils/formatters");
@@ -20,6 +21,7 @@ const { getCollateralDecimals, getCollateralSymbolByAddress } = require("../util
 const { getLeagueSport, getLeagueLabel, League, UFC_LEAGUE_IDS } = require("overtime-live-trading-utils");
 const { orderBy } = require("lodash");
 const positionNamesMap = require("../assets/positionNamesMap.json");
+const futuresPositionNamesMap = require("../assets/futuresPositionNamesMap.json");
 
 async function getPlayersInfoMap() {
   const obj = await redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO);
@@ -100,7 +102,11 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
       const marketStatus = Number(marketResult.status);
 
       const formattedOdds = bigNumberFormatter(market.odd);
-      const positionNames = positionNamesMap[typeId];
+      const positionNames = isFuturesMarket(typeId)
+        ? futuresPositionNamesMap[leagueId]
+          ? futuresPositionNamesMap[leagueId][typeId]
+          : undefined
+        : positionNamesMap[typeId];
 
       return {
         gameId: market.gameId,

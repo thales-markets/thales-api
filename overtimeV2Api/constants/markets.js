@@ -260,6 +260,10 @@ const MarketType = {
   FIRST_PERIOD_TOTAL_EXACT_AWAY_TEAM: 10146,
   SECOND_PERIOD_TOTAL_EXACT_HOME_TEAM: 10147,
   SECOND_PERIOD_TOTAL_EXACT_AWAY_TEAM: 10148,
+
+  // Futures
+  LEAGUE_WINNER: 13001,
+  MVP: 13002,
 };
 
 const MarketTypeMap = {
@@ -1494,6 +1498,20 @@ const MarketTypeMap = {
     name: "Exact total 2nd",
     resultType: ResultType.EXACT_POSITION,
   },
+
+  // Futures
+  [MarketType.LEAGUE_WINNER]: {
+    id: MarketType.LEAGUE_WINNER,
+    key: "leagueWinner",
+    name: "Champion",
+    resultType: ResultType.EXACT_POSITION,
+  },
+  [MarketType.MVP]: {
+    id: MarketType.MVP,
+    key: "mvp",
+    name: "MVP",
+    resultType: ResultType.EXACT_POSITION,
+  },
 };
 
 const PLAYER_PROPS_MARKET_TYPES = [
@@ -1569,6 +1587,8 @@ const COMBINED_POSITIONS_MARKET_TYPES = [
   MarketType.HALFTIME_FULLTIME_GOALS,
 ];
 
+const FUTURES_MARKET_TYPES = [MarketType.LEAGUE_WINNER, MarketType.MVP];
+
 const OddsType = {
   AMERICAN: "american-odds",
   DECIMAL: "decimal-odds",
@@ -1626,4 +1646,5 @@ module.exports = {
   EnetpulseRounds,
   LIVE_TYPE_ID_BASE,
   TicketMarketStatus,
+  FUTURES_MARKET_TYPES,
 };
