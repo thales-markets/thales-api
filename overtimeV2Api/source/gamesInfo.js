@@ -19,6 +19,7 @@ const {
   Sport,
 } = require("overtime-live-trading-utils");
 const { getLeaguePeriodType, getLeagueSport } = require("overtime-live-trading-utils");
+const { NETWORK } = require("../constants/networks");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
 const numberOfDaysInFuture = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_FUTURE);
@@ -327,6 +328,12 @@ const procesOpticOdssGamesInfo = async (sports, formattedDate, gamesInfoMap) => 
   }
 };
 
+async function getOpenMarketsMap(network) {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[network]);
+  const openMarkets = new Map(JSON.parse(obj));
+  return openMarkets;
+}
+
 async function getGamesInfoMap() {
   const obj = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO);
   const gamesInfoMap = new Map(JSON.parse(obj));
@@ -357,28 +364,35 @@ async function processAllGamesInfo() {
     ]);
   }
 
-  // TODO hardcode US Election 2024
-  gamesInfoMap.set("0x3764616430383334656435643464643038386661336166643230613033343336", {
-    lastUpdate: new Date().getTime(),
-    gameStatus: "",
-    isGameFinished: false,
-    tournamentName: "",
-    tournamentRound: "",
-    provider: Provider.EMPTY,
-    teams: [
-      {
-        name: "US Election 2024",
-        isHome: true,
-        score: undefined,
-        scoreByPeriod: [],
-      },
-      {
-        name: "",
-        isHome: false,
-        score: undefined,
-        scoreByPeriod: [],
-      },
-    ],
+  // Get Futures and Politics game info from open markets
+  const openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
+  const futuresMarkets = Array.from(openMarketsMap.values()).filter(
+    (market) => market.sport === Sport.FUTURES || market.sport === Sport.POLITICS,
+  );
+
+  futuresMarkets.forEach((market) => {
+    gamesInfoMap.set(market.gameId, {
+      lastUpdate: new Date().getTime(),
+      gameStatus: "",
+      isGameFinished: false,
+      tournamentName: "",
+      tournamentRound: "",
+      provider: Provider.EMPTY,
+      teams: [
+        {
+          name: market.homeTeam,
+          isHome: true,
+          score: undefined,
+          scoreByPeriod: [],
+        },
+        {
+          name: market.awayTeam,
+          isHome: false,
+          score: undefined,
+          scoreByPeriod: [],
+        },
+      ],
+    });
   });
 
   console.log(`Games info: Number of games info: ${Array.from(gamesInfoMap.values()).length}`);

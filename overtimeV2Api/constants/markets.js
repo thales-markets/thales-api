@@ -1587,6 +1587,8 @@ const COMBINED_POSITIONS_MARKET_TYPES = [
   MarketType.HALFTIME_FULLTIME_GOALS,
 ];
 
+const FUTURES_MARKET_TYPES = [MarketType.LEAGUE_WINNER, MarketType.MVP];
+
 const OddsType = {
   AMERICAN: "american-odds",
   DECIMAL: "decimal-odds",
@@ -1644,4 +1646,5 @@ module.exports = {
   EnetpulseRounds,
   LIVE_TYPE_ID_BASE,
   TicketMarketStatus,
+  FUTURES_MARKET_TYPES,
 };

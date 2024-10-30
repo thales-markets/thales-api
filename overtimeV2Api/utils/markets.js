@@ -4,6 +4,7 @@ const {
   ONE_SIDE_PLAYER_PROPS_MARKET_TYPES,
   YES_NO_PLAYER_PROPS_MARKET_TYPES,
   COMBINED_POSITIONS_MARKET_TYPES,
+  FUTURES_MARKET_TYPES,
 } = require("../constants/markets");
 const bytes32 = require("bytes32");
 const { getLeagueSport, League, Sport } = require("overtime-live-trading-utils");
@@ -62,6 +63,10 @@ const getIsCombinedPositionsMarket = (marketType) => {
   return COMBINED_POSITIONS_MARKET_TYPES.includes(marketType);
 };
 
+const isFuturesMarket = (marketType) => {
+  return FUTURES_MARKET_TYPES.includes(marketType);
+};
+
 const calculateImpliedOddsDifference = (impliedOddsA, impliedOddsB) => {
   const percentageDifference = (Math.abs(impliedOddsA - impliedOddsB) / impliedOddsA) * 100;
   console.log("% diff: " + percentageDifference);
@@ -83,4 +88,5 @@ module.exports = {
   calculateImpliedOddsDifference,
   convertFromBytes32,
   getIsCombinedPositionsMarket,
+  isFuturesMarket,
 };
