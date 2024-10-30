@@ -127,7 +127,13 @@ const fetchOpticOddsFixtureOdds = async (sportsbooks, markets, fixtureIds) => {
 
   let oddsResponses = [];
   try {
+    const startTime = new Date().getTime();
     oddsResponses = await Promise.all(oddsPromises);
+    const endTime = new Date().getTime();
+    const diff = endTime - startTime;
+    if (diff > process.env.LOG_OPTIC_ODDS_API_CALL_TIME_THRESHOLD) {
+      console.log(`API CALL TAKES TOO LONG: fetchOpticOddsFixtureOdds time: ${diff}ms`);
+    }
   } catch (e) {
     console.log(`Fetchng Optic Odds fixture odds error: ${e.message} ${e.error})`);
     oddsResponses = [];

@@ -89,7 +89,13 @@ const fetchOpticOddsResults = async (fixtureIds) => {
 
   let resultsResponses = [];
   try {
+    const startTime = new Date().getTime();
     resultsResponses = await Promise.all(resultsPromises);
+    const endTime = new Date().getTime();
+    const diff = endTime - startTime;
+    if (diff > process.env.LOG_OPTIC_ODDS_API_CALL_TIME_THRESHOLD) {
+      console.log(`API CALL TAKES TOO LONG: fetchOpticOddsResults time: ${diff}ms`);
+    }
   } catch (e) {
     console.log(`Fetchng Optic Odds results error: ${e.message} ${e.error})`);
     resultsResponses = [];
