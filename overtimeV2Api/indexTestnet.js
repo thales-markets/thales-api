@@ -1,6 +1,8 @@
 const { initServices } = require("./services/init");
 const markets = require("./source/markets");
 const liveMarkets = require("./source/liveMarkets");
+const riskManagement = require("./source/riskManagement");
+const streams = require("./source/streams");
 
 require("dotenv").config();
 
