@@ -15,7 +15,6 @@ async function processOpticOddsResults() {
   if (process.env.REDIS_URL) {
     const isTestnet = process.env.IS_TESTNET === "true";
     const network = isTestnet ? "testnet" : "mainnets";
-    console.log(`Stream results ${network}: create client from index`);
 
     const resultsStreamSourcesByLeagueMap = new Map();
 

@@ -21,9 +21,9 @@ const fetchRiskManagementConfig = async (isTestnet) => {
 
   return {
     teamsMap,
-    bookmakersData: JSON.parse(bookmakersData),
-    spreadData: JSON.parse(spreadData),
-    leaguesData: JSON.parse(leaguesData),
+    bookmakersData: JSON.parse(bookmakersData) || [],
+    spreadData: JSON.parse(spreadData) || [],
+    leaguesData: JSON.parse(leaguesData) || [],
   };
 };
 

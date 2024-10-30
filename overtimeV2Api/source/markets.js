@@ -38,6 +38,7 @@ async function processMarkets() {
   if (process.env.REDIS_URL) {
     const isTestnet = process.env.IS_TESTNET === "true";
     const network = isTestnet ? "testnet" : "mainnets";
+
     setTimeout(async () => {
       while (true) {
         try {

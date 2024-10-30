@@ -3,18 +3,24 @@ const axios = require("axios");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
 const { readCsvFromUrl } = require("../utils/csvReader");
-
 const { delay } = require("../utils/general");
-const { SUPPORTED_NETWORKS, NETWORK } = require("../constants/networks");
 
 const processRiskManagement = async () => {
   if (process.env.REDIS_URL) {
     const isTestnet = process.env.IS_TESTNET === "true";
+    const network = isTestnet ? "testnet" : "mainnets";
 
     setTimeout(async () => {
       while (true) {
         try {
+          const startTime = new Date().getTime();
+          console.log(`Risk management ${network}: process all risks`);
+
           await processAllRisks(isTestnet);
+
+          const endTime = new Date().getTime();
+          const duration = ((endTime - startTime) / 1000).toFixed(0);
+          console.log(`Risk management ${network}: === Seconds for processing all risks: ${duration} ===`);
         } catch (error) {
           console.log(`Risk management: processing data error: ${error}`);
         }

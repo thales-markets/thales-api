@@ -11,6 +11,8 @@ const app = async () => {
 
   markets.processMarkets();
   liveMarkets.processLiveMarkets();
+  riskManagement.processRiskManagement();
+  streams.processOpticOddsResults();
 };
 
 app();
