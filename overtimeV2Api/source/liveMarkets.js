@@ -116,7 +116,7 @@ async function processAllMarkets(
   // Process games per league
   const processMarketsByLeaguePromises = uniqueLiveLeagueIds.map((leagueId) => {
     // Start or re-start one stream for each league except for tennis GS where starting multiple leagues (ATP and WTA)
-    startOddsStreams(leagueId, config.bookmakersData, oddsStreamsInfoByLeagueMap, isTestnet);
+    startOddsStreams(leagueId, config.bookmakersData, config.leaguesData, oddsStreamsInfoByLeagueMap);
 
     const ongoingLeagueMarkets = supportedLiveMarkets.filter((market) => market.leagueId === leagueId);
     return processMarketsByLeague(
