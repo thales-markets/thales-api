@@ -65,7 +65,7 @@ async function processMarkets() {
   }
 }
 
-const packMarket = (market) => {
+const packMarket = (market, isChild) => {
   const leagueId = `${market.sportId}`.startsWith("152")
     ? League.TENNIS_WTA
     : `${market.sportId}`.startsWith("153")
@@ -78,7 +78,7 @@ const packMarket = (market) => {
   const isEnetpulseSport = getLeagueProvider(leagueId) === Provider.ENETPULSE;
   const type = MarketTypeMap[market.typeId]?.key;
 
-  return {
+  const packedMarket = {
     gameId: market.gameId,
     sport: getLeagueSport(leagueId),
     leagueId: leagueId,
@@ -127,6 +127,12 @@ const packMarket = (market) => {
     positionNames: market.positionNames,
     proof: market.proof,
   };
+
+  if (!isChild) {
+    packedMarket.isV3 = !!market.isV3;
+  }
+
+  return packedMarket;
 };
 
 const readAwsS3File = async (bucket, key) => {
@@ -189,10 +195,10 @@ const loadMarkets = async (isTestnet) => {
 };
 
 const mapMarket = (market) => {
-  const packedMarket = packMarket(market);
+  const packedMarket = packMarket(market, false);
   packedMarket.childMarkets = [];
   market.childMarkets.forEach((childMarket) => {
-    const packedChildMarket = packMarket(childMarket);
+    const packedChildMarket = packMarket(childMarket, true);
     packedMarket.childMarkets.push(packedChildMarket);
   });
 

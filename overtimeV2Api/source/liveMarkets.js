@@ -107,7 +107,9 @@ async function processAllMarkets(
   const openMarketsMap = new Map(JSON.parse(openMarkets));
 
   const supportedLiveMarkets = Array.from(openMarketsMap.values())
-    .filter((market) => market.statusCode === "ongoing" && !market.isWholeGameResolved && !market.noTickets)
+    .filter(
+      (market) => !!market.isV3 && market.statusCode === "ongoing" && !market.isWholeGameResolved && !market.noTickets,
+    )
     .filter((market) => supportedLiveLeagueIds.includes(market.leagueId));
   const uniqueLiveLeagueIds = uniq(supportedLiveMarkets.map((market) => market.leagueId));
 
