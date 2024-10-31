@@ -1100,6 +1100,8 @@ app.get(ENDPOINTS.THALES_IO_WEEKLY_STATS, async (req, res) => {
   }
 });
 
+// OVERTIME V2
+
 app.get(ENDPOINTS.OVERTIME_V2_SPORTS, (req, res) => {
   try {
     res.send(LeagueMap);
@@ -1548,6 +1550,48 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ, async (req, 
 
   try {
     res.send(Object.fromEntries(errorsMap));
+  } catch (e) {
+    console.log(e);
+  }
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_RISK_MANAGEMENT_CONFIG, async (req, res) => {
+  const network = req.params.networkParam;
+  const configType = req.params.configType;
+
+  if (!SUPPORTED_NETWORKS.includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
+    return;
+  }
+
+  const isTestnet = Number(network) === NETWORK.OptimismSepolia;
+
+  try {
+    let configResponse;
+    switch (configType) {
+      case "teams":
+        const teamsData = await redisClient.get(KEYS.RISK_MANAGEMENT_TEAMS_MAP);
+        configResponse = JSON.parse(teamsData) || [];
+        break;
+      case "bookmakers":
+        const bookmakersData = await redisClient.get(KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA);
+        configResponse = JSON.parse(bookmakersData) || [];
+        break;
+      case "spreads":
+        const spreadData = await redisClient.get(KEYS.RISK_MANAGEMENT_SPREAD_DATA);
+        configResponse = JSON.parse(spreadData) || [];
+        break;
+      case "leagues":
+        const leaguesData = await redisClient.get(
+          isTestnet ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET : KEYS.RISK_MANAGEMENT_LEAGUES_DATA,
+        );
+        configResponse = JSON.parse(leaguesData) || [];
+        break;
+      default:
+        configResponse = "Unsupported config type. Supported config types: teams, bookmakers, spreads, leagues.";
+    }
+
+    res.send(configResponse);
   } catch (e) {
     console.log(e);
   }
