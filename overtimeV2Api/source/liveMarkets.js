@@ -435,6 +435,7 @@ async function processMarketsByLeague(
         market.proof = [];
         market.homeScoreByPeriod = gamesHomeScoreByPeriod;
         market.awayScoreByPeriod = gamesAwayScoreByPeriod;
+        market.isV3 = true;
 
         if (!market.errorMessage) {
           if (isLive) {
