@@ -402,8 +402,14 @@ async function processAllGamesInfo() {
     });
   });
 
-  console.log(`Games info: Total number of games info: ${Array.from(gamesInfoMap.values()).length}`);
-  redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]));
+  // TODO: remove this when all V2 games are finished
+  // Add games info from V2
+  const gamesInfoV2 = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO_V2);
+  const gamesInfoV2Map = new Map(JSON.parse(gamesInfoV2));
+  const gamesInfoMapMerged = new Map([...gamesInfoV2Map, ...gamesInfoMap]);
+
+  console.log(`Games info: Total number of games info: ${Array.from(gamesInfoMapMerged.values()).length}`);
+  redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMapMerged]));
 }
 
 module.exports = {
