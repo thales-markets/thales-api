@@ -8,6 +8,7 @@ docker build -f Dockerfile.thalesAPI -t thalesmarket/thales-api .
 docker build -f Dockerfile.thalesIO -t thalesmarket/thales-io .
 docker build -f Dockerfile.overtimeV2API -t thalesmarket/overtime-v2-api .
 docker build -f Dockerfile.overtimeV2API.testnet -t thalesmarket/overtime-v2-api-testnet .
+docker build -f ./gamesInfoV2/Dockerfile.gamesInfo -t thalesmarket/games-info-v2 .
 
 ###### PUSH IMAGES TO GIT ######
 docker push thalesmarket/api
