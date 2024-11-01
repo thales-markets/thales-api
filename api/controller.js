@@ -25,7 +25,7 @@ app.use(function (req, res, next) {
 const ENDPOINTS = require("./endpoints");
 const sigUtil = require("eth-sig-util");
 const KEYS = require("../redis/redis-keys");
-const { uniqBy, groupBy } = require("lodash");
+const { uniqBy, groupBy, spread } = require("lodash");
 
 const thalesUsers = require("../thalesApi/source/users");
 const thalesQuotes = require("../thalesApi/source/quotes");
@@ -54,7 +54,7 @@ const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters")
 const overtimeV2Markets = require("../overtimeV2Api/source/markets");
 const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
-const { LeagueMap, getLiveSupportedLeagues } = require("overtime-live-trading-utils");
+const { LeagueMap, getLiveSupportedLeagues, SpreadTypes, TotalTypes } = require("overtime-live-trading-utils");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
 const { SUPPORTED_NETWORKS, NETWORK } = require("./constants/networks");
 const {
@@ -1585,7 +1585,12 @@ app.get(ENDPOINTS.OVERTIME_V2_RISK_MANAGEMENT_CONFIG, async (req, res) => {
         const leaguesData = await redisClient.get(
           isTestnet ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET : KEYS.RISK_MANAGEMENT_LEAGUES_DATA,
         );
-        configResponse = JSON.parse(leaguesData) || [];
+        const leagues = JSON.parse(leaguesData) || [];
+        configResponse = {
+          leagues,
+          spreadTypes: Object.values(SpreadTypes),
+          totalTypes: Object.values(TotalTypes),
+        };
         break;
       default:
         configResponse = "Unsupported config type. Supported config types: teams, bookmakers, spreads, leagues.";
