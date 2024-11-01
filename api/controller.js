@@ -25,7 +25,7 @@ app.use(function (req, res, next) {
 const ENDPOINTS = require("./endpoints");
 const sigUtil = require("eth-sig-util");
 const KEYS = require("../redis/redis-keys");
-const { uniqBy, groupBy, spread } = require("lodash");
+const { uniqBy, groupBy } = require("lodash");
 
 const thalesUsers = require("../thalesApi/source/users");
 const thalesQuotes = require("../thalesApi/source/quotes");
