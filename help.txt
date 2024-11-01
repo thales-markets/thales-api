@@ -8,6 +8,7 @@ docker build -f Dockerfile.thalesAPI -t thalesmarket/thales-api .
 docker build -f Dockerfile.thalesIO -t thalesmarket/thales-io .
 docker build -f Dockerfile.overtimeV2API -t thalesmarket/overtime-v2-api .
 docker build -f Dockerfile.overtimeV2API.testnet -t thalesmarket/overtime-v2-api-testnet .
+docker build -f Dockerfile.gamesInfoV2 -t thalesmarket/games-info-v2 .
 
 ###### PUSH IMAGES TO GIT ######
 docker push thalesmarket/api
@@ -16,6 +17,7 @@ docker push thalesmarket/thales-api
 docker push thalesmarket/thales-io
 docker push thalesmarket/overtime-v2-api
 docker push thalesmarket/overtime-v2-api-testnet
+docker push thalesmarket/games-info-v2
 
 ###### RUN SERVER LOCALLY ######
 docker-compose -f docker-compose-dev.yml up
@@ -41,6 +43,10 @@ docker-compose up -d overtime-v2-api
 docker-compose pull overtime-v2-api-testnet
 docker-compose stop overtime-v2-api-testnet
 docker-compose up -d overtime-v2-api-testnet
+
+docker-compose pull games-info-v2
+docker-compose stop games-info-v2
+docker-compose up -d games-info-v2
 
 ### OPEN REDIS CLI ON SERVER ###
 - Access SERVER
