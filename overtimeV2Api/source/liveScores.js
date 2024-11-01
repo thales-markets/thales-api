@@ -104,14 +104,14 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
       }
     }
 
-    if (leagueProvider === Provider.OPTICODDS) {
+    if (leagueProvider === Provider.OPTICODDS && market.isV3) {
       opticOddsGameIdsWithLeagueID.push({ gameId: market.gameId, leagueId, gameInfo });
     }
   }
 
   if (opticOddsGameIdsWithLeagueID.length > 0) {
     let liveResults = [];
-    const opticOddsGameIds = opticOddsGameIdsWithLeagueID.map((obj) => obj.gameId);
+    const opticOddsGameIds = opticOddsGameIdsWithLeagueID.map((obj) => convertFromBytes32(obj.gameId));
 
     if (!isOpticOddsStreamResultsDisabled && isOpticOddsResultsInitialized) {
       // Read from Redis
