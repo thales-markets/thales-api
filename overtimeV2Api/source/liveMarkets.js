@@ -1,4 +1,5 @@
 require("dotenv").config();
+const { logger } = require("../../utils/logger");
 const { delay } = require("../utils/general");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
@@ -61,20 +62,29 @@ async function processLiveMarkets() {
         try {
           const startTime = new Date().getTime();
           console.log(`Live markets ${network}: process live markets`);
+          logger.info(`Live markets ${network}: process live markets`);
+
           await processAllMarkets(
             oddsStreamsInfoByLeagueMap,
             oddsInitializedByLeagueMap,
             resultsInitializedByLeagueMap,
             isTestnet,
           );
+
           const endTime = new Date().getTime();
           console.log(
             `Live markets ${network}: === Seconds for processing live markets: ${((endTime - startTime) / 1000).toFixed(
               0,
             )} ===`,
           );
+          logger.info(
+            `Live markets ${network}: === Seconds for processing live markets: ${((endTime - startTime) / 1000).toFixed(
+              0,
+            )} ===`,
+          );
         } catch (error) {
           console.log(`Live markets ${network}: live markets error: ${error}`);
+          logger.error(`Live markets ${network}: live markets error: ${error}`);
         }
 
         await delay(2 * 1000);
@@ -113,7 +123,7 @@ async function processAllMarkets(
     .filter((market) => supportedLiveLeagueIds.includes(market.leagueId));
   const uniqueLiveLeagueIds = uniq(supportedLiveMarkets.map((market) => market.leagueId));
 
-  console.log(`Live markets: Number of ongoing leagues ${uniqueLiveLeagueIds.length}`);
+  logger.info(`Live markets: Number of ongoing leagues ${uniqueLiveLeagueIds.length}`);
 
   // Process games per league
   const processMarketsByLeaguePromises = uniqueLiveLeagueIds.map((leagueId) => {
@@ -480,18 +490,18 @@ async function processMarketsByLeague(
         liveMarkets.push(...dummyMarketsLive);
       }
 
-      console.log(`Live markets for league ID ${leagueId}:
+      logger.info(`Live markets for league ID ${leagueId}:
         Number of ongoing markets ${ongoingMarkets.length}
         Number of Optic Odds games ${opticOddsGames.length} and matching games ${ongoingMarketsByOpticOddsGames.length}
         Number of Optic Odds odds ${oddsPerGame.length} and matching odds ${ongoingMarketsByOpticOddsOdds.length}
         Number of Optic Odds results ${resultsPerGame.length} and matching results ${ongoingMarketsByResults.length}`);
     } else {
       // IF NO MATCHES WERE FOUND WITH MATCHING CRITERIA
-      console.log(
+      logger.info(
         `Live markets for league ID ${leagueId}: Could not find any live matches matching the criteria for team names and date`,
       );
 
-      console.log(`Live markets for league ID ${leagueId}:
+      logger.info(`Live markets for league ID ${leagueId}:
         Number of ongoing markets ${ongoingMarkets.length}
         Number of Optic Odds games ${opticOddsGames.length} and matching games ${ongoingMarketsByOpticOddsGames.length}`);
     }
@@ -501,7 +511,7 @@ async function processMarketsByLeague(
       SUPPORTED_NETWORKS.forEach((network) => persistErrorMessages(errorsMap, network));
     }
   } catch (e) {
-    console.log(`Live markets: Processing error: ${e}`);
+    logger.error(`Live markets: Processing error: ${e}`);
   }
 
   return liveMarkets;
