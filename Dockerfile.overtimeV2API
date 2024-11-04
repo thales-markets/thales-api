@@ -10,7 +10,7 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # Create logs folder and write permissions
-RUN mkdir logs && touch logs/info.log && chmod 777 logs/info.log
+RUN mkdir logs && touch logs/debug.log && chmod 777 logs/debug.log
 
 # Second stage: production image
 FROM node:16-slim

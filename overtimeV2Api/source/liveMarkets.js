@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { logger } = require("../../utils/logger");
+const { logger, logAllInfo, logAllError } = require("../../utils/logger");
 const { delay } = require("../utils/general");
 const { redisClient } = require("../../redis/client");
 const KEYS = require("../../redis/redis-keys");
@@ -61,8 +61,7 @@ async function processLiveMarkets() {
       while (true) {
         try {
           const startTime = new Date().getTime();
-          console.log(`Live markets ${network}: process live markets`);
-          logger.info(`Live markets ${network}: process live markets`);
+          logAllInfo(`Live markets ${network}: process live markets`);
 
           await processAllMarkets(
             oddsStreamsInfoByLeagueMap,
@@ -72,19 +71,13 @@ async function processLiveMarkets() {
           );
 
           const endTime = new Date().getTime();
-          console.log(
-            `Live markets ${network}: === Seconds for processing live markets: ${((endTime - startTime) / 1000).toFixed(
-              0,
-            )} ===`,
-          );
-          logger.info(
+          logAllInfo(
             `Live markets ${network}: === Seconds for processing live markets: ${((endTime - startTime) / 1000).toFixed(
               0,
             )} ===`,
           );
         } catch (error) {
-          console.log(`Live markets ${network}: live markets error: ${error}`);
-          logger.error(`Live markets ${network}: live markets error: ${error}`);
+          logAllInfo(`Live markets ${network}: live markets error: ${error}`);
         }
 
         await delay(2 * 1000);
@@ -306,7 +299,7 @@ async function processMarketsByLeague(
         // Initially fetch game results from Optic Odds API for given markets
         const gameIds = ongoingMarketsByOpticOddsOdds.map((market) => market.opticOddsGameOdds.gameId);
 
-        const resultsFromApi = await fetchOpticOddsResults(gameIds);
+        const resultsFromApi = await fetchOpticOddsResults(gameIds, true);
 
         resultsPerGame = mapOpticOddsApiResults(resultsFromApi);
         if (!isOpticOddsStreamResultsDisabled && resultsPerGame.length > 0) {
@@ -511,7 +504,7 @@ async function processMarketsByLeague(
       SUPPORTED_NETWORKS.forEach((network) => persistErrorMessages(errorsMap, network));
     }
   } catch (e) {
-    logger.error(`Live markets: Processing error: ${e}`);
+    logAllError(`Live markets: Processing error: ${e}`);
   }
 
   return liveMarkets;

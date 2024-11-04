@@ -12,6 +12,7 @@ const {
   getLeagueSport,
 } = require("overtime-live-trading-utils");
 const { connectToOpticOddsStreamOdds } = require("./opticOddsStreamsConnector");
+const { logAllInfo, logAllError } = require("../../../utils/logger");
 
 const isOpticOddsStreamOddsDisabled = process.env.DISABLE_OPTIC_ODDS_STREAM_ODDS === "true";
 
@@ -132,10 +133,10 @@ const fetchOpticOddsFixtureOdds = async (sportsbooks, markets, fixtureIds) => {
     const endTime = new Date().getTime();
     const diff = endTime - startTime;
     if (diff > process.env.LOG_OPTIC_ODDS_API_CALL_TIME_THRESHOLD) {
-      console.log(`API CALL TAKES TOO LONG: fetchOpticOddsFixtureOdds time: ${diff}ms`);
+      logAllInfo(`API CALL TAKES TOO LONG: fetchOpticOddsFixtureOdds time: ${diff}ms`);
     }
   } catch (e) {
-    console.log(`Fetchng Optic Odds fixture odds error: ${e.message} ${e.error})`);
+    logAllError(`Fetchng Optic Odds fixture odds error: ${e.message} ${e.error})`);
     oddsResponses = [];
   }
 

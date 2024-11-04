@@ -3,7 +3,7 @@ const { OPTIC_ODDS_API_BASE_URL_V3 } = require("../../constants/opticOdds");
 const KEYS = require("../../../redis/redis-keys");
 const { uniq } = require("lodash");
 const { getRedisClientForStreamOdds, getRedisClientForStreamResults } = require("../../services/init");
-const { logger } = require("../../../utils/logger");
+const { logger, logAllError } = require("../../../utils/logger");
 
 const getRedisKeyForOpticOddsStreamEventOddsId = (gameId) => `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME}${gameId}`;
 const getRedisKeyForOpticOddsStreamEventResults = (gameId) =>
@@ -38,7 +38,7 @@ const connectToOpticOddsStreamOdds = (
       const data = JSON.parse(event.data);
       logger.info("Stream for odds: message data:", data);
     } catch (e) {
-      console.log("Stream for odds: Error parsing message data:", e);
+      logAllError(`Stream for odds: Error parsing message data: ${e}`);
     }
   };
 
@@ -102,7 +102,7 @@ const connectToOpticOddsStreamOdds = (
   });
 
   eventSource.onerror = (event) => {
-    console.log("Stream for odds: EventSource error:", event);
+    logAllError(`Stream for odds: EventSource error: ${event}`);
     eventSource.close();
     // Attempt to reconnect after 1 second
     setTimeout(
@@ -141,7 +141,7 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
       const data = JSON.parse(event.data);
       logger.info("Stream for results: message data:", data);
     } catch (e) {
-      console.log("Stream for results: Error parsing message data:", e);
+      logAllError(`Stream for results: Error parsing message data: ${e}`);
     }
   };
 
@@ -157,7 +157,7 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
   });
 
   eventSource.onerror = (event) => {
-    console.log("Stream for results: EventSource error:", event);
+    logAllError(`Stream for results: EventSource error: ${event}`);
     eventSource.close();
     setTimeout(() => connectToOpticOddsStreamResults(sport, leagues, isLive), 1000); // Attempt to reconnect after 1 second
   };
