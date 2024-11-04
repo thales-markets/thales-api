@@ -54,19 +54,14 @@ const thalesSpeedUtilsFormmaters = require("../thalesSpeedApi/utils/formatters")
 const overtimeV2Markets = require("../overtimeV2Api/source/markets");
 const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
-const { LeagueMap, getLiveSupportedLeagues } = require("overtime-live-trading-utils");
+const { LeagueMap, getLiveSupportedLeagues, SpreadTypes, TotalTypes } = require("overtime-live-trading-utils");
 const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
-const {
-  initializeSportsAMMLPListener,
-  initializeParlayAMMLPListener,
-  initializeThalesAMMLPListener,
-} = require("./services/contractEventListener");
-const { SUPPORTED_NETWORKS } = require("./constants/networks");
+const { SUPPORTED_NETWORKS, NETWORK } = require("./constants/networks");
 const {
   getCachedOpenMarketsByNetworkMap,
   getCachedClosedMarketsByNetworkMap,
-  getCachedLeaguesInfoArrayByNetworkMap,
 } = require("./services/overtimeMarketsCache");
+const { getGameFinishersMap, getUserReffererIDsMap, getSolanaAddressesMap } = require("./services/loadData");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -112,6 +107,7 @@ app.get(ENDPOINTS.TOKEN_CAP, async (req, res) => {
 
 app.post(ENDPOINTS.GAME_STARTED, async (req, res) => {
   const walletAddress = req.body.walletAddress;
+  const gameFinishersMap = getGameFinishersMap();
   const gameStartedCount = gameFinishersMap.get("gameStartedCount") || 0;
   gameFinishersMap.set("gameStartedCount", gameStartedCount + 1);
 
@@ -120,12 +116,13 @@ app.post(ENDPOINTS.GAME_STARTED, async (req, res) => {
     gameFinishersMap.set(walletAddress, { ...userObject, startedTime: Date.now() });
   }
 
-  await redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]));
+  redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]));
   res.send();
 });
 
 app.post(ENDPOINTS.GAME_ENDED, async (req, res) => {
   const walletAddress = req.body.walletAddress;
+  const gameFinishersMap = getGameFinishersMap();
   const gameFinishedCount = gameFinishersMap.get("gameFinishedCount") || 0;
   gameFinishersMap.set("gameFinishedCount", gameFinishedCount + 1);
 
@@ -139,11 +136,12 @@ app.post(ENDPOINTS.GAME_ENDED, async (req, res) => {
     });
   }
 
-  await redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]));
+  redisClient.set(KEYS.GAME_FINISHERS, JSON.stringify([...gameFinishersMap]));
   res.send();
 });
 
 app.get(ENDPOINTS.GAME_FINISHERS, (req, res) => {
+  const gameFinishersMap = getGameFinishersMap();
   res.send(Array.from(gameFinishersMap));
 });
 
@@ -225,6 +223,7 @@ app.post(ENDPOINTS.UPDATE_REFFERER_ID, async (req, res) => {
   const reffererID = req.body.reffererID;
   const previousReffererID = req.body.previousReffererID;
 
+  const userReffererIDsMap = getUserReffererIDsMap();
   const existingID = userReffererIDsMap.get(reffererID);
 
   if (existingID) {
@@ -248,12 +247,13 @@ app.post(ENDPOINTS.UPDATE_REFFERER_ID, async (req, res) => {
     userReffererIDsMap.set(reffererID, walletAddress);
   }
 
-  await redisClient.set(KEYS.USER_REFFERER_IDS, JSON.stringify([...userReffererIDsMap]));
+  redisClient.set(KEYS.USER_REFFERER_IDS, JSON.stringify([...userReffererIDsMap]));
   res.send(JSON.stringify({ error: false }));
 });
 
 app.get(ENDPOINTS.GET_REFFERER_ID_ADDRESS, (req, res) => {
   const reffererID = req.params.reffererID;
+  const userReffererIDsMap = getUserReffererIDsMap();
   const IDAddress = userReffererIDsMap.get(reffererID);
   if (reffererID && IDAddress) {
     res.setHeader("content-type", "application/json");
@@ -265,6 +265,7 @@ app.get(ENDPOINTS.GET_REFFERER_ID_ADDRESS, (req, res) => {
 
 app.get(ENDPOINTS.GET_ADDRESS_REFFERER_ID, (req, res) => {
   const walletAddress = req.params.walletAddress;
+  const userReffererIDsMap = getUserReffererIDsMap();
   const reffererID = [...userReffererIDsMap].find(([, val]) => val == walletAddress);
   if (reffererID && walletAddress) {
     res.setHeader("content-type", "application/json");
@@ -285,16 +286,18 @@ app.post(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, async (req, res) => {
     sig: signature,
   });
 
+  const solanaAddressesMap = getSolanaAddressesMap();
   if (walletAddress && solanaAddress && recovered.toLowerCase() === walletAddress.toLowerCase()) {
     solanaAddressesMap.set(smartAccountAddress ?? walletAddress, solanaAddress);
   }
 
-  await redisClient.set(KEYS.SOLANA_ADDRESSES, JSON.stringify([...solanaAddressesMap]));
+  redisClient.set(KEYS.SOLANA_ADDRESSES, JSON.stringify([...solanaAddressesMap]));
   res.send(JSON.stringify({ error: false }));
 });
 
 app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS_FOR_ADDRESS, (req, res) => {
   const walletAddress = req.params.walletAddress;
+  const solanaAddressesMap = getSolanaAddressesMap();
   const solanaAddress = solanaAddressesMap.get(walletAddress);
   if (walletAddress) {
     res.setHeader("content-type", "application/json");
@@ -306,6 +309,7 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS_FOR_ADDRESS, (req, res) =>
 
 app.get(ENDPOINTS.THALES_SPEED_MARKETS_SOLANA_ADDRESS, (req, res) => {
   res.setHeader("content-type", "application/json");
+  const solanaAddressesMap = getSolanaAddressesMap();
   res.send(Array.from(solanaAddressesMap));
 });
 
@@ -317,6 +321,7 @@ app.get(ENDPOINTS.ENETPULSE_RESULT, (req, res) => {
 });
 
 app.get(ENDPOINTS.GET_REFFERER_MAP, (req, res) => {
+  const userReffererIDsMap = getUserReffererIDsMap();
   res.send(Object.fromEntries(userReffererIDsMap));
 });
 
@@ -1095,6 +1100,8 @@ app.get(ENDPOINTS.THALES_IO_WEEKLY_STATS, async (req, res) => {
   }
 });
 
+// OVERTIME V2
+
 app.get(ENDPOINTS.OVERTIME_V2_SPORTS, (req, res) => {
   try {
     res.send(LeagueMap);
@@ -1239,7 +1246,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
   const ungroup = req.query.ungroup;
   const leagueId = req.query.leagueId;
 
-  if (![10, 42161, 11155420].includes(Number(network))) {
+  if (!SUPPORTED_NETWORKS.includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
     return;
   }
@@ -1261,7 +1268,14 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
     return;
   }
 
-  const allLiveLeagueIds = getLiveSupportedLeagues(getCachedLeaguesInfoArrayByNetworkMap(network));
+  const redisKeyForRiskManagementLeagues =
+    Number(network) === NETWORK.OptimismSepolia
+      ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET
+      : KEYS.RISK_MANAGEMENT_LEAGUES_DATA;
+
+  const riskManagementLeagues = JSON.parse(await redisClient.get(redisKeyForRiskManagementLeagues));
+
+  const allLiveLeagueIds = getLiveSupportedLeagues(riskManagementLeagues);
   const allLiveSports = uniqBy(allLiveLeagueIds.map((id) => LeagueMap[id].sport.toLowerCase()));
 
   if (sport && !allLiveSports.includes(sport.toLowerCase())) {
@@ -1283,8 +1297,7 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 
   const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network]);
   const markets = JSON.parse(obj);
-  const errorsMap = await getLiveMarketsErrorsMap(network);
-  const errors = [];
+
   try {
     const filteredMarkets = markets.filter(
       (market) =>
@@ -1293,27 +1306,11 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
         (!typeId || Number(market.typeId) === Number(typeId)),
     );
 
-    filteredMarkets.forEach((market) => {
-      const errorsDetails = errorsMap.get(market.gameId);
-      if (errorsDetails != undefined) {
-        errors.push({ gameId: market.gameId, errorsDetails });
-      }
-    });
-
-    res.send({
-      markets: filteredMarkets,
-      errors,
-    });
+    res.send({ markets: filteredMarkets });
   } catch (e) {
     console.log(e);
   }
 });
-
-async function getLiveMarketsErrorsMap(network) {
-  const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network]);
-  const liveMarketsErrorsMap = new Map(JSON.parse(obj));
-  return liveMarketsErrorsMap;
-}
 
 app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   const network = req.params.networkParam;
@@ -1521,7 +1518,7 @@ app.put(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_WRITE, async (req, re
     const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId]);
     const messagesMap = new Map(JSON.parse(obj));
     messagesMap.set(requestId, { message: message, allow: allow });
-    await redisClient.set(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId], JSON.stringify([...messagesMap]));
+    redisClient.set(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId], JSON.stringify([...messagesMap]));
     try {
       res.send();
     } catch (e) {
@@ -1548,10 +1545,58 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ, async (req, res
 
 app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ, async (req, res) => {
   const networkId = req.params.networkParam;
-  const errorsMap = await getLiveMarketsErrorsMap(networkId);
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[networkId]);
+  const errorsMap = new Map(JSON.parse(obj));
 
   try {
     res.send(Object.fromEntries(errorsMap));
+  } catch (e) {
+    console.log(e);
+  }
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_RISK_MANAGEMENT_CONFIG, async (req, res) => {
+  const network = req.params.networkParam;
+  const configType = req.params.configType;
+
+  if (!SUPPORTED_NETWORKS.includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
+    return;
+  }
+
+  const isTestnet = Number(network) === NETWORK.OptimismSepolia;
+
+  try {
+    let configResponse;
+    switch (configType) {
+      case "teams":
+        const teamsData = await redisClient.get(KEYS.RISK_MANAGEMENT_TEAMS_MAP);
+        configResponse = JSON.parse(teamsData) || [];
+        break;
+      case "bookmakers":
+        const bookmakersData = await redisClient.get(KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA);
+        configResponse = JSON.parse(bookmakersData) || [];
+        break;
+      case "spreads":
+        const spreadData = await redisClient.get(KEYS.RISK_MANAGEMENT_SPREAD_DATA);
+        configResponse = JSON.parse(spreadData) || [];
+        break;
+      case "leagues":
+        const leaguesData = await redisClient.get(
+          isTestnet ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET : KEYS.RISK_MANAGEMENT_LEAGUES_DATA,
+        );
+        const leagues = JSON.parse(leaguesData) || [];
+        configResponse = {
+          leagues,
+          spreadTypes: Object.values(SpreadTypes),
+          totalTypes: Object.values(TotalTypes),
+        };
+        break;
+      default:
+        configResponse = "Unsupported config type. Supported config types: teams, bookmakers, spreads, leagues.";
+    }
+
+    res.send(configResponse);
   } catch (e) {
     console.log(e);
   }
@@ -1562,8 +1607,3 @@ app.use("/v1/stakers", stakersRoutes);
 app.use("/v1/digital-options", digitalOptionsRoutes);
 app.use("/v1/sport-markets", sportMarketsRoutes);
 app.use("/v1/cache-control", cacheControlRoutes);
-
-// Contract listeners
-initializeSportsAMMLPListener();
-initializeParlayAMMLPListener();
-initializeThalesAMMLPListener();

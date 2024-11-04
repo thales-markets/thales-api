@@ -71,6 +71,7 @@ const ENDPOINTS = {
   OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ:
     "/overtime-v2/networks/:networkParam/live-trading/read-message/request/:requestId",
   OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ: "/overtime-v2/networks/:networkParam/live-trading/error-messages",
+  OVERTIME_V2_RISK_MANAGEMENT_CONFIG: "/overtime-v2/networks/:networkParam/risk-management-config/:configType",
 };
 
 module.exports = ENDPOINTS;

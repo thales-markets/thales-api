@@ -38,6 +38,7 @@ async function processMarkets() {
   if (process.env.REDIS_URL) {
     const isTestnet = process.env.IS_TESTNET === "true";
     const network = isTestnet ? "testnet" : "mainnets";
+
     setTimeout(async () => {
       while (true) {
         try {
@@ -64,7 +65,7 @@ async function processMarkets() {
   }
 }
 
-const packMarket = (market) => {
+const packMarket = (market, isChild) => {
   const leagueId = `${market.sportId}`.startsWith("152")
     ? League.TENNIS_WTA
     : `${market.sportId}`.startsWith("153")
@@ -77,7 +78,7 @@ const packMarket = (market) => {
   const isEnetpulseSport = getLeagueProvider(leagueId) === Provider.ENETPULSE;
   const type = MarketTypeMap[market.typeId]?.key;
 
-  return {
+  const packedMarket = {
     gameId: market.gameId,
     sport: getLeagueSport(leagueId),
     leagueId: leagueId,
@@ -126,6 +127,12 @@ const packMarket = (market) => {
     positionNames: market.positionNames,
     proof: market.proof,
   };
+
+  if (!isChild) {
+    packedMarket.isV3 = !!market.isV3;
+  }
+
+  return packedMarket;
 };
 
 const readAwsS3File = async (bucket, key) => {
@@ -188,10 +195,10 @@ const loadMarkets = async (isTestnet) => {
 };
 
 const mapMarket = (market) => {
-  const packedMarket = packMarket(market);
+  const packedMarket = packMarket(market, false);
   packedMarket.childMarkets = [];
   market.childMarkets.forEach((childMarket) => {
-    const packedChildMarket = packMarket(childMarket);
+    const packedChildMarket = packMarket(childMarket, true);
     packedMarket.childMarkets.push(packedChildMarket);
   });
 
@@ -242,7 +249,7 @@ async function processAllMarkets(markets, network) {
     }
   });
 
-  await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[network], JSON.stringify([...openMarketsMap]));
+  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[network], JSON.stringify([...openMarketsMap]));
 }
 
 async function updateMerkleTree(gameIds) {
@@ -274,9 +281,9 @@ async function updateMerkleTree(gameIds) {
     }
   }
 
-  await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify([...opOpenMarketsMap]));
-  await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum], JSON.stringify([...arbOpenMarketsMap]));
-  // await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Base], JSON.stringify([...baseOpenMarketsMap]));
+  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify([...opOpenMarketsMap]));
+  redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum], JSON.stringify([...arbOpenMarketsMap]));
+  // redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Base], JSON.stringify([...baseOpenMarketsMap]));
 
   const endTime = new Date().getTime();
   console.log(`Markets mainnets: Seconds for updating merkle tree: ${(endTime - startTime) / 1000}`);

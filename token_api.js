@@ -3,7 +3,7 @@ const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 const MAX_SUPPLY = 100000000;
 const circulatingSupplyList = require("./assets/circulating-supply.json");
 const erc20Contract = require("./abi/erc20Contract.js");
-const { redisClient } = require("./redis/client");
+const { redisClient, connectDefaultRedisClient } = require("./redis/client");
 
 require("dotenv").config();
 const express = require("express");
@@ -34,6 +34,8 @@ app.get("/", (_, res) => {
 });
 
 (async () => {
+  await connectDefaultRedisClient();
+
   if (process.env.REDIS_URL) {
     const tokenMapRaw = await redisClient.get("tokenMap");
     console.log("tokenMapRaw:" + tokenMapRaw);
@@ -77,7 +79,7 @@ async function processToken() {
   }
 
   if (process.env.REDIS_URL) {
-    await redisClient.set("tokenMap", JSON.stringify([...tokenMap]));
+    redisClient.set("tokenMap", JSON.stringify([...tokenMap]));
   }
 }
 

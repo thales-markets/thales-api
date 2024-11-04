@@ -1,15 +1,12 @@
-const { redisClient } = require("./client");
+const { redisClient } = require("../../redis/client");
+const KEYS = require("../../redis/redis-keys");
 require("dotenv").config();
-const KEYS = require("./redis-keys");
 
-// eslint-disable-next-line prefer-const
-gameFinishersMap = new Map();
-// eslint-disable-next-line prefer-const
-userReffererIDsMap = new Map();
-// eslint-disable-next-line prefer-const
-solanaAddressesMap = new Map();
+let gameFinishersMap = new Map();
+let userReffererIDsMap = new Map();
+let solanaAddressesMap = new Map();
 
-(async () => {
+const loadData = async () => {
   if (process.env.REDIS_URL) {
     const gameFinishersMapRaw = await redisClient.get(KEYS.GAME_FINISHERS);
     if (gameFinishersMapRaw) {
@@ -26,4 +23,15 @@ solanaAddressesMap = new Map();
       solanaAddressesMap = new Map(JSON.parse(solanaAddressesMapRaw));
     }
   }
-})();
+};
+
+const getGameFinishersMap = () => gameFinishersMap;
+const getUserReffererIDsMap = () => userReffererIDsMap;
+const getSolanaAddressesMap = () => solanaAddressesMap;
+
+module.exports = {
+  loadData,
+  getGameFinishersMap,
+  getUserReffererIDsMap,
+  getSolanaAddressesMap,
+};

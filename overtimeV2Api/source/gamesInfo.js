@@ -12,13 +12,16 @@ const {
   Provider,
   LeagueIdMapEnetpulse,
   LeagueIdMapRundown,
-  AMERICAN_LEAGUES,
-  League,
   LeagueIdMapOpticOdds,
+  League,
+  AMERICAN_LEAGUES,
   PeriodType,
   Sport,
 } = require("overtime-live-trading-utils");
 const { getLeaguePeriodType, getLeagueSport } = require("overtime-live-trading-utils");
+const { MAX_NUMBER_OF_SCORE_PERIODS } = require("../constants/opticOdds");
+const { fetchOpticOddsResults, mapOpticOddsApiResults } = require("../utils/opticOdds/opticOddsResults");
+const { fetchOpticOddsFixtures } = require("../utils/opticOdds/opticOddsFixtures");
 const { NETWORK } = require("../constants/networks");
 
 const numberOfDaysInPast = Number(process.env.PROCESS_GAMES_INFO_NUMBER_OF_DAYS_IN_PAST);
@@ -40,16 +43,16 @@ async function processGamesInfo() {
           console.log("Games info: games info error: ", error);
         }
 
-        await delay(10 * 60 * 1000);
+        await delay(10 * 60 * 1000); // 10min
       }
     }, 3000);
   }
 }
 
-const getRundownScore = (team, event, sport) => {
+const getRundownScore = (team, event, league) => {
   let score = undefined;
 
-  if (sport === League.UFC) {
+  if (league === League.UFC) {
     const numberOfRounds = Number(event.score?.game_period);
     const lastRoundEndTimeInfo = event.score?.event_status_detail.split(",");
 
@@ -75,14 +78,13 @@ const getRundownScore = (team, event, sport) => {
   return score;
 };
 
-const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap) => {
-  for (let j = 0; j < sports.length; j++) {
-    const sportId = Number(sports[j]);
-    const sport = sportId;
-    const rundownSport = LeagueIdMapRundown[sport];
+const procesRundownGamesInfoPerDate = async (leagues, formattedDate, gamesInfoMap) => {
+  for (let j = 0; j < leagues.length; j++) {
+    const league = Number(leagues[j]);
+    const rundownLeague = LeagueIdMapRundown[league];
 
-    // console.log(`Getting games info for Rundown sport: ${rundownSport}, ${sport} and date ${formattedDate}`);
-    const apiUrl = `https://therundown.io/api/v1/sports/${rundownSport}/events/${formattedDate}?key=${process.env.RUNDOWN_API_KEY}`;
+    // console.log(`Getting games info for Rundown sport: ${rundownLeague}, ${league} and date ${formattedDate}`);
+    const apiUrl = `https://therundown.io/api/v1/sports/${rundownLeague}/events/${formattedDate}?key=${process.env.RUNDOWN_API_KEY}`;
     const response = await axios.get(apiUrl);
 
     response.data.events.forEach((event) => {
@@ -100,9 +102,9 @@ const procesRundownGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap
           provider: Provider.RUNDOWN,
           teams: event.teams_normalized
             ? event.teams_normalized.map((team) => ({
-                name: AMERICAN_LEAGUES.includes(sport) ? `${team.name} ${team.mascot}` : team.name,
+                name: AMERICAN_LEAGUES.includes(league) ? `${team.name} ${team.mascot}` : team.name,
                 isHome: team.is_home,
-                score: getRundownScore(team, event, sport),
+                score: getRundownScore(team, event, league),
                 scoreByPeriod: team.is_home ? event.score.score_home_by_period : event.score.score_away_by_period,
               }))
             : [],
@@ -122,11 +124,11 @@ const getEnetpulseScoreByCode = (results, resultCode) => {
   return undefined;
 };
 
-const getEnetpulseScore = (results, sport) => {
+const getEnetpulseScore = (results, league) => {
   let score = undefined;
   const scoreByPeriod = [];
 
-  const periodType = getLeaguePeriodType(sport);
+  const periodType = getLeaguePeriodType(league);
 
   if (periodType === PeriodType.QUARTER) {
     score = getEnetpulseScoreByCode(Object.values(results), "finalresult");
@@ -150,7 +152,7 @@ const getEnetpulseScore = (results, sport) => {
         break;
       }
     }
-  } else if (sport === League.CSGO || sport === League.DOTA2 || sport === League.LOL) {
+  } else if (league === League.CSGO || league === League.DOTA2 || league === League.LOL) {
     score = getEnetpulseScoreByCode(Object.values(results), "finalresult");
   } else {
     score = getEnetpulseScoreByCode(Object.values(results), "ordinarytime");
@@ -165,14 +167,13 @@ const getEnetpulseScore = (results, sport) => {
   };
 };
 
-const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoMap) => {
-  for (let j = 0; j < sports.length; j++) {
-    const sportId = Number(sports[j]);
-    const sport = sportId;
-    const enetpulseSport = LeagueIdMapEnetpulse[sport];
+const procesEnetpulseGamesInfoPerDate = async (leagues, formattedDate, gamesInfoMap) => {
+  for (let j = 0; j < leagues.length; j++) {
+    const league = Number(leagues[j]);
+    const enetpulseLeague = LeagueIdMapEnetpulse[league];
 
-    // console.log(`Getting games info for Enetpulse sport: ${enetpulseSport}, ${sport} and date ${formattedDate}`);
-    const apiUrl = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${enetpulseSport}&date=${formattedDate}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&includeEventProperties=no`;
+    // console.log(`Getting games info for Enetpulse sport: ${enetpulseLeague}, ${league} and date ${formattedDate}`);
+    const apiUrl = `https://eapi.enetpulse.com/event/daily/?tournament_templateFK=${enetpulseLeague}&date=${formattedDate}&username=${process.env.ENETPULSE_USERNAME}&token=${process.env.ENETPULSE_TOKEN}&includeEventProperties=no`;
     const response = await axios.get(apiUrl);
 
     Object.values(response.data.events).forEach((event) => {
@@ -190,7 +191,7 @@ const procesEnetpulseGamesInfoPerDate = async (sports, formattedDate, gamesInfoM
                 name: team.participant.name,
                 isHome: team.number === "1",
                 ...(team.result
-                  ? getEnetpulseScore(Object.values(team.result), sport)
+                  ? getEnetpulseScore(Object.values(team.result), league)
                   : {
                       score: undefined,
                       scoreByPeriod: [],
@@ -213,13 +214,13 @@ const getOpticOddsScoreByCode = (gameScores, code) => {
   return undefined;
 };
 
-const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
+const getOpticOddsScore = (gameScores, league, homeAwayType) => {
   let score = undefined;
   const scoreByPeriod = [];
-  const leagueSport = getLeagueSport(sport);
+  const leagueSport = getLeagueSport(league);
 
   if (gameScores) {
-    if (sport === League.UFC) {
+    if (league === League.UFC) {
       const numberOfRounds = Number(gameScores.period);
       const lastRoundEndTimeNumber = Number(gameScores.clock.replace(":", "."));
 
@@ -229,12 +230,11 @@ const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
       } else {
         numberOfRoundsResult = Number(numberOfRounds) == 1 ? numberOfRounds : numberOfRounds - 1;
       }
-      score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`) == 1 ? numberOfRoundsResult : 0;
+      score = getOpticOddsScoreByCode(gameScores, `${homeAwayType}Total`) == 1 ? numberOfRoundsResult : 0;
     } else if (leagueSport !== Sport.SOCCER) {
-      score = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_total`);
-      // set 50 as max number of periods
-      for (let i = 1; i <= 50; i++) {
-        const code = `score_${homeAwayType}_period_${i}`;
+      score = getOpticOddsScoreByCode(gameScores, `${homeAwayType}Total`);
+      for (let i = 1; i <= MAX_NUMBER_OF_SCORE_PERIODS; i++) {
+        const code = `${homeAwayType}Period${i}`;
         const periodScore = getOpticOddsScoreByCode(gameScores, code);
         if (periodScore !== undefined) {
           scoreByPeriod.push(periodScore);
@@ -244,8 +244,8 @@ const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
       }
     } else {
       // soccer
-      const periodScore1 = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_period_1`);
-      const periodScore2 = getOpticOddsScoreByCode(gameScores, `score_${homeAwayType}_period_2`);
+      const periodScore1 = getOpticOddsScoreByCode(gameScores, `${homeAwayType}Period1`);
+      const periodScore2 = getOpticOddsScoreByCode(gameScores, `${homeAwayType}Period2`);
       if (periodScore1 !== undefined) {
         scoreByPeriod.push(periodScore1);
       }
@@ -259,60 +259,62 @@ const getOpticOddsScore = (gameScores, sport, homeAwayType) => {
   };
 };
 
-const procesOpticOdssGamesInfo = async (sports, formattedDate, gamesInfoMap) => {
-  for (let j = 0; j < sports.length; j++) {
-    const sportId = Number(sports[j]);
-    const sport = sportId;
-    const opticOddsSport = LeagueIdMapOpticOdds[sport];
+const procesOpticOdssGamesInfo = async (leagues, formattedDate, gamesInfoMap) => {
+  for (let j = 0; j < leagues.length; j++) {
+    const league = Number(leagues[j]);
+    const opticOddsLeague = LeagueIdMapOpticOdds[league];
 
     let page = 1;
     let totalPages = 1;
 
     while (page <= totalPages) {
       // console.log(
-      //   `Getting games info for OpticOdds sport: ${opticOddsSport}, ${sport}, date ${formattedDate} and page ${page}`,
+      //   `Getting games info for OpticOdds league: ${opticOddsLeague}, ${league}, date ${formattedDate} and page ${page}`,
       // );
-      const schedulesApiUrl = `https://api.opticodds.com/api/v2/schedules/list?game_date=${formattedDate}&league=${opticOddsSport}&page=${page}`;
-      const schedulesResponse = await axios.get(schedulesApiUrl, {
-        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-      });
+
+      // API call for fixtures
+      const opticOddsApiFixturesResponseData = await fetchOpticOddsFixtures(opticOddsLeague, formattedDate, page);
+      if (opticOddsApiFixturesResponseData === null) {
+        break; // continue with next league
+      }
+
       page++;
-      totalPages = Number(schedulesResponse.data.total_pages);
+      totalPages = Number(opticOddsApiFixturesResponseData.total_pages);
 
-      const gameIds = schedulesResponse.data.data.map((data) => `game_id=${data.game_id}`);
-      const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?${gameIds.join("&")}`;
-      const scoresResponse = await axios.get(scoresApiUrl, {
-        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-      });
+      // API call for results
+      const opticOddsFixtureIds = opticOddsApiFixturesResponseData.data.map((data) => data.id);
+      const opticOddsApiResults = await fetchOpticOddsResults(opticOddsFixtureIds);
+      const opticOddsResult = mapOpticOddsApiResults(opticOddsApiResults);
 
-      schedulesResponse.data.data.forEach((event) => {
-        if (event.game_id) {
-          const gameId = bytes32({ input: event.game_id });
-          const gameScores = scoresResponse.data.data.find((score) => score.game_id === event.game_id);
+      opticOddsApiFixturesResponseData.data.forEach((fixtureEvent) => {
+        if (fixtureEvent.id) {
+          const gameId = bytes32({ input: fixtureEvent.id });
+          const gameResults = opticOddsResult.find((result) => result.gameId === fixtureEvent.id);
+          const fixtureStatus = fixtureEvent.status.toLowerCase();
 
           gamesInfoMap.set(gameId, {
             lastUpdate: new Date().getTime(),
-            gameStatus: event.status,
-            isGameFinished: event.status === "Completed" || event.status === "Cancelled",
+            gameStatus: fixtureStatus,
+            isGameFinished: fixtureStatus === "completed" || fixtureStatus === "cancelled",
             tournamentName: "",
             tournamentRound: "",
             provider: Provider.OPTICODDS,
             teams: [
               {
-                name: event.home_team,
+                name: fixtureEvent.home_team_display,
                 isHome: true,
-                ...(gameScores
-                  ? getOpticOddsScore(gameScores, sport, "home")
+                ...(gameResults
+                  ? getOpticOddsScore(gameResults, league, "home")
                   : {
                       score: undefined,
                       scoreByPeriod: [],
                     }),
               },
               {
-                name: event.away_team,
+                name: fixtureEvent.away_team_display,
                 isHome: false,
-                ...(gameScores
-                  ? getOpticOddsScore(gameScores, sport, "away")
+                ...(gameResults
+                  ? getOpticOddsScore(gameResults, league, "away")
                   : {
                       score: undefined,
                       scoreByPeriod: [],
@@ -362,6 +364,11 @@ async function processAllGamesInfo() {
       procesEnetpulseGamesInfoPerDate(enetpulseLeagues, formattedDate, gamesInfoMap),
       procesOpticOdssGamesInfo(opticOddsLeagues, formattedDate, gamesInfoMap),
     ]);
+
+    console.log(
+      `Games info: Number of games info for date ${formattedDate}: ${Array.from(gamesInfoMap.values()).length}`,
+    );
+    redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]));
   }
 
   // Get Futures and Politics game info from open markets
@@ -395,8 +402,14 @@ async function processAllGamesInfo() {
     });
   });
 
-  console.log(`Games info: Number of games info: ${Array.from(gamesInfoMap.values()).length}`);
-  await redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]));
+  // TODO: remove this when all V2 games are finished
+  // Add games info from V2
+  const gamesInfoV2 = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO_V2);
+  const gamesInfoV2Map = new Map(JSON.parse(gamesInfoV2));
+  const gamesInfoMapMerged = new Map([...gamesInfoV2Map, ...gamesInfoMap]);
+
+  console.log(`Games info: Total number of games info: ${Array.from(gamesInfoMapMerged.values()).length}`);
+  redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMapMerged]));
 }
 
 module.exports = {

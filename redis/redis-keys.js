@@ -47,6 +47,7 @@ const KEYS = {
     8453: "overtimeV2BaseClosedMarkets",
   },
   OVERTIME_V2_GAMES_INFO: "overtimeV2GamesInfo",
+  OVERTIME_V2_GAMES_INFO_V2: "overtimeV2GamesInfoV2", // TODO: remove this and delete it from redis when all V2 games are finished
   OVERTIME_V2_PLAYERS_INFO: "overtimeV2PlayersInfo",
   OVERTIME_V2_LIVE_MARKETS: {
     10: "overtimeV2OpLiveMarkets",
@@ -67,6 +68,16 @@ const KEYS = {
     42161: "overtimeV2ArbLiveMarketsApiErrorMessages",
     8453: "overtimeV2BaseLiveMarketsApiErrorMessages",
   },
+  OPTIC_ODDS_API_FIXTURES_BY_LEAGUE: "opticOddsApiFixturesByLeagueId",
+  OPTIC_ODDS_API_ODDS_BY_LEAGUE: "opticOddsApiOddsByLeagueId",
+  OPTIC_ODDS_API_RESULTS_BY_LEAGUE: "opticOddsApiResultsByLeagueId",
+  OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME: "opticOddsStreamEventOddsIdByGameId",
+  OPTIC_ODDS_STREAM_EVENT_RESULTS_BY_GAME: "opticOddsStreamEventResultsByGameId",
+  RISK_MANAGEMENT_SPREAD_DATA: "riskManagementSpreadData",
+  RISK_MANAGEMENT_BOOKMAKERS_DATA: "riskManagementBookmakersData",
+  RISK_MANAGEMENT_LEAGUES_DATA: "riskManagementLeaguesData",
+  RISK_MANAGEMENT_LEAGUES_DATA_TESTNET: "riskManagementLeaguesDataTestnet",
+  RISK_MANAGEMENT_TEAMS_MAP: "riskManagementTeamsMap",
   SOLANA_ADDRESSES: "solanaAddresses",
 };
 

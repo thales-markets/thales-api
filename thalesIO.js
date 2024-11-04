@@ -1,4 +1,4 @@
-const { redisClient } = require("./redis/client");
+const { redisClient, connectDefaultRedisClient } = require("./redis/client");
 require("dotenv").config();
 
 const KEYS = require("./redis/redis-keys");
@@ -12,6 +12,8 @@ let dailyStatsDisableFirstRunExecution = true;
 let weeklyStatsDisableFirstRunExecution = true;
 
 (async () => {
+  await connectDefaultRedisClient();
+
   if (process.env.REDIS_URL && process.env.DUNE_API_KEY) {
     const thalesIOMapRaw = await redisClient.get(KEYS.THALES_IO_DAILY_STATS);
     if (thalesIOMapRaw) {
@@ -100,7 +102,7 @@ async function fetchDailyDuneData() {
       };
       thalesIODuneDataMap = new Map(Object.entries(allThalesStats));
 
-      await redisClient.set(KEYS.THALES_IO_DAILY_STATS, JSON.stringify([...thalesIODuneDataMap]));
+      redisClient.set(KEYS.THALES_IO_DAILY_STATS, JSON.stringify([...thalesIODuneDataMap]));
     }
   } catch (e) {
     console.log(e);
@@ -167,7 +169,7 @@ async function fetchWeeklyDuneData() {
         ["revShare", thalesRevShareJson.result.rows],
       ]);
 
-      await redisClient.set(KEYS.THALES_IO_WEEKLY_STATS, JSON.stringify([...thalesIOWeeklyDuneDataMap]));
+      redisClient.set(KEYS.THALES_IO_WEEKLY_STATS, JSON.stringify([...thalesIOWeeklyDuneDataMap]));
     }
   } catch (e) {
     console.log(e);

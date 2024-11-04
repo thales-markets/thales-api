@@ -9,15 +9,24 @@ const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getOpticOddsScore } = require("./gamesInfo");
 const { getLeagueProvider, Provider } = require("overtime-live-trading-utils");
+const { getRedisKeyForOpticOddsStreamEventResults } = require("../utils/opticOdds/opticOddsStreamsConnector");
+const {
+  mapOpticOddsStreamResults,
+  mapOpticOddsApiResults,
+  fetchOpticOddsResults,
+  isOpticOddsStreamResultsDisabled,
+} = require("../utils/opticOdds/opticOddsResults");
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {
+    let isOpticOddsResultsInitialized = false;
+
     setTimeout(async () => {
       while (true) {
         try {
           const startTime = new Date().getTime();
           console.log("Lives scores: process lives scores");
-          await processAllLiveScores();
+          await processAllLiveResults(isOpticOddsResultsInitialized);
           const endTime = new Date().getTime();
           console.log(
             `Lives scores: === Seconds for processing lives scores: ${((endTime - startTime) / 1000).toFixed(0)} ===`,
@@ -50,18 +59,17 @@ async function getGamesInfoMap() {
   return gamesInfoMap;
 }
 
-async function processAllLiveScores() {
+async function processAllLiveResults(isOpticOddsResultsInitialized) {
   const liveScoresMap = await getLiveScoresMap();
   const gamesInfoMap = await getGamesInfoMap();
-  // TODO: take from OP and ARB for now
+  // take only from OP as markets are the same on all networks
   const openOpMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
-  const openArbMarketsMap = await getOpenMarketsMap(NETWORK.Arbitrum);
 
-  const allOngoingMarketsMap = [
-    ...Array.from(openOpMarketsMap.values()),
-    ...Array.from(openArbMarketsMap.values()),
-  ].filter((market) => market.statusCode === "ongoing");
+  const allOngoingMarketsMap = Array.from(openOpMarketsMap.values()).filter(
+    (market) => market.statusCode === "ongoing",
+  );
 
+  let opticOddsGameIdsWithLeagueID = [];
   for (let i = 0; i < allOngoingMarketsMap.length; i++) {
     const market = allOngoingMarketsMap[i];
     const leagueId = market.leagueId;
@@ -96,50 +104,64 @@ async function processAllLiveScores() {
       }
     }
 
-    if (leagueProvider === Provider.OPTICODDS) {
-      const scoresApiUrl = `https://api.opticodds.com/api/v2/scores?game_id=${convertFromBytes32(market.gameId)}`;
-      const scoresResponse = await axios.get(scoresApiUrl, {
-        headers: { "x-api-key": process.env.OPTIC_ODDS_API_KEY },
-      });
+    if (leagueProvider === Provider.OPTICODDS && market.isV3) {
+      opticOddsGameIdsWithLeagueID.push({ gameId: market.gameId, leagueId, gameInfo });
+    }
+  }
 
-      const scoresResponseData = scoresResponse.data;
+  if (opticOddsGameIdsWithLeagueID.length > 0) {
+    let liveResults = [];
+    const opticOddsGameIds = opticOddsGameIdsWithLeagueID.map((obj) => convertFromBytes32(obj.gameId));
 
-      if (scoresResponseData !== null && scoresResponseData.data.length > 0) {
-        scoresResponseData.data.forEach((event) => {
-          if (event.game_id) {
-            const gameId = bytes32({ input: event.game_id });
+    if (!isOpticOddsStreamResultsDisabled && isOpticOddsResultsInitialized) {
+      // Read from Redis
+      const redisKeysForStreamResults = opticOddsGameIds.map((gameId) =>
+        getRedisKeyForOpticOddsStreamEventResults(gameId),
+      );
+      const objArray = await redisClient.mGet(redisKeysForStreamResults);
+      const opticOddsStreamResults = objArray.filter((obj) => obj !== null).map((obj) => JSON.parse(obj));
+      liveResults = mapOpticOddsStreamResults(opticOddsStreamResults);
+    } else {
+      // Fetch from API
+      const opticOddsApiResults = await fetchOpticOddsResults(opticOddsGameIds);
+      if (opticOddsApiResults.length > 0) {
+        liveResults = mapOpticOddsApiResults(opticOddsApiResults);
+        isOpticOddsResultsInitialized = true;
+      }
+    }
 
-            const homeScores = getOpticOddsScore(event, market.leagueId, "home");
-            const awayScores = getOpticOddsScore(event, market.leagueId, "away");
+    opticOddsGameIdsWithLeagueID.forEach((obj) => {
+      const opticOddsEvent = liveResults.find((event) => event.gameId === obj.gameId);
+      if (opticOddsEvent) {
+        const homeScores = getOpticOddsScore(opticOddsEvent, obj.leagueId, "home");
+        const awayScores = getOpticOddsScore(opticOddsEvent, obj.leagueId, "away");
 
-            const period = parseInt(event.period);
+        const period = parseInt(opticOddsEvent.period);
 
-            liveScoresMap.set(gameId, {
-              lastUpdate: new Date().getTime(),
-              period: Number.isNaN(period) ? undefined : period,
-              gameStatus: event.period === "HALF" ? "Half" : event.status,
-              displayClock: event.clock,
-              homeScore: homeScores.score,
-              awayScore: awayScores.score,
-              homeScoreByPeriod: homeScores.scoreByPeriod,
-              awayScoreByPeriod: awayScores.scoreByPeriod,
-            });
-          }
+        liveScoresMap.set(obj.gameId, {
+          lastUpdate: new Date().getTime(),
+          period: Number.isNaN(period) ? undefined : period,
+          gameStatus: opticOddsEvent.period,
+          displayClock: opticOddsEvent.clock,
+          homeScore: homeScores.score,
+          awayScore: awayScores.score,
+          homeScoreByPeriod: homeScores.scoreByPeriod,
+          awayScoreByPeriod: awayScores.scoreByPeriod,
         });
-      } else if (gameInfo) {
-        liveScoresMap.set(market.gameId, {
-          gameStatus: gameInfo.gameStatus,
+      } else if (obj.gameInfo) {
+        liveScoresMap.set(obj.gameInfo.gameId, {
+          gameStatus: obj.gameInfo.gameStatus,
           homeScore: 0,
           awayScore: 0,
           homeScoreByPeriod: [],
           awayScoreByPeriod: [],
         });
       }
-    }
+    });
   }
 
   console.log(`Lives scores: Number of lives scores: ${Array.from(liveScoresMap.values()).length}`);
-  await redisClient.set(KEYS.OVERTIME_V2_LIVE_SCORES, JSON.stringify([...liveScoresMap]));
+  redisClient.set(KEYS.OVERTIME_V2_LIVE_SCORES, JSON.stringify([...liveScoresMap]));
 }
 
 module.exports = {

@@ -325,11 +325,8 @@ async function processMarketsPerNetwork(network, lpCollateral) {
       allMarkets.length,
     );
 
-    await redisClient.set(
-      (isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network],
-      JSON.stringify(allMarkets),
-    );
-    await redisClient.set(
+    redisClient.set((isUsdc ? KEYS.THALES_USDC_MARKETS : KEYS.THALES_MARKETS)[network], JSON.stringify(allMarkets));
+    redisClient.set(
       (isUsdc ? KEYS.THALES_USDC_MARKETS_LAST_UPDATED_AT : KEYS.THALES_MARKETS_LAST_UPDATED_AT)[network],
       new Date().toISOString(),
     );
