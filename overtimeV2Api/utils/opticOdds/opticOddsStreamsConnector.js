@@ -3,6 +3,7 @@ const { OPTIC_ODDS_API_BASE_URL_V3 } = require("../../constants/opticOdds");
 const KEYS = require("../../../redis/redis-keys");
 const { uniq } = require("lodash");
 const { getRedisClientForStreamOdds, getRedisClientForStreamResults } = require("../../services/init");
+const { logger, logAllError } = require("../../../utils/logger");
 
 const getRedisKeyForOpticOddsStreamEventOddsId = (gameId) => `${KEYS.OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME}${gameId}`;
 const getRedisKeyForOpticOddsStreamEventResults = (gameId) =>
@@ -26,7 +27,7 @@ const connectToOpticOddsStreamOdds = (
   lastEntryId && queryString.append("last_entry_id", lastEntryId);
 
   const url = `${OPTIC_ODDS_API_BASE_URL_V3}/stream/${sport}/odds?${queryString.toString()}`;
-  console.log(`Stream for odds: Connecting to stream ${url}`);
+  logger.info(`Stream for odds: Connecting to stream ${url}`);
   const eventSource = new EventSource(url);
 
   const redisClient = getRedisClientForStreamOdds();
@@ -35,9 +36,9 @@ const connectToOpticOddsStreamOdds = (
     try {
       // TODO: check when this happens
       const data = JSON.parse(event.data);
-      console.log("Stream for odds: message data:", data);
+      logger.info("Stream for odds: message data:", data);
     } catch (e) {
-      console.log("Stream for odds: Error parsing message data:", e);
+      logAllError(`Stream for odds: Error parsing message data: ${e}`);
     }
   };
 
@@ -101,7 +102,7 @@ const connectToOpticOddsStreamOdds = (
   });
 
   eventSource.onerror = (event) => {
-    console.error("Stream for odds: EventSource error:", event);
+    logAllError(`Stream for odds: EventSource error: ${event}`);
     eventSource.close();
     // Attempt to reconnect after 1 second
     setTimeout(
@@ -129,7 +130,7 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
   leagues.forEach((league) => queryString.append("league", league));
 
   const url = `${OPTIC_ODDS_API_BASE_URL_V3}/stream/${sport}/results?${queryString.toString()}`;
-  console.log(`Stream for results: Connecting to stream ${url}`);
+  logger.info(`Stream for results: Connecting to stream ${url}`);
   const eventSource = new EventSource(url);
 
   const redisClient = getRedisClientForStreamResults();
@@ -138,9 +139,9 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
     try {
       // TODO: check when this happens
       const data = JSON.parse(event.data);
-      console.log("Stream for results: message data:", data);
+      logger.info("Stream for results: message data:", data);
     } catch (e) {
-      console.log("Stream for results: Error parsing message data:", e);
+      logAllError(`Stream for results: Error parsing message data: ${e}`);
     }
   };
 
@@ -156,7 +157,7 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
   });
 
   eventSource.onerror = (event) => {
-    console.error("Stream for results: EventSource error:", event);
+    logAllError(`Stream for results: EventSource error: ${event}`);
     eventSource.close();
     setTimeout(() => connectToOpticOddsStreamResults(sport, leagues, isLive), 1000); // Attempt to reconnect after 1 second
   };

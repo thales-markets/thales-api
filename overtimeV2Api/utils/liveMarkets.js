@@ -4,6 +4,7 @@ const KEYS = require("../../redis/redis-keys");
 const { getLeagueOpticOddsName, MoneylineTypes } = require("overtime-live-trading-utils");
 const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../constants/markets");
 const { fetchOpticOddsFixturesActive, mapOpticOddsApiFixtures } = require("./opticOdds/opticOddsFixtures");
+const { logger } = require("../../utils/logger");
 
 const getRedisKeyForOpticOddsApiFixtures = (leagueId) => `${KEYS.OPTIC_ODDS_API_FIXTURES_BY_LEAGUE}${leagueId}`;
 const getRedisKeyForOpticOddsApiOdds = (leagueId) => `${KEYS.OPTIC_ODDS_API_ODDS_BY_LEAGUE}${leagueId}`;
@@ -27,7 +28,7 @@ const fetchRiskManagementConfig = async (isTestnet) => {
   };
 };
 
-const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
+const fetchOpticOddsGamesForLeague = async (leagueId) => {
   let opticOddsGames = [];
 
   const opticOddsLeagueName = getLeagueOpticOddsName(leagueId);
@@ -41,8 +42,8 @@ const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
       opticOddsGames = mapOpticOddsApiFixtures(opticOddsGamesResponse.data);
       if (opticOddsGames.length > 0) {
         redisClient.set(getRedisKeyForOpticOddsApiFixtures(leagueId), JSON.stringify(opticOddsGames));
-      } else if (!isTestnet) {
-        console.log(`Live markets: Could not find any Optic Odds fixtures/active for the given league ID ${leagueId}`);
+      } else {
+        logger.info(`Live markets: Could not find any Optic Odds fixtures/active for the given league ID ${leagueId}`);
       }
     } else {
       // read previous games from cache

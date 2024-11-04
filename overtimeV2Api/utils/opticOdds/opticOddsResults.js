@@ -6,6 +6,7 @@ const {
   OPTIC_ODDS_API_KEY_HEADER,
   OPTIC_ODDS_API_RESULTS_MAX_GAMES,
 } = require("../../constants/opticOdds");
+const { logAllError, logAllInfo } = require("../../../utils/logger");
 
 const isOpticOddsStreamResultsDisabled = process.env.DISABLE_OPTIC_ODDS_STREAM_RESULTS === "true";
 
@@ -70,7 +71,7 @@ const mapResultsStreamEvents = (streamEvents, initialResults) => {
   return mappedResults.concat(newMappedResults);
 };
 
-const fetchOpticOddsResults = async (fixtureIds) => {
+const fetchOpticOddsResults = async (fixtureIds, isLiveMarketsCaller = false) => {
   const resultsPromises = [];
   let requestUrl = `${OPTIC_ODDS_API_FIXTURES_RESULTS_URL}?`;
 
@@ -94,10 +95,14 @@ const fetchOpticOddsResults = async (fixtureIds) => {
     const endTime = new Date().getTime();
     const diff = endTime - startTime;
     if (diff > process.env.LOG_OPTIC_ODDS_API_CALL_TIME_THRESHOLD) {
-      console.log(`API CALL TAKES TOO LONG: fetchOpticOddsResults time: ${diff}ms`);
+      isLiveMarketsCaller
+        ? logAllInfo(`API CALL TAKES TOO LONG: fetchOpticOddsResults time: ${diff}ms`)
+        : console.log(`API CALL TAKES TOO LONG: fetchOpticOddsResults time: ${diff}ms`);
     }
   } catch (e) {
-    console.log(`Fetchng Optic Odds results error: ${e.message} ${e.error})`);
+    isLiveMarketsCaller
+      ? logAllError(`Fetchng Optic Odds results error: ${e.message} ${e.error})`)
+      : console.error(`Fetchng Optic Odds results error: ${e.message} ${e.error})`);
     resultsResponses = [];
   }
 

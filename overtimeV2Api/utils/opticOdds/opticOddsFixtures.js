@@ -4,6 +4,7 @@ const {
   OPTIC_ODDS_API_KEY_HEADER,
   OPTIC_ODDS_API_FIXTURES_ACTIVE_URL,
 } = require("../../constants/opticOdds");
+const { logAllError } = require("../../../utils/logger");
 
 const mapOpticOddsApiFixtures = (fixturesData) =>
   fixturesData.map((fixtureData) => ({
@@ -26,7 +27,7 @@ const fetchOpticOddsFixtures = async (league, startDate, page) => {
     const fixturesResponse = await axios.get(url, { headers: OPTIC_ODDS_API_KEY_HEADER });
     fixturesResponseData = fixturesResponse.data;
   } catch (e) {
-    console.log(`Fetchng Optic Odds fixtures error: ${e.message}`);
+    logAllError(`Fetchng Optic Odds fixtures error: ${e.message}`);
   }
 
   return fixturesResponseData;
@@ -45,7 +46,7 @@ const fetchOpticOddsFixturesActive = async (leagues, isLive, startDate = null, p
     const fixturesResponse = await axios.get(url, { headers: OPTIC_ODDS_API_KEY_HEADER, timeout });
     fixturesResponseData = fixturesResponse.data;
   } catch (e) {
-    console.log(`Fetching Optic Odds fixtures/active error: ${e.message}`);
+    logAllError(`Fetching Optic Odds fixtures/active error: ${e.message}`);
   }
 
   return fixturesResponseData;
