@@ -1,6 +1,7 @@
 const { initServices } = require("./services/init");
 const markets = require("./source/markets");
 const liveMarkets = require("./source/liveMarkets");
+const playersInfo = require("./source/playersInfo");
 const riskManagement = require("./source/riskManagement");
 const streams = require("./source/streams");
 
@@ -13,6 +14,7 @@ const app = async () => {
 
   markets.processMarkets();
   liveMarkets.processLiveMarkets();
+  playersInfo.processPlayersInfo();
   riskManagement.processRiskManagement();
   streams.processOpticOddsResults();
 };

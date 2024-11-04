@@ -34,6 +34,10 @@ docker-compose pull thales-markets-api
 docker-compose stop thales-markets-api
 docker-compose up -d thales-markets-api
 
+docker-compose pull thales-io
+docker-compose stop thales-io
+docker-compose up -d thales-io
+
 docker-compose pull overtime-v2-api
 docker-compose stop overtime-v2-api
 docker-compose up -d overtime-v2-api

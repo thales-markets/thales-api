@@ -10,12 +10,16 @@ const { getLeagueProvider, Provider } = require("overtime-live-trading-utils");
 
 async function processPlayersInfo() {
   if (process.env.REDIS_URL) {
+    const isTestnet = process.env.IS_TESTNET === "true";
+
     setTimeout(async () => {
       while (true) {
         try {
           const startTime = new Date().getTime();
           console.log("Players info: process players info");
-          await processAllPlayersInfo();
+
+          await processAllPlayersInfo(isTestnet);
+
           const endTime = new Date().getTime();
           console.log(
             `Players info: === Seconds for processing players info: ${((endTime - startTime) / 1000).toFixed(0)} ===`,
@@ -30,8 +34,9 @@ async function processPlayersInfo() {
   }
 }
 
-async function getPlayersInfoMap() {
-  const obj = await redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO);
+async function getPlayersInfoMap(isTestnet) {
+  const key = isTestnet ? KEYS.OVERTIME_V2_PLAYERS_INFO_TESTNET : KEYS.OVERTIME_V2_PLAYERS_INFO;
+  const obj = await redisClient.get(key);
   const playersInfoMap = new Map(JSON.parse(obj));
   return playersInfoMap;
 }
@@ -48,11 +53,10 @@ async function getOpenMarketsMap(network) {
   return openMarkets;
 }
 
-async function processAllPlayersInfo() {
-  const playersInfoMap = await getPlayersInfoMap();
+async function processAllPlayersInfo(isTestnet) {
+  const playersInfoMap = await getPlayersInfoMap(isTestnet);
   const gamesInfoMap = await getGamesInfoMap();
-  // TODO: take from OP for now
-  const openMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
+  const openMarketsMap = await getOpenMarketsMap(isTestnet ? NETWORK.OptimismSepolia : NETWORK.Optimism);
 
   const allOpenMarkets = Array.from(openMarketsMap.values());
 
@@ -119,7 +123,8 @@ async function processAllPlayersInfo() {
   }
 
   console.log(`Players info: Number of players info: ${Array.from(playersInfoMap.values()).length}`);
-  redisClient.set(KEYS.OVERTIME_V2_PLAYERS_INFO, JSON.stringify([...playersInfoMap]));
+  const key = isTestnet ? KEYS.OVERTIME_V2_PLAYERS_INFO_TESTNET : KEYS.OVERTIME_V2_PLAYERS_INFO;
+  redisClient.set(key, JSON.stringify([...playersInfoMap]));
 }
 
 module.exports = {
