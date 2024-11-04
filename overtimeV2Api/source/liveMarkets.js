@@ -171,7 +171,7 @@ async function processMarketsByLeague(
 
   try {
     // Fetching games from Optic Odds for given league
-    const opticOddsGames = await fetchOpticOddsGamesForLeague(leagueId, isTestnet);
+    const opticOddsGames = await fetchOpticOddsGamesForLeague(leagueId);
 
     // Add Optic Odds game data to market and filter by Optic Odds games (teams name and date)
     const ongoingMarketsByOpticOddsGames = ongoingMarkets

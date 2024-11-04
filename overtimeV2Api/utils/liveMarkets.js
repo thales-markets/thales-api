@@ -28,7 +28,7 @@ const fetchRiskManagementConfig = async (isTestnet) => {
   };
 };
 
-const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
+const fetchOpticOddsGamesForLeague = async (leagueId) => {
   let opticOddsGames = [];
 
   const opticOddsLeagueName = getLeagueOpticOddsName(leagueId);
@@ -42,7 +42,7 @@ const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
       opticOddsGames = mapOpticOddsApiFixtures(opticOddsGamesResponse.data);
       if (opticOddsGames.length > 0) {
         redisClient.set(getRedisKeyForOpticOddsApiFixtures(leagueId), JSON.stringify(opticOddsGames));
-      } else if (!isTestnet) {
+      } else {
         logger.info(`Live markets: Could not find any Optic Odds fixtures/active for the given league ID ${leagueId}`);
       }
     } else {
