@@ -3,8 +3,10 @@ const {
   OPTIC_ODDS_API_FIXTURES_URL,
   OPTIC_ODDS_API_KEY_HEADER,
   OPTIC_ODDS_API_FIXTURES_ACTIVE_URL,
+  DATE_FORMAT_WITH_TIME_ZONE,
 } = require("../../constants/opticOdds");
 const { logAllError } = require("../../../utils/logger");
+const { format, subSeconds, startOfDay, addDays } = require("date-fns");
 
 const mapOpticOddsApiFixtures = (fixturesData) =>
   fixturesData.map((fixtureData) => ({
@@ -18,10 +20,26 @@ const mapOpticOddsApiFixtures = (fixturesData) =>
     // league: fixtureData.league.name,
   }));
 
+/*
+ * Example:
+ * startDate:       2024-11-06
+ * startDatetime:   2024-11-06T00:00:00Z
+ * startDateAfter:  2024-11-05T23:59:59Z
+ * startDateBefore: 2024-11-07T00:00:00Z
+ */
+const getStartDateBeforeAndAfter = (startDate) => {
+  const startDatetime = startOfDay(new Date(startDate));
+  const startDateAfter = format(subSeconds(startDatetime, 1), DATE_FORMAT_WITH_TIME_ZONE);
+  const startDateBefore = format(addDays(startDatetime, 1), DATE_FORMAT_WITH_TIME_ZONE);
+  return { startDateAfter, startDateBefore };
+};
+
 const fetchOpticOddsFixtures = async (league, startDate, page) => {
   let fixturesResponseData = null;
 
-  const urlQueryParams = `league=${league}&start_date=${startDate}&page=${page}`;
+  const { startDateAfter, startDateBefore } = getStartDateBeforeAndAfter(startDate);
+
+  const urlQueryParams = `league=${league}&start_date_after=${startDateAfter}&start_date_before=${startDateBefore}&page=${page}`;
   const url = `${OPTIC_ODDS_API_FIXTURES_URL}?${urlQueryParams}`;
   try {
     const fixturesResponse = await axios.get(url, { headers: OPTIC_ODDS_API_KEY_HEADER });
@@ -35,9 +53,12 @@ const fetchOpticOddsFixtures = async (league, startDate, page) => {
 
 // one page returns max 100 objects in data array
 const fetchOpticOddsFixturesActive = async (leagues, isLive, startDate = null, page = 1, timeout = 0) => {
-  const urlQueryParams = `league=${leagues.join("&league=")}&is_live=${isLive}${
-    startDate ? `&start_date=${startDate}` : ""
-  }&page=${page}`;
+  let urlQueryParams = `league=${leagues.join("&league=")}&is_live=${isLive}&page=${page}`;
+
+  if (startDate) {
+    const { startDateAfter, startDateBefore } = getStartDateBeforeAndAfter(startDate);
+    urlQueryParams += `&start_date_after=${startDateAfter}&start_date_before=${startDateBefore}`;
+  }
 
   const url = `${OPTIC_ODDS_API_FIXTURES_ACTIVE_URL}?${urlQueryParams}`;
 

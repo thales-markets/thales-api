@@ -46,7 +46,7 @@ const processAllLiveResults = async (resultsStreamSourcesByLeagueMap, isTestnet)
   const redisKeyForRiskManagementLeagues = isTestnet
     ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET
     : KEYS.RISK_MANAGEMENT_LEAGUES_DATA;
-  const riskManagementLeagues = JSON.parse(await redisClient.get(redisKeyForRiskManagementLeagues));
+  const riskManagementLeagues = JSON.parse(await redisClient.get(redisKeyForRiskManagementLeagues)) || [];
   const supportedLiveLeagueIds = getLiveSupportedLeagues(riskManagementLeagues);
 
   // Read open markets only from one network as markets are the same on all networks
