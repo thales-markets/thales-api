@@ -1379,7 +1379,9 @@ app.get(ENDPOINTS.OVERTIME_V2_GAME_INFO, async (req, res) => {
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_PLAYERS_INFO, async (req, res) => {
-  const obj = await redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO);
+  const isTestnet = req.query.isTestnet === "true";
+  const key = isTestnet ? KEYS.OVERTIME_V2_PLAYERS_INFO_TESTNET : KEYS.OVERTIME_V2_PLAYERS_INFO;
+  const obj = await redisClient.get(key);
   const playersInfo = new Map(JSON.parse(obj));
   try {
     res.send(Object.fromEntries(playersInfo));
@@ -1390,8 +1392,11 @@ app.get(ENDPOINTS.OVERTIME_V2_PLAYERS_INFO, async (req, res) => {
 
 app.get(ENDPOINTS.OVERTIME_V2_PLAYER_INFO, async (req, res) => {
   const playerId = req.params.playerId;
+  const isTestnet = req.query.isTestnet === "true";
 
-  const obj = await redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO);
+  const key = isTestnet ? KEYS.OVERTIME_V2_PLAYERS_INFO_TESTNET : KEYS.OVERTIME_V2_PLAYERS_INFO;
+
+  const obj = await redisClient.get(key);
   const playersInfo = new Map(JSON.parse(obj));
 
   try {
