@@ -24,6 +24,7 @@ const {
   Provider,
   League,
   UFC_LEAGUE_IDS,
+  Sport,
 } = require("overtime-live-trading-utils");
 
 const awsS3Client = new S3Client({
@@ -129,7 +130,7 @@ const packMarket = (market, isChild) => {
   };
 
   if (!isChild) {
-    packedMarket.isV3 = !!market.isV3;
+    packedMarket.isV3 = !!market.isV3 || packedMarket.sport === Sport.TENNIS;
   }
 
   return packedMarket;
