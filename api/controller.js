@@ -1246,59 +1246,61 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
   const ungroup = req.query.ungroup;
   const leagueId = req.query.leagueId;
 
-  if (!SUPPORTED_NETWORKS.includes(Number(network))) {
-    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
-    return;
-  }
-
-  const allTypes = Object.values(MarketTypeMap);
-  const allTypeIds = allTypes.map((type) => type.id);
-
-  if (typeId && !allTypeIds.includes(Number(typeId))) {
-    res.send(
-      `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: ${
-        ENDPOINTS.OVERTIME_V2_MARKET_TYPES
-      }.`,
-    );
-    return;
-  }
-
-  if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
-    res.send("Invalid value for ungroup. Possible values: true or false.");
-    return;
-  }
-
-  const redisKeyForRiskManagementLeagues =
-    Number(network) === NETWORK.OptimismSepolia
-      ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET
-      : KEYS.RISK_MANAGEMENT_LEAGUES_DATA;
-
-  const riskManagementLeagues = JSON.parse(await redisClient.get(redisKeyForRiskManagementLeagues));
-
-  const allLiveLeagueIds = getLiveSupportedLeagues(riskManagementLeagues);
-  const allLiveSports = uniqBy(allLiveLeagueIds.map((id) => LeagueMap[id].sport.toLowerCase()));
-
-  if (sport && !allLiveSports.includes(sport.toLowerCase())) {
-    res.send(
-      `Unsupported live sport. Supported live sports: ${allLiveSports.join(", ")}. See details on: ${
-        ENDPOINTS.OVERTIME_V2_SPORTS
-      }.`,
-    );
-    return;
-  }
-  if (leagueId && !allLiveLeagueIds.includes(Number(leagueId))) {
-    res.send(
-      `Unsupported live league ID. Supported live league IDs: ${allLiveLeagueIds.join(", ")}. See details on: ${
-        ENDPOINTS.OVERTIME_V2_SPORTS
-      }.`,
-    );
-    return;
-  }
-
-  const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network]);
-  const markets = JSON.parse(obj);
-
   try {
+    if (!SUPPORTED_NETWORKS.includes(Number(network))) {
+      res.send(
+        "Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).",
+      );
+      return;
+    }
+
+    const allTypes = Object.values(MarketTypeMap);
+    const allTypeIds = allTypes.map((type) => type.id);
+
+    if (typeId && !allTypeIds.includes(Number(typeId))) {
+      res.send(
+        `Unsupported type ID. Supported type IDs: ${allTypeIds.join(", ")}. See details on: ${
+          ENDPOINTS.OVERTIME_V2_MARKET_TYPES
+        }.`,
+      );
+      return;
+    }
+
+    if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
+      res.send("Invalid value for ungroup. Possible values: true or false.");
+      return;
+    }
+
+    const redisKeyForRiskManagementLeagues =
+      Number(network) === NETWORK.OptimismSepolia
+        ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET
+        : KEYS.RISK_MANAGEMENT_LEAGUES_DATA;
+
+    const riskManagementLeagues = JSON.parse(await redisClient.get(redisKeyForRiskManagementLeagues)) || [];
+
+    const allLiveLeagueIds = getLiveSupportedLeagues(riskManagementLeagues);
+    const allLiveSports = uniqBy(allLiveLeagueIds.map((id) => LeagueMap[id].sport.toLowerCase()));
+
+    if (sport && !allLiveSports.includes(sport.toLowerCase())) {
+      res.send(
+        `Unsupported live sport. Supported live sports: ${allLiveSports.join(", ")}. See details on: ${
+          ENDPOINTS.OVERTIME_V2_SPORTS
+        }.`,
+      );
+      return;
+    }
+    if (leagueId && !allLiveLeagueIds.includes(Number(leagueId))) {
+      res.send(
+        `Unsupported live league ID. Supported live league IDs: ${allLiveLeagueIds.join(", ")}. See details on: ${
+          ENDPOINTS.OVERTIME_V2_SPORTS
+        }.`,
+      );
+      return;
+    }
+
+    const obj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[network]);
+    const markets = JSON.parse(obj);
+
     const filteredMarkets = markets.filter(
       (market) =>
         (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
