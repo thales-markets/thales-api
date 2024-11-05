@@ -242,7 +242,7 @@ async function processMarketsByLeague(
 
           // clean up old odds from stream
           const cleanUpArray = redisStreamOddsKeys.flatMap((value) => [value, ""]);
-          await redisClient.mSet(cleanUpArray);
+          cleanUpArray.length && (await redisClient.mSet(cleanUpArray));
         }
       } else {
         // Update odds using stream
