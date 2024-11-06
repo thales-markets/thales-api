@@ -406,7 +406,7 @@ async function processAllGamesInfo() {
   // Add games info from V2
   const gamesInfoV2 = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO_V2);
   const gamesInfoV2Map = new Map(JSON.parse(gamesInfoV2));
-  const gamesInfoMapMerged = new Map([...gamesInfoV2Map, ...gamesInfoMap]);
+  const gamesInfoMapMerged = new Map([...gamesInfoMap, ...gamesInfoV2Map]);
 
   console.log(`Games info: Total number of games info: ${Array.from(gamesInfoMapMerged.values()).length}`);
   redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMapMerged]));
