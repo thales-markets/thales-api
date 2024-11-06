@@ -14,10 +14,10 @@ const mapOpticOddsApiFixtures = (fixturesData) =>
     startDate: fixtureData.start_date,
     homeTeam: fixtureData.home_team_display,
     awayTeam: fixtureData.away_team_display,
-    // isLive: fixtureData.is_live,
-    // status: fixtureData.status,
-    // sport: fixtureData.sport.id,
-    // league: fixtureData.league.name,
+    isLive: fixtureData.is_live,
+    status: fixtureData.status,
+    sport: fixtureData.sport.id,
+    league: fixtureData.league.name,
   }));
 
 /*
