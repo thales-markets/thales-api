@@ -79,8 +79,9 @@ app.get(ENDPOINTS.PARLAY_LEADERBOARD, async (req, res) => {
     const rewards = new Map(JSON.parse(obj));
     try {
       res.send(rewards.get(Number(period)));
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error });
     }
   } else {
     res.send("Bad Network ");
@@ -355,8 +356,9 @@ app.get(ENDPOINTS.THALES_COLLATERALS, (req, res) => {
   if ([10, 137, 8453, 42161].includes(Number(network))) {
     try {
       res.send((isUsdc ? USDC_COLLATERALS : THALES_COLLATERALS)[Number(network)]);
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error });
     }
   } else {
     res.send("Unsupported network. Supported networks: 10 (optimism), 137 (polygon), 42161 (arbitrum), 8453 (base).");
@@ -434,8 +436,9 @@ app.get(ENDPOINTS.THALES_MARKETS, async (req, res) => {
     });
 
     res.send(groupMarkets);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -479,8 +482,9 @@ app.get(ENDPOINTS.THALES_MARKETS_COUNT, async (req, res) => {
     });
 
     return res.send({ data, lastUpdatedAt: obj[1] ? obj[1] : "" });
-  } catch (e) {
-    console.log("Error ", e);
+  } catch (error) {
+    console.log("Error ", error);
+    res.status(500).json({ error });
     return null;
   }
 });
@@ -501,8 +505,9 @@ app.get(ENDPOINTS.THALES_MARKET, async (req, res) => {
   try {
     const market = markets.find((market) => market.address.toLowerCase() === marketAddress.toLowerCase());
     return res.send(market || `Market with address ${marketAddress} not found or not open.`);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -587,8 +592,9 @@ app.get(ENDPOINTS.THALES_MARKET_BUY_QUOTE, async (req, res) => {
     );
 
     return res.send(ammQuote);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -656,8 +662,9 @@ app.get(ENDPOINTS.THALES_MARKET_SELL_QUOTE, async (req, res) => {
     );
 
     return res.send(ammQuote);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1085,8 +1092,9 @@ app.get(ENDPOINTS.THALES_IO_DAILY_STATS, async (req, res) => {
   const stats = new Map(JSON.parse(obj));
   try {
     res.send(Object.fromEntries(stats));
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1095,8 +1103,9 @@ app.get(ENDPOINTS.THALES_IO_WEEKLY_STATS, async (req, res) => {
   const stats = new Map(JSON.parse(obj));
   try {
     res.send(Object.fromEntries(stats));
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1105,16 +1114,18 @@ app.get(ENDPOINTS.THALES_IO_WEEKLY_STATS, async (req, res) => {
 app.get(ENDPOINTS.OVERTIME_V2_SPORTS, (req, res) => {
   try {
     res.send(LeagueMap);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
 app.get(ENDPOINTS.OVERTIME_V2_MARKET_TYPES, (req, res) => {
   try {
     res.send(MarketTypeMap);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1123,8 +1134,9 @@ app.get(ENDPOINTS.OVERTIME_V2_COLLATERALS, (req, res) => {
   if ([10, 42161, 11155420].includes(Number(network))) {
     try {
       res.send(OVERTIME_V2_COLLATERALS[Number(network)]);
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error });
     }
   } else {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
@@ -1234,8 +1246,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     });
 
     res.send(groupMarkets);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1309,8 +1322,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
     );
 
     res.send({ markets: filteredMarkets });
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1332,8 +1346,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
       );
       return res.send(market || `Market with gameId ${marketAddress} not found.`);
     }
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1349,8 +1364,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKET, async (req, res) => {
     } else {
       return res.send(market || `Market with gameId ${marketAddress} not found.`);
     }
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1359,8 +1375,9 @@ app.get(ENDPOINTS.OVERTIME_V2_GAMES_INFO, async (req, res) => {
   const gamesInfo = new Map(JSON.parse(obj));
   try {
     res.send(Object.fromEntries(gamesInfo));
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1373,8 +1390,9 @@ app.get(ENDPOINTS.OVERTIME_V2_GAME_INFO, async (req, res) => {
   try {
     const gameInfo = gamesInfo.get(gameId);
     return res.send(gameInfo);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1385,8 +1403,9 @@ app.get(ENDPOINTS.OVERTIME_V2_PLAYERS_INFO, async (req, res) => {
   const playersInfo = new Map(JSON.parse(obj));
   try {
     res.send(Object.fromEntries(playersInfo));
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1402,8 +1421,9 @@ app.get(ENDPOINTS.OVERTIME_V2_PLAYER_INFO, async (req, res) => {
   try {
     const playerInfo = playersInfo.get(playerId);
     return res.send(playerInfo);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1412,8 +1432,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORES, async (req, res) => {
   const liveScores = new Map(JSON.parse(obj));
   try {
     res.send(Object.fromEntries(liveScores));
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1426,8 +1447,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_SCORE, async (req, res) => {
   try {
     const liveScore = liveScores.get(gameId);
     return res.send(liveScore);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1450,8 +1472,9 @@ app.get(ENDPOINTS.OVERTIME_V2_USER_HISTORY, async (req, res) => {
     const userHistory = await overtimeV2Users.processUserHistory(network, userAddress.toLowerCase());
     const history = status ? userHistory[status.toLowerCase()] : userHistory;
     return res.send(history);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1509,8 +1532,9 @@ app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
   try {
     const quote = await overtimeV2Quotes.getAmmQuote(Number(network), tradeData, Number(buyInAmount), collateral);
     res.send(quote);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1528,8 +1552,9 @@ app.put(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_WRITE, async (req, re
     redisClient.set(KEYS.OVERTIME_V2_LIVE_TRADE_ADAPTER_MESSAGES[networkId], JSON.stringify([...messagesMap]));
     try {
       res.send();
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error });
     }
   } else {
     res.send("Wrong API key for writing live trading error message");
@@ -1545,8 +1570,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_ADAPTER_MESSAGE_READ, async (req, res
   const message = messagesMap.get(requestId);
   try {
     res.send(message);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1557,8 +1583,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_TRADING_API_ERROR_MESSAGES_READ, async (req, 
 
   try {
     res.send(Object.fromEntries(errorsMap));
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
@@ -1604,8 +1631,9 @@ app.get(ENDPOINTS.OVERTIME_V2_RISK_MANAGEMENT_CONFIG, async (req, res) => {
     }
 
     res.send(configResponse);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
