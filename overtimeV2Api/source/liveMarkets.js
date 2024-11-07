@@ -400,7 +400,10 @@ async function processMarketsByLeague(
         const gamesHomeScoreByPeriod = [];
         const gamesAwayScoreByPeriod = [];
 
-        if (currentGameStatus.includes("half") || currentPeriod.includes("half")) {
+        if (
+          (currentGameStatus && currentGameStatus.includes("half")) ||
+          (currentPeriod && currentPeriod.includes("half"))
+        ) {
           gamePaused = false;
         }
 
