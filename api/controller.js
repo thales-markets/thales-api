@@ -1143,6 +1143,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const typeId = req.query.typeId;
   const sport = req.query.sport;
   const leagueId = req.query.leagueid;
+  const gameIds = req.query.gameIds;
   const ungroup = req.query.ungroup;
   const minMaturity = req.query.minMaturity;
 
@@ -1171,6 +1172,11 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       }.`,
     );
     return;
+  }
+
+  let gamesIdsArray = [];
+  if (gameIds) {
+    gamesIdsArray = gameIds.split(",");
   }
 
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
@@ -1208,7 +1214,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     : getCachedOpenMarketsByNetworkMap(network);
 
   try {
-    const allMarkets = Array.from(markets.values());
+    const allMarkets = Array.from(markets.values()).filter(
+      (market) => gamesIdsArray.length === 0 || gamesIdsArray.includes(market.gameId),
+    );
     const groupMarketsByStatus = groupBy(allMarkets, (market) => market.statusCode);
 
     const marketsByStatus = groupMarketsByStatus[status] || [];
@@ -1597,19 +1605,22 @@ app.get(ENDPOINTS.OVERTIME_V2_RISK_MANAGEMENT_CONFIG, async (req, res) => {
   try {
     let configResponse;
     switch (configType) {
-      case "teams":
+      case "teams": {
         const teamsData = await redisClient.get(KEYS.RISK_MANAGEMENT_TEAMS_MAP);
         configResponse = JSON.parse(teamsData) || [];
         break;
-      case "bookmakers":
+      }
+      case "bookmakers": {
         const bookmakersData = await redisClient.get(KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA);
         configResponse = JSON.parse(bookmakersData) || [];
         break;
-      case "spreads":
+      }
+      case "spreads": {
         const spreadData = await redisClient.get(KEYS.RISK_MANAGEMENT_SPREAD_DATA);
         configResponse = JSON.parse(spreadData) || [];
         break;
-      case "leagues":
+      }
+      case "leagues": {
         const leaguesData = await redisClient.get(
           isTestnet ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET : KEYS.RISK_MANAGEMENT_LEAGUES_DATA,
         );
@@ -1620,6 +1631,7 @@ app.get(ENDPOINTS.OVERTIME_V2_RISK_MANAGEMENT_CONFIG, async (req, res) => {
           totalTypes: Object.values(TotalTypes),
         };
         break;
+      }
       default:
         configResponse = "Unsupported config type. Supported config types: teams, bookmakers, spreads, leagues.";
     }
