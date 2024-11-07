@@ -2,8 +2,6 @@ const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
 const { delay } = require("../utils/general");
-const axios = require("axios");
-const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
 const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
@@ -19,14 +17,16 @@ const {
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {
-    let isOpticOddsResultsInitialized = false;
+    const resultsInitialization = { isInitialized: false };
 
     setTimeout(async () => {
       while (true) {
         try {
           const startTime = new Date().getTime();
           console.log("Lives scores: process lives scores");
-          await processAllLiveResults(isOpticOddsResultsInitialized);
+
+          await processAllLiveResults(resultsInitialization);
+
           const endTime = new Date().getTime();
           console.log(
             `Lives scores: === Seconds for processing lives scores: ${((endTime - startTime) / 1000).toFixed(0)} ===`,
@@ -59,7 +59,7 @@ async function getGamesInfoMap() {
   return gamesInfoMap;
 }
 
-async function processAllLiveResults(isOpticOddsResultsInitialized) {
+async function processAllLiveResults(resultsInitialization) {
   const liveScoresMap = await getLiveScoresMap();
   const gamesInfoMap = await getGamesInfoMap();
   // take only from OP as markets are the same on all networks
@@ -69,40 +69,12 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     (market) => market.statusCode === "ongoing",
   );
 
-  let opticOddsGameIdsWithLeagueID = [];
+  const opticOddsGameIdsWithLeagueID = [];
   for (let i = 0; i < allOngoingMarketsMap.length; i++) {
     const market = allOngoingMarketsMap[i];
     const leagueId = market.leagueId;
     const leagueProvider = getLeagueProvider(leagueId);
     const gameInfo = gamesInfoMap.get(market.gameId);
-
-    if (leagueProvider === Provider.RUNDOWN && gameInfo && gameInfo.provider === Provider.RUNDOWN) {
-      const eventApiUrl = `https://therundown.io/api/v2/events/${convertFromBytes32(market.gameId)}?key=${
-        process.env.RUNDOWN_API_KEY
-      }`;
-
-      const eventResponse = await axios.get(eventApiUrl);
-      const eventResponseData = eventResponse.data;
-
-      if (eventResponseData !== null) {
-        eventResponseData.events.forEach((event) => {
-          if (event.event_id) {
-            const gameId = bytes32({ input: event.event_id });
-
-            liveScoresMap.set(gameId, {
-              lastUpdate: new Date().getTime(),
-              period: event.score.game_period,
-              gameStatus: event.score.event_status,
-              displayClock: event.score.display_clock,
-              homeScore: event.score.score_home,
-              awayScore: event.score.score_away,
-              homeScoreByPeriod: event.score.score_home_by_period,
-              awayScoreByPeriod: event.score.score_away_by_period,
-            });
-          }
-        });
-      }
-    }
 
     if (leagueProvider === Provider.OPTICODDS && market.isV3) {
       opticOddsGameIdsWithLeagueID.push({ gameId: market.gameId, leagueId, gameInfo });
@@ -113,7 +85,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     let liveResults = [];
     const opticOddsGameIds = opticOddsGameIdsWithLeagueID.map((obj) => convertFromBytes32(obj.gameId));
 
-    if (!isOpticOddsStreamResultsDisabled && isOpticOddsResultsInitialized) {
+    if (!isOpticOddsStreamResultsDisabled && resultsInitialization.isInitialized) {
       // Read from Redis
       const redisKeysForStreamResults = opticOddsGameIds.map((gameId) =>
         getRedisKeyForOpticOddsStreamEventResults(gameId),
@@ -126,7 +98,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
       const opticOddsApiResults = await fetchOpticOddsResults(opticOddsGameIds);
       if (opticOddsApiResults.length > 0) {
         liveResults = mapOpticOddsApiResults(opticOddsApiResults);
-        isOpticOddsResultsInitialized = true;
+        resultsInitialization.isInitialized = true;
       }
     }
 

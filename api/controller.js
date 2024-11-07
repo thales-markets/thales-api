@@ -213,12 +213,6 @@ app.get(ENDPOINTS.PROMOTIONS, async (req, res) => {
   request.get(banners).pipe(res);
 });
 
-app.get(ENDPOINTS.LIVE_RESULT, (req, res) => {
-  const gameId = req.params.gameId;
-  const url = `https://therundown.io/api/v2/events/${gameId}?key=${process.env.RUNDOWN_API_KEY}`;
-  request.get(url).pipe(res);
-});
-
 app.post(ENDPOINTS.UPDATE_REFFERER_ID, async (req, res) => {
   const walletAddress = req.body.walletAddress;
   const reffererID = req.body.reffererID;
