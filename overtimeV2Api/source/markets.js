@@ -173,18 +173,14 @@ const loadMarkets = async (isTestnet) => {
     }
 
     const merkleTreesFileContents = await Promise.all(
-      merkleTreesList.map(async (merkleTreesItem) => {
-        return await readAwsS3File(bucketName, merkleTreesItem);
-      }),
+      merkleTreesList.map((merkleTreesItem) => readAwsS3File(bucketName, merkleTreesItem)),
     );
 
     await Promise.all(
       merkleTreesFileContents.map(async (merkleTreeFileConent) => {
         const marketFiles = merkleTreeFileConent ? merkleTreeFileConent.split(",").map((f) => f.trim()) : [];
         const marketFileContents = await Promise.all(
-          marketFiles.map(async (marketFile) => {
-            return await readAwsS3File(bucketName, marketFile);
-          }),
+          marketFiles.map((marketFile) => readAwsS3File(bucketName, marketFile)),
         );
         marketFileContents.map((content) => {
           const arr = JSON.parse(content);
