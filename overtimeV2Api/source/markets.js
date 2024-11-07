@@ -172,22 +172,26 @@ const loadMarkets = async (isTestnet) => {
       command.input.ContinuationToken = NextContinuationToken;
     }
 
-    for (let i = 0; i < merkleTreesList.length; i++) {
-      const merkleTreesItem = merkleTreesList[i];
-      const merkleTreeFileConent = await readAwsS3File(bucketName, merkleTreesItem);
+    const merkleTreesFileContents = await Promise.all(
+      merkleTreesList.map(async (merkleTreesItem) => {
+        return await readAwsS3File(bucketName, merkleTreesItem);
+      }),
+    );
 
-      const marketFiles = merkleTreeFileConent ? merkleTreeFileConent.split(",").map((f) => f.trim()) : [];
-
-      for (let j = 0; j < marketFiles.length; j++) {
-        const marketFile = marketFiles[j];
-        try {
-          const marketFileContent = await readAwsS3File(bucketName, marketFile);
-          markets = [...markets, ...JSON.parse(marketFileContent)];
-        } catch (e) {
-          console.log(`Markets ${network}: Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
-        }
-      }
-    }
+    await Promise.all(
+      merkleTreesFileContents.map(async (merkleTreeFileConent) => {
+        const marketFiles = merkleTreeFileConent ? merkleTreeFileConent.split(",").map((f) => f.trim()) : [];
+        const marketFileContents = await Promise.all(
+          marketFiles.map(async (marketFile) => {
+            return await readAwsS3File(bucketName, marketFile);
+          }),
+        );
+        marketFileContents.map((content) => {
+          const arr = JSON.parse(content);
+          markets = [...markets, ...arr];
+        });
+      }),
+    );
   } catch (e) {
     console.log(`Markets ${network}: Error reading merkle trees: ${e}`);
   }
