@@ -60,7 +60,7 @@ async function processMarkets() {
           console.log(`Markets ${network}: markets error: `, error);
         }
 
-        await delay(1000);
+        await delay(process.env.DELAY_FOR_PROCESS_MARKETS || 1000);
       }
     }, 3000);
   }
