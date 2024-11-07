@@ -47,7 +47,6 @@ const KEYS = {
     8453: "overtimeV2BaseClosedMarkets",
   },
   OVERTIME_V2_GAMES_INFO: "overtimeV2GamesInfo",
-  OVERTIME_V2_GAMES_INFO_V2: "overtimeV2GamesInfoV2", // TODO: remove this and delete it from redis when all V2 games are finished
   OVERTIME_V2_PLAYERS_INFO: "overtimeV2PlayersInfo",
   OVERTIME_V2_PLAYERS_INFO_TESTNET: "overtimeV2PlayersInfoTestnet",
   OVERTIME_V2_LIVE_MARKETS: {

@@ -11,10 +11,8 @@ const {
   LeagueMap,
   Provider,
   LeagueIdMapEnetpulse,
-  LeagueIdMapRundown,
   LeagueIdMapOpticOdds,
   League,
-  AMERICAN_LEAGUES,
   PeriodType,
   Sport,
 } = require("overtime-live-trading-utils");
@@ -48,73 +46,6 @@ async function processGamesInfo() {
     }, 3000);
   }
 }
-
-const getRundownScore = (team, event, league) => {
-  let score = undefined;
-
-  if (league === League.UFC) {
-    const numberOfRounds = Number(event.score?.game_period);
-    const lastRoundEndTimeInfo = event.score?.event_status_detail.split(",");
-
-    if (lastRoundEndTimeInfo.length > 0) {
-      const lastRoundEndTimeNumber = Number(
-        lastRoundEndTimeInfo[lastRoundEndTimeInfo.length - 1].trim().replace(":", "."),
-      );
-      let numberOfRoundsResult;
-      if (lastRoundEndTimeNumber >= 2.3) {
-        numberOfRoundsResult = numberOfRounds;
-      } else {
-        numberOfRoundsResult = Number(numberOfRounds) == 1 ? numberOfRounds : numberOfRounds - 1;
-      }
-
-      score =
-        (team.is_home ? Number(event.score?.winner_home) : Number(event.score?.winner_away)) == 1
-          ? numberOfRoundsResult
-          : 0;
-    }
-  } else {
-    score = team.is_home ? event.score?.score_home : event.score?.score_away;
-  }
-  return score;
-};
-
-const procesRundownGamesInfoPerDate = async (leagues, formattedDate, gamesInfoMap) => {
-  for (let j = 0; j < leagues.length; j++) {
-    const league = Number(leagues[j]);
-    const rundownLeague = LeagueIdMapRundown[league];
-
-    // console.log(`Getting games info for Rundown sport: ${rundownLeague}, ${league} and date ${formattedDate}`);
-    const apiUrl = `https://therundown.io/api/v1/sports/${rundownLeague}/events/${formattedDate}?key=${process.env.RUNDOWN_API_KEY}`;
-    const response = await axios.get(apiUrl);
-
-    response.data.events.forEach((event) => {
-      if (event.event_id) {
-        const gameId = bytes32({ input: event.event_id });
-        gamesInfoMap.set(gameId, {
-          lastUpdate: new Date().getTime(),
-          gameStatus: event.score.event_status,
-          isGameFinished:
-            event.score.event_status === "STATUS_FINAL" ||
-            event.score.event_status === "STATUS_FULL_TIME" ||
-            event.score.event_status === "STATUS_CANCELED",
-          tournamentName: "",
-          tournamentRound: "",
-          provider: Provider.RUNDOWN,
-          teams: event.teams_normalized
-            ? event.teams_normalized.map((team) => ({
-                name: AMERICAN_LEAGUES.includes(league) ? `${team.name} ${team.mascot}` : team.name,
-                isHome: team.is_home,
-                score: getRundownScore(team, event, league),
-                scoreByPeriod: team.is_home ? event.score.score_home_by_period : event.score.score_away_by_period,
-              }))
-            : [],
-        });
-      }
-    });
-
-    // await delay(1 * 1000);
-  }
-};
 
 const getEnetpulseScoreByCode = (results, resultCode) => {
   const finalScore = results.find((result) => result.result_code == resultCode);
@@ -347,7 +278,6 @@ async function processAllGamesInfo() {
   const gamesInfoMap = await getGamesInfoMap();
 
   const allLeagues = Object.values(LeagueMap);
-  const rundownLeagues = allLeagues.filter((league) => league.provider === Provider.RUNDOWN).map((league) => league.id);
   const enetpulseLeagues = allLeagues
     .filter((league) => league.provider === Provider.ENETPULSE)
     .map((league) => league.id);
@@ -360,7 +290,6 @@ async function processAllGamesInfo() {
     console.log(`Games info: Getting games info for date: ${formattedDate}`);
 
     await Promise.all([
-      procesRundownGamesInfoPerDate(rundownLeagues, formattedDate, gamesInfoMap),
       procesEnetpulseGamesInfoPerDate(enetpulseLeagues, formattedDate, gamesInfoMap),
       procesOpticOdssGamesInfo(opticOddsLeagues, formattedDate, gamesInfoMap),
     ]);
@@ -402,14 +331,8 @@ async function processAllGamesInfo() {
     });
   });
 
-  // TODO: remove this when all V2 games are finished
-  // Add games info from V2
-  const gamesInfoV2 = await redisClient.get(KEYS.OVERTIME_V2_GAMES_INFO_V2);
-  const gamesInfoV2Map = new Map(JSON.parse(gamesInfoV2));
-  const gamesInfoMapMerged = new Map([...gamesInfoMap, ...gamesInfoV2Map]);
-
-  console.log(`Games info: Total number of games info: ${Array.from(gamesInfoMapMerged.values()).length}`);
-  redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMapMerged]));
+  console.log(`Games info: Total number of games info: ${Array.from(gamesInfoMap.values()).length}`);
+  redisClient.set(KEYS.OVERTIME_V2_GAMES_INFO, JSON.stringify([...gamesInfoMap]));
 }
 
 module.exports = {
