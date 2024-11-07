@@ -17,14 +17,16 @@ const {
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {
-    const isOpticOddsResultsInitialized = false;
+    const resultsInitialization = { isInitialized: false };
 
     setTimeout(async () => {
       while (true) {
         try {
           const startTime = new Date().getTime();
           console.log("Lives scores: process lives scores");
-          await processAllLiveResults(isOpticOddsResultsInitialized);
+
+          await processAllLiveResults(resultsInitialization);
+
           const endTime = new Date().getTime();
           console.log(
             `Lives scores: === Seconds for processing lives scores: ${((endTime - startTime) / 1000).toFixed(0)} ===`,
@@ -57,7 +59,7 @@ async function getGamesInfoMap() {
   return gamesInfoMap;
 }
 
-async function processAllLiveResults(isOpticOddsResultsInitialized) {
+async function processAllLiveResults(resultsInitialization) {
   const liveScoresMap = await getLiveScoresMap();
   const gamesInfoMap = await getGamesInfoMap();
   // take only from OP as markets are the same on all networks
@@ -83,7 +85,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
     let liveResults = [];
     const opticOddsGameIds = opticOddsGameIdsWithLeagueID.map((obj) => convertFromBytes32(obj.gameId));
 
-    if (!isOpticOddsStreamResultsDisabled && isOpticOddsResultsInitialized) {
+    if (!isOpticOddsStreamResultsDisabled && resultsInitialization.isInitialized) {
       // Read from Redis
       const redisKeysForStreamResults = opticOddsGameIds.map((gameId) =>
         getRedisKeyForOpticOddsStreamEventResults(gameId),
@@ -96,7 +98,7 @@ async function processAllLiveResults(isOpticOddsResultsInitialized) {
       const opticOddsApiResults = await fetchOpticOddsResults(opticOddsGameIds);
       if (opticOddsApiResults.length > 0) {
         liveResults = mapOpticOddsApiResults(opticOddsApiResults);
-        isOpticOddsResultsInitialized = true;
+        resultsInitialization.isInitialized = true;
       }
     }
 
