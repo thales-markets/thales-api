@@ -24,7 +24,9 @@ const connectToOpticOddsStreamOdds = (
   sportsbooks.forEach((sportsbook) => queryString.append("sportsbook", sportsbook));
   markets.forEach((market) => queryString.append("market", market));
   leagues.forEach((league) => queryString.append("league", league));
-  lastEntryId && queryString.append("last_entry_id", lastEntryId);
+  if (lastEntryId) {
+    queryString.append("last_entry_id", lastEntryId);
+  }
 
   const url = `${OPTIC_ODDS_API_BASE_URL_V3}/stream/${sport}/odds?${queryString.toString()}`;
   logger.info(`Stream for odds: Connecting to stream ${url}`);
@@ -43,7 +45,7 @@ const connectToOpticOddsStreamOdds = (
   };
 
   let lastReceivedEntryId = lastEntryId;
-  let allRedisKeysByGameIdMap = lastRedisKeysMap;
+  const allRedisKeysByGameIdMap = lastRedisKeysMap;
 
   eventSource.addEventListener("odds", (event) => {
     const data = JSON.parse(event.data);
