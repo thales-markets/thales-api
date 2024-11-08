@@ -402,12 +402,20 @@ async function processMarketsByLeague(
         const gamesHomeScoreByPeriod = [];
         const gamesAwayScoreByPeriod = [];
 
-        if (currentGameStatus.includes("half") || currentPeriod.includes("half")) {
-          gamePaused = false;
+        const isStatusOrPeriodUknown = currentGameStatus === null || currentPeriod === null;
+
+        if (isStatusOrPeriodUknown) {
+          gamePaused = true;
+        } else {
+          if (currentGameStatus.includes("half") || currentPeriod.includes("half")) {
+            gamePaused = false;
+          }
         }
 
         if (gamePaused) {
-          const errorMessage = `Pausing game ${market.opticOddsGameOdds.homeTeam} - ${market.opticOddsGameOdds.awayTeam} due to odds being stale`;
+          const errorMessage = `Pausing game ${market.opticOddsGameOdds.homeTeam} - ${
+            market.opticOddsGameOdds.awayTeam
+          } ${isStatusOrPeriodUknown ? "due to uknown status or period" : "due to odds being stale"}`;
           errorsMap.set(market.gameId, {
             processingTime: PROCESSING_START_TIME,
             errorTime: new Date().toUTCString(),
