@@ -409,7 +409,6 @@ async function processMarketsByLeague(
         } else if (currentGameStatus.includes("half") || currentPeriod.includes("half")) {
           gamePaused = false;
         }
-        }
 
         if (gamePaused) {
           const errorMessage = `Pausing game ${market.opticOddsGameOdds.homeTeam} - ${
