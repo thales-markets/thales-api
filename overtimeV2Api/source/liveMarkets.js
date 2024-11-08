@@ -406,10 +406,9 @@ async function processMarketsByLeague(
 
         if (isStatusOrPeriodUknown) {
           gamePaused = true;
-        } else {
-          if (currentGameStatus.includes("half") || currentPeriod.includes("half")) {
-            gamePaused = false;
-          }
+        } else if (currentGameStatus.includes("half") || currentPeriod.includes("half")) {
+          gamePaused = false;
+        }
         }
 
         if (gamePaused) {
