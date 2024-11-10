@@ -103,7 +103,7 @@ async function processAllLiveResults(resultsInitialization) {
     }
 
     opticOddsGameIdsWithLeagueID.forEach((obj) => {
-      const opticOddsEvent = liveResults.find((event) => event.gameId === obj.gameId);
+      const opticOddsEvent = liveResults.find((event) => event.gameId === convertFromBytes32(obj.gameId));
       if (opticOddsEvent) {
         const homeScores = getOpticOddsScore(opticOddsEvent, obj.leagueId, "home");
         const awayScores = getOpticOddsScore(opticOddsEvent, obj.leagueId, "away");
