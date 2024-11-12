@@ -1629,6 +1629,8 @@ const EnetpulseRounds = {
   [9]: "Final",
 };
 
+const MEDIUM_ODDS = 0.52;
+
 module.exports = {
   ResultType,
   MarketType,
@@ -1647,4 +1649,5 @@ module.exports = {
   LIVE_TYPE_ID_BASE,
   TicketMarketStatus,
   FUTURES_MARKET_TYPES,
+  MEDIUM_ODDS,
 };

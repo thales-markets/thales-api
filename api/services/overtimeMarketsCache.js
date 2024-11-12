@@ -1,14 +1,14 @@
 const KEYS = require("../../redis/redis-keys");
 const { delay } = require("../../services/utils");
 const { SUPPORTED_NETWORKS } = require("../constants/networks");
-const { redisClient, redisClientsPool, getRandomRedisClient } = require("../../redis/client");
+const { getRandomRedisClient } = require("../../redis/client");
 require("dotenv").config();
 
 const REDIS_OPEN_MARKETS_CACHE_INTERVAL = Number(process.env.REDIS_OVERTIME_OPEN_MARKETS_CACHE_INTERVAL);
 const REDIS_CLOSED_MARKETS_CACHE_INTERVAL = Number(process.env.REDIS_OVERTIME_CLOSED_MARKETS_CACHE_INTERVAL);
 
-let cachedOpenMarketsByNetworkMap = new Map();
-let cachedClosedMarketsByNetworkMap = new Map();
+const cachedOpenMarketsByNetworkMap = new Map();
+const cachedClosedMarketsByNetworkMap = new Map();
 
 // Cache open markets for all networks
 const cacheOpenMarkets = async () => {
