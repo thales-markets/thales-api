@@ -55,7 +55,7 @@ const overtimeV2Markets = require("../overtimeV2Api/source/markets");
 const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
 const { LeagueMap, getLiveSupportedLeagues, SpreadTypes, TotalTypes } = require("overtime-live-trading-utils");
-const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
+const { MarketTypeMap, MarketType, MEDIUM_ODDS } = require("../overtimeV2Api/constants/markets");
 const { SUPPORTED_NETWORKS, NETWORK } = require("./constants/networks");
 const {
   getCachedOpenMarketsByNetworkMap,
@@ -1143,9 +1143,10 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const typeId = req.query.typeId;
   const sport = req.query.sport;
   const leagueId = req.query.leagueid;
-  const gameIds = req.query.gameIds;
+  const gameIds = req.query.gameids;
   const ungroup = req.query.ungroup;
   const minMaturity = req.query.minMaturity;
+  const onlyMainMarkets = req.query.onlymainmarkets;
 
   if (!status) {
     status = "open";
@@ -1181,6 +1182,11 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
     res.send("Invalid value for ungroup. Possible values: true or false.");
+    return;
+  }
+
+  if (onlyMainMarkets && !["true", "false"].includes(onlyMainMarkets.toLowerCase())) {
+    res.send("Invalid value for onlyMainMarkets. Possible values: true or false.");
     return;
   }
 
@@ -1237,17 +1243,67 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
         (!minMaturity || Number(market.maturity) >= Number(minMaturity)),
     );
 
+    let finalMarkets = [];
+
+    if (onlyMainMarkets && onlyMainMarkets.toLowerCase() === "true") {
+      filteredMarkets.forEach((market) => {
+        const spreadMarkets = market.childMarkets.filter((childMarket) => childMarket.typeId === MarketType.SPREAD);
+        const totalMarkets = market.childMarkets.filter((childMarket) => childMarket.typeId === MarketType.TOTAL);
+
+        const newMarket = { ...market, childMarkets: [] };
+
+        if (spreadMarkets.length) {
+          const mainSpreadMarket = spreadMarkets.reduce(function (prev, curr) {
+            return Math.abs(curr.odds[0].normalizedImplied - MEDIUM_ODDS) <
+              Math.abs(prev.odds[0].normalizedImplied - MEDIUM_ODDS)
+              ? curr
+              : prev;
+          });
+          newMarket.childMarkets.push(mainSpreadMarket);
+        }
+        if (totalMarkets.length) {
+          const mainTotalMarket = totalMarkets.reduce(function (prev, curr) {
+            return Math.abs(curr.odds[0].normalizedImplied - MEDIUM_ODDS) <
+              Math.abs(prev.odds[0].normalizedImplied - MEDIUM_ODDS)
+              ? curr
+              : prev;
+          });
+          newMarket.childMarkets.push(mainTotalMarket);
+        }
+        finalMarkets.push(newMarket);
+      });
+    } else {
+      finalMarkets = filteredMarkets;
+    }
+
     if (ungroup && ungroup.toLowerCase() === "true") {
-      res.send(filteredMarkets);
+      res.send(finalMarkets);
       return;
     }
 
-    const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
+    const groupMarkets = groupBy(finalMarkets, (market) => market.sport);
     Object.keys(groupMarkets).forEach((key) => {
       groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
     });
 
     res.send(groupMarkets);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
+  }
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_NUMBER_OF_MARKETS, async (req, res) => {
+  const network = req.params.networkParam;
+  if (!SUPPORTED_NETWORKS.includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
+    return;
+  }
+
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_NUMBER_OF_MARKETS[network]);
+  const numberOfMarkets = new Map(JSON.parse(obj));
+  try {
+    res.send(Object.fromEntries(numberOfMarkets));
   } catch (error) {
     console.log(error);
     res.status(500).json({ error });

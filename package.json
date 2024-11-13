@@ -34,7 +34,7 @@
     "node-fetch": "^2.6.1",
     "overtime-live-trading-utils": "^0.0.158",
     "redis": "4.7.0",
-    "thales-data": "^3.0.16",
+    "thales-data": "^3.0.17",
     "twitter-api-v2": "^1.4.1",
     "web3": "^1.5.2"
   },
