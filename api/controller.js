@@ -62,6 +62,7 @@ const {
   getCachedClosedMarketsByNetworkMap,
 } = require("./services/overtimeMarketsCache");
 const { getGameFinishersMap, getUserReffererIDsMap, getSolanaAddressesMap } = require("./services/loadData");
+const { excludePropertiesFromMarket } = require("../overtimeV2Api/utils/markets");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -1147,6 +1148,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const ungroup = req.query.ungroup;
   const minMaturity = req.query.minMaturity;
   const onlyMainMarkets = req.query.onlymainmarkets;
+  const onlyBasicProperties = req.query.onlybasicproperties;
 
   if (!status) {
     status = "open";
@@ -1187,6 +1189,11 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
   if (onlyMainMarkets && !["true", "false"].includes(onlyMainMarkets.toLowerCase())) {
     res.send("Invalid value for onlyMainMarkets. Possible values: true or false.");
+    return;
+  }
+
+  if (onlyBasicProperties && !["true", "false"].includes(onlyBasicProperties.toLowerCase())) {
+    res.send("Invalid value for onlyBasicProperties. Possible values: true or false.");
     return;
   }
 
@@ -1274,6 +1281,14 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       });
     } else {
       finalMarkets = filteredMarkets;
+    }
+
+    if (onlyBasicProperties && onlyBasicProperties.toLowerCase() === "true") {
+      const newMarkets = [];
+      finalMarkets.forEach((market) => {
+        newMarkets.push(excludePropertiesFromMarket(market));
+      });
+      finalMarkets = newMarkets;
     }
 
     if (ungroup && ungroup.toLowerCase() === "true") {
@@ -1389,6 +1404,13 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
+  const onlyBasicProperties = req.query.onlybasicproperties;
+
+  if (onlyBasicProperties && !["true", "false"].includes(onlyBasicProperties.toLowerCase())) {
+    res.send("Invalid value for onlyBasicProperties. Possible values: true or false.");
+    return;
+  }
+
   try {
     const openMarkets = getCachedOpenMarketsByNetworkMap(network);
     let market = Array.from(openMarkets.values()).find(
@@ -1396,12 +1418,18 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
     );
 
     if (market) {
+      if (onlyBasicProperties) {
+        market = excludePropertiesFromMarket(market);
+      }
       return res.send(market);
     } else {
       const closedMarkets = getCachedClosedMarketsByNetworkMap(network);
       market = Array.from(closedMarkets.values()).find(
         (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
       );
+      if (market && onlyBasicProperties) {
+        market = excludePropertiesFromMarket(market);
+      }
       return res.send(market || `Market with gameId ${marketAddress} not found.`);
     }
   } catch (error) {
