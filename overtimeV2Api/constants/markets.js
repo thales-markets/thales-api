@@ -1616,6 +1616,34 @@ const MIN_ODDS_FOR_DIFF_CHECKING = 0.2;
 const LIVE_TYPE_ID_BASE = 100000;
 const MAX_ALLOWED_STALE_ODDS_DELAY = process.env.MAX_ALLOWED_STALE_ODDS_DELAY || 1000 * 60 * 3; // 3 mins
 
+const PARENT_MARKET_PROPERTIES_TO_EXCLUDE = [
+  "proof",
+  "sport",
+  "leagueId",
+  "leagueName",
+  "type",
+  "maturityDate",
+  "isOpen",
+  "isResolved",
+  "isCancelled",
+  "isPaused",
+  "isOneSideMarket",
+  "isPlayerPropsMarket",
+  "isOneSidePlayerPropsMarket",
+  "isYesNoPlayerPropsMarket",
+  "proof",
+  "isV3",
+];
+
+const CHILD_MARKET_PROPERTIES_TO_EXCLUDE = [
+  ...PARENT_MARKET_PROPERTIES_TO_EXCLUDE,
+  "gameId",
+  "subLeagueId",
+  "maturity",
+  "homeTeam",
+  "awayTeam",
+];
+
 const EnetpulseRounds = {
   [0]: "",
   [1]: "no round",
@@ -1650,4 +1678,6 @@ module.exports = {
   TicketMarketStatus,
   FUTURES_MARKET_TYPES,
   MEDIUM_ODDS,
+  PARENT_MARKET_PROPERTIES_TO_EXCLUDE,
+  CHILD_MARKET_PROPERTIES_TO_EXCLUDE,
 };
