@@ -264,6 +264,7 @@ const MarketType = {
   // Futures
   LEAGUE_WINNER: 13001,
   MVP: 13002,
+  CUP_WINNER: 13003,
 };
 
 const MarketTypeMap = {
@@ -1512,6 +1513,12 @@ const MarketTypeMap = {
     name: "MVP",
     resultType: ResultType.EXACT_POSITION,
   },
+  [MarketType.CUP_WINNER]: {
+    id: MarketType.CUP_WINNER,
+    key: "cupWinner",
+    name: "Cup winner",
+    resultType: ResultType.EXACT_POSITION,
+  },
 };
 
 const PLAYER_PROPS_MARKET_TYPES = [
@@ -1587,7 +1594,7 @@ const COMBINED_POSITIONS_MARKET_TYPES = [
   MarketType.HALFTIME_FULLTIME_GOALS,
 ];
 
-const FUTURES_MARKET_TYPES = [MarketType.LEAGUE_WINNER, MarketType.MVP];
+const FUTURES_MARKET_TYPES = [MarketType.LEAGUE_WINNER, MarketType.MVP, MarketType.CUP_WINNER];
 
 const OddsType = {
   AMERICAN: "american-odds",
