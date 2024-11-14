@@ -1149,6 +1149,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const minMaturity = req.query.minMaturity;
   const onlyMainMarkets = req.query.onlymainmarkets;
   const onlyBasicProperties = req.query.onlybasicproperties;
+  const includeProofs = req.query.includeproofs;
 
   if (!status) {
     status = "open";
@@ -1194,6 +1195,11 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
   if (onlyBasicProperties && !["true", "false"].includes(onlyBasicProperties.toLowerCase())) {
     res.send("Invalid value for onlyBasicProperties. Possible values: true or false.");
+    return;
+  }
+
+  if (includeProofs && !["true", "false"].includes(includeProofs.toLowerCase())) {
+    res.send("Invalid value for includeProofs. Possible values: true or false.");
     return;
   }
 
@@ -1286,7 +1292,8 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
     if (onlyBasicProperties && onlyBasicProperties.toLowerCase() === "true") {
       const newMarkets = [];
       finalMarkets.forEach((market) => {
-        newMarkets.push(excludePropertiesFromMarket(market));
+        const shouldIncludeProofs = includeProofs && includeProofs.toLowerCase() === "true";
+        newMarkets.push(excludePropertiesFromMarket(market, shouldIncludeProofs));
       });
       finalMarkets = newMarkets;
     }
