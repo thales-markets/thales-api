@@ -1145,6 +1145,9 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const sport = req.query.sport;
   const leagueId = req.query.leagueid;
   const gameIds = req.query.gameids;
+  const typeIds = req.query.typeids;
+  const playerIds = req.query.playerids;
+  const lines = req.query.lines;
   const ungroup = req.query.ungroup;
   const minMaturity = req.query.minMaturity;
   const onlyMainMarkets = req.query.onlymainmarkets;
@@ -1181,6 +1184,18 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   let gamesIdsArray = [];
   if (gameIds) {
     gamesIdsArray = gameIds.split(",");
+  }
+  let typeIdsArray = [];
+  if (typeIds) {
+    typeIdsArray = typeIds.split(",");
+  }
+  let playerIdsArray = [];
+  if (playerIds) {
+    playerIdsArray = playerIds.split(",");
+  }
+  let linesArray = [];
+  if (lines) {
+    linesArray = lines.split(",");
   }
 
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
@@ -1240,7 +1255,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
     const marketsByStatus = groupMarketsByStatus[status] || [];
     let marketsByType = marketsByStatus;
-    if (typeId) {
+    if (typeId || typeIdsArray.length || playerIdsArray.length || linesArray.length) {
       marketsByType = [];
       marketsByStatus.forEach((market) => {
         marketsByType.push(market);
@@ -1253,7 +1268,10 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
         (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
         (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
         (!typeId || Number(market.typeId) === Number(typeId)) &&
-        (!minMaturity || Number(market.maturity) >= Number(minMaturity)),
+        (!minMaturity || Number(market.maturity) >= Number(minMaturity)) &&
+        (!typeIdsArray.length || typeIdsArray.includes(`${market.typeId}`)) &&
+        (!playerIdsArray.length || playerIdsArray.includes(`${market.playerProps.playerId}`)) &&
+        (!linesArray.length || linesArray.includes(`${market.line}`)),
     );
 
     let finalMarkets = [];
@@ -1293,7 +1311,8 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       const newMarkets = [];
       finalMarkets.forEach((market) => {
         const shouldIncludeProofs = includeProofs && includeProofs.toLowerCase() === "true";
-        newMarkets.push(excludePropertiesFromMarket(market, shouldIncludeProofs));
+        const skipChildMarkets = typeId || typeIdsArray.length || playerIdsArray.length || linesArray.length;
+        newMarkets.push(excludePropertiesFromMarket(market, shouldIncludeProofs, skipChildMarkets));
       });
       finalMarkets = newMarkets;
     }

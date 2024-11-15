@@ -152,16 +152,18 @@ const handleExcludeProperties = (propertiesToExclude, market, newMarket, shouldI
   newMarket.odds = market.odds.map((odd) => odd.normalizedImplied);
 };
 
-const excludePropertiesFromMarket = (market, shouldIncludeProofs) => {
+const excludePropertiesFromMarket = (market, shouldIncludeProofs, skipChildMarkets) => {
   const newMarket = { ...market };
   handleExcludeProperties(PARENT_MARKET_PROPERTIES_TO_EXCLUDE, market, newMarket, shouldIncludeProofs);
 
   newMarket.childMarkets = [];
-  market.childMarkets.forEach((childMarket) => {
-    const newChildMarket = { ...childMarket };
-    handleExcludeProperties(CHILD_MARKET_PROPERTIES_TO_EXCLUDE, childMarket, newChildMarket, shouldIncludeProofs);
-    newMarket.childMarkets.push(newChildMarket);
-  });
+  if (!skipChildMarkets) {
+    market.childMarkets.forEach((childMarket) => {
+      const newChildMarket = { ...childMarket };
+      handleExcludeProperties(CHILD_MARKET_PROPERTIES_TO_EXCLUDE, childMarket, newChildMarket, shouldIncludeProofs);
+      newMarket.childMarkets.push(newChildMarket);
+    });
+  }
   return newMarket;
 };
 
