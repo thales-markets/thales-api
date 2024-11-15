@@ -1624,7 +1624,6 @@ const LIVE_TYPE_ID_BASE = 100000;
 const MAX_ALLOWED_STALE_ODDS_DELAY = process.env.MAX_ALLOWED_STALE_ODDS_DELAY || 1000 * 60 * 3; // 3 mins
 
 const PARENT_MARKET_PROPERTIES_TO_EXCLUDE = [
-  "proof",
   "sport",
   "leagueId",
   "leagueName",
@@ -1638,7 +1637,6 @@ const PARENT_MARKET_PROPERTIES_TO_EXCLUDE = [
   "isPlayerPropsMarket",
   "isOneSidePlayerPropsMarket",
   "isYesNoPlayerPropsMarket",
-  "proof",
   "isV3",
 ];
 

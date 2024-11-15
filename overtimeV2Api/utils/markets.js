@@ -131,10 +131,13 @@ const packMarket = (market, isChild) => {
   return packedMarket;
 };
 
-const handleExcludeProperties = (propertiesToExclude, market, newMarket) => {
+const handleExcludeProperties = (propertiesToExclude, market, newMarket, shouldIncludeProofs) => {
   propertiesToExclude.forEach((property) => {
     delete newMarket[property];
   });
+  if (!shouldIncludeProofs) {
+    delete newMarket["proof"];
+  }
   if (!market.isPlayerPropsMarket) {
     delete newMarket["playerProps"];
   } else {
@@ -149,16 +152,18 @@ const handleExcludeProperties = (propertiesToExclude, market, newMarket) => {
   newMarket.odds = market.odds.map((odd) => odd.normalizedImplied);
 };
 
-const excludePropertiesFromMarket = (market) => {
+const excludePropertiesFromMarket = (market, shouldIncludeProofs, skipChildMarkets) => {
   const newMarket = { ...market };
-  handleExcludeProperties(PARENT_MARKET_PROPERTIES_TO_EXCLUDE, market, newMarket);
+  handleExcludeProperties(PARENT_MARKET_PROPERTIES_TO_EXCLUDE, market, newMarket, shouldIncludeProofs);
 
   newMarket.childMarkets = [];
-  market.childMarkets.forEach((childMarket) => {
-    const newChildMarket = { ...childMarket };
-    handleExcludeProperties(CHILD_MARKET_PROPERTIES_TO_EXCLUDE, childMarket, newChildMarket);
-    newMarket.childMarkets.push(newChildMarket);
-  });
+  if (!skipChildMarkets) {
+    market.childMarkets.forEach((childMarket) => {
+      const newChildMarket = { ...childMarket };
+      handleExcludeProperties(CHILD_MARKET_PROPERTIES_TO_EXCLUDE, childMarket, newChildMarket, shouldIncludeProofs);
+      newMarket.childMarkets.push(newChildMarket);
+    });
+  }
   return newMarket;
 };
 
