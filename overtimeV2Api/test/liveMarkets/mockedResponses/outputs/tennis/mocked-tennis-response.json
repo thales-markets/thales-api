@@ -1,0 +1,355 @@
+{
+  "markets": [
+    {
+      "gameId": "0x3436373239393200000000000000000000000000000000000000000000000000",
+      "sport": "Tennis",
+      "leagueId": 156,
+      "leagueName": "ATP Events",
+      "subLeagueId": 15626,
+      "typeId": 0,
+      "type": "winner",
+      "line": 0,
+      "maturity": 1731503400,
+      "maturityDate": "2024-11-13T13:10:00.000Z",
+      "homeTeam": "Carlos Alcaraz",
+      "awayTeam": "Andrey Rublev",
+      "status": 1,
+      "isOpen": false,
+      "isResolved": false,
+      "isCancelled": false,
+      "isPaused": false,
+      "isOneSideMarket": false,
+      "isPlayerPropsMarket": false,
+      "isOneSidePlayerPropsMarket": false,
+      "isYesNoPlayerPropsMarket": false,
+      "playerProps": {
+        "playerId": 0,
+        "playerName": ""
+      },
+      "combinedPositions": [[], []],
+      "odds": [
+        {
+          "american": -1372.05081676,
+          "decimal": 1.07288359788,
+          "normalizedImplied": 0.932067562569492
+        },
+        {
+          "american": 575.984265094,
+          "decimal": 6.75984265094,
+          "normalizedImplied": 0.147932437430508
+        }
+      ],
+      "proof": [],
+      "isV3": true,
+      "childMarkets": [
+        {
+          "gameId": "0x3436373239393200000000000000000000000000000000000000000000000000",
+          "sport": "Tennis",
+          "leagueId": 156,
+          "leagueName": "ATP Events",
+          "subLeagueId": 15626,
+          "typeId": 10001,
+          "type": "spread",
+          "line": -4.5,
+          "maturity": 1731503400,
+          "maturityDate": "2024-11-13T13:10:00.000Z",
+          "homeTeam": "Carlos Alcaraz",
+          "awayTeam": "Andrey Rublev",
+          "status": 1,
+          "isOpen": false,
+          "isResolved": false,
+          "isCancelled": false,
+          "isPaused": true,
+          "isOneSideMarket": false,
+          "isPlayerPropsMarket": false,
+          "isOneSidePlayerPropsMarket": false,
+          "isYesNoPlayerPropsMarket": false,
+          "playerProps": {
+            "playerId": 0,
+            "playerName": ""
+          },
+          "combinedPositions": [[], []],
+          "odds": [
+            {
+              "american": -125.260205034,
+              "decimal": 1.79833814716,
+              "normalizedImplied": 0.556068947087078
+            },
+            {
+              "american": -114.560529349,
+              "decimal": 1.87290099451,
+              "normalizedImplied": 0.533931052912922
+            }
+          ],
+          "proof": [],
+          "isV3": true,
+          "childMarkets": [],
+          "statusCode": "ongoing",
+          "homeScore": 1,
+          "awayScore": 0,
+          "gameClock": null,
+          "gamePeriod": "2nd set",
+          "homeScoreByPeriod": [3],
+          "awayScoreByPeriod": [3]
+        },
+        {
+          "gameId": "0x3436373239393200000000000000000000000000000000000000000000000000",
+          "sport": "Tennis",
+          "leagueId": 156,
+          "leagueName": "ATP Events",
+          "subLeagueId": 15626,
+          "typeId": 10002,
+          "type": "total",
+          "line": 19.5,
+          "maturity": 1731503400,
+          "maturityDate": "2024-11-13T13:10:00.000Z",
+          "homeTeam": "Carlos Alcaraz",
+          "awayTeam": "Andrey Rublev",
+          "status": 1,
+          "isOpen": false,
+          "isResolved": false,
+          "isCancelled": false,
+          "isPaused": true,
+          "isOneSideMarket": false,
+          "isPlayerPropsMarket": false,
+          "isOneSidePlayerPropsMarket": false,
+          "isYesNoPlayerPropsMarket": false,
+          "playerProps": {
+            "playerId": 0,
+            "playerName": ""
+          },
+          "combinedPositions": [[], []],
+          "odds": [
+            {
+              "american": -213.725490195,
+              "decimal": 1.46788990826,
+              "normalizedImplied": 0.681250000000128
+            },
+            {
+              "american": 144.648318043,
+              "decimal": 2.44648318043,
+              "normalizedImplied": 0.408749999999872
+            }
+          ],
+          "proof": [],
+          "isV3": true,
+          "childMarkets": [],
+          "statusCode": "ongoing",
+          "homeScore": 1,
+          "awayScore": 0,
+          "gameClock": null,
+          "gamePeriod": "2nd set",
+          "homeScoreByPeriod": [3],
+          "awayScoreByPeriod": [3]
+        },
+        {
+          "gameId": "0x3436373239393200000000000000000000000000000000000000000000000000",
+          "sport": "Tennis",
+          "leagueId": 156,
+          "leagueName": "ATP Events",
+          "subLeagueId": 15626,
+          "typeId": 10002,
+          "type": "total",
+          "line": 22.5,
+          "maturity": 1731503400,
+          "maturityDate": "2024-11-13T13:10:00.000Z",
+          "homeTeam": "Carlos Alcaraz",
+          "awayTeam": "Andrey Rublev",
+          "status": 1,
+          "isOpen": false,
+          "isResolved": false,
+          "isCancelled": false,
+          "isPaused": true,
+          "isOneSideMarket": false,
+          "isPlayerPropsMarket": false,
+          "isOneSidePlayerPropsMarket": false,
+          "isYesNoPlayerPropsMarket": false,
+          "playerProps": {
+            "playerId": 0,
+            "playerName": ""
+          },
+          "combinedPositions": [[], []],
+          "odds": [
+            {
+              "american": 190.161155802,
+              "decimal": 2.90161155802,
+              "normalizedImplied": 0.344636068613505
+            },
+            {
+              "american": -292.717341827,
+              "decimal": 1.34162649666,
+              "normalizedImplied": 0.745363931386495
+            }
+          ],
+          "proof": [],
+          "isV3": true,
+          "childMarkets": [],
+          "statusCode": "ongoing",
+          "homeScore": 1,
+          "awayScore": 0,
+          "gameClock": null,
+          "gamePeriod": "2nd set",
+          "homeScoreByPeriod": [3],
+          "awayScoreByPeriod": [3]
+        },
+        {
+          "gameId": "0x3436373239393200000000000000000000000000000000000000000000000000",
+          "sport": "Tennis",
+          "leagueId": 156,
+          "leagueName": "ATP Events",
+          "subLeagueId": 15626,
+          "typeId": 10002,
+          "type": "total",
+          "line": 25.5,
+          "maturity": 1731503400,
+          "maturityDate": "2024-11-13T13:10:00.000Z",
+          "homeTeam": "Carlos Alcaraz",
+          "awayTeam": "Andrey Rublev",
+          "status": 1,
+          "isOpen": false,
+          "isResolved": false,
+          "isCancelled": false,
+          "isPaused": true,
+          "isOneSideMarket": false,
+          "isPlayerPropsMarket": false,
+          "isOneSidePlayerPropsMarket": false,
+          "isYesNoPlayerPropsMarket": false,
+          "playerProps": {
+            "playerId": 0,
+            "playerName": ""
+          },
+          "combinedPositions": [[], []],
+          "odds": [
+            {
+              "american": 190.161155802,
+              "decimal": 2.90161155802,
+              "normalizedImplied": 0.344636068613505
+            },
+            {
+              "american": -292.717341827,
+              "decimal": 1.34162649666,
+              "normalizedImplied": 0.745363931386495
+            }
+          ],
+          "proof": [],
+          "isV3": true,
+          "childMarkets": [],
+          "statusCode": "ongoing",
+          "homeScore": 1,
+          "awayScore": 0,
+          "gameClock": null,
+          "gamePeriod": "2nd set",
+          "homeScoreByPeriod": [3],
+          "awayScoreByPeriod": [3]
+        },
+        {
+          "gameId": "0x3436373239393200000000000000000000000000000000000000000000000000",
+          "sport": "Tennis",
+          "leagueId": 156,
+          "leagueName": "ATP Events",
+          "subLeagueId": 15626,
+          "typeId": 10002,
+          "type": "total",
+          "line": 26.5,
+          "maturity": 1731503400,
+          "maturityDate": "2024-11-13T13:10:00.000Z",
+          "homeTeam": "Carlos Alcaraz",
+          "awayTeam": "Andrey Rublev",
+          "status": 1,
+          "isOpen": false,
+          "isResolved": false,
+          "isCancelled": false,
+          "isPaused": true,
+          "isOneSideMarket": false,
+          "isPlayerPropsMarket": false,
+          "isOneSidePlayerPropsMarket": false,
+          "isYesNoPlayerPropsMarket": false,
+          "playerProps": {
+            "playerId": 0,
+            "playerName": ""
+          },
+          "combinedPositions": [[], []],
+          "odds": [
+            {
+              "american": 193.52417337,
+              "decimal": 2.9352417337,
+              "normalizedImplied": 0.340687442712881
+            },
+            {
+              "american": -298.903107864,
+              "decimal": 1.33455657492,
+              "normalizedImplied": 0.74931255728712
+            }
+          ],
+          "proof": [],
+          "isV3": true,
+          "childMarkets": [],
+          "statusCode": "ongoing",
+          "homeScore": 1,
+          "awayScore": 0,
+          "gameClock": null,
+          "gamePeriod": "2nd set",
+          "homeScoreByPeriod": [3],
+          "awayScoreByPeriod": [3]
+        },
+        {
+          "gameId": "0x3436373239393200000000000000000000000000000000000000000000000000",
+          "sport": "Tennis",
+          "leagueId": 156,
+          "leagueName": "ATP Events",
+          "subLeagueId": 15626,
+          "typeId": 10002,
+          "type": "total",
+          "line": 21.5,
+          "maturity": 1731503400,
+          "maturityDate": "2024-11-13T13:10:00.000Z",
+          "homeTeam": "Carlos Alcaraz",
+          "awayTeam": "Andrey Rublev",
+          "status": 1,
+          "isOpen": false,
+          "isResolved": false,
+          "isCancelled": false,
+          "isPaused": true,
+          "isOneSideMarket": false,
+          "isPlayerPropsMarket": false,
+          "isOneSidePlayerPropsMarket": false,
+          "isYesNoPlayerPropsMarket": false,
+          "playerProps": {
+            "playerId": 0,
+            "playerName": ""
+          },
+          "combinedPositions": [[], []],
+          "odds": [
+            {
+              "american": -137.193203272,
+              "decimal": 1.72889908257,
+              "normalizedImplied": 0.578402759352451
+            },
+            {
+              "american": -104.749047963,
+              "decimal": 1.95466261455,
+              "normalizedImplied": 0.511597240647549
+            }
+          ],
+          "proof": [],
+          "isV3": true,
+          "childMarkets": [],
+          "statusCode": "ongoing",
+          "homeScore": 1,
+          "awayScore": 0,
+          "gameClock": null,
+          "gamePeriod": "2nd set",
+          "homeScoreByPeriod": [3],
+          "awayScoreByPeriod": [3]
+        }
+      ],
+      "statusCode": "ongoing",
+      "homeScore": 1,
+      "awayScore": 0,
+      "gameClock": null,
+      "gamePeriod": "2nd set",
+      "homeScoreByPeriod": [3],
+      "awayScoreByPeriod": [3]
+    }
+  ]
+}
