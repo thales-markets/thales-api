@@ -153,6 +153,12 @@ const getOpticOddsScore = (gameScores, league, homeAwayType) => {
   try {
     if (gameScores) {
       if (league === League.UFC) {
+        if (gameScores.clock === null) {
+          return {
+            score,
+            scoreByPeriod,
+          };
+        }
         const numberOfRounds = Number(gameScores.period);
         const lastRoundEndTimeNumber = Number(gameScores.clock.replace(":", "."));
 

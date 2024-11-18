@@ -242,7 +242,9 @@ async function processMarketsByLeague(
 
           // clean up old odds from stream
           const cleanUpArray = redisStreamOddsKeys.flatMap((value) => [value, ""]);
-          await redisClient.mSet(cleanUpArray);
+          if (cleanUpArray.length) {
+            await redisClient.mSet(cleanUpArray);
+          }
         }
       } else {
         // Update odds using stream
@@ -404,10 +406,8 @@ async function processMarketsByLeague(
 
         if (isStatusOrPeriodUknown) {
           gamePaused = true;
-        } else {
-          if (currentGameStatus.includes("half") || currentPeriod.includes("half")) {
-            gamePaused = false;
-          }
+        } else if (currentGameStatus.includes("half") || currentPeriod.includes("half")) {
+          gamePaused = false;
         }
 
         if (gamePaused) {

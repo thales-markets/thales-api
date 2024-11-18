@@ -90,11 +90,11 @@ const mapOddsStreamEvents = (streamEvents, initialOdds, gamesInfo) => {
       const gameInfoData = gamesInfo.find((gameInfo) => gameInfo.gameId === gameId);
 
       const oddsHeader = {
-        gameId: gameInfoData.fixture_id,
-        startDate: gameInfoData.start_date,
-        homeTeam: gameInfoData.home_team,
-        awayTeam: gameInfoData.away_team,
-        isLive: gameInfoData.is_live, // should be always true
+        gameId: gameInfoData.gameId,
+        startDate: gameInfoData.startDate,
+        homeTeam: gameInfoData.homeTeam,
+        awayTeam: gameInfoData.awayTeam,
+        isLive: gameInfoData.isLive, // should be always true
         status: gameInfoData.status,
         sport: gameInfoData.sport,
         league: gameInfoData.league,

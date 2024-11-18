@@ -24,7 +24,9 @@ const connectToOpticOddsStreamOdds = (
   sportsbooks.forEach((sportsbook) => queryString.append("sportsbook", sportsbook));
   markets.forEach((market) => queryString.append("market", market));
   leagues.forEach((league) => queryString.append("league", league));
-  lastEntryId && queryString.append("last_entry_id", lastEntryId);
+  if (lastEntryId) {
+    queryString.append("last_entry_id", lastEntryId);
+  }
 
   const url = `${OPTIC_ODDS_API_BASE_URL_V3}/stream/${sport}/odds?${queryString.toString()}`;
   logger.info(`Stream for odds: Connecting to stream ${url}`);
@@ -34,7 +36,6 @@ const connectToOpticOddsStreamOdds = (
 
   eventSource.onmessage = (event) => {
     try {
-      // TODO: check when this happens
       const data = JSON.parse(event.data);
       logger.info("Stream for odds: message data:", data);
     } catch (e) {
@@ -43,7 +44,7 @@ const connectToOpticOddsStreamOdds = (
   };
 
   let lastReceivedEntryId = lastEntryId;
-  let allRedisKeysByGameIdMap = lastRedisKeysMap;
+  const allRedisKeysByGameIdMap = lastRedisKeysMap;
 
   eventSource.addEventListener("odds", (event) => {
     const data = JSON.parse(event.data);
@@ -137,7 +138,6 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
 
   eventSource.onmessage = (event) => {
     try {
-      // TODO: check when this happens
       const data = JSON.parse(event.data);
       logger.info("Stream for results: message data:", data);
     } catch (e) {
@@ -153,7 +153,7 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
     // Save each object from event data to redis with key by Game ID (e.g. opticOddsStreamEventResultsByGameId2E4AB315ABD9)
     const redisGameKey = getRedisKeyForOpticOddsStreamEventResults(resultsData.fixture_id);
 
-    redisClient.set(redisGameKey, JSON.stringify(resultsData), { EX: 60 * 60 * 12 }); // delete after 12h TODO: check if longer needed
+    redisClient.set(redisGameKey, JSON.stringify(resultsData), { EX: 60 * 60 * 12 }); // delete after 12h
   });
 
   eventSource.onerror = (event) => {
