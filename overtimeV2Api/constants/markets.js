@@ -1637,7 +1637,6 @@ const PARENT_MARKET_PROPERTIES_TO_EXCLUDE = [
   "isPlayerPropsMarket",
   "isOneSidePlayerPropsMarket",
   "isYesNoPlayerPropsMarket",
-  "isV3",
 ];
 
 const CHILD_MARKET_PROPERTIES_TO_EXCLUDE = [

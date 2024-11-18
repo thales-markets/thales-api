@@ -76,7 +76,7 @@ async function processAllLiveResults(resultsInitialization) {
     const leagueProvider = getLeagueProvider(leagueId);
     const gameInfo = gamesInfoMap.get(market.gameId);
 
-    if (leagueProvider === Provider.OPTICODDS && market.isV3) {
+    if (leagueProvider === Provider.OPTICODDS) {
       opticOddsGameIdsWithLeagueID.push({ gameId: market.gameId, leagueId, gameInfo });
     }
   }
