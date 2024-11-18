@@ -55,13 +55,14 @@ const overtimeV2Markets = require("../overtimeV2Api/source/markets");
 const overtimeV2Users = require("../overtimeV2Api/source/users");
 const overtimeV2Quotes = require("../overtimeV2Api/source/quotes");
 const { LeagueMap, getLiveSupportedLeagues, SpreadTypes, TotalTypes } = require("overtime-live-trading-utils");
-const { MarketTypeMap } = require("../overtimeV2Api/constants/markets");
+const { MarketTypeMap, MarketType, MEDIUM_ODDS } = require("../overtimeV2Api/constants/markets");
 const { SUPPORTED_NETWORKS, NETWORK } = require("./constants/networks");
 const {
   getCachedOpenMarketsByNetworkMap,
   getCachedClosedMarketsByNetworkMap,
 } = require("./services/overtimeMarketsCache");
 const { getGameFinishersMap, getUserReffererIDsMap, getSolanaAddressesMap } = require("./services/loadData");
+const { excludePropertiesFromMarket } = require("../overtimeV2Api/utils/markets");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -1143,9 +1144,15 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const typeId = req.query.typeId;
   const sport = req.query.sport;
   const leagueId = req.query.leagueid;
-  const gameIds = req.query.gameIds;
+  const gameIds = req.query.gameids;
+  const typeIds = req.query.typeids;
+  const playerIds = req.query.playerids;
+  const lines = req.query.lines;
   const ungroup = req.query.ungroup;
   const minMaturity = req.query.minMaturity;
+  const onlyMainMarkets = req.query.onlymainmarkets;
+  const onlyBasicProperties = req.query.onlybasicproperties;
+  const includeProofs = req.query.includeproofs;
 
   if (!status) {
     status = "open";
@@ -1178,9 +1185,36 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   if (gameIds) {
     gamesIdsArray = gameIds.split(",");
   }
+  let typeIdsArray = [];
+  if (typeIds) {
+    typeIdsArray = typeIds.split(",");
+  }
+  let playerIdsArray = [];
+  if (playerIds) {
+    playerIdsArray = playerIds.split(",");
+  }
+  let linesArray = [];
+  if (lines) {
+    linesArray = lines.split(",");
+  }
 
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
     res.send("Invalid value for ungroup. Possible values: true or false.");
+    return;
+  }
+
+  if (onlyMainMarkets && !["true", "false"].includes(onlyMainMarkets.toLowerCase())) {
+    res.send("Invalid value for onlyMainMarkets. Possible values: true or false.");
+    return;
+  }
+
+  if (onlyBasicProperties && !["true", "false"].includes(onlyBasicProperties.toLowerCase())) {
+    res.send("Invalid value for onlyBasicProperties. Possible values: true or false.");
+    return;
+  }
+
+  if (includeProofs && !["true", "false"].includes(includeProofs.toLowerCase())) {
+    res.send("Invalid value for includeProofs. Possible values: true or false.");
     return;
   }
 
@@ -1221,7 +1255,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
     const marketsByStatus = groupMarketsByStatus[status] || [];
     let marketsByType = marketsByStatus;
-    if (typeId) {
+    if (typeId || typeIdsArray.length || playerIdsArray.length || linesArray.length) {
       marketsByType = [];
       marketsByStatus.forEach((market) => {
         marketsByType.push(market);
@@ -1234,20 +1268,83 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
         (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
         (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
         (!typeId || Number(market.typeId) === Number(typeId)) &&
-        (!minMaturity || Number(market.maturity) >= Number(minMaturity)),
+        (!minMaturity || Number(market.maturity) >= Number(minMaturity)) &&
+        (!typeIdsArray.length || typeIdsArray.includes(`${market.typeId}`)) &&
+        (!playerIdsArray.length || playerIdsArray.includes(`${market.playerProps.playerId}`)) &&
+        (!linesArray.length || linesArray.includes(`${market.line}`)),
     );
 
+    let finalMarkets = [];
+
+    if (onlyMainMarkets && onlyMainMarkets.toLowerCase() === "true") {
+      filteredMarkets.forEach((market) => {
+        const spreadMarkets = market.childMarkets.filter((childMarket) => childMarket.typeId === MarketType.SPREAD);
+        const totalMarkets = market.childMarkets.filter((childMarket) => childMarket.typeId === MarketType.TOTAL);
+
+        const newMarket = { ...market, childMarkets: [] };
+
+        if (spreadMarkets.length) {
+          const mainSpreadMarket = spreadMarkets.reduce(function (prev, curr) {
+            return Math.abs(curr.odds[0].normalizedImplied - MEDIUM_ODDS) <
+              Math.abs(prev.odds[0].normalizedImplied - MEDIUM_ODDS)
+              ? curr
+              : prev;
+          });
+          newMarket.childMarkets.push(mainSpreadMarket);
+        }
+        if (totalMarkets.length) {
+          const mainTotalMarket = totalMarkets.reduce(function (prev, curr) {
+            return Math.abs(curr.odds[0].normalizedImplied - MEDIUM_ODDS) <
+              Math.abs(prev.odds[0].normalizedImplied - MEDIUM_ODDS)
+              ? curr
+              : prev;
+          });
+          newMarket.childMarkets.push(mainTotalMarket);
+        }
+        finalMarkets.push(newMarket);
+      });
+    } else {
+      finalMarkets = filteredMarkets;
+    }
+
+    if (onlyBasicProperties && onlyBasicProperties.toLowerCase() === "true") {
+      const newMarkets = [];
+      finalMarkets.forEach((market) => {
+        const shouldIncludeProofs = includeProofs && includeProofs.toLowerCase() === "true";
+        const skipChildMarkets = typeId || typeIdsArray.length || playerIdsArray.length || linesArray.length;
+        newMarkets.push(excludePropertiesFromMarket(market, shouldIncludeProofs, skipChildMarkets));
+      });
+      finalMarkets = newMarkets;
+    }
+
     if (ungroup && ungroup.toLowerCase() === "true") {
-      res.send(filteredMarkets);
+      res.send(finalMarkets);
       return;
     }
 
-    const groupMarkets = groupBy(filteredMarkets, (market) => market.sport);
+    const groupMarkets = groupBy(finalMarkets, (market) => market.sport);
     Object.keys(groupMarkets).forEach((key) => {
       groupMarkets[key] = groupBy(groupMarkets[key], (market) => market.leagueId);
     });
 
     res.send(groupMarkets);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
+  }
+});
+
+app.get(ENDPOINTS.OVERTIME_V2_NUMBER_OF_MARKETS, async (req, res) => {
+  const network = req.params.networkParam;
+  if (!SUPPORTED_NETWORKS.includes(Number(network))) {
+    res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
+    return;
+  }
+
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_NUMBER_OF_MARKETS[network]);
+  const numberOfMarkets = new Map(JSON.parse(obj));
+  try {
+    res.send(Object.fromEntries(numberOfMarkets));
   } catch (error) {
     console.log(error);
     res.status(500).json({ error });
@@ -1333,6 +1430,13 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
+  const onlyBasicProperties = req.query.onlybasicproperties;
+
+  if (onlyBasicProperties && !["true", "false"].includes(onlyBasicProperties.toLowerCase())) {
+    res.send("Invalid value for onlyBasicProperties. Possible values: true or false.");
+    return;
+  }
+
   try {
     const openMarkets = getCachedOpenMarketsByNetworkMap(network);
     let market = Array.from(openMarkets.values()).find(
@@ -1340,12 +1444,18 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
     );
 
     if (market) {
+      if (onlyBasicProperties) {
+        market = excludePropertiesFromMarket(market);
+      }
       return res.send(market);
     } else {
       const closedMarkets = getCachedClosedMarketsByNetworkMap(network);
       market = Array.from(closedMarkets.values()).find(
         (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
       );
+      if (market && onlyBasicProperties) {
+        market = excludePropertiesFromMarket(market);
+      }
       return res.send(market || `Market with gameId ${marketAddress} not found.`);
     }
   } catch (error) {

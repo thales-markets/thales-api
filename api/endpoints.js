@@ -54,6 +54,7 @@ const ENDPOINTS = {
   OVERTIME_V2_MARKET_TYPES: "/overtime-v2/market-types",
   OVERTIME_V2_COLLATERALS: "/overtime-v2/networks/:networkParam/collaterals",
   OVERTIME_V2_MARKETS: "/overtime-v2/networks/:networkParam/markets",
+  OVERTIME_V2_NUMBER_OF_MARKETS: "/overtime-v2/networks/:networkParam/number-of-markets",
   OVERTIME_V2_LIVE_MARKETS: "/overtime-v2/networks/:networkParam/live-markets",
   OVERTIME_V2_MARKET: "/overtime-v2/networks/:networkParam/markets/:marketAddress",
   OVERTIME_V2_LIVE_MARKET: "/overtime-v2/networks/:networkParam/live-markets/:marketAddress",

@@ -40,6 +40,12 @@ const KEYS = {
     42161: "overtimeV2ArbOpenMarkets",
     8453: "overtimeV2BaseOpenMarkets",
   },
+  OVERTIME_V2_NUMBER_OF_MARKETS: {
+    10: "overtimeV2OpNumberOfMarkets",
+    11155420: "overtimeV2OpSepoliaNumberOfMarkets",
+    42161: "overtimeV2ArbNumberOfMarkets",
+    8453: "overtimeV2BaseNumberOfMarkets",
+  },
   OVERTIME_V2_CLOSED_MARKETS: {
     10: "overtimeV2OpClosedMarkets",
     11155420: "overtimeV2OpSepoliaClosedMarkets",

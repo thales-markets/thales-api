@@ -264,6 +264,7 @@ const MarketType = {
   // Futures
   LEAGUE_WINNER: 13001,
   MVP: 13002,
+  CUP_WINNER: 13003,
 };
 
 const MarketTypeMap = {
@@ -1512,6 +1513,12 @@ const MarketTypeMap = {
     name: "MVP",
     resultType: ResultType.EXACT_POSITION,
   },
+  [MarketType.CUP_WINNER]: {
+    id: MarketType.CUP_WINNER,
+    key: "cupWinner",
+    name: "Cup winner",
+    resultType: ResultType.EXACT_POSITION,
+  },
 };
 
 const PLAYER_PROPS_MARKET_TYPES = [
@@ -1587,7 +1594,7 @@ const COMBINED_POSITIONS_MARKET_TYPES = [
   MarketType.HALFTIME_FULLTIME_GOALS,
 ];
 
-const FUTURES_MARKET_TYPES = [MarketType.LEAGUE_WINNER, MarketType.MVP];
+const FUTURES_MARKET_TYPES = [MarketType.LEAGUE_WINNER, MarketType.MVP, MarketType.CUP_WINNER];
 
 const OddsType = {
   AMERICAN: "american-odds",
@@ -1616,6 +1623,32 @@ const MIN_ODDS_FOR_DIFF_CHECKING = 0.2;
 const LIVE_TYPE_ID_BASE = 100000;
 const MAX_ALLOWED_STALE_ODDS_DELAY = process.env.MAX_ALLOWED_STALE_ODDS_DELAY || 1000 * 60 * 3; // 3 mins
 
+const PARENT_MARKET_PROPERTIES_TO_EXCLUDE = [
+  "sport",
+  "leagueId",
+  "leagueName",
+  "type",
+  "maturityDate",
+  "isOpen",
+  "isResolved",
+  "isCancelled",
+  "isPaused",
+  "isOneSideMarket",
+  "isPlayerPropsMarket",
+  "isOneSidePlayerPropsMarket",
+  "isYesNoPlayerPropsMarket",
+  "isV3",
+];
+
+const CHILD_MARKET_PROPERTIES_TO_EXCLUDE = [
+  ...PARENT_MARKET_PROPERTIES_TO_EXCLUDE,
+  "gameId",
+  "subLeagueId",
+  "maturity",
+  "homeTeam",
+  "awayTeam",
+];
+
 const EnetpulseRounds = {
   [0]: "",
   [1]: "no round",
@@ -1628,6 +1661,8 @@ const EnetpulseRounds = {
   [8]: "1/128",
   [9]: "Final",
 };
+
+const MEDIUM_ODDS = 0.52;
 
 module.exports = {
   ResultType,
@@ -1647,4 +1682,7 @@ module.exports = {
   LIVE_TYPE_ID_BASE,
   TicketMarketStatus,
   FUTURES_MARKET_TYPES,
+  MEDIUM_ODDS,
+  PARENT_MARKET_PROPERTIES_TO_EXCLUDE,
+  CHILD_MARKET_PROPERTIES_TO_EXCLUDE,
 };

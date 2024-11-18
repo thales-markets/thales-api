@@ -2,30 +2,10 @@ const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
 const { delay } = require("../utils/general");
-const { bigNumberFormatter } = require("../utils/formatters");
-// const markets = require("./treeMarketsAndHashes.json");
-const {
-  fixDuplicatedTeamName,
-  isOneSideMarket,
-  isOneSidePlayerPropsMarket,
-  formatMarketOdds,
-  isYesNoPlayerPropsMarket,
-  isPlayerPropsMarket,
-  convertFromBytes32,
-} = require("../utils/markets");
-const { OddsType, Status, MarketTypeMap } = require("../constants/markets");
+const { convertFromBytes32, packMarket } = require("../utils/markets");
 const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { NETWORK } = require("../constants/networks");
-const {
-  getLeagueSport,
-  getLeagueLabel,
-  getLeagueProvider,
-  Provider,
-  League,
-  UFC_LEAGUE_IDS,
-  Sport,
-} = require("overtime-live-trading-utils");
 
 const awsS3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -65,76 +45,6 @@ async function processMarkets() {
     }, 3000);
   }
 }
-
-const packMarket = (market, isChild) => {
-  const leagueId = `${market.sportId}`.startsWith("152")
-    ? League.TENNIS_WTA
-    : `${market.sportId}`.startsWith("153")
-    ? League.TENNIS_GS
-    : `${market.sportId}`.startsWith("156")
-    ? League.TENNIS_MASTERS
-    : UFC_LEAGUE_IDS.includes(market.sportId)
-    ? League.UFC
-    : market.sportId;
-  const isEnetpulseSport = getLeagueProvider(leagueId) === Provider.ENETPULSE;
-  const type = MarketTypeMap[market.typeId]?.key;
-
-  const packedMarket = {
-    gameId: market.gameId,
-    sport: getLeagueSport(leagueId),
-    leagueId: leagueId,
-    leagueName: getLeagueLabel(leagueId),
-    subLeagueId: market.sportId,
-    typeId: market.typeId,
-    type,
-    line: Number(market.line) / 100,
-    maturity: market.maturity,
-    maturityDate: new Date(market.maturity * 1000),
-    homeTeam:
-      leagueId == League.US_ELECTION ? "US Election 2024" : fixDuplicatedTeamName(market.homeTeam, isEnetpulseSport),
-    awayTeam: leagueId == League.US_ELECTION ? "" : fixDuplicatedTeamName(market.awayTeam, isEnetpulseSport),
-    status: market.status,
-    isOpen: market.status === Status.OPEN || market.status === Status.IN_PROGRESS,
-    isResolved: market.status === Status.RESOLVED,
-    isCancelled: market.status === Status.CANCELLED,
-    isPaused: market.status === Status.PAUSED,
-    isOneSideMarket: isOneSideMarket(leagueId),
-    isPlayerPropsMarket: isPlayerPropsMarket(market.typeId),
-    isOneSidePlayerPropsMarket: isOneSidePlayerPropsMarket(market.typeId),
-    isYesNoPlayerPropsMarket: isYesNoPlayerPropsMarket(market.typeId),
-    playerProps: {
-      playerId: market.playerProps.playerId,
-      originalProviderPlayerId: market.playerProps.originalProviderPlayerId,
-      playerName: market.playerProps.playerName,
-    },
-    combinedPositions: market.combinedPositions
-      ? market.combinedPositions.map((combinedPosition) => {
-          return combinedPosition.map((position) => {
-            return {
-              ...position,
-              line: position.line / 100,
-            };
-          });
-        })
-      : new Array(market.odds.length).fill([]),
-    odds: market.odds.map((odd) => {
-      const formattedOdds = Number(odd) > 0 ? bigNumberFormatter(odd) : 0;
-      return {
-        american: formattedOdds ? formatMarketOdds(formattedOdds, OddsType.AMERICAN) : 0,
-        decimal: formattedOdds ? formatMarketOdds(formattedOdds, OddsType.DECIMAL) : 0,
-        normalizedImplied: formattedOdds ? formatMarketOdds(formattedOdds, OddsType.AMM) : 0,
-      };
-    }),
-    positionNames: market.positionNames,
-    proof: market.proof,
-  };
-
-  if (!isChild) {
-    packedMarket.isV3 = !!market.isV3 || packedMarket.sport === Sport.TENNIS;
-  }
-
-  return packedMarket;
-};
 
 const readAwsS3File = async (bucket, key) => {
   const params = {
@@ -224,6 +134,12 @@ async function getOpenMarketsMap(network) {
   return openMarkets;
 }
 
+async function getNumberOfMarketsMap(network) {
+  const obj = await redisClient.get(KEYS.OVERTIME_V2_NUMBER_OF_MARKETS[network]);
+  const numberOdMarkets = new Map(JSON.parse(obj));
+  return numberOdMarkets;
+}
+
 async function getClosedMarketsMap(network) {
   const obj = await redisClient.get(KEYS.OVERTIME_V2_CLOSED_MARKETS[network]);
   const closedMarketsMap = new Map(JSON.parse(obj));
@@ -237,6 +153,7 @@ async function loadAndMapMarkets(isTestnet) {
 
 async function processAllMarkets(markets, network) {
   const openMarketsMap = new Map();
+  const numberOfMarketsMap = new Map();
 
   const closedMarketsMap = await getClosedMarketsMap(network);
 
@@ -247,10 +164,12 @@ async function processAllMarkets(markets, network) {
       (market.statusCode === "open" || market.statusCode === "ongoing" || market.statusCode === "paused")
     ) {
       openMarketsMap.set(market.gameId, market);
+      numberOfMarketsMap.set(market.gameId, market.childMarkets.filter((childMarket) => childMarket.isOpen).length + 1);
     }
   });
 
   redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[network], JSON.stringify([...openMarketsMap]));
+  redisClient.set(KEYS.OVERTIME_V2_NUMBER_OF_MARKETS[network], JSON.stringify([...numberOfMarketsMap]));
 }
 
 async function updateMerkleTree(gameIds) {
@@ -264,6 +183,8 @@ async function updateMerkleTree(gameIds) {
   const opOpenMarketsMap = await getOpenMarketsMap(NETWORK.Optimism);
   const arbOpenMarketsMap = await getOpenMarketsMap(NETWORK.Arbitrum);
   // const baseOpenMarketsMap = await getOpenMarketsMap(NETWORK.Base);
+  const opNumberOfMarketsMap = await getNumberOfMarketsMap(NETWORK.Optimism);
+  const arbNumberOfMarketsMap = await getNumberOfMarketsMap(NETWORK.Arbitrum);
 
   for (let i = 0; i < gameIds.length; i++) {
     const gameIdString = convertFromBytes32(gameIds[i]);
@@ -277,6 +198,10 @@ async function updateMerkleTree(gameIds) {
       opOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
       arbOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
       // baseOpenMarketsMap.set(mappedMarket.gameId, mappedMarket);
+
+      const numberOfMarkets = market.childMarkets.filter((childMarket) => childMarket.isOpen).length + 1;
+      opNumberOfMarketsMap.set(mappedMarket.gameId, numberOfMarkets);
+      arbNumberOfMarketsMap.set(mappedMarket.gameId, numberOfMarkets);
     } catch (e) {
       console.log(`Markets mainnets: Error reading file ${marketFile}. Skipped for now. Error: ${e}`);
     }
@@ -284,6 +209,8 @@ async function updateMerkleTree(gameIds) {
 
   redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify([...opOpenMarketsMap]));
   redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum], JSON.stringify([...arbOpenMarketsMap]));
+  redisClient.set(KEYS.OVERTIME_V2_NUMBER_OF_MARKETS[NETWORK.Optimism], JSON.stringify([...opNumberOfMarketsMap]));
+  redisClient.set(KEYS.OVERTIME_V2_NUMBER_OF_MARKETS[NETWORK.Arbitrum], JSON.stringify([...arbNumberOfMarketsMap]));
   // redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Base], JSON.stringify([...baseOpenMarketsMap]));
 
   const endTime = new Date().getTime();
