@@ -1716,17 +1716,23 @@ app.get(ENDPOINTS.OVERTIME_V2_RISK_MANAGEMENT_CONFIG, async (req, res) => {
     let configResponse;
     switch (configType) {
       case "teams": {
-        const teamsData = await redisClient.get(KEYS.RISK_MANAGEMENT_TEAMS_MAP);
+        const teamsData = await redisClient.get(
+          isTestnet ? KEYS.RISK_MANAGEMENT_TEAMS_MAP_TESTNET : KEYS.RISK_MANAGEMENT_TEAMS_MAP,
+        );
         configResponse = JSON.parse(teamsData) || [];
         break;
       }
       case "bookmakers": {
-        const bookmakersData = await redisClient.get(KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA);
+        const bookmakersData = await redisClient.get(
+          isTestnet ? KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA_TESTNET : KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA,
+        );
         configResponse = JSON.parse(bookmakersData) || [];
         break;
       }
       case "spreads": {
-        const spreadData = await redisClient.get(KEYS.RISK_MANAGEMENT_SPREAD_DATA);
+        const spreadData = await redisClient.get(
+          isTestnet ? KEYS.RISK_MANAGEMENT_SPREAD_DATA_TESTNET : KEYS.RISK_MANAGEMENT_SPREAD_DATA,
+        );
         configResponse = JSON.parse(spreadData) || [];
         break;
       }

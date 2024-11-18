@@ -113,7 +113,7 @@ const fetchOpticOddsResults = async (fixtureIds, isLiveMarketsCaller = false) =>
 };
 
 // Start stream for league ID or re-start when param (sportsbooks) is updated
-const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap) => {
+const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap, isTestnet) => {
   const opticOddsLeagueName = getLeagueOpticOddsName(leagueId);
 
   if (isOpticOddsStreamResultsDisabled || !opticOddsLeagueName) {
@@ -127,7 +127,7 @@ const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap) => {
     const sport = getLeagueSport(leagueId);
     const streamLeagues = opticOddsLeagueName.split(",");
     // start new stream
-    const streamSource = connectToOpticOddsStreamResults(sport, streamLeagues);
+    const streamSource = connectToOpticOddsStreamResults(sport, streamLeagues, isTestnet);
     resultsStreamSourcesByLeagueMap.set(leagueId, streamSource);
   }
 };

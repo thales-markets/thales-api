@@ -74,16 +74,27 @@ const KEYS = {
     42161: "overtimeV2ArbLiveMarketsApiErrorMessages",
     8453: "overtimeV2BaseLiveMarketsApiErrorMessages",
   },
+
   OPTIC_ODDS_API_FIXTURES_BY_LEAGUE: "opticOddsApiFixturesByLeagueId",
   OPTIC_ODDS_API_ODDS_BY_LEAGUE: "opticOddsApiOddsByLeagueId",
   OPTIC_ODDS_API_RESULTS_BY_LEAGUE: "opticOddsApiResultsByLeagueId",
   OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME: "opticOddsStreamEventOddsIdByGameId",
   OPTIC_ODDS_STREAM_EVENT_RESULTS_BY_GAME: "opticOddsStreamEventResultsByGameId",
+  TESTNET_OPTIC_ODDS_API_FIXTURES_BY_LEAGUE: "testnetOpticOddsApiFixturesByLeagueId",
+  TESTNET_OPTIC_ODDS_API_ODDS_BY_LEAGUE: "testnetOpticOddsApiOddsByLeagueId",
+  TESTNET_OPTIC_ODDS_API_RESULTS_BY_LEAGUE: "testnetOpticOddsApiResultsByLeagueId",
+  TESTNET_OPTIC_ODDS_STREAM_EVENT_ODDS_ID_BY_GAME: "testnetOpticOddsStreamEventOddsIdByGameId",
+  TESTNET_OPTIC_ODDS_STREAM_EVENT_RESULTS_BY_GAME: "testnetOpticOddsStreamEventResultsByGameId",
+
   RISK_MANAGEMENT_SPREAD_DATA: "riskManagementSpreadData",
+  RISK_MANAGEMENT_SPREAD_DATA_TESTNET: "riskManagementSpreadDataTestnet",
   RISK_MANAGEMENT_BOOKMAKERS_DATA: "riskManagementBookmakersData",
+  RISK_MANAGEMENT_BOOKMAKERS_DATA_TESTNET: "riskManagementBookmakersDataTestnet",
   RISK_MANAGEMENT_LEAGUES_DATA: "riskManagementLeaguesData",
   RISK_MANAGEMENT_LEAGUES_DATA_TESTNET: "riskManagementLeaguesDataTestnet",
   RISK_MANAGEMENT_TEAMS_MAP: "riskManagementTeamsMap",
+  RISK_MANAGEMENT_TEAMS_MAP_TESTNET: "riskManagementTeamsMapTestnet",
+
   SOLANA_ADDRESSES: "solanaAddresses",
 };
 
