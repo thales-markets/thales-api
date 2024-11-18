@@ -36,7 +36,6 @@ const connectToOpticOddsStreamOdds = (
 
   eventSource.onmessage = (event) => {
     try {
-      // TODO: check when this happens
       const data = JSON.parse(event.data);
       logger.info("Stream for odds: message data:", data);
     } catch (e) {
@@ -139,7 +138,6 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
 
   eventSource.onmessage = (event) => {
     try {
-      // TODO: check when this happens
       const data = JSON.parse(event.data);
       logger.info("Stream for results: message data:", data);
     } catch (e) {
@@ -155,7 +153,7 @@ const connectToOpticOddsStreamResults = (sport, leagues, isLive = true) => {
     // Save each object from event data to redis with key by Game ID (e.g. opticOddsStreamEventResultsByGameId2E4AB315ABD9)
     const redisGameKey = getRedisKeyForOpticOddsStreamEventResults(resultsData.fixture_id);
 
-    redisClient.set(redisGameKey, JSON.stringify(resultsData), { EX: 60 * 60 * 12 }); // delete after 12h TODO: check if longer needed
+    redisClient.set(redisGameKey, JSON.stringify(resultsData), { EX: 60 * 60 * 12 }); // delete after 12h
   });
 
   eventSource.onerror = (event) => {
