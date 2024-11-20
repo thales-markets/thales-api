@@ -11,42 +11,51 @@ const KEYS = require("../../../redis/redis-keys");
 
 describe("Check live markets without streams", () => {
   const OLD_ENV = process.env;
+  let riskManagementSpy;
+  let opticOddsGamesSpy;
+  let opticOddsFixtureOddsSpy;
+  let opticOddsResultsSpy;
 
-  beforeEach(() => {
+  beforeAll(() => {
     jest.resetModules(); // Clear the module cache
     process.env = { ...OLD_ENV }; // Copy current environment variables
 
     process.env.LIVE_ODDS_PROVIDERS = "draftkings";
     process.env.DISABLE_OPTIC_ODDS_STREAM_ODDS = "true";
     process.env.DISABLE_OPTIC_ODDS_STREAM_RESULTS = "true";
-  });
 
-  afterAll(() => {
-    process.env = OLD_ENV; // Restore original environment variables
-  });
-
-  it("checks number of live markets", async () => {
     // Example to mock node_modules
     // require("overtime-live-trading-utils").__mockBookmakersArray(["draftkings"]);
     jest.unmock("overtime-live-trading-utils");
 
     // Mock risk management API
     const liveMarketsUtils = require("../../utils/liveMarkets");
-    const riskManagementSpy = jest.spyOn(liveMarketsUtils, "fetchRiskManagementConfig");
+    riskManagementSpy = jest.spyOn(liveMarketsUtils, "fetchRiskManagementConfig");
     const config = { teamsMap, bookmakersData, spreadData, leaguesData };
     riskManagementSpy.mockResolvedValue(config);
     // Mock Optic Odds fixtures active API
-    const opticOddsGamesSpy = jest.spyOn(liveMarketsUtils, "fetchOpticOddsGamesForLeague");
+    opticOddsGamesSpy = jest.spyOn(liveMarketsUtils, "fetchOpticOddsGamesForLeague");
     opticOddsGamesSpy.mockResolvedValue(liveGames);
     // Mock Optic Odds fixtures odds API
     const opticOddsFixtureOddsUtils = require("../../utils/opticOdds/opticOddsFixtureOdds");
-    const opticOddsFixtureOddsSpy = jest.spyOn(opticOddsFixtureOddsUtils, "fetchOpticOddsFixtureOdds");
+    opticOddsFixtureOddsSpy = jest.spyOn(opticOddsFixtureOddsUtils, "fetchOpticOddsFixtureOdds");
     opticOddsFixtureOddsSpy.mockResolvedValue(liveFixtureOdds);
     // Mock Optic Odds fixtures results API
     const opticOddsResultsUtils = require("../../utils/opticOdds/opticOddsResults");
-    const opticOddsResultsSpy = jest.spyOn(opticOddsResultsUtils, "fetchOpticOddsResults");
+    opticOddsResultsSpy = jest.spyOn(opticOddsResultsUtils, "fetchOpticOddsResults");
     opticOddsResultsSpy.mockResolvedValue(liveResults);
+  });
 
+  afterAll(() => {
+    process.env = OLD_ENV; // Restore original environment variables
+
+    riskManagementSpy.mockRestore();
+    opticOddsGamesSpy.mockRestore();
+    opticOddsFixtureOddsSpy.mockRestore();
+    opticOddsResultsSpy.mockRestore();
+  });
+
+  it("checks number of live markets", async () => {
     // This needs to be imported after mocks in order to work
     const { redisClient } = require("../../../redis/client");
     const { processAllMarkets } = require("../../source/liveMarkets");
@@ -72,10 +81,5 @@ describe("Check live markets without streams", () => {
     expect(liveMarketsOp.length).toBe(openMarkets.length);
     const liveMarketsArb = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Arbitrum]));
     expect(liveMarketsArb.length).toBe(openMarkets.length);
-
-    riskManagementSpy.mockRestore();
-    opticOddsGamesSpy.mockRestore();
-    opticOddsFixtureOddsSpy.mockRestore();
-    opticOddsResultsSpy.mockRestore();
   });
 });
