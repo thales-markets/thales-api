@@ -17,8 +17,8 @@ describe("Check live markets without streams", () => {
     process.env = { ...OLD_ENV }; // Copy current environment variables
 
     process.env.LIVE_ODDS_PROVIDERS = "draftkings";
-    process.env.DISABLE_OPTIC_ODDS_STREAM_ODDS = "false";
-    process.env.DISABLE_OPTIC_ODDS_STREAM_RESULTS = "false";
+    process.env.DISABLE_OPTIC_ODDS_STREAM_ODDS = "true";
+    process.env.DISABLE_OPTIC_ODDS_STREAM_RESULTS = "true";
   });
 
   afterAll(() => {
@@ -52,8 +52,7 @@ describe("Check live markets without streams", () => {
     const { processAllMarkets } = require("../../source/liveMarkets");
 
     // GIVEN X number of ongoing markets on Optimism
-    const ongoingMarkets = Array.from(new Map(openMarkets).values());
-    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(ongoingMarkets));
+    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(openMarkets));
 
     const oddsStreamsInfoByLeagueMap = new Map();
     const oddsInitializedByLeagueMap = new Map();
@@ -69,10 +68,10 @@ describe("Check live markets without streams", () => {
     );
 
     // THEN X live markets should be stored in Redis for all networks
-    const liveMarketsOp = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism]);
-    expect(liveMarketsOp.length).toBe(ongoingMarkets.length);
-    const liveMarketsArb = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Arbitrum]);
-    expect(liveMarketsArb.length).toBe(ongoingMarkets.length);
+    const liveMarketsOp = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Optimism]));
+    expect(liveMarketsOp.length).toBe(openMarkets.length);
+    const liveMarketsArb = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Arbitrum]));
+    expect(liveMarketsArb.length).toBe(openMarkets.length);
 
     riskManagementSpy.mockRestore();
     opticOddsGamesSpy.mockRestore();
