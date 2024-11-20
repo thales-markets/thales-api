@@ -110,9 +110,7 @@ async function processAllMarkets(
   const openMarketsMap = new Map(JSON.parse(openMarkets));
 
   const supportedLiveMarkets = Array.from(openMarketsMap.values())
-    .filter(
-      (market) => !!market.isV3 && market.statusCode === "ongoing" && !market.isWholeGameResolved && !market.noTickets,
-    )
+    .filter((market) => market.statusCode === "ongoing" && !market.isWholeGameResolved && !market.noTickets)
     .filter((market) => supportedLiveLeagueIds.includes(market.leagueId));
   const uniqueLiveLeagueIds = uniq(supportedLiveMarkets.map((market) => market.leagueId));
 
@@ -447,7 +445,6 @@ async function processMarketsByLeague(
         market.proof = [];
         market.homeScoreByPeriod = gamesHomeScoreByPeriod;
         market.awayScoreByPeriod = gamesAwayScoreByPeriod;
-        market.isV3 = true;
 
         if (!market.errorMessage) {
           if (isLive) {

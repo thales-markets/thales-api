@@ -106,10 +106,10 @@ const loadMarkets = async (isTestnet) => {
 };
 
 const mapMarket = (market) => {
-  const packedMarket = packMarket(market, false);
+  const packedMarket = packMarket(market);
   packedMarket.childMarkets = [];
   market.childMarkets.forEach((childMarket) => {
-    const packedChildMarket = packMarket(childMarket, true);
+    const packedChildMarket = packMarket(childMarket);
     packedMarket.childMarkets.push(packedChildMarket);
   });
 
