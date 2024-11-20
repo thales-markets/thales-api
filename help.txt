@@ -52,5 +52,7 @@ docker-compose up -d overtime-v2-api-testnet
 - Copy "CONTAINER ID" of redis:alpine
 - Run: docker exec -it "CONTAINER ID" redis-cli
 
-### RUN TESTS WITH COVERAGE ###
-npm test -- --coverage
+### RUN TESTS ###
+npm test
+npm test -- liveMarkets.test.js
+npm test -- --testNamePattern 'checks number of live markets'

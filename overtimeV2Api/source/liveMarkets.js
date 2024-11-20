@@ -63,7 +63,8 @@ async function processLiveMarkets() {
           const startTime = new Date().getTime();
           logAllInfo(`Live markets ${network}: process live markets`);
 
-          await processAllMarkets(
+          // call function from the same file with module.exports for unit tests mocking purpose
+          await module.exports.processAllMarkets(
             oddsStreamsInfoByLeagueMap,
             oddsInitializedByLeagueMap,
             resultsInitializedByLeagueMap,

@@ -9,7 +9,8 @@ const client = redis.createClient();
 const setEx = promisify(client.setex).bind(client);
 
 const v4Client = {
-  connect: () => undefined,
+  isOpen: false,
+  connect: () => (v4Client.isOpen = true),
   get: promisify(client.get).bind(client),
   set: promisify(client.set).bind(client),
   del: promisify(client.del).bind(client),
