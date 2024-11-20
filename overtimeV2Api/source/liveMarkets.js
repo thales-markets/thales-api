@@ -521,4 +521,5 @@ async function processMarketsByLeague(
 
 module.exports = {
   processLiveMarkets,
+  processAllMarkets,
 };
