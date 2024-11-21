@@ -1,4 +1,4 @@
-const liveFixtureOdds = [
+const liveApiFixtureOdds = [
   {
     id: "3DA34AEB6566",
     game_id: "41571-32765-2024-11-19",
@@ -211,4 +211,4 @@ const liveFixtureOdds = [
   },
 ];
 
-module.exports = { liveFixtureOdds };
+module.exports = { liveApiFixtureOdds };

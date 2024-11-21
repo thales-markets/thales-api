@@ -1,4 +1,4 @@
-const liveResults = [
+const liveApiResults = [
   {
     sport: {
       id: "soccer",
@@ -789,4 +789,4 @@ const liveResults = [
   },
 ];
 
-module.exports = { liveResults };
+module.exports = { liveApiResults };

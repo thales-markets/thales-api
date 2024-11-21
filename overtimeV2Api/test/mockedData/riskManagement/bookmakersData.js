@@ -130,7 +130,7 @@ const bookmakersData = [
     sportName: "UEFA Nations League",
     sportId: "9806",
     primaryBookmaker: "draftkings",
-    secondaryBookmaker: "bovada",
+    secondaryBookmaker: "",
     tertiaryBookmaker: "",
   },
   {
