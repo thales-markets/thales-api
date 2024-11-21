@@ -240,10 +240,9 @@ async function processMarketsByLeague(
           await redisClient.set(getRedisKeyForOpticOddsApiOdds(leagueId, isTestnet), JSON.stringify(oddsPerGame));
           oddsInitializedByLeagueMap.set(leagueId, true);
 
-          // clean up old odds from stream
-          const cleanUpArray = redisStreamOddsKeys.flatMap((value) => [value, ""]);
-          if (cleanUpArray.length) {
-            await redisClient.mSet(cleanUpArray);
+          // clean up old odds from stream when initial execution
+          if (redisStreamOddsKeys.length) {
+            await redisClient.del(redisStreamOddsKeys);
           }
         }
       } else {
@@ -260,9 +259,7 @@ async function processMarketsByLeague(
         // Read odds received from stream
         const oddsStreamEvents =
           redisStreamOddsKeys.length > 0
-            ? (await redisClient.mGet(redisStreamOddsKeys))
-                .filter((obj) => obj !== null && obj !== "")
-                .map((obj) => JSON.parse(obj))
+            ? (await redisClient.mGet(redisStreamOddsKeys)).filter((obj) => obj !== null).map((obj) => JSON.parse(obj))
             : [];
 
         // Remove locked odds
