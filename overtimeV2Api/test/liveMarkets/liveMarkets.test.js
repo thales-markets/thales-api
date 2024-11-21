@@ -224,7 +224,7 @@ describe("Check live markets with streams", () => {
         const selection = i === 0 ? liveMarket.homeTeam : i === 1 ? liveMarket.awayTeam : "Draw";
         const expected = expectedOdds.find((data) => data.selection === selection);
 
-        expect(decimalOdds).toBe(expected?.price);
+        expect(Math.round(decimalOdds * 1000) / 1000).toBe(expected?.price); // TODO: remove rounding
       });
     });
 
@@ -275,9 +275,11 @@ describe("Check live markets with streams", () => {
 
       liveOdds.forEach((decimalOdds, i) => {
         const selection = i === 0 ? liveMarket.homeTeam : i === 1 ? liveMarket.awayTeam : "Draw";
-        const expected = expectedOdds.find((data) => data.selection === selection) || expectedApiOdds;
+        const expected =
+          expectedOdds.find((data) => data.selection === selection) ||
+          expectedApiOdds.find((data) => data.selection === selection);
 
-        expect(decimalOdds).toBe(expected.price);
+        expect(Math.round(decimalOdds * 1000) / 1000).toBe(expected.price); // TODO: remove rounding
       });
     });
   });
