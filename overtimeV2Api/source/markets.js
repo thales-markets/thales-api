@@ -15,6 +15,8 @@ const awsS3Client = new S3Client({
   },
 });
 
+let numberOfExecution = 0;
+
 async function processMarkets() {
   if (process.env.REDIS_URL) {
     const isTestnet = process.env.IS_TESTNET === "true";
@@ -24,21 +26,28 @@ async function processMarkets() {
       while (true) {
         try {
           const startTime = new Date().getTime();
-          const markets = await loadAndMapMarkets(isTestnet);
-          console.log(`Markets ${network}: process markets`);
+          console.log(`Markets ${network} (execution number: ${numberOfExecution}): process markets`);
+
+          const fullUpdateAfterExecutions = Number(process.env.FULL_UPDATE_AFTER_EXECUTIONS) || 10;
+          const shouldDoFullUpdate = numberOfExecution % fullUpdateAfterExecutions === 0;
+          const markets = await loadAndMapMarkets(isTestnet, shouldDoFullUpdate);
           isTestnet
-            ? await Promise.all([processAllMarkets(markets, NETWORK.OptimismSepolia)])
+            ? await Promise.all([processAllMarkets(markets, NETWORK.OptimismSepolia, shouldDoFullUpdate)])
             : await Promise.all([
-                processAllMarkets(markets, NETWORK.Optimism),
-                processAllMarkets(markets, NETWORK.Arbitrum),
+                processAllMarkets(markets, NETWORK.Optimism, shouldDoFullUpdate),
+                processAllMarkets(markets, NETWORK.Arbitrum, shouldDoFullUpdate),
               ]);
           const endTime = new Date().getTime();
           console.log(
-            `Markets ${network}: === Seconds for processing markets: ${((endTime - startTime) / 1000).toFixed(0)} ===`,
+            `Markets ${network} (execution number: ${numberOfExecution}): === Seconds for processing markets: ${(
+              (endTime - startTime) /
+              1000
+            ).toFixed(0)} ===`,
           );
         } catch (error) {
           console.log(`Markets ${network}: markets error: `, error);
         }
+        numberOfExecution++;
 
         await delay(Number(process.env.DELAY_FOR_PROCESS_MARKETS) || 1000);
       }
@@ -56,9 +65,15 @@ const readAwsS3File = async (bucket, key) => {
   return response.Body.transformToString();
 };
 
-const loadMarkets = async (isTestnet) => {
+const loadMarkets = async (isTestnet, shouldDoFullUpdate) => {
   const bucketName = process.env.AWS_BUCKET_NAME;
-  const listFolderName = isTestnet ? process.env.AWS_FOLDER_NAME_LIST_TEST : process.env.AWS_FOLDER_NAME_LIST;
+  const listFolderName = isTestnet
+    ? shouldDoFullUpdate
+      ? process.env.AWS_FOLDER_NAME_LIST_TEST
+      : process.env.AWS_FOLDER_NAME_MODIFIED_TREES_TEST
+    : shouldDoFullUpdate
+    ? process.env.AWS_FOLDER_NAME_LIST
+    : process.env.AWS_FOLDER_NAME_MODIFIED_TREES;
   const network = isTestnet ? "testnet" : "mainnets";
 
   const command = new ListObjectsV2Command({
@@ -75,7 +90,6 @@ const loadMarkets = async (isTestnet) => {
     while (isTruncated) {
       const { Contents, IsTruncated, NextContinuationToken } = await awsS3Client.send(command);
       const contentsList = Contents.map((c) => c.Key);
-      console.log(`Markets ${network}: Available sport merkle trees: ${contentsList.length}`);
       merkleTreesList = [...merkleTreesList, ...contentsList];
 
       isTruncated = IsTruncated;
@@ -86,9 +100,28 @@ const loadMarkets = async (isTestnet) => {
       merkleTreesList.map((merkleTreesItem) => readAwsS3File(bucketName, merkleTreesItem)),
     );
 
+    let numberOfGames = 0;
     await Promise.all(
       merkleTreesFileContents.map(async (merkleTreeFileConent) => {
-        const marketFiles = merkleTreeFileConent ? merkleTreeFileConent.split(",").map((f) => f.trim()) : [];
+        let marketFiles = [];
+        let lines = 0;
+        if (merkleTreeFileConent) {
+          if (shouldDoFullUpdate) {
+            marketFiles = merkleTreeFileConent.split(",").map((f) => f.trim());
+          } else {
+            lines = merkleTreeFileConent.split("\n");
+            lines.forEach((line) => {
+              const merkleTreeTimestampArray = line.split(":");
+              const checkMerkleTreesPeriod = Number(process.env.CHECK_MERKLE_TREES_PERIOD) || 60000;
+              const minTimestampForUpdate = Math.round((new Date().getTime() - checkMerkleTreesPeriod) / 1000);
+              const lastModified = Number(merkleTreeTimestampArray[1] || 0);
+              if (lastModified >= minTimestampForUpdate) {
+                marketFiles.push(merkleTreeTimestampArray[0]);
+              }
+            });
+          }
+        }
+
         const marketFileContents = await Promise.all(
           marketFiles.map((marketFile) => readAwsS3File(bucketName, marketFile)),
         );
@@ -96,8 +129,16 @@ const loadMarkets = async (isTestnet) => {
           const arr = JSON.parse(content);
           markets = [...markets, ...arr];
         });
+
+        numberOfGames += marketFileContents.length;
       }),
     );
+
+    if (shouldDoFullUpdate) {
+      console.log(`Execution number: ${numberOfExecution}, merkle trees full update. Total games: ${numberOfGames}.`);
+    } else {
+      console.log(`Execution number: ${numberOfExecution}, only modified trees update. Total games: ${numberOfGames}.`);
+    }
   } catch (e) {
     console.log(`Markets ${network}: Error reading merkle trees: ${e}`);
   }
@@ -146,14 +187,14 @@ async function getClosedMarketsMap(network) {
   return closedMarketsMap;
 }
 
-async function loadAndMapMarkets(isTestnet) {
-  const markets = await loadMarkets(isTestnet);
+async function loadAndMapMarkets(isTestnet, shouldDoFullUpdate) {
+  const markets = await loadMarkets(isTestnet, shouldDoFullUpdate);
   return markets.map((market) => mapMarket(market));
 }
 
-async function processAllMarkets(markets, network) {
-  const openMarketsMap = new Map();
-  const numberOfMarketsMap = new Map();
+async function processAllMarkets(markets, network, shouldDoFullUpdate) {
+  const openMarketsMap = shouldDoFullUpdate ? new Map() : await getOpenMarketsMap(network);
+  const numberOfMarketsMap = shouldDoFullUpdate ? new Map() : await getNumberOfMarketsMap(network);
 
   const closedMarketsMap = await getClosedMarketsMap(network);
 
