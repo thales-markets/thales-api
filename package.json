@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node overtimeApi/s3test.js",
     "dev": "nodemon overtimeApi.js",
-    "test": "jest",
+    "test": "jest --silent",
     "test:unit": "jest unit"
   },
   "keywords": [],
