@@ -347,11 +347,12 @@ async function processMarketsByLeague(
             errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
-              errorMessage: `Blocking game ${opticOddsHomeTeam} - ${opticOddsAwayTeam} due to game clock being unavailable`,
+              errorMessage: `Blocking game ${opticOddsHomeTeam} - ${opticOddsAwayTeam} due to missing game result.`,
             });
             return false;
           }
 
+          // TODO: why checked separately from checkGameContraints?
           if (opticOddsResultData.status === "completed") {
             errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
@@ -362,6 +363,7 @@ async function processMarketsByLeague(
           }
 
           const leagueSport = getLeagueSport(leagueId);
+          // TODO: why only for soccer?
           if (leagueSport == Sport.SOCCER) {
             const constraintsMap = new Map();
             constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
