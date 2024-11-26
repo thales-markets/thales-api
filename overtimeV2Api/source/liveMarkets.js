@@ -352,32 +352,17 @@ async function processMarketsByLeague(
             return false;
           }
 
-          // TODO: why checked separately from checkGameContraints?
-          if (opticOddsResultData.status === "completed") {
+          const constraintsMap = new Map();
+          constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
+          const passingConstraintsObject = checkGameContraints(opticOddsResultData, leagueId, constraintsMap);
+
+          if (!passingConstraintsObject.allow) {
             errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
-              errorMessage: `Blocking game ${opticOddsHomeTeam} - ${opticOddsAwayTeam} because it is finished.`,
+              errorMessage: passingConstraintsObject.message,
             });
             return false;
-          }
-
-          const leagueSport = getLeagueSport(leagueId);
-          // TODO: why only for soccer?
-          if (leagueSport == Sport.SOCCER) {
-            const constraintsMap = new Map();
-            constraintsMap.set(Sport.SOCCER, Number(process.env.MINUTE_LIMIT_FOR_LIVE_TRADING_FOOTBALL));
-
-            const passingConstraintsObject = checkGameContraints(opticOddsResultData, leagueId, constraintsMap);
-
-            if (!passingConstraintsObject.allow) {
-              errorsMap.set(market.gameId, {
-                processingTime: PROCESSING_START_TIME,
-                errorTime: new Date().toUTCString(),
-                errorMessage: passingConstraintsObject.message,
-              });
-              return false;
-            }
           }
 
           return true;
@@ -385,34 +370,32 @@ async function processMarketsByLeague(
 
       // ======================================== MAPPING MARKETS ========================================
       liveMarkets = ongoingMarketsByResults.map((market) => {
-        let gamePaused = false;
-
-        if (market.opticOddsGameOdds?.odds?.some((odds) => isOddsTimeStale(odds.timestamp))) {
-          gamePaused = true;
-        }
-
-        // Reading clock, period and result data from results
+        // Reading results data
         const currentScoreHome = market.opticOddsResultData.homeTotal;
         const currentScoreAway = market.opticOddsResultData.awayTotal;
         const currentClock = market.opticOddsResultData.clock;
         const currentPeriod = market.opticOddsResultData.period;
         const isLive = market.opticOddsResultData.isLive;
         const currentGameStatus = market.opticOddsResultData.status;
-        const gamesHomeScoreByPeriod = [];
-        const gamesAwayScoreByPeriod = [];
 
         const isStatusOrPeriodUknown = currentGameStatus === null || currentPeriod === null;
 
+        // Check errors
+        let errorMessage = "";
+
         if (isStatusOrPeriodUknown) {
-          gamePaused = true;
-        } else if (currentGameStatus.includes("half") || currentPeriod.includes("half")) {
-          gamePaused = false;
+          errorMessage = `Pausing game ${market.opticOddsGameOdds.homeTeam} - ${market.opticOddsGameOdds.awayTeam} due to unknown status or period`;
+        } else if (
+          market.opticOddsGameOdds?.odds?.some((odds) => isOddsTimeStale(odds.timestamp)) &&
+          !currentGameStatus.includes("half") &&
+          !currentPeriod.includes("half")
+        ) {
+          errorMessage = `Pausing game ${market.opticOddsGameOdds.homeTeam} - ${market.opticOddsGameOdds.awayTeam} due to odds being stale`;
+        } else if (!isLive) {
+          errorMessage = `Provider marked game ${market.opticOddsGameOdds.homeTeam} - ${market.opticOddsGameOdds.awayTeam} as not live`;
         }
 
-        if (gamePaused) {
-          const errorMessage = `Pausing game ${market.opticOddsGameOdds.homeTeam} - ${
-            market.opticOddsGameOdds.awayTeam
-          } ${isStatusOrPeriodUknown ? "due to uknown status or period" : "due to odds being stale"}`;
+        if (errorMessage) {
           errorsMap.set(market.gameId, {
             processingTime: PROCESSING_START_TIME,
             errorTime: new Date().toUTCString(),
@@ -420,9 +403,12 @@ async function processMarketsByLeague(
           });
           market.errorMessage = errorMessage;
           market.isPaused = true;
+          market.odds = market.odds.map(() => ({ american: 0, decimal: 0, normalizedImplied: 0 }));
         }
 
-        const leagueSport = getLeagueSport(Number(market.leagueId));
+        const gamesHomeScoreByPeriod = [];
+        const gamesAwayScoreByPeriod = [];
+        const leagueSport = getLeagueSport(market.leagueId);
 
         if (leagueSport === Sport.TENNIS || leagueSport === Sport.VOLLEYBALL) {
           const resultInCurrentSet = fetchResultInCurrentSet(parseInt(currentPeriod), market.opticOddsResultData);
@@ -446,40 +432,28 @@ async function processMarketsByLeague(
         market.homeScoreByPeriod = gamesHomeScoreByPeriod;
         market.awayScoreByPeriod = gamesAwayScoreByPeriod;
 
-        if (!market.errorMessage) {
-          if (isLive) {
-            const processedMarket = processMarket(
-              market,
-              opticOddsGameOddsData,
-              bookmakers,
-              spreadData,
-              getLeagueIsDrawAvailable(market.leagueId),
-              Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
-              Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
-              config.leaguesData,
-            );
+        if (!errorMessage) {
+          const processedMarket = processMarket(
+            market,
+            opticOddsGameOddsData,
+            bookmakers,
+            spreadData,
+            getLeagueIsDrawAvailable(market.leagueId),
+            Number(process.env.DEFAULT_SPREAD_FOR_LIVE_MARKETS),
+            Number(process.env.MAX_PERCENTAGE_DIFF_BETWEEN_ODDS),
+            config.leaguesData,
+          );
 
-            if (processedMarket.errorMessage) {
-              errorsMap.set(market.gameId, {
-                processingTime: PROCESSING_START_TIME,
-                errorTime: new Date().toUTCString(),
-                errorMessage: processedMarket.errorMessage,
-              });
-            }
-
-            market = processedMarket;
-            market.isPaused = isMarketPaused(market);
-          } else {
-            const errorMessage = `Provider marked game ${opticOddsGameOddsData.homeTeam} - ${opticOddsGameOddsData.awayTeam} as not live`;
+          if (processedMarket.errorMessage) {
             errorsMap.set(market.gameId, {
               processingTime: PROCESSING_START_TIME,
               errorTime: new Date().toUTCString(),
-              errorMessage,
+              errorMessage: processedMarket.errorMessage,
             });
-            market.errorMessage = errorMessage;
-
-            market.odds = market.odds.map(() => ({ american: 0, decimal: 0, normalizedImplied: 0 }));
           }
+
+          market = processedMarket;
+          market.isPaused = isMarketPaused(market);
         }
 
         return market;
