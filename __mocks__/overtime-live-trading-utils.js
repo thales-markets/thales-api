@@ -2,9 +2,7 @@
 
 let __gameContraints = { allow: true, message: "" };
 const __mockCheckGameContraints = (gameContraints) => (__gameContraints = gameContraints);
-const checkGameContraints = () => {
-  return __gameContraints;
-};
+const checkGameContraints = () => __gameContraints;
 
 // NOT MOCKED functions
 
@@ -79,8 +77,8 @@ const processMarket = (
     );
 
 module.exports = {
-  checkGameContraints,
   __mockCheckGameContraints,
+  checkGameContraints,
   teamNamesMatching,
   gamesDatesMatching,
   getLeagueOpticOddsName,

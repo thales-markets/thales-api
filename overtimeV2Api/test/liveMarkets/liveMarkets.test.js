@@ -15,6 +15,8 @@ const { delay } = require("../../utils/general");
 describe("Check live markets without streams", () => {
   const OLD_ENV = process.env;
   let riskManagementSpy;
+  let utilsStaleOddsSpy;
+  let utilsFilterStaleOddsSpy;
   let opticOddsGamesSpy;
   let opticOddsFixtureOddsSpy;
   let opticOddsResultsSpy;
@@ -37,10 +39,10 @@ describe("Check live markets without streams", () => {
     const config = { teamsMap, bookmakersData, spreadData, leaguesData };
     riskManagementSpy.mockResolvedValue(config);
     // Mock stale odds check
-    riskManagementSpy = jest.spyOn(liveMarketsUtils, "isOddsTimeStale");
-    riskManagementSpy.mockReturnValue(false);
-    riskManagementSpy = jest.spyOn(liveMarketsUtils, "filterStaleOdds");
-    riskManagementSpy.mockImplementation((a) => a);
+    utilsStaleOddsSpy = jest.spyOn(liveMarketsUtils, "isOddsTimeStale");
+    utilsStaleOddsSpy.mockReturnValue(false);
+    utilsFilterStaleOddsSpy = jest.spyOn(liveMarketsUtils, "filterStaleOdds");
+    utilsFilterStaleOddsSpy.mockImplementation((a) => a);
     // Mock Optic Odds fixtures active API
     opticOddsGamesSpy = jest.spyOn(liveMarketsUtils, "fetchOpticOddsGamesForLeague");
     opticOddsGamesSpy.mockResolvedValue(liveGames);
@@ -64,6 +66,8 @@ describe("Check live markets without streams", () => {
     process.env = OLD_ENV; // Restore original environment variables
 
     riskManagementSpy.mockRestore();
+    utilsStaleOddsSpy.mockRestore();
+    utilsFilterStaleOddsSpy.mockRestore();
     opticOddsGamesSpy.mockRestore();
     opticOddsFixtureOddsSpy.mockRestore();
     opticOddsResultsSpy.mockRestore();
@@ -255,8 +259,48 @@ describe("Check live markets without streams", () => {
     const errorMessages = new Map(JSON.parse(errorObj)).get(firstMarket.gameId);
     const errorMessage = errorMessages && errorMessages.length ? errorMessages[0].errorMessage : "";
 
+    try {
+      expect(errorMessage).toBeTruthy();
+      expect(errorMessage).toBe(ERROR_MESSAGE);
+    } finally {
+      await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+      __mockCheckGameContraints({ allow: true, message: "" });
+    }
+  });
+
+  it("checks error for stale odds", async () => {
+    // Mock stale odds
+    utilsStaleOddsSpy.mockReturnValue(true);
+
+    // This needs to be imported after mocks in order to work
+    const { redisClient } = require("../../../redis/client");
+    const { processAllMarkets } = require("../../source/liveMarkets");
+
+    // GIVEN X number of ongoing markets on Optimism
+    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(openMarkets));
+
+    const oddsStreamsInfoByLeagueMap = new Map();
+    const oddsInitializedByLeagueMap = new Map();
+    const resultsInitializedByLeagueMap = new Map();
+    const isTestnet = process.env.IS_TESTNET === "true";
+
+    // WHEN process X ongoing markets
+    await processAllMarkets(
+      oddsStreamsInfoByLeagueMap,
+      oddsInitializedByLeagueMap,
+      resultsInitializedByLeagueMap,
+      isTestnet,
+    );
+
+    // THEN error message should be stored to redis
+    await delay(100); // wait for redis set to be completed
+    const errorObj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+    const firstMarket = Array.from(new Map(openMarkets).values())[0];
+    const errorMessages = new Map(JSON.parse(errorObj)).get(firstMarket.gameId);
+    const errorMessage = errorMessages && errorMessages.length ? errorMessages[0].errorMessage : "";
+
     expect(errorMessage).toBeTruthy();
-    expect(errorMessage).toBe(ERROR_MESSAGE);
+    expect(errorMessage).toBe(`Pausing game ${firstMarket.homeTeam} - ${firstMarket.awayTeam} due to odds being stale`);
 
     await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
   });
@@ -265,6 +309,8 @@ describe("Check live markets without streams", () => {
 describe("Check live markets with streams", () => {
   const OLD_ENV = process.env;
   let riskManagementSpy;
+  let utilsStaleOddsSpy;
+  let utilsFilterStaleOddsSpy;
   let opticOddsGamesSpy;
   let opticOddsFixtureOddsSpy;
   let opticOddsResultsSpy;
@@ -308,10 +354,10 @@ describe("Check live markets with streams", () => {
     const config = { teamsMap, bookmakersData, spreadData, leaguesData };
     riskManagementSpy.mockResolvedValue(config);
     // Mock stale odds check
-    riskManagementSpy = jest.spyOn(liveMarketsUtils, "isOddsTimeStale");
-    riskManagementSpy.mockReturnValue(false);
-    riskManagementSpy = jest.spyOn(liveMarketsUtils, "filterStaleOdds");
-    riskManagementSpy.mockImplementation((a) => a);
+    utilsStaleOddsSpy = jest.spyOn(liveMarketsUtils, "isOddsTimeStale");
+    utilsStaleOddsSpy.mockReturnValue(false);
+    utilsFilterStaleOddsSpy = jest.spyOn(liveMarketsUtils, "filterStaleOdds");
+    utilsFilterStaleOddsSpy.mockImplementation((a) => a);
     // Mock Optic Odds fixtures active API
     opticOddsGamesSpy = jest.spyOn(liveMarketsUtils, "fetchOpticOddsGamesForLeague");
     opticOddsGamesSpy.mockResolvedValue(liveGames);
@@ -334,6 +380,8 @@ describe("Check live markets with streams", () => {
     process.env = OLD_ENV; // Restore original environment variables
 
     riskManagementSpy.mockRestore();
+    utilsStaleOddsSpy.mockRestore();
+    utilsFilterStaleOddsSpy.mockRestore();
     opticOddsGamesSpy.mockRestore();
     opticOddsFixtureOddsSpy.mockRestore();
     opticOddsResultsSpy.mockRestore();
@@ -378,7 +426,7 @@ describe("Check live markets with streams", () => {
         const selection = i === 0 ? liveMarket.homeTeam : i === 1 ? liveMarket.awayTeam : "Draw";
         const expectedPrice = getExpectedStreamOddsPrice(liveMarket.gameId, selection, false);
 
-        expect(Math.round(decimalOdds * 1000) / 1000).toBe(expectedPrice); // TODO: remove rounding
+        expect(decimalOdds).toBe(expectedPrice);
       });
     });
 
@@ -408,7 +456,7 @@ describe("Check live markets with streams", () => {
         const selection = i === 0 ? liveMarket.homeTeam : i === 1 ? liveMarket.awayTeam : "Draw";
         const expectedPrice = getExpectedStreamOddsPrice(liveMarket.gameId, selection);
 
-        expect(Math.round(decimalOdds * 1000) / 1000).toBe(expectedPrice); // TODO: remove rounding
+        expect(decimalOdds).toBe(expectedPrice);
       });
     });
   });
