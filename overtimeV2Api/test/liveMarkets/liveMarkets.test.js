@@ -58,8 +58,6 @@ describe("Check live markets without streams", () => {
 
   beforeEach(() => {
     jest.useRealTimers();
-
-    opticOddsResultsSpy.mockResolvedValue(liveApiResults);
   });
 
   afterAll(() => {
@@ -115,6 +113,41 @@ describe("Check live markets without streams", () => {
     }
   });
 
+  it("checks zero number of live markets (processAllMarkets)", async () => {
+    // Mocks zero games
+    opticOddsGamesSpy.mockResolvedValue([]);
+
+    // This needs to be imported after mocks in order to work
+    const { redisClient } = require("../../../redis/client");
+    const { processAllMarkets } = require("../../source/liveMarkets");
+
+    // GIVEN X number of ongoing markets on Optimism
+    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(openMarkets));
+
+    const oddsStreamsInfoByLeagueMap = new Map();
+    const oddsInitializedByLeagueMap = new Map();
+    const resultsInitializedByLeagueMap = new Map();
+    const isTestnet = process.env.IS_TESTNET === "true";
+
+    // WHEN process X ongoing markets
+    await processAllMarkets(
+      oddsStreamsInfoByLeagueMap,
+      oddsInitializedByLeagueMap,
+      resultsInitializedByLeagueMap,
+      isTestnet,
+    );
+
+    // THEN zero live markets should be stored in Redis for all networks
+    try {
+      const liveMarketsOp = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Optimism]));
+      expect(liveMarketsOp.length).toBe(0);
+      const liveMarketsArb = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Arbitrum]));
+      expect(liveMarketsArb.length).toBe(0);
+    } finally {
+      opticOddsGamesSpy.mockResolvedValue(liveGames);
+    }
+  });
+
   it("checks number of live markets (processAllMarkets)", async () => {
     // This needs to be imported after mocks in order to work
     const { redisClient } = require("../../../redis/client");
@@ -141,88 +174,6 @@ describe("Check live markets without streams", () => {
     expect(liveMarketsOp.length).toBe(openMarkets.length);
     const liveMarketsArb = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Arbitrum]));
     expect(liveMarketsArb.length).toBe(openMarkets.length);
-  });
-
-  it("checks error for result not found", async () => {
-    // Mock empty results
-    opticOddsResultsSpy.mockResolvedValue([]);
-
-    // This needs to be imported after mocks in order to work
-    const { redisClient } = require("../../../redis/client");
-    const { processAllMarkets } = require("../../source/liveMarkets");
-
-    // GIVEN X number of ongoing markets on Optimism
-    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(openMarkets));
-
-    const oddsStreamsInfoByLeagueMap = new Map();
-    const oddsInitializedByLeagueMap = new Map();
-    const resultsInitializedByLeagueMap = new Map();
-    const isTestnet = process.env.IS_TESTNET === "true";
-
-    // WHEN process X ongoing markets
-    await processAllMarkets(
-      oddsStreamsInfoByLeagueMap,
-      oddsInitializedByLeagueMap,
-      resultsInitializedByLeagueMap,
-      isTestnet,
-    );
-
-    // THEN error message should be stored to redis
-    await delay(100); // wait for redis set to be completed
-    const errorObj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
-    const firstMarket = Array.from(new Map(openMarkets).values())[0];
-    const errorMessages = new Map(JSON.parse(errorObj)).get(firstMarket.gameId);
-    const errorMessage = errorMessages && errorMessages.length ? errorMessages[0].errorMessage : "";
-
-    expect(errorMessage).toBeTruthy();
-    expect(errorMessage).toBe(
-      `Blocking game ${firstMarket.homeTeam} - ${firstMarket.awayTeam} due to missing game result.`,
-    );
-
-    await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
-  });
-
-  it("checks error for game finished", async () => {
-    // Mock results status completed
-    const liveApiResultsWithStatusCompleted = liveApiResults.map((liveApiResult) => ({
-      ...liveApiResult,
-      fixture: { ...liveApiResult.fixture, status: "completed" },
-    }));
-    opticOddsResultsSpy.mockResolvedValue(liveApiResultsWithStatusCompleted);
-
-    // This needs to be imported after mocks in order to work
-    const { redisClient } = require("../../../redis/client");
-    const { processAllMarkets } = require("../../source/liveMarkets");
-
-    // GIVEN X number of ongoing markets on Optimism
-    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(openMarkets));
-
-    const oddsStreamsInfoByLeagueMap = new Map();
-    const oddsInitializedByLeagueMap = new Map();
-    const resultsInitializedByLeagueMap = new Map();
-    const isTestnet = process.env.IS_TESTNET === "true";
-
-    // WHEN process X ongoing markets
-    await processAllMarkets(
-      oddsStreamsInfoByLeagueMap,
-      oddsInitializedByLeagueMap,
-      resultsInitializedByLeagueMap,
-      isTestnet,
-    );
-
-    // THEN error message should be stored to redis
-    await delay(100); // wait for redis set to be completed
-    const errorObj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
-    const firstMarket = Array.from(new Map(openMarkets).values())[0];
-    const errorMessages = new Map(JSON.parse(errorObj)).get(firstMarket.gameId);
-    const errorMessage = errorMessages && errorMessages.length ? errorMessages[0].errorMessage : "";
-
-    expect(errorMessage).toBeTruthy();
-    expect(errorMessage).toBe(
-      `Blocking game ${firstMarket.homeTeam} - ${firstMarket.awayTeam} because it is finished.`,
-    );
-
-    await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
   });
 
   it("checks error from game constraints", async () => {
@@ -299,8 +250,142 @@ describe("Check live markets without streams", () => {
     const errorMessages = new Map(JSON.parse(errorObj)).get(firstMarket.gameId);
     const errorMessage = errorMessages && errorMessages.length ? errorMessages[0].errorMessage : "";
 
+    try {
+      expect(errorMessage).toBeTruthy();
+      expect(errorMessage).toBe(
+        `Pausing game ${firstMarket.homeTeam} - ${firstMarket.awayTeam} due to odds being stale`,
+      );
+    } finally {
+      utilsStaleOddsSpy.mockReturnValue(false);
+      await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+    }
+  });
+
+  it("checks error for result not found", async () => {
+    // Mock empty results
+    opticOddsResultsSpy.mockResolvedValue([]);
+
+    // This needs to be imported after mocks in order to work
+    const { redisClient } = require("../../../redis/client");
+    const { processAllMarkets } = require("../../source/liveMarkets");
+
+    // GIVEN X number of ongoing markets on Optimism
+    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(openMarkets));
+
+    const oddsStreamsInfoByLeagueMap = new Map();
+    const oddsInitializedByLeagueMap = new Map();
+    const resultsInitializedByLeagueMap = new Map();
+    const isTestnet = process.env.IS_TESTNET === "true";
+
+    // WHEN process X ongoing markets
+    await processAllMarkets(
+      oddsStreamsInfoByLeagueMap,
+      oddsInitializedByLeagueMap,
+      resultsInitializedByLeagueMap,
+      isTestnet,
+    );
+
+    // THEN error message should be stored to redis
+    await delay(100); // wait for redis set to be completed
+    const errorObj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+    const firstMarket = Array.from(new Map(openMarkets).values())[0];
+    const errorMessages = new Map(JSON.parse(errorObj)).get(firstMarket.gameId);
+    const errorMessage = errorMessages && errorMessages.length ? errorMessages[0].errorMessage : "";
+
+    try {
+      expect(errorMessage).toBeTruthy();
+      expect(errorMessage).toBe(
+        `Blocking game ${firstMarket.homeTeam} - ${firstMarket.awayTeam} due to missing game result.`,
+      );
+    } finally {
+      opticOddsResultsSpy.mockResolvedValue(liveApiResults);
+      await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+    }
+  });
+
+  it("checks error for result unknown status", async () => {
+    // Mock results status null
+    const liveApiResultsWithUnknownStatus = liveApiResults.map((liveApiResult) => ({
+      ...liveApiResult,
+      fixture: { ...liveApiResult.fixture, status: null },
+    }));
+    opticOddsResultsSpy.mockResolvedValue(liveApiResultsWithUnknownStatus);
+
+    // This needs to be imported after mocks in order to work
+    const { redisClient } = require("../../../redis/client");
+    const { processAllMarkets } = require("../../source/liveMarkets");
+
+    // GIVEN X number of ongoing markets on Optimism
+    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(openMarkets));
+
+    const oddsStreamsInfoByLeagueMap = new Map();
+    const oddsInitializedByLeagueMap = new Map();
+    const resultsInitializedByLeagueMap = new Map();
+    const isTestnet = process.env.IS_TESTNET === "true";
+
+    // WHEN process X ongoing markets
+    await processAllMarkets(
+      oddsStreamsInfoByLeagueMap,
+      oddsInitializedByLeagueMap,
+      resultsInitializedByLeagueMap,
+      isTestnet,
+    );
+
+    // THEN error message should be stored to redis
+    await delay(100); // wait for redis set to be completed
+    const errorObj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+    const firstMarket = Array.from(new Map(openMarkets).values())[0];
+    const errorMessages = new Map(JSON.parse(errorObj)).get(firstMarket.gameId);
+    const errorMessage = errorMessages && errorMessages.length ? errorMessages[0].errorMessage : "";
+
+    try {
+      expect(errorMessage).toBeTruthy();
+      expect(errorMessage).toBe(
+        `Pausing game ${firstMarket.homeTeam} - ${firstMarket.awayTeam} due to unknown status or period`,
+      );
+    } finally {
+      opticOddsResultsSpy.mockResolvedValue(liveApiResults);
+      await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+    }
+  });
+
+  it("checks error for result not live", async () => {
+    // Mock results isLive false
+    const liveApiResultsWithUnknownStatus = liveApiResults.map((liveApiResult) => ({
+      ...liveApiResult,
+      fixture: { ...liveApiResult.fixture, is_live: false },
+    }));
+    opticOddsResultsSpy.mockResolvedValue(liveApiResultsWithUnknownStatus);
+
+    // This needs to be imported after mocks in order to work
+    const { redisClient } = require("../../../redis/client");
+    const { processAllMarkets } = require("../../source/liveMarkets");
+
+    // GIVEN X number of ongoing markets on Optimism
+    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(openMarkets));
+
+    const oddsStreamsInfoByLeagueMap = new Map();
+    const oddsInitializedByLeagueMap = new Map();
+    const resultsInitializedByLeagueMap = new Map();
+    const isTestnet = process.env.IS_TESTNET === "true";
+
+    // WHEN process X ongoing markets
+    await processAllMarkets(
+      oddsStreamsInfoByLeagueMap,
+      oddsInitializedByLeagueMap,
+      resultsInitializedByLeagueMap,
+      isTestnet,
+    );
+
+    // THEN error message should be stored to redis
+    await delay(100); // wait for redis set to be completed
+    const errorObj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+    const firstMarket = Array.from(new Map(openMarkets).values())[0];
+    const errorMessages = new Map(JSON.parse(errorObj)).get(firstMarket.gameId);
+    const errorMessage = errorMessages && errorMessages.length ? errorMessages[0].errorMessage : "";
+
     expect(errorMessage).toBeTruthy();
-    expect(errorMessage).toBe(`Pausing game ${firstMarket.homeTeam} - ${firstMarket.awayTeam} due to odds being stale`);
+    expect(errorMessage).toBe(`Provider marked game ${firstMarket.homeTeam} - ${firstMarket.awayTeam} as not live`);
 
     await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
   });
