@@ -52,11 +52,11 @@ const processAllRisks = async (isTestnet) => {
     ]);
 
     redisClient.mSet([
-      KEYS.RISK_MANAGEMENT_TEAMS_MAP,
+      isTestnet ? KEYS.RISK_MANAGEMENT_TEAMS_MAP_TESTNET : KEYS.RISK_MANAGEMENT_TEAMS_MAP,
       JSON.stringify(Array.from(teamsMap.entries())),
-      KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA,
+      isTestnet ? KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA_TESTNET : KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA,
       JSON.stringify(bookmakersData),
-      KEYS.RISK_MANAGEMENT_SPREAD_DATA,
+      isTestnet ? KEYS.RISK_MANAGEMENT_SPREAD_DATA_TESTNET : KEYS.RISK_MANAGEMENT_SPREAD_DATA,
       JSON.stringify(spreadData),
       isTestnet ? KEYS.RISK_MANAGEMENT_LEAGUES_DATA_TESTNET : KEYS.RISK_MANAGEMENT_LEAGUES_DATA,
       JSON.stringify(leaguesData),

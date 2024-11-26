@@ -90,11 +90,11 @@ const mapOddsStreamEvents = (streamEvents, initialOdds, gamesInfo) => {
       const gameInfoData = gamesInfo.find((gameInfo) => gameInfo.gameId === gameId);
 
       const oddsHeader = {
-        gameId: gameInfoData.fixture_id,
-        startDate: gameInfoData.start_date,
-        homeTeam: gameInfoData.home_team,
-        awayTeam: gameInfoData.away_team,
-        isLive: gameInfoData.is_live, // should be always true
+        gameId: gameInfoData.gameId,
+        startDate: gameInfoData.startDate,
+        homeTeam: gameInfoData.homeTeam,
+        awayTeam: gameInfoData.awayTeam,
+        isLive: gameInfoData.isLive, // should be always true
         status: gameInfoData.status,
         sport: gameInfoData.sport,
         league: gameInfoData.league,
@@ -145,7 +145,7 @@ const fetchOpticOddsFixtureOdds = async (sportsbooks, markets, fixtureIds) => {
 };
 
 // Start stream for league ID or re-start when param (sportsbooks) is updated
-const startOddsStreams = (leagueId, bookmakersData, leaguesData, oddsStreamsInfoByLeagueMap) => {
+const startOddsStreams = (leagueId, bookmakersData, leaguesData, oddsStreamsInfoByLeagueMap, isTestnet) => {
   const opticOddsLeagueName = getLeagueOpticOddsName(leagueId);
 
   if (isOpticOddsStreamOddsDisabled || !opticOddsLeagueName) {
@@ -165,12 +165,12 @@ const startOddsStreams = (leagueId, bookmakersData, leaguesData, oddsStreamsInfo
   // Start new stream for new league or start again when param is updated
   if (!oddsStreamInfo) {
     // start new stream
-    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, sport, streamLeagues);
+    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, sport, streamLeagues, isTestnet);
     oddsStreamsInfoByLeagueMap.set(leagueId, { bookmakers, betTypes, streamSource });
   } else if (isBookmakersUpdated) {
     // close and start with new bookmakers
     oddsStreamInfo.streamSource.close();
-    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, sport, streamLeagues);
+    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, sport, streamLeagues, isTestnet);
     oddsStreamsInfoByLeagueMap.set(leagueId, { bookmakers, betTypes, streamSource });
   }
 };

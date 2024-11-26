@@ -62,6 +62,7 @@ const {
   getCachedClosedMarketsByNetworkMap,
 } = require("./services/overtimeMarketsCache");
 const { getGameFinishersMap, getUserReffererIDsMap, getSolanaAddressesMap } = require("./services/loadData");
+const { excludePropertiesFromMarket } = require("../overtimeV2Api/utils/markets");
 
 app.listen(process.env.PORT || 3002, () => {
   console.log("Server running on port " + (process.env.PORT || 3002));
@@ -1144,9 +1145,14 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   const sport = req.query.sport;
   const leagueId = req.query.leagueid;
   const gameIds = req.query.gameids;
+  const typeIds = req.query.typeids;
+  const playerIds = req.query.playerids;
+  const lines = req.query.lines;
   const ungroup = req.query.ungroup;
   const minMaturity = req.query.minMaturity;
   const onlyMainMarkets = req.query.onlymainmarkets;
+  const onlyBasicProperties = req.query.onlybasicproperties;
+  const includeProofs = req.query.includeproofs;
 
   if (!status) {
     status = "open";
@@ -1179,6 +1185,18 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
   if (gameIds) {
     gamesIdsArray = gameIds.split(",");
   }
+  let typeIdsArray = [];
+  if (typeIds) {
+    typeIdsArray = typeIds.split(",");
+  }
+  let playerIdsArray = [];
+  if (playerIds) {
+    playerIdsArray = playerIds.split(",");
+  }
+  let linesArray = [];
+  if (lines) {
+    linesArray = lines.split(",");
+  }
 
   if (ungroup && !["true", "false"].includes(ungroup.toLowerCase())) {
     res.send("Invalid value for ungroup. Possible values: true or false.");
@@ -1187,6 +1205,16 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
   if (onlyMainMarkets && !["true", "false"].includes(onlyMainMarkets.toLowerCase())) {
     res.send("Invalid value for onlyMainMarkets. Possible values: true or false.");
+    return;
+  }
+
+  if (onlyBasicProperties && !["true", "false"].includes(onlyBasicProperties.toLowerCase())) {
+    res.send("Invalid value for onlyBasicProperties. Possible values: true or false.");
+    return;
+  }
+
+  if (includeProofs && !["true", "false"].includes(includeProofs.toLowerCase())) {
+    res.send("Invalid value for includeProofs. Possible values: true or false.");
     return;
   }
 
@@ -1227,7 +1255,7 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
 
     const marketsByStatus = groupMarketsByStatus[status] || [];
     let marketsByType = marketsByStatus;
-    if (typeId) {
+    if (typeId || typeIdsArray.length || playerIdsArray.length || linesArray.length) {
       marketsByType = [];
       marketsByStatus.forEach((market) => {
         marketsByType.push(market);
@@ -1240,7 +1268,10 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
         (!sport || (market.sport && market.sport.toLowerCase() === sport.toLowerCase())) &&
         (!leagueId || Number(market.leagueId) === Number(leagueId)) &&
         (!typeId || Number(market.typeId) === Number(typeId)) &&
-        (!minMaturity || Number(market.maturity) >= Number(minMaturity)),
+        (!minMaturity || Number(market.maturity) >= Number(minMaturity)) &&
+        (!typeIdsArray.length || typeIdsArray.includes(`${market.typeId}`)) &&
+        (!playerIdsArray.length || playerIdsArray.includes(`${market.playerProps.playerId}`)) &&
+        (!linesArray.length || linesArray.includes(`${market.line}`)),
     );
 
     let finalMarkets = [];
@@ -1274,6 +1305,16 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKETS, (req, res) => {
       });
     } else {
       finalMarkets = filteredMarkets;
+    }
+
+    if (onlyBasicProperties && onlyBasicProperties.toLowerCase() === "true") {
+      const newMarkets = [];
+      finalMarkets.forEach((market) => {
+        const shouldIncludeProofs = includeProofs && includeProofs.toLowerCase() === "true";
+        const skipChildMarkets = typeId || typeIdsArray.length || playerIdsArray.length || linesArray.length;
+        newMarkets.push(excludePropertiesFromMarket(market, shouldIncludeProofs, skipChildMarkets));
+      });
+      finalMarkets = newMarkets;
     }
 
     if (ungroup && ungroup.toLowerCase() === "true") {
@@ -1389,6 +1430,13 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
 app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
   const network = req.params.networkParam;
   const marketAddress = req.params.marketAddress;
+  const onlyBasicProperties = req.query.onlybasicproperties;
+
+  if (onlyBasicProperties && !["true", "false"].includes(onlyBasicProperties.toLowerCase())) {
+    res.send("Invalid value for onlyBasicProperties. Possible values: true or false.");
+    return;
+  }
+
   try {
     const openMarkets = getCachedOpenMarketsByNetworkMap(network);
     let market = Array.from(openMarkets.values()).find(
@@ -1396,12 +1444,18 @@ app.get(ENDPOINTS.OVERTIME_V2_MARKET, (req, res) => {
     );
 
     if (market) {
+      if (onlyBasicProperties) {
+        market = excludePropertiesFromMarket(market);
+      }
       return res.send(market);
     } else {
       const closedMarkets = getCachedClosedMarketsByNetworkMap(network);
       market = Array.from(closedMarkets.values()).find(
         (market) => market.gameId.toLowerCase() === marketAddress.toLowerCase(),
       );
+      if (market && onlyBasicProperties) {
+        market = excludePropertiesFromMarket(market);
+      }
       return res.send(market || `Market with gameId ${marketAddress} not found.`);
     }
   } catch (error) {
@@ -1662,17 +1716,23 @@ app.get(ENDPOINTS.OVERTIME_V2_RISK_MANAGEMENT_CONFIG, async (req, res) => {
     let configResponse;
     switch (configType) {
       case "teams": {
-        const teamsData = await redisClient.get(KEYS.RISK_MANAGEMENT_TEAMS_MAP);
+        const teamsData = await redisClient.get(
+          isTestnet ? KEYS.RISK_MANAGEMENT_TEAMS_MAP_TESTNET : KEYS.RISK_MANAGEMENT_TEAMS_MAP,
+        );
         configResponse = JSON.parse(teamsData) || [];
         break;
       }
       case "bookmakers": {
-        const bookmakersData = await redisClient.get(KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA);
+        const bookmakersData = await redisClient.get(
+          isTestnet ? KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA_TESTNET : KEYS.RISK_MANAGEMENT_BOOKMAKERS_DATA,
+        );
         configResponse = JSON.parse(bookmakersData) || [];
         break;
       }
       case "spreads": {
-        const spreadData = await redisClient.get(KEYS.RISK_MANAGEMENT_SPREAD_DATA);
+        const spreadData = await redisClient.get(
+          isTestnet ? KEYS.RISK_MANAGEMENT_SPREAD_DATA_TESTNET : KEYS.RISK_MANAGEMENT_SPREAD_DATA,
+        );
         configResponse = JSON.parse(spreadData) || [];
         break;
       }

@@ -17,6 +17,7 @@ const {
 
 async function processLiveScores() {
   if (process.env.REDIS_URL) {
+    const isTestnet = process.env.IS_TESTNET === "true";
     const resultsInitialization = { isInitialized: false };
 
     setTimeout(async () => {
@@ -25,7 +26,7 @@ async function processLiveScores() {
           const startTime = new Date().getTime();
           console.log("Lives scores: process lives scores");
 
-          await processAllLiveResults(resultsInitialization);
+          await processAllLiveResults(resultsInitialization, isTestnet);
 
           const endTime = new Date().getTime();
           console.log(
@@ -59,7 +60,7 @@ async function getGamesInfoMap() {
   return gamesInfoMap;
 }
 
-async function processAllLiveResults(resultsInitialization) {
+async function processAllLiveResults(resultsInitialization, isTestnet) {
   const liveScoresMap = await getLiveScoresMap();
   const gamesInfoMap = await getGamesInfoMap();
   // take only from OP as markets are the same on all networks
@@ -88,7 +89,7 @@ async function processAllLiveResults(resultsInitialization) {
     if (!isOpticOddsStreamResultsDisabled && resultsInitialization.isInitialized) {
       // Read from Redis
       const redisKeysForStreamResults = opticOddsGameIds.map((gameId) =>
-        getRedisKeyForOpticOddsStreamEventResults(gameId),
+        getRedisKeyForOpticOddsStreamEventResults(gameId, isTestnet),
       );
       const objArray = await redisClient.mGet(redisKeysForStreamResults);
       const opticOddsStreamResults = objArray.filter((obj) => obj !== null).map((obj) => JSON.parse(obj));

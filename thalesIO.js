@@ -12,6 +12,7 @@ let dailyStatsDisableFirstRunExecution = true;
 let weeklyStatsDisableFirstRunExecution = true;
 
 (async () => {
+  console.log("Start processing...");
   await connectDefaultRedisClient();
 
   if (process.env.REDIS_URL && process.env.DUNE_API_KEY) {
