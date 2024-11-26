@@ -787,6 +787,80 @@ const liveApiResults = [
     },
     retirement_info: null,
   },
+  {
+    sport: {
+      id: "tennis",
+      name: "Tennis",
+    },
+    league: {
+      id: "atp",
+      name: "ATP",
+    },
+    fixture: {
+      id: "4673726",
+      game_id: "98292-24011-2024-11-09",
+      start_date: "2024-11-09T14:10:00.000Z",
+      home_competitors: [
+        {
+          id: "43C553083327",
+          name: "Hamad Medjedovic",
+          abbreviation: "HMD",
+          logo: "https://cdn.opticodds.com/team-logos/soccer/6093.png",
+        },
+      ],
+      away_competitors: [
+        {
+          id: "0D9A76558077",
+          name: "Denis Shapovalov",
+          abbreviation: "DSH",
+          logo: "https://cdn.opticodds.com/team-logos/soccer/6073.png",
+        },
+      ],
+      home_team_display: "Hamad Medjedovic",
+      away_team_display: "Denis Shapovalov",
+      status: "live",
+      is_live: true,
+    },
+    scores: {
+      home: {
+        total: 3.0,
+        periods: {
+          period_1: 3.0,
+        },
+        aggregate: null,
+      },
+      away: {
+        total: 3.0,
+        periods: {
+          period_1: 3.0,
+        },
+        aggregate: null,
+      },
+    },
+    in_play: {
+      period: "1H",
+      clock: "13",
+      last_play: null,
+      time_min: null,
+      time_sec: null,
+      balls: null,
+      outs: null,
+      strikes: null,
+      runners: null,
+      batter: null,
+      pitcher: null,
+      possession: null,
+      down: null,
+      distance_to_go: null,
+      field_position: null,
+    },
+    events: [],
+    extra: {
+      decision: null,
+      decision_method: null,
+    },
+    retirement_info: null,
+  },
 ];
 
 module.exports = { liveApiResults };

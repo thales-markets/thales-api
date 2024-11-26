@@ -1,5 +1,5 @@
 const { openMarkets } = require("../mockData/openMarkets");
-const { liveGames } = require("../mockData/liveGames");
+const { liveSoccerGames, liveTennisGames } = require("../mockData/liveGames");
 const { liveApiFixtureOdds } = require("../mockData/opticOdds/opticOddsApiFixtureOdds");
 const { liveApiResults } = require("../mockData/opticOdds/opticOddsApiResults");
 const { teamsMap } = require("../mockData/riskManagement/teamsMap");
@@ -29,6 +29,7 @@ describe("Check live markets without streams", () => {
     process.env.LIVE_ODDS_PROVIDERS = "draftkings";
     process.env.DISABLE_OPTIC_ODDS_STREAM_ODDS = "true";
     process.env.DISABLE_OPTIC_ODDS_STREAM_RESULTS = "true";
+    process.env.TENNIS_MATCH_TIME_DIFFERENCE_MINUTES = "360";
     process.env.IS_TESTNET = "false";
 
     jest.mock("overtime-live-trading-utils");
@@ -45,7 +46,6 @@ describe("Check live markets without streams", () => {
     utilsFilterStaleOddsSpy.mockImplementation((a) => a);
     // Mock Optic Odds fixtures active API
     opticOddsGamesSpy = jest.spyOn(liveMarketsUtils, "fetchOpticOddsGamesForLeague");
-    opticOddsGamesSpy.mockResolvedValue(liveGames);
     // Mock Optic Odds fixtures odds API
     const opticOddsFixtureOddsUtils = require("../../utils/opticOdds/opticOddsFixtureOdds");
     opticOddsFixtureOddsSpy = jest.spyOn(opticOddsFixtureOddsUtils, "fetchOpticOddsFixtureOdds");
@@ -58,6 +58,8 @@ describe("Check live markets without streams", () => {
 
   beforeEach(() => {
     jest.useRealTimers();
+
+    opticOddsGamesSpy.mockResolvedValueOnce(liveSoccerGames).mockResolvedValueOnce(liveTennisGames);
   });
 
   afterAll(() => {
@@ -95,6 +97,8 @@ describe("Check live markets without streams", () => {
   it("checks live markets processing with error (processLiveMarkets)", () => {
     jest.useFakeTimers();
 
+    process.env.IS_TESTNET = "true";
+
     // Mock Optic Odds fixtures odds API
     const liveMarkets = require("../../source/liveMarkets");
     const liveMarketsSpy = jest.spyOn(liveMarkets, "processAllMarkets");
@@ -109,12 +113,46 @@ describe("Check live markets without streams", () => {
     try {
       expect(liveMarketsSpy).toHaveBeenCalledTimes(1);
     } finally {
+      process.env.IS_TESTNET = "false";
       liveMarketsSpy.mockRestore();
     }
   });
 
+  it("checks all markets processing with error (processAllMarkets)", async () => {
+    // Mock some games error
+    opticOddsGamesSpy.mockReset();
+    opticOddsGamesSpy.mockRejectedValue("Some games error");
+
+    // This needs to be imported after mocks in order to work
+    const { redisClient } = require("../../../redis/client");
+    const { processAllMarkets } = require("../../source/liveMarkets");
+
+    // GIVEN X number of ongoing markets on Optimism
+    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(openMarkets));
+
+    const oddsStreamsInfoByLeagueMap = new Map();
+    const oddsInitializedByLeagueMap = new Map();
+    const resultsInitializedByLeagueMap = new Map();
+    const isTestnet = process.env.IS_TESTNET === "true";
+
+    // WHEN process X ongoing markets
+    await processAllMarkets(
+      oddsStreamsInfoByLeagueMap,
+      oddsInitializedByLeagueMap,
+      resultsInitializedByLeagueMap,
+      isTestnet,
+    );
+
+    // THEN zero live markets should be stored in Redis for all networks
+    const liveMarketsOp = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Optimism]));
+    expect(liveMarketsOp.length).toBe(0);
+    const liveMarketsArb = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Arbitrum]));
+    expect(liveMarketsArb.length).toBe(0);
+  });
+
   it("checks zero number of live markets (processAllMarkets)", async () => {
-    // Mocks zero games
+    // Mock zero games
+    opticOddsGamesSpy.mockReset();
     opticOddsGamesSpy.mockResolvedValue([]);
 
     // This needs to be imported after mocks in order to work
@@ -138,17 +176,13 @@ describe("Check live markets without streams", () => {
     );
 
     // THEN zero live markets should be stored in Redis for all networks
-    try {
-      const liveMarketsOp = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Optimism]));
-      expect(liveMarketsOp.length).toBe(0);
-      const liveMarketsArb = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Arbitrum]));
-      expect(liveMarketsArb.length).toBe(0);
-    } finally {
-      opticOddsGamesSpy.mockResolvedValue(liveGames);
-    }
+    const liveMarketsOp = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Optimism]));
+    expect(liveMarketsOp.length).toBe(0);
+    const liveMarketsArb = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.Arbitrum]));
+    expect(liveMarketsArb.length).toBe(0);
   });
 
-  it("checks number of live markets (processAllMarkets)", async () => {
+  it("checks number of live markets on mainnets (processAllMarkets)", async () => {
     // This needs to be imported after mocks in order to work
     const { redisClient } = require("../../../redis/client");
     const { processAllMarkets } = require("../../source/liveMarkets");
@@ -349,6 +383,50 @@ describe("Check live markets without streams", () => {
     }
   });
 
+  it("checks error for bad odds", async () => {
+    // Mock odds empty array
+    const liveApiFixtureOddsWithBadOdds = liveApiFixtureOdds.map((liveApiOdds) => ({
+      ...liveApiOdds,
+      odds: [],
+    }));
+    opticOddsFixtureOddsSpy.mockResolvedValue(liveApiFixtureOddsWithBadOdds);
+
+    // This needs to be imported after mocks in order to work
+    const { redisClient } = require("../../../redis/client");
+    const { processAllMarkets } = require("../../source/liveMarkets");
+
+    // GIVEN X number of ongoing markets on Optimism
+    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism], JSON.stringify(openMarkets));
+
+    const oddsStreamsInfoByLeagueMap = new Map();
+    const oddsInitializedByLeagueMap = new Map();
+    const resultsInitializedByLeagueMap = new Map();
+    const isTestnet = process.env.IS_TESTNET === "true";
+
+    // WHEN process X ongoing markets
+    await processAllMarkets(
+      oddsStreamsInfoByLeagueMap,
+      oddsInitializedByLeagueMap,
+      resultsInitializedByLeagueMap,
+      isTestnet,
+    );
+
+    // THEN error message should be stored to redis
+    await delay(100); // wait for redis set to be completed
+    const errorObj = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+    const firstMarket = Array.from(new Map(openMarkets).values())[0];
+    const errorMessages = new Map(JSON.parse(errorObj)).get(firstMarket.gameId);
+    const errorMessage = errorMessages && errorMessages.length ? errorMessages[0].errorMessage : "";
+
+    try {
+      expect(errorMessage).toBeTruthy();
+      expect(errorMessage).toBe("Returning zero odds cause bookmakers have 0 or 1 odds");
+    } finally {
+      await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+      opticOddsFixtureOddsSpy.mockResolvedValue(liveApiFixtureOdds);
+    }
+  });
+
   it("checks error for result not live", async () => {
     // Mock results isLive false
     const liveApiResultsWithUnknownStatus = liveApiResults.map((liveApiResult) => ({
@@ -384,10 +462,48 @@ describe("Check live markets without streams", () => {
     const errorMessages = new Map(JSON.parse(errorObj)).get(firstMarket.gameId);
     const errorMessage = errorMessages && errorMessages.length ? errorMessages[0].errorMessage : "";
 
-    expect(errorMessage).toBeTruthy();
-    expect(errorMessage).toBe(`Provider marked game ${firstMarket.homeTeam} - ${firstMarket.awayTeam} as not live`);
+    try {
+      expect(errorMessage).toBeTruthy();
+      expect(errorMessage).toBe(`Provider marked game ${firstMarket.homeTeam} - ${firstMarket.awayTeam} as not live`);
+    } finally {
+      await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+      opticOddsResultsSpy.mockResolvedValue(liveApiResults);
+    }
+  });
 
-    await redisClient.del(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[NETWORK.Optimism]);
+  it("checks number of live markets on testnet", async () => {
+    process.env.IS_TESTNET = "true";
+    process.env.LIVE_DUMMY_MARKETS_ENABLED = "true";
+
+    // This needs to be imported after mocks in order to work
+    const { redisClient } = require("../../../redis/client");
+    const { processAllMarkets } = require("../../source/liveMarkets");
+    const dummyMarketsLive = require("../../utils/dummy/dummyMarketsLive.json");
+
+    // GIVEN X number of ongoing markets on Optimism Sepolia
+    await redisClient.set(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.OptimismSepolia], JSON.stringify(openMarkets));
+
+    const oddsStreamsInfoByLeagueMap = new Map();
+    const oddsInitializedByLeagueMap = new Map();
+    const resultsInitializedByLeagueMap = new Map();
+    const isTestnet = process.env.IS_TESTNET === "true";
+
+    // WHEN process X ongoing markets
+    await processAllMarkets(
+      oddsStreamsInfoByLeagueMap,
+      oddsInitializedByLeagueMap,
+      resultsInitializedByLeagueMap,
+      isTestnet,
+    );
+
+    // THEN X live markets should be stored in Redis for Optimism Sepolia
+    try {
+      const liveMarketsOp = JSON.parse(await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS[NETWORK.OptimismSepolia]));
+      expect(liveMarketsOp.length).toBe(openMarkets.length + dummyMarketsLive.length);
+    } finally {
+      process.env.IS_TESTNET = "false";
+      process.env.LIVE_DUMMY_MARKETS_ENABLED = "false";
+    }
   });
 });
 
@@ -445,7 +561,11 @@ describe("Check live markets with streams", () => {
     utilsFilterStaleOddsSpy.mockImplementation((a) => a);
     // Mock Optic Odds fixtures active API
     opticOddsGamesSpy = jest.spyOn(liveMarketsUtils, "fetchOpticOddsGamesForLeague");
-    opticOddsGamesSpy.mockResolvedValue(liveGames);
+    opticOddsGamesSpy
+      .mockResolvedValueOnce(liveSoccerGames)
+      .mockResolvedValueOnce(liveTennisGames)
+      .mockResolvedValueOnce(liveSoccerGames)
+      .mockResolvedValueOnce(liveTennisGames);
     // Mock Optic Odds fixtures odds API
     const opticOddsFixtureOddsUtils = require("../../utils/opticOdds/opticOddsFixtureOdds");
     opticOddsFixtureOddsSpy = jest.spyOn(opticOddsFixtureOddsUtils, "fetchOpticOddsFixtureOdds");

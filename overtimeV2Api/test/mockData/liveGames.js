@@ -1,4 +1,4 @@
-const liveGames = [
+const liveSoccerGames = [
   {
     gameId: "3DA34AEB6566",
     startDate: "2024-11-19T19:45:00Z",
@@ -21,4 +21,17 @@ const liveGames = [
   },
 ];
 
-module.exports = { liveGames };
+const liveTennisGames = [
+  {
+    gameId: "4673726",
+    startDate: "2024-11-09T14:10:00.000Z",
+    homeTeam: "Hamad Medjedovic",
+    awayTeam: "Denis Shapovalov",
+    isLive: true,
+    status: "live",
+    sport: "tennis",
+    league: "ATP",
+  },
+];
+
+module.exports = { liveSoccerGames, liveTennisGames };

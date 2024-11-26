@@ -77,8 +77,8 @@ const processMarket = (
     );
 
 module.exports = {
-  __mockCheckGameContraints,
   checkGameContraints,
+  __mockCheckGameContraints,
   teamNamesMatching,
   gamesDatesMatching,
   getLeagueOpticOddsName,

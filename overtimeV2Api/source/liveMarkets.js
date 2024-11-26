@@ -117,6 +117,8 @@ async function processAllMarkets(
 
   logger.info(`Live markets: Number of ongoing leagues ${uniqueLiveLeagueIds.length}`);
 
+  const errorsMap = new Map();
+
   // Process games per league
   const processMarketsByLeaguePromises = uniqueLiveLeagueIds.map((leagueId) => {
     // Start or re-start one stream for each league except for tennis GS where starting multiple leagues (ATP and WTA)
@@ -129,6 +131,7 @@ async function processAllMarkets(
       config,
       oddsInitializedByLeagueMap,
       resultsInitializedByLeagueMap,
+      errorsMap,
       isTestnet,
     );
   });
@@ -139,9 +142,19 @@ async function processAllMarkets(
   const processedMarketsResponses = await Promise.all(processMarketsByLeaguePromises);
   const liveMarkets = processedMarketsResponses.flat();
 
-  SUPPORTED_NETWORKS.forEach((network) =>
-    redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets)),
-  );
+  const isDummyMarketsEnabled = isTestnet && process.env.LIVE_DUMMY_MARKETS_ENABLED === "true";
+  if (isDummyMarketsEnabled) {
+    liveMarkets.push(...dummyMarketsLive);
+  }
+
+  SUPPORTED_NETWORKS.forEach((network) => {
+    // PERSISTING ERROR MESSAGES
+    if (errorsMap.size > 0) {
+      SUPPORTED_NETWORKS.forEach((network) => persistErrorMessages(errorsMap, network));
+    }
+
+    redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets));
+  });
 }
 
 /*
@@ -158,15 +171,14 @@ async function processMarketsByLeague(
   config,
   oddsInitializedByLeagueMap,
   resultsInitializedByLeagueMap,
+  errorsMap,
   isTestnet,
 ) {
   const PROCESSING_START_TIME = new Date().toUTCString();
-  const SUPPORTED_NETWORKS = isTestnet ? [NETWORK.OptimismSepolia] : [NETWORK.Optimism, NETWORK.Arbitrum];
 
   const { teamsMap, bookmakersData, spreadData } = config;
 
   let liveMarkets = [];
-  const errorsMap = new Map();
 
   try {
     // Fetching games from Optic Odds for given league
@@ -198,9 +210,7 @@ async function processMarketsByLeague(
       })
       .filter((market) => market.opticOddsGameEvent !== undefined);
 
-    const isDummyMarketsEnabled = isTestnet && process.env.LIVE_DUMMY_MARKETS_ENABLED === "true";
-
-    if (ongoingMarketsByOpticOddsGames.length > 0 || isDummyMarketsEnabled) {
+    if (ongoingMarketsByOpticOddsGames.length > 0) {
       // ======================================== ODDS PROCESSING ========================================
       let oddsPerGame = [];
       const isOddsInitialized = !!oddsInitializedByLeagueMap.get(leagueId);
@@ -459,10 +469,6 @@ async function processMarketsByLeague(
         return market;
       });
 
-      if (isTestnet && isDummyMarketsEnabled) {
-        liveMarkets.push(...dummyMarketsLive);
-      }
-
       logger.info(`Live markets for league ID ${leagueId}:
         Number of ongoing markets ${ongoingMarkets.length}
         Number of Optic Odds games ${opticOddsGames.length} and matching games ${ongoingMarketsByOpticOddsGames.length}
@@ -477,11 +483,6 @@ async function processMarketsByLeague(
       logger.info(`Live markets for league ID ${leagueId}:
         Number of ongoing markets ${ongoingMarkets.length}
         Number of Optic Odds games ${opticOddsGames.length} and matching games ${ongoingMarketsByOpticOddsGames.length}`);
-    }
-
-    // PERSISTING ERROR MESSAGES
-    if (errorsMap.size > 0) {
-      SUPPORTED_NETWORKS.forEach((network) => persistErrorMessages(errorsMap, network));
     }
   } catch (e) {
     logAllError(`Live markets: Processing error: ${e}`);
