@@ -47,6 +47,7 @@ const Sport = jest.requireActual("overtime-live-trading-utils").Sport;
 const MoneylineTypes = jest.requireActual("overtime-live-trading-utils").MoneylineTypes;
 const Provider = jest.requireActual("overtime-live-trading-utils").Provider;
 const PeriodType = jest.requireActual("overtime-live-trading-utils").PeriodType;
+const TotalTypes = jest.requireActual("overtime-live-trading-utils").TotalTypes;
 
 const UFC_LEAGUE_IDS = jest.requireActual("overtime-live-trading-utils").UFC_LEAGUE_IDS;
 const LeagueMap = jest.requireActual("overtime-live-trading-utils").LeagueMap;
@@ -96,6 +97,7 @@ module.exports = {
   MoneylineTypes,
   Provider,
   PeriodType,
+  TotalTypes,
   UFC_LEAGUE_IDS,
   LeagueMap,
   LeagueIdMapEnetpulse,
