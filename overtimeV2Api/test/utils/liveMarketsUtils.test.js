@@ -2,9 +2,11 @@ const { League, TotalTypes } = require("overtime-live-trading-utils");
 const KEYS = require("../../../redis/redis-keys");
 const { liveApiFixtures } = require("../mockData/opticOdds/opticOddsApiFixtures");
 const { liveApiFixtureOdds } = require("../mockData/opticOdds/opticOddsApiFixtureOdds");
+const { liveMarkets } = require("../mockData/liveMarkets");
 const { MAX_ALLOWED_STALE_ODDS_DELAY } = require("../../constants/markets");
-const { millisecondsToSeconds } = require("date-fns");
+const { millisecondsToSeconds, subDays } = require("date-fns");
 const { mapOpticOddsApiFixtureOdds } = require("../../utils/opticOdds/opticOddsFixtureOdds");
+const { NETWORK } = require("../../constants/networks");
 
 describe("Check live markets utils", () => {
   let axios;
@@ -147,7 +149,7 @@ describe("Check live markets utils", () => {
   });
 
   it("checks filtered stale odds", () => {
-    // GIVEN function for foltering stale odds
+    // GIVEN function for filtering stale odds
     const { filterStaleOdds } = require("../../utils/liveMarkets");
 
     // WHEN there are only moneyline odds
@@ -179,5 +181,79 @@ describe("Check live markets utils", () => {
 
     // THEN return initial odds
     expect(nonStaledOdds[0].odds).toBe(gameOddsArray[0].odds);
+  });
+
+  it("checks market paused", () => {
+    // GIVEN function for foltering stale odds
+    const { isMarketPaused } = require("../../utils/liveMarkets");
+
+    // WHEN there are some odds
+    let isPaused = isMarketPaused(liveMarkets[0]);
+
+    // THEN return as not paused
+    expect(isPaused).toBe(false);
+
+    // WHEN there are no odds
+    const liveMarketsWithoutOdds = { ...liveMarkets[0], odds: [], childMarkets: [] };
+    isPaused = isMarketPaused(liveMarketsWithoutOdds);
+
+    // THEN return as paused
+    expect(isPaused).toBe(true);
+  });
+
+  it("checks error messages persist", async () => {
+    // This needs to be imported after mocks in order to work
+    const { redisClient } = require("../../../redis/client");
+
+    // GIVEN old error (2 days old) for persist function
+    const network = NETWORK.Optimism;
+    const errorsMap = new Map();
+    const GAME_ID = "0x3030394130434633343445450000000000000000000000000000000000000000";
+    const ERROR_MESSAGE = "Blocking game Liechtenstein - San Marino due to missing game result.";
+    errorsMap.set(GAME_ID, {
+      processingTime: subDays(new Date(), 2).toUTCString(),
+      errorTime: subDays(new Date(), 2).toUTCString(),
+      errorMessage: ERROR_MESSAGE,
+    });
+    const { persistErrorMessages } = require("../../utils/liveMarkets");
+
+    // WHEN persists errors
+    await persistErrorMessages(errorsMap, network);
+
+    // THEN error should be present in Redis
+    let errors = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network]);
+    let storedErrorsMap = new Map(JSON.parse(errors));
+    expect(storedErrorsMap.get(GAME_ID)[0].errorMessage).toBe(ERROR_MESSAGE);
+
+    // WHEN there are 2 errors, old one again and new one
+    const GAME_ID_2 = "0x3742323834333746313245440000000000000000000000000000000000000000";
+    const ERROR_MESSAGE_2 = "Blocking game Malta - Andorra due to missing game result.";
+    errorsMap.set(GAME_ID_2, {
+      processingTime: new Date().toUTCString(),
+      errorTime: new Date().toUTCString(),
+      errorMessage: ERROR_MESSAGE_2,
+    });
+    await persistErrorMessages(errorsMap, network);
+
+    // THEN there should be total 2 errors stored in Redis, not 3
+    errors = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network]);
+    storedErrorsMap = new Map(JSON.parse(errors));
+    expect(storedErrorsMap.size).toBe(2);
+
+    // WHEN previous error is older than 24h and there is new error
+    const errorsMapSecond = new Map();
+    errorsMapSecond.set(GAME_ID_2, {
+      processingTime: new Date().toUTCString(),
+      errorTime: new Date().toUTCString(),
+      errorMessage: ERROR_MESSAGE_2,
+    });
+    await persistErrorMessages(errorsMapSecond, network);
+
+    // THEN old error should not be present and new error should be present in Redis
+    errors = await redisClient.get(KEYS.OVERTIME_V2_LIVE_MARKETS_API_ERROR_MESSAGES[network]);
+    storedErrorsMap = new Map(JSON.parse(errors));
+    expect(storedErrorsMap.size).toBe(1);
+    expect(storedErrorsMap.get(GAME_ID)).toBe(undefined);
+    expect(storedErrorsMap.get(GAME_ID_2)[0].errorMessage).toBe(ERROR_MESSAGE_2);
   });
 });
