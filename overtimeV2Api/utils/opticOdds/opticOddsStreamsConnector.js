@@ -110,7 +110,7 @@ const connectToOpticOddsStreamOdds = (
   });
 
   eventSource.onerror = (event) => {
-    logAllError(`Stream for odds: EventSource error: ${event}`);
+    logAllError(`Stream for odds: EventSource error: ${JSON.stringify(event)}`);
     eventSource.close();
     // Attempt to reconnect after 1 second
     setTimeout(
@@ -165,7 +165,7 @@ const connectToOpticOddsStreamResults = (sport, leagues, isTestnet, isLive = tru
   });
 
   eventSource.onerror = (event) => {
-    logAllError(`Stream for results: EventSource error: ${event}`);
+    logAllError(`Stream for results: EventSource error: ${JSON.stringify(event)}`);
     eventSource.close();
     setTimeout(() => connectToOpticOddsStreamResults(sport, leagues, isTestnet, isLive), 1000); // Attempt to reconnect after 1 second
   };
