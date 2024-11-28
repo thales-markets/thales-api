@@ -151,7 +151,7 @@ async function processAllMarkets(
   SUPPORTED_NETWORKS.forEach((network) => {
     // PERSISTING ERROR MESSAGES
     if (errorsMap.size > 0) {
-      SUPPORTED_NETWORKS.forEach((network) => persistErrorMessages(errorsMap, network));
+      persistErrorMessages(errorsMap, network);
     }
 
     redisClient.set(KEYS.OVERTIME_V2_LIVE_MARKETS[network], JSON.stringify(liveMarkets));
