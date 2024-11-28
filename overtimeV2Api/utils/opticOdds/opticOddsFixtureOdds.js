@@ -160,6 +160,9 @@ const startOddsStreams = (leagueId, bookmakersData, leaguesData, oddsStreamsInfo
   const oddsStreamInfo = oddsStreamsInfoByLeagueMap.get(leagueId);
   const isBookmakersUpdated =
     oddsStreamInfo && oddsStreamInfo.bookmakers.sort().join().toLowerCase() !== bookmakers.sort().join().toLowerCase();
+  const isBetTypesUpdated =
+    oddsStreamInfo && oddsStreamInfo.betTypes.sort().join().toLowerCase() !== betTypes.sort().join().toLowerCase();
+
   const sport = getLeagueSport(leagueId);
 
   // Start new stream for new league or start again when param is updated
@@ -167,7 +170,7 @@ const startOddsStreams = (leagueId, bookmakersData, leaguesData, oddsStreamsInfo
     // start new stream
     const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, sport, streamLeagues, isTestnet);
     oddsStreamsInfoByLeagueMap.set(leagueId, { bookmakers, betTypes, streamSource });
-  } else if (isBookmakersUpdated) {
+  } else if (isBookmakersUpdated || isBetTypesUpdated) {
     // close and start with new bookmakers
     oddsStreamInfo.streamSource.close();
     const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, sport, streamLeagues, isTestnet);
