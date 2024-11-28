@@ -24,7 +24,7 @@ const mapOpticOddsApiResults = (resultsData) =>
     gameId: resultData.fixture.id, // fixture_id
     sport: resultData.sport.name,
     league: resultData.league.name.toLowerCase(),
-    status: resultData.fixture.status.toLowerCase(),
+    status: resultData.fixture.status ? resultData.fixture.status.toLowerCase() : resultData.fixture.status,
     isLive: resultData.fixture.is_live,
     clock: resultData.in_play.clock,
     period: resultData.in_play.period ? resultData.in_play.period.toLowerCase() : resultData.in_play.period,
