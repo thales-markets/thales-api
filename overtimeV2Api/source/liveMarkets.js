@@ -388,12 +388,10 @@ async function processMarketsByLeague(
         const isLive = market.opticOddsResultData.isLive;
         const currentGameStatus = market.opticOddsResultData.status;
 
-        const isStatusOrPeriodUknown = currentGameStatus === null || currentPeriod === null;
-
         // Check errors
         let errorMessage = "";
 
-        if (isStatusOrPeriodUknown) {
+        if (currentGameStatus === null || currentPeriod === null) {
           errorMessage = `Pausing game ${market.opticOddsGameOdds.homeTeam} - ${market.opticOddsGameOdds.awayTeam} due to unknown status or period`;
         } else if (
           market.opticOddsGameOdds?.odds?.some((odds) => isOddsTimeStale(odds.timestamp)) &&
