@@ -75,6 +75,7 @@ const fetchOpticOddsFixturesActive = async (leagues, isLive, startDate = null, p
 
 module.exports = {
   mapOpticOddsApiFixtures,
+  getStartDateBeforeAndAfter,
   fetchOpticOddsFixtures,
   fetchOpticOddsFixturesActive,
 };
