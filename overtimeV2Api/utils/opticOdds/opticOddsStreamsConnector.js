@@ -77,14 +77,16 @@ const connectToOpticOddsStreamOdds = (
      * key = opticOddsStreamEventOddsIdByGameId32C781DB02F8
      * value = [31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5, 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+1_5]
      */
-    const gameId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
-    const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
-    const updatedRedisKeysForOdds = uniq([...prevRedisKeysForOdds, ...currentRedisKeysForGameEvent]);
-    allRedisKeysByGameIdMap.set(gameId, updatedRedisKeysForOdds);
+    if (currentRedisKeysForGameEvent.length) {
+      const gameId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
+      const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
+      const updatedRedisKeysForOdds = uniq([...prevRedisKeysForOdds, ...currentRedisKeysForGameEvent]);
+      allRedisKeysByGameIdMap.set(gameId, updatedRedisKeysForOdds);
 
-    const redisGameKey = getRedisKeyForOpticOddsStreamEventOddsId(gameId, isTestnet);
+      const redisGameKey = getRedisKeyForOpticOddsStreamEventOddsId(gameId, isTestnet);
 
-    redisClient.set(redisGameKey, JSON.stringify(updatedRedisKeysForOdds), { EX: 60 * 60 * 12 }); // delete after 12h
+      redisClient.set(redisGameKey, JSON.stringify(updatedRedisKeysForOdds), { EX: 60 * 60 * 12 }); // delete after 12h
+    }
   });
 
   // If an odds gets locked. You can use this to tell if an odds are no longer available on a sportsbook.
@@ -107,10 +109,12 @@ const connectToOpticOddsStreamOdds = (
       }
     });
 
-    const gameId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
-    const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
-    const updatedRedisKeysForOdds = uniq([...prevRedisKeysForOdds, ...currentRedisKeysForGameEvent]);
-    allRedisKeysByGameIdMap.set(gameId, updatedRedisKeysForOdds);
+    if (currentRedisKeysForGameEvent.length) {
+      const gameId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
+      const prevRedisKeysForOdds = allRedisKeysByGameIdMap.get(gameId) || [];
+      const updatedRedisKeysForOdds = uniq([...prevRedisKeysForOdds, ...currentRedisKeysForGameEvent]);
+      allRedisKeysByGameIdMap.set(gameId, updatedRedisKeysForOdds);
+    }
   });
 
   eventSource.onerror = (event) => {
