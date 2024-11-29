@@ -97,12 +97,14 @@ const connectToOpticOddsStreamOdds = (
     const currentRedisKeysForGameEvent = [];
 
     oddsDataArray.forEach((oddsData) => {
-      oddsData.isLocked = true;
+      if (oddsData.is_live) {
+        oddsData.isLocked = true;
 
-      const redisOddsKey = isTestnet ? `testnet:${oddsData.id}` : oddsData.id;
-      currentRedisKeysForGameEvent.push(redisOddsKey);
+        const redisOddsKey = isTestnet ? `testnet:${oddsData.id}` : oddsData.id;
+        currentRedisKeysForGameEvent.push(redisOddsKey);
 
-      redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
+        redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
+      }
     });
 
     const gameId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
