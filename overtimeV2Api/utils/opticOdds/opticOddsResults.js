@@ -6,7 +6,7 @@ const {
   OPTIC_ODDS_API_KEY_HEADER,
   OPTIC_ODDS_API_RESULTS_MAX_GAMES,
 } = require("../../constants/opticOdds");
-const { logAllError, logAllInfo } = require("../../../utils/logger");
+const { logAllError, logAllInfo, logger } = require("../../../utils/logger");
 
 const isOpticOddsStreamResultsDisabled = process.env.DISABLE_OPTIC_ODDS_STREAM_RESULTS === "true";
 
@@ -137,6 +137,7 @@ const closeInactiveResultsStreams = (resultsStreamSourcesByLeagueMap, activeLeag
   resultsStreamSourcesByLeagueMap.forEach((resultsStreamSource, resultsStreamLeagueId) => {
     const isStreamInactive = !activeLeagues.includes(resultsStreamLeagueId);
     if (isStreamInactive) {
+      logger.info(`Stream for result: Closing stream ${resultsStreamSource.url}`);
       resultsStreamSource.close();
       resultsStreamSourcesByLeagueMap.delete(resultsStreamLeagueId);
     }

@@ -64,10 +64,12 @@ const connectToOpticOddsStreamOdds = (
     // Save each object from event data array to redis with key: Game ID + Sportsbook + Market (Bet Type) + Bet Name
     // e.g. event id: 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5
     oddsDataArray.forEach((oddsData) => {
-      const redisOddsKey = isTestnet ? `testnet:${oddsData.id}` : oddsData.id; // this is Optic Odds ID: 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5
-      currentRedisKeysForGameEvent.push(redisOddsKey);
+      if (oddsData.is_live) {
+        const redisOddsKey = isTestnet ? `testnet:${oddsData.id}` : oddsData.id; // this is Optic Odds ID: 31209-39104-2024-40:draftkings:game_spread:terence_atmane_+2_5
+        currentRedisKeysForGameEvent.push(redisOddsKey);
 
-      redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
+        redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
+      }
     });
 
     /*
@@ -95,12 +97,14 @@ const connectToOpticOddsStreamOdds = (
     const currentRedisKeysForGameEvent = [];
 
     oddsDataArray.forEach((oddsData) => {
-      oddsData.isLocked = true;
+      if (oddsData.is_live) {
+        oddsData.isLocked = true;
 
-      const redisOddsKey = isTestnet ? `testnet:${oddsData.id}` : oddsData.id;
-      currentRedisKeysForGameEvent.push(redisOddsKey);
+        const redisOddsKey = isTestnet ? `testnet:${oddsData.id}` : oddsData.id;
+        currentRedisKeysForGameEvent.push(redisOddsKey);
 
-      redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
+        redisClient.set(redisOddsKey, JSON.stringify(oddsData), { EX: 60 * 60 * 12 }); // delete after 12h
+      }
     });
 
     const gameId = oddsDataArray[0].fixture_id; // event contains only data for one fixture ID
