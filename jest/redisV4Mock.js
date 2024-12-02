@@ -6,13 +6,14 @@ const redis = require("redis-mock");
 const { promisify } = require("util");
 
 const client = redis.createClient();
+const set = promisify(client.set).bind(client);
 const setEx = promisify(client.setex).bind(client);
 
 const v4Client = {
   isOpen: false,
   connect: () => (v4Client.isOpen = true),
   get: promisify(client.get).bind(client),
-  set: promisify(client.set).bind(client),
+  set: (key, value) => set(key, value),
   del: promisify(client.del).bind(client),
   hSet: promisify(client.hset).bind(client),
   hGet: promisify(client.hget).bind(client),
