@@ -46,7 +46,9 @@ const fetchOpticOddsGamesForLeague = async (leagueId, isTestnet) => {
     if (opticOddsGamesResponse) {
       opticOddsGames = mapOpticOddsApiFixtures(opticOddsGamesResponse.data);
       if (opticOddsGames.length > 0) {
-        redisClient.set(getRedisKeyForOpticOddsApiFixtures(leagueId, isTestnet), JSON.stringify(opticOddsGames));
+        redisClient.set(getRedisKeyForOpticOddsApiFixtures(leagueId, isTestnet), JSON.stringify(opticOddsGames), {
+          EX: 60 * 60 * 12,
+        });
       } else {
         logger.info(`Live markets: Could not find any Optic Odds fixtures/active for the given league ID ${leagueId}`);
       }
