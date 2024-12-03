@@ -60,7 +60,7 @@ const processAllLiveResults = async (resultsStreamSourcesByLeagueMap, isTestnet)
 
   uniqueLiveLeagueIds.forEach((leagueId) => {
     // Start or re-start streams
-    startResultsStreams(leagueId, resultsStreamSourcesByLeagueMap);
+    startResultsStreams(leagueId, resultsStreamSourcesByLeagueMap, isTestnet);
   });
 
   // Close inactive streams

@@ -6,7 +6,7 @@ const {
   OPTIC_ODDS_API_KEY_HEADER,
   OPTIC_ODDS_API_RESULTS_MAX_GAMES,
 } = require("../../constants/opticOdds");
-const { logAllError, logAllInfo } = require("../../../utils/logger");
+const { logAllError, logAllInfo, logger } = require("../../../utils/logger");
 
 const isOpticOddsStreamResultsDisabled = process.env.DISABLE_OPTIC_ODDS_STREAM_RESULTS === "true";
 
@@ -24,7 +24,7 @@ const mapOpticOddsApiResults = (resultsData) =>
     gameId: resultData.fixture.id, // fixture_id
     sport: resultData.sport.name,
     league: resultData.league.name.toLowerCase(),
-    status: resultData.fixture.status.toLowerCase(),
+    status: resultData.fixture.status ? resultData.fixture.status.toLowerCase() : resultData.fixture.status,
     isLive: resultData.fixture.is_live,
     clock: resultData.in_play.clock,
     period: resultData.in_play.period ? resultData.in_play.period.toLowerCase() : resultData.in_play.period,
@@ -113,7 +113,7 @@ const fetchOpticOddsResults = async (fixtureIds, isLiveMarketsCaller = false) =>
 };
 
 // Start stream for league ID or re-start when param (sportsbooks) is updated
-const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap) => {
+const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap, isTestnet) => {
   const opticOddsLeagueName = getLeagueOpticOddsName(leagueId);
 
   if (isOpticOddsStreamResultsDisabled || !opticOddsLeagueName) {
@@ -127,7 +127,7 @@ const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap) => {
     const sport = getLeagueSport(leagueId);
     const streamLeagues = opticOddsLeagueName.split(",");
     // start new stream
-    const streamSource = connectToOpticOddsStreamResults(sport, streamLeagues);
+    const streamSource = connectToOpticOddsStreamResults(sport, streamLeagues, isTestnet);
     resultsStreamSourcesByLeagueMap.set(leagueId, streamSource);
   }
 };
@@ -137,6 +137,7 @@ const closeInactiveResultsStreams = (resultsStreamSourcesByLeagueMap, activeLeag
   resultsStreamSourcesByLeagueMap.forEach((resultsStreamSource, resultsStreamLeagueId) => {
     const isStreamInactive = !activeLeagues.includes(resultsStreamLeagueId);
     if (isStreamInactive) {
+      logger.info(`Stream for result: Closing stream ${resultsStreamSource.url}`);
       resultsStreamSource.close();
       resultsStreamSourcesByLeagueMap.delete(resultsStreamLeagueId);
     }

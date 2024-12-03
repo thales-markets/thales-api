@@ -12,7 +12,7 @@ const {
   getLeagueSport,
 } = require("overtime-live-trading-utils");
 const { connectToOpticOddsStreamOdds } = require("./opticOddsStreamsConnector");
-const { logAllInfo, logAllError } = require("../../../utils/logger");
+const { logAllInfo, logAllError, logger } = require("../../../utils/logger");
 
 const isOpticOddsStreamOddsDisabled = process.env.DISABLE_OPTIC_ODDS_STREAM_ODDS === "true";
 
@@ -145,7 +145,7 @@ const fetchOpticOddsFixtureOdds = async (sportsbooks, markets, fixtureIds) => {
 };
 
 // Start stream for league ID or re-start when param (sportsbooks) is updated
-const startOddsStreams = (leagueId, bookmakersData, leaguesData, oddsStreamsInfoByLeagueMap) => {
+const startOddsStreams = (leagueId, bookmakersData, leaguesData, oddsStreamsInfoByLeagueMap, isTestnet) => {
   const opticOddsLeagueName = getLeagueOpticOddsName(leagueId);
 
   if (isOpticOddsStreamOddsDisabled || !opticOddsLeagueName) {
@@ -160,17 +160,21 @@ const startOddsStreams = (leagueId, bookmakersData, leaguesData, oddsStreamsInfo
   const oddsStreamInfo = oddsStreamsInfoByLeagueMap.get(leagueId);
   const isBookmakersUpdated =
     oddsStreamInfo && oddsStreamInfo.bookmakers.sort().join().toLowerCase() !== bookmakers.sort().join().toLowerCase();
+  const isBetTypesUpdated =
+    oddsStreamInfo && oddsStreamInfo.betTypes.sort().join().toLowerCase() !== betTypes.sort().join().toLowerCase();
+
   const sport = getLeagueSport(leagueId);
 
   // Start new stream for new league or start again when param is updated
   if (!oddsStreamInfo) {
     // start new stream
-    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, sport, streamLeagues);
+    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, sport, streamLeagues, isTestnet);
     oddsStreamsInfoByLeagueMap.set(leagueId, { bookmakers, betTypes, streamSource });
-  } else if (isBookmakersUpdated) {
+  } else if (isBookmakersUpdated || isBetTypesUpdated) {
     // close and start with new bookmakers
+    logger.info(`Stream for odds: Closing stream ${oddsStreamInfo.streamSource.url}`);
     oddsStreamInfo.streamSource.close();
-    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, sport, streamLeagues);
+    const streamSource = connectToOpticOddsStreamOdds(bookmakers, betTypes, sport, streamLeagues, isTestnet);
     oddsStreamsInfoByLeagueMap.set(leagueId, { bookmakers, betTypes, streamSource });
   }
 };
@@ -180,6 +184,7 @@ const closeInactiveOddsStreams = (oddsStreamsInfoByLeagueMap, activeLeagues) => 
   oddsStreamsInfoByLeagueMap.forEach((oddsStreamInfo, oddsStreamLeagueId) => {
     const isStreamInactive = !activeLeagues.includes(oddsStreamLeagueId);
     if (isStreamInactive) {
+      logger.info(`Stream for odds: Closing stream ${oddsStreamInfo.streamSource.url}`);
       oddsStreamInfo.streamSource.close();
       oddsStreamsInfoByLeagueMap.delete(oddsStreamLeagueId);
     }
