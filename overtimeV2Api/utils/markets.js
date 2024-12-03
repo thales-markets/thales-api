@@ -63,7 +63,7 @@ const convertFromBytes32 = (value) => {
   return result.replace(/\0/g, "");
 };
 
-const packMarket = (market, isChild) => {
+const packMarket = (market) => {
   const leagueId = `${market.sportId}`.startsWith("152")
     ? League.TENNIS_WTA
     : `${market.sportId}`.startsWith("153")
@@ -123,10 +123,6 @@ const packMarket = (market, isChild) => {
     positionNames: market.positionNames,
     proof: market.proof,
   };
-
-  if (!isChild) {
-    packedMarket.isV3 = !!market.isV3 || packedMarket.sport === Sport.TENNIS;
-  }
 
   return packedMarket;
 };

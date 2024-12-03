@@ -106,4 +106,9 @@ dist
 /.idea/*
 .vscode
 .git
+
+# Test folders
 /*/test/
+jest
+jest.config.js
+__mocks__

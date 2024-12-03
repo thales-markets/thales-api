@@ -4,6 +4,9 @@ import globals from "globals";
 export default [
   {
     files: ["**/*.js"],
+    env: {
+      jest: true,
+    },
     languageOptions: { sourceType: "commonjs" },
     rules: {
       "prefer-const": "error",

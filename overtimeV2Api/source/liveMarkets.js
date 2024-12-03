@@ -63,7 +63,8 @@ async function processLiveMarkets() {
           const startTime = new Date().getTime();
           logAllInfo(`Live markets ${network}: process live markets`);
 
-          await processAllMarkets(
+          // call function from the same file with module.exports for unit tests mocking purpose
+          await module.exports.processAllMarkets(
             oddsStreamsInfoByLeagueMap,
             oddsInitializedByLeagueMap,
             resultsInitializedByLeagueMap,
@@ -110,9 +111,7 @@ async function processAllMarkets(
   const openMarketsMap = new Map(JSON.parse(openMarkets));
 
   const supportedLiveMarkets = Array.from(openMarketsMap.values())
-    .filter(
-      (market) => !!market.isV3 && market.statusCode === "ongoing" && !market.isWholeGameResolved && !market.noTickets,
-    )
+    .filter((market) => market.statusCode === "ongoing" && !market.isWholeGameResolved && !market.noTickets)
     .filter((market) => supportedLiveLeagueIds.includes(market.leagueId));
   const uniqueLiveLeagueIds = uniq(supportedLiveMarkets.map((market) => market.leagueId));
 
@@ -450,7 +449,6 @@ async function processMarketsByLeague(
         market.proof = [];
         market.homeScoreByPeriod = gamesHomeScoreByPeriod;
         market.awayScoreByPeriod = gamesAwayScoreByPeriod;
-        market.isV3 = true;
 
         if (!errorMessage) {
           const processedMarket = processMarket(
@@ -503,4 +501,5 @@ async function processMarketsByLeague(
 
 module.exports = {
   processLiveMarkets,
+  processAllMarkets,
 };
