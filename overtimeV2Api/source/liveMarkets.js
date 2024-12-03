@@ -247,7 +247,9 @@ async function processMarketsByLeague(
         oddsPerGame = mapOpticOddsApiFixtureOdds(oddsFromApi);
 
         if (!isOpticOddsStreamOddsDisabled && oddsPerGame.length > 0) {
-          await redisClient.set(getRedisKeyForOpticOddsApiOdds(leagueId, isTestnet), JSON.stringify(oddsPerGame));
+          await redisClient.set(getRedisKeyForOpticOddsApiOdds(leagueId, isTestnet), JSON.stringify(oddsPerGame), {
+            EX: 60 * 60 * 12,
+          });
           oddsInitializedByLeagueMap.set(leagueId, true);
 
           // clean up old odds from stream when initial execution
@@ -286,7 +288,9 @@ async function processMarketsByLeague(
 
         oddsPerGame = mapOddsStreamEvents(oddsStreamActiveEvents, previousLiveActiveOddsPerGame, opticOddsGameEvents);
 
-        await redisClient.set(getRedisKeyForOpticOddsApiOdds(leagueId, isTestnet), JSON.stringify(oddsPerGame));
+        await redisClient.set(getRedisKeyForOpticOddsApiOdds(leagueId, isTestnet), JSON.stringify(oddsPerGame), {
+          EX: 60 * 60 * 12,
+        });
       }
 
       oddsPerGame = filterStaleOdds(oddsPerGame);
@@ -313,7 +317,11 @@ async function processMarketsByLeague(
 
         resultsPerGame = mapOpticOddsApiResults(resultsFromApi);
         if (!isOpticOddsStreamResultsDisabled && resultsPerGame.length > 0) {
-          await redisClient.set(getRedisKeyForOpticOddsApiResults(leagueId, isTestnet), JSON.stringify(resultsPerGame));
+          await redisClient.set(
+            getRedisKeyForOpticOddsApiResults(leagueId, isTestnet),
+            JSON.stringify(resultsPerGame),
+            { EX: 60 * 60 * 12 },
+          );
           resultsInitializedByLeagueMap.set(leagueId, true);
         }
       } else {
@@ -340,7 +348,9 @@ async function processMarketsByLeague(
 
         resultsPerGame = mapResultsStreamEvents(resultsStreamEvents, previousLiveResultsPerGame);
 
-        await redisClient.set(getRedisKeyForOpticOddsApiResults(leagueId, isTestnet), JSON.stringify(resultsPerGame));
+        await redisClient.set(getRedisKeyForOpticOddsApiResults(leagueId, isTestnet), JSON.stringify(resultsPerGame), {
+          EX: 60 * 60 * 12,
+        });
       }
 
       // Add Optic Odds game results data and filter it
