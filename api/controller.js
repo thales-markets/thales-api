@@ -1391,7 +1391,9 @@ app.get(ENDPOINTS.OVERTIME_V2_LIVE_MARKETS, async (req, res) => {
     const riskManagementLeagues = JSON.parse(await redisClient.get(redisKeyForRiskManagementLeagues)) || [];
 
     const allLiveLeagueIds = getLiveSupportedLeagues(riskManagementLeagues);
-    const allLiveSports = uniqBy(allLiveLeagueIds.map((id) => LeagueMap[id].sport.toLowerCase()));
+    const allLiveSports = uniqBy(
+      allLiveLeagueIds.filter((id) => LeagueMap[id].sport).map((id) => LeagueMap[id].sport.toLowerCase()),
+    );
 
     if (sport && !allLiveSports.includes(sport.toLowerCase())) {
       res.send(
