@@ -720,171 +720,177 @@ app.get(ENDPOINTS.THALES_SPEED_MARKETS_BUY_PARAMS, async (req, res) => {
 
   let response;
   let responseError = "";
-  if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
-    responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
-  }
-  if (!thalesSpeedUtilsMarkets.getIsAssetSupported(asset)) {
-    responseError +=
-      (responseError ? "\n" : "") +
-      "Unsupported asset. Supported assets: " +
-      thalesSpeedConst.SUPPORTED_ASSETS.join(", ");
-  }
-  const speedLimits = await thalesSpeedLimits.getSpeedMarketsLimits(network);
-  if (speedLimits.minBuyinAmount == 0) {
-    responseError += (responseError ? "\n" : "") + "Cannot fetch data from speed AMM data contract!";
-  }
-  if (deltaTimeSec) {
-    if (deltaTimeSec < speedLimits.minimalTimeToMaturity || deltaTimeSec > speedLimits.maximalTimeToMaturity) {
+  try {
+    if (!thalesSpeedUtilsMarkets.getIsNetworkSupported(network)) {
+      responseError = "Unsupported network. Supported networks: " + thalesSpeedUtilsNetworks.getSupportedNetworks();
+      return res.status(400).send(responseError);
+    }
+    if (!thalesSpeedUtilsMarkets.getIsAssetSupported(asset)) {
       responseError +=
         (responseError ? "\n" : "") +
-        "Unsupported delta time. Minimal delta: " +
-        speedLimits.minimalTimeToMaturity +
-        ", maximal delta: " +
-        speedLimits.maximalTimeToMaturity;
+        "Unsupported asset. Supported assets: " +
+        thalesSpeedConst.SUPPORTED_ASSETS.join(", ");
     }
-  } else if (strikeTimeSec) {
-    if (strikeTimeSec.toString().length != 10) {
-      responseError += (responseError ? "\n" : "") + "Unsupported strike time. Strike time has to be in seconds!";
+    const speedLimits = await thalesSpeedLimits.getSpeedMarketsLimits(network);
+    if (speedLimits.minBuyinAmount == 0) {
+      responseError += (responseError ? "\n" : "") + "Cannot fetch data from speed AMM data contract!";
     }
-    if (
-      strikeTimeSec < nowSec + speedLimits.minimalTimeToMaturity ||
-      strikeTimeSec > nowSec + speedLimits.maximalTimeToMaturity
-    ) {
-      responseError +=
-        (responseError ? "\n" : "") +
-        "Unsupported strike time. Minimal strike time: " +
-        speedLimits.minimalTimeToMaturity +
-        " seconds from now" +
-        ", maximal strike time: " +
-        speedLimits.maximalTimeToMaturity +
-        " seconds from now";
-    }
-  } else {
-    responseError += (responseError ? "\n" : "") + "Missing delta time or strike time!";
-  }
-  if (!["UP", "DOWN"].includes(direction)) {
-    responseError += (responseError ? "\n" : "") + "Unsupported direction. Supported directions: UP, DOWN";
-  }
-  if (collateral && !thalesSpeedConst.SUPPORTED_COLLATERALS[network].includes(collateral)) {
-    responseError +=
-      (responseError ? "\n" : "") +
-      "Unsupported collateral for network. Supported collaterals: " +
-      thalesSpeedConst.SUPPORTED_COLLATERALS[network].join(", ");
-  }
-  // Buy-in calculation and validation
-  const isDefaultCollateral = !collateral || thalesSpeedUtilsMarkets.getIsDefaultCollateral(network, collateral);
-  let stableBuyin = buyin;
-  let buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
-    thalesSpeedUtilsFormmaters.truncToDecimals(buyin),
-    network,
-    collateral,
-  );
-  const skewImpact = thalesSpeedUtilsMarkets.getSkewImpact(speedLimits, asset);
-  if (!isDefaultCollateral) {
-    const lpFee = thalesSpeedUtilsMarkets.getFeeByTimeThreshold(
-      deltaTimeSec ? deltaTimeSec : strikeTimeSec - nowSec,
-      speedLimits.timeThresholdsForFees,
-      speedLimits.lpFees,
-      speedLimits.defaultLPFee,
-    );
-    const skew = skewImpact[direction];
-    const oppositeDirection = direction == "UP" ? "DOWN" : "UP";
-    const discount = skewImpact[oppositeDirection] / 2;
-    const totalFee = lpFee + skew - discount + speedLimits.safeBoxImpact;
-
-    if (thalesSpeedUtilsMarkets.getIsStableCollateral(collateral)) {
-      stableBuyin = buyin;
-      const buyinWithFees = buyin * (1 + totalFee + thalesSpeedConst.STABLECOIN_CONVERSION_BUFFER_PERCENTAGE);
-      buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
-        thalesSpeedUtilsFormmaters.truncToDecimals(buyinWithFees),
-        network,
-        collateral,
-      );
-    } else {
-      stableBuyin = await thalesSpeedUtilsMarkets.getConvertedToStable(buyin, collateral, network);
-      if (stableBuyin == 0) {
-        responseError += (responseError ? "\n" : "") + "Conversion to stable collateral failed! Please try again...";
+    if (deltaTimeSec) {
+      if (deltaTimeSec < speedLimits.minimalTimeToMaturity || deltaTimeSec > speedLimits.maximalTimeToMaturity) {
+        responseError +=
+          (responseError ? "\n" : "") +
+          "Unsupported delta time. Minimal delta: " +
+          speedLimits.minimalTimeToMaturity +
+          ", maximal delta: " +
+          speedLimits.maximalTimeToMaturity;
       }
-      const buyinWithFees = buyin * (1 + totalFee);
-      buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
-        thalesSpeedUtilsFormmaters.truncToDecimals(
-          buyinWithFees,
-          thalesSpeedUtilsMarkets.getCollateralDecimals(collateral),
-        ),
-        network,
-        collateral,
-      );
+    } else if (strikeTimeSec) {
+      if (strikeTimeSec.toString().length != 10) {
+        responseError += (responseError ? "\n" : "") + "Unsupported strike time. Strike time has to be in seconds!";
+      }
+      if (
+        strikeTimeSec < nowSec + speedLimits.minimalTimeToMaturity ||
+        strikeTimeSec > nowSec + speedLimits.maximalTimeToMaturity
+      ) {
+        responseError +=
+          (responseError ? "\n" : "") +
+          "Unsupported strike time. Minimal strike time: " +
+          speedLimits.minimalTimeToMaturity +
+          " seconds from now" +
+          ", maximal strike time: " +
+          speedLimits.maximalTimeToMaturity +
+          " seconds from now";
+      }
+    } else {
+      responseError += (responseError ? "\n" : "") + "Missing delta time or strike time!";
     }
-  }
-  if (stableBuyin && (stableBuyin < speedLimits.minBuyinAmount || stableBuyin > speedLimits.maxBuyinAmount)) {
-    const minBuyin = await thalesSpeedUtilsMarkets.getConvertedFromStable(
-      speedLimits.minBuyinAmount,
-      collateral,
-      true,
+    if (!["UP", "DOWN"].includes(direction)) {
+      responseError += (responseError ? "\n" : "") + "Unsupported direction. Supported directions: UP, DOWN";
+    }
+    if (collateral && !thalesSpeedConst.SUPPORTED_COLLATERALS[network].includes(collateral)) {
+      responseError +=
+        (responseError ? "\n" : "") +
+        "Unsupported collateral for network. Supported collaterals: " +
+        thalesSpeedConst.SUPPORTED_COLLATERALS[network].join(", ");
+    }
+    // Buy-in calculation and validation
+    const isDefaultCollateral = !collateral || thalesSpeedUtilsMarkets.getIsDefaultCollateral(network, collateral);
+    let stableBuyin = buyin;
+    let buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
+      thalesSpeedUtilsFormmaters.truncToDecimals(buyin),
       network,
-    );
-    const maxBuyin = await thalesSpeedUtilsMarkets.getConvertedFromStable(
-      speedLimits.maxBuyinAmount,
       collateral,
-      false,
-      network,
     );
-    responseError +=
-      (responseError ? "\n" : "") + "Unsupported buyin. Minimal buyin: " + minBuyin + ", maximal buyin: " + maxBuyin;
-  }
-  // Liquidity per assset and direction validation
-  const riskPerAssetAndDirectionData = speedLimits.risksPerAssetAndDirection.filter(
-    (data) => data.currency == asset && data.position == direction,
-  )[0];
-  const liquidityPerDirection = riskPerAssetAndDirectionData.max - riskPerAssetAndDirectionData.current;
-  if (stableBuyin > liquidityPerDirection) {
-    responseError +=
-      (responseError ? "\n" : "") +
-      "Out of liquidity for asset and direction. Current liquidity: " +
-      liquidityPerDirection;
-  }
-  // Liquidity validation
-  const riskPerAssetData = speedLimits.risksPerAsset.filter((data) => data.currency == asset)[0];
-  const liquidity = riskPerAssetData.max - riskPerAssetData.current;
-  if (stableBuyin > liquidity) {
-    responseError += (responseError ? "\n" : "") + "Out of liquidity for asset. Current liquidity: " + liquidity;
-  }
+    const skewImpact = thalesSpeedUtilsMarkets.getSkewImpact(speedLimits, asset);
+    if (!isDefaultCollateral) {
+      const lpFee = thalesSpeedUtilsMarkets.getFeeByTimeThreshold(
+        deltaTimeSec ? deltaTimeSec : strikeTimeSec - nowSec,
+        speedLimits.timeThresholdsForFees,
+        speedLimits.lpFees,
+        speedLimits.defaultLPFee,
+      );
+      const skew = skewImpact[direction];
+      const oppositeDirection = direction == "UP" ? "DOWN" : "UP";
+      const discount = skewImpact[oppositeDirection] / 2;
+      const totalFee = lpFee + skew - discount + speedLimits.safeBoxImpact;
 
-  let pythPriceData = { priceUpdateData: [], updateFee: 0, pythPrice: 0 };
-  if (!responseError) {
-    pythPriceData = await thalesPythPrice.getPythLatestPriceData(network, asset);
-
-    response = {
-      methodName: isDefaultCollateral ? "createNewMarket" : "createNewMarketWithDifferentCollateral",
-      asset: thalesSpeedUtilsFormmaters.assetFormatter(asset),
-      strikeTime: deltaTimeSec ? 0 : strikeTimeSec,
-      delta: deltaTimeSec ? deltaTimeSec : 0,
-      direction: direction == "UP" ? 0 : 1,
-      priceUpdateData: pythPriceData.priceUpdateData,
-      pythPrice: pythPriceData.pythPrice,
-      referrer: thalesSpeedConst.ZERO_ADDRESS,
-      skewImpact: thalesSpeedUtilsFormmaters.skewParser(skewImpact[direction]),
-    };
-
-    const isEth = thalesSpeedUtilsMarkets.getIsEth(collateral);
-    response = isDefaultCollateral
-      ? {
-          ...response,
-          buyinAmount,
+      if (thalesSpeedUtilsMarkets.getIsStableCollateral(collateral)) {
+        stableBuyin = buyin;
+        const buyinWithFees = buyin * (1 + totalFee + thalesSpeedConst.STABLECOIN_CONVERSION_BUFFER_PERCENTAGE);
+        buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
+          thalesSpeedUtilsFormmaters.truncToDecimals(buyinWithFees),
+          network,
+          collateral,
+        );
+      } else {
+        stableBuyin = await thalesSpeedUtilsMarkets.getConvertedToStable(buyin, collateral, network);
+        if (stableBuyin == 0) {
+          responseError += (responseError ? "\n" : "") + "Conversion to stable collateral failed! Please try again...";
         }
-      : {
-          ...response,
-          collateral: thalesSpeedUtilsMarkets.getCollateralAddress(network, collateral),
-          collateralAmount: buyinAmount,
-          isEth,
-        };
-    response = { ...response, value: isEth ? buyinAmount.add(pythPriceData.updateFee) : pythPriceData.updateFee };
-  }
+        const buyinWithFees = buyin * (1 + totalFee);
+        buyinAmount = thalesSpeedUtilsFormmaters.coinParser(
+          thalesSpeedUtilsFormmaters.truncToDecimals(
+            buyinWithFees,
+            thalesSpeedUtilsMarkets.getCollateralDecimals(collateral),
+          ),
+          network,
+          collateral,
+        );
+      }
+    }
+    if (stableBuyin && (stableBuyin < speedLimits.minBuyinAmount || stableBuyin > speedLimits.maxBuyinAmount)) {
+      const minBuyin = await thalesSpeedUtilsMarkets.getConvertedFromStable(
+        speedLimits.minBuyinAmount,
+        collateral,
+        true,
+        network,
+      );
+      const maxBuyin = await thalesSpeedUtilsMarkets.getConvertedFromStable(
+        speedLimits.maxBuyinAmount,
+        collateral,
+        false,
+        network,
+      );
+      responseError +=
+        (responseError ? "\n" : "") + "Unsupported buyin. Minimal buyin: " + minBuyin + ", maximal buyin: " + maxBuyin;
+    }
+    // Liquidity per assset and direction validation
+    const riskPerAssetAndDirectionData = speedLimits.risksPerAssetAndDirection.filter(
+      (data) => data.currency == asset && data.position == direction,
+    )[0];
+    const liquidityPerDirection = riskPerAssetAndDirectionData.max - riskPerAssetAndDirectionData.current;
+    if (stableBuyin > liquidityPerDirection) {
+      responseError +=
+        (responseError ? "\n" : "") +
+        "Out of liquidity for asset and direction. Current liquidity: " +
+        liquidityPerDirection;
+    }
+    // Liquidity validation
+    const riskPerAssetData = speedLimits.risksPerAsset.filter((data) => data.currency == asset)[0];
+    const liquidity = riskPerAssetData.max - riskPerAssetData.current;
+    if (stableBuyin > liquidity) {
+      responseError += (responseError ? "\n" : "") + "Out of liquidity for asset. Current liquidity: " + liquidity;
+    }
 
-  if (responseError) {
-    return res.status(400).send(responseError);
-  } else {
-    return res.send(response);
+    let pythPriceData = { priceUpdateData: [], updateFee: 0, pythPrice: 0 };
+    if (!responseError) {
+      pythPriceData = await thalesPythPrice.getPythLatestPriceData(network, asset);
+
+      response = {
+        methodName: isDefaultCollateral ? "createNewMarket" : "createNewMarketWithDifferentCollateral",
+        asset: thalesSpeedUtilsFormmaters.assetFormatter(asset),
+        strikeTime: deltaTimeSec ? 0 : strikeTimeSec,
+        delta: deltaTimeSec ? deltaTimeSec : 0,
+        direction: direction == "UP" ? 0 : 1,
+        priceUpdateData: pythPriceData.priceUpdateData,
+        pythPrice: pythPriceData.pythPrice,
+        referrer: thalesSpeedConst.ZERO_ADDRESS,
+        skewImpact: thalesSpeedUtilsFormmaters.skewParser(skewImpact[direction]),
+      };
+
+      const isEth = thalesSpeedUtilsMarkets.getIsEth(collateral);
+      response = isDefaultCollateral
+        ? {
+            ...response,
+            buyinAmount,
+          }
+        : {
+            ...response,
+            collateral: thalesSpeedUtilsMarkets.getCollateralAddress(network, collateral),
+            collateralAmount: buyinAmount,
+            isEth,
+          };
+      response = { ...response, value: isEth ? buyinAmount.add(pythPriceData.updateFee) : pythPriceData.updateFee };
+    }
+
+    if (responseError) {
+      return res.status(400).send(responseError);
+    } else {
+      return res.send(response);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error });
   }
 });
 
