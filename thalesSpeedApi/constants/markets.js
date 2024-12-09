@@ -8,9 +8,6 @@ const SUPPORTED_NETWORKS = [
   NETWORK.Arbitrum,
   NETWORK.Base,
   NETWORK.Polygon,
-  NETWORK.ZkSync,
-  NETWORK.BlastSepolia,
-  NETWORK.ZkSyncSepolia,
   NETWORK.OptimismGoerli,
 ];
 const SUPPORTED_ASSETS = [CRYPTO_CURRENCY_MAP.BTC, CRYPTO_CURRENCY_MAP.ETH];
