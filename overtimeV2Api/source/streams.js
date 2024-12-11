@@ -50,7 +50,9 @@ const processAllLiveResults = async (resultsStreamSourcesByLeagueMap, isTestnet)
   const supportedLiveLeagueIds = getLiveSupportedLeagues(riskManagementLeagues);
 
   // Read open markets only from one network as markets are the same on all networks
-  const openMarkets = await redisClient.get(KEYS.OVERTIME_V2_OPEN_MARKETS[NETWORK.Optimism]);
+  const openMarkets = await redisClient.get(
+    KEYS.OVERTIME_V2_OPEN_MARKETS[isTestnet ? NETWORK.OptimismSepolia : NETWORK.Optimism],
+  );
   const openMarketsMap = new Map(JSON.parse(openMarkets));
 
   const supportedLiveMarkets = Array.from(openMarketsMap.values())
