@@ -127,8 +127,7 @@ const startResultsStreams = (leagueId, resultsStreamSourcesByLeagueMap, isTestne
     const sport = getLeagueSport(leagueId);
     const streamLeagues = opticOddsLeagueName.split(",");
     // start new stream
-    const streamSource = connectToOpticOddsStreamResults(sport, streamLeagues, isTestnet);
-    resultsStreamSourcesByLeagueMap.set(leagueId, streamSource);
+    connectToOpticOddsStreamResults(sport, streamLeagues, leagueId, resultsStreamSourcesByLeagueMap, isTestnet);
   }
 };
 

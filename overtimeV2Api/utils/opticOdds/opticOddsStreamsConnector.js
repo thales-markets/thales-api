@@ -20,6 +20,8 @@ const connectToOpticOddsStreamOdds = (
   markets,
   sport,
   leagues,
+  leagueId,
+  infoByLeagueIdMap,
   isTestnet,
   lastEntryId = "",
   lastRedisKeysMap = new Map(),
@@ -38,6 +40,8 @@ const connectToOpticOddsStreamOdds = (
   const url = `${OPTIC_ODDS_API_BASE_URL_V3}/stream/${sport}/odds?${queryString.toString()}`;
   logger.info(`Stream for odds: Connecting to stream ${url}`);
   const eventSource = new EventSource(url);
+
+  infoByLeagueIdMap.set(leagueId, { sportsbooks, markets, eventSource });
 
   const redisClient = getRedisClientForStreamOdds();
 
@@ -128,6 +132,8 @@ const connectToOpticOddsStreamOdds = (
           markets,
           sport,
           leagues,
+          leagueId,
+          infoByLeagueIdMap,
           isTestnet,
           lastReceivedEntryId,
           allRedisKeysByGameIdMap,
@@ -135,11 +141,9 @@ const connectToOpticOddsStreamOdds = (
       1000,
     );
   };
-
-  return eventSource;
 };
 
-const connectToOpticOddsStreamResults = (sport, leagues, isTestnet, isLive = true) => {
+const connectToOpticOddsStreamResults = (sport, leagues, leagueId, infoByLeagueIdMap, isTestnet, isLive = true) => {
   // Construct the query string with repeated parameters
   const queryString = new URLSearchParams();
   queryString.append("key", process.env.OPTIC_ODDS_API_KEY);
@@ -149,6 +153,8 @@ const connectToOpticOddsStreamResults = (sport, leagues, isTestnet, isLive = tru
   const url = `${OPTIC_ODDS_API_BASE_URL_V3}/stream/${sport}/results?${queryString.toString()}`;
   logger.info(`Stream for results: Connecting to stream ${url}`);
   const eventSource = new EventSource(url);
+
+  infoByLeagueIdMap.set(leagueId, eventSource);
 
   const redisClient = getRedisClientForStreamResults();
 
@@ -175,10 +181,11 @@ const connectToOpticOddsStreamResults = (sport, leagues, isTestnet, isLive = tru
   eventSource.onerror = (event) => {
     logAllError(`Stream for results: EventSource error: ${JSON.stringify(event)}`);
     eventSource.close();
-    setTimeout(() => connectToOpticOddsStreamResults(sport, leagues, isTestnet, isLive), 1000); // Attempt to reconnect after 1 second
+    setTimeout(
+      () => connectToOpticOddsStreamResults(sport, leagues, leagueId, infoByLeagueIdMap, isTestnet, isLive),
+      1000,
+    ); // Attempt to reconnect after 1 second
   };
-
-  return eventSource;
 };
 
 module.exports = {
