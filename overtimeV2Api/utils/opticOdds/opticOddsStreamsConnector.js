@@ -41,7 +41,7 @@ const connectToOpticOddsStreamOdds = (
   logger.info(`Stream for odds: Connecting to stream ${url}`);
   const eventSource = new EventSource(url);
 
-  infoByLeagueIdMap.set(leagueId, { sportsbooks, markets, eventSource });
+  infoByLeagueIdMap.set(leagueId, { bookmakers: sportsbooks, betTypes: markets, streamSource: eventSource });
 
   const redisClient = getRedisClientForStreamOdds();
 
