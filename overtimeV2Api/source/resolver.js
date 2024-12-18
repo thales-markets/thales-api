@@ -73,26 +73,29 @@ async function resolveMarkets(network) {
   const allOpenGameIds = allOpenMarkets.map((market) => market.gameId);
 
   if (allOpenGameIds.length > 0) {
-    let emptyArrays = Array(allOpenGameIds.length).fill(0);
     const gamesInfoMap = await getGamesInfoMap();
 
     // check are there any unresolved open markets
+    const allOpenTypeIds = allOpenMarkets.map((market) => market.typeId);
+    const allOpenPlayerIds = allOpenMarkets.map((market) => market.playerProps.playerId);
+    const allOpenLines = allOpenMarkets.map((market) => market.line);
     const [areMarketsResolved, onlyActiveGameIds] = await Promise.all([
-      sportsAmmData.areMarketsResolved(allOpenGameIds, emptyArrays, emptyArrays, emptyArrays),
+      sportsAmmData.areMarketsResolved(allOpenGameIds, allOpenTypeIds, allOpenPlayerIds, allOpenLines),
       sportsAmmData.getOnlyActiveGameIdsAndTicketsOf(allOpenGameIds, 0, allOpenGameIds.length),
     ]);
     const readyForResolveGameIds = allOpenGameIds.filter((_, index) => areMarketsResolved[index]);
+    const readyForResolveTypeIds = allOpenTypeIds.filter((_, index) => areMarketsResolved[index]);
+    const readyForResolvePlayerIds = allOpenPlayerIds.filter((_, index) => areMarketsResolved[index]);
     const activeGameIdsWithoutTickets = allOpenGameIds.filter(
       (gameId) => !onlyActiveGameIds.activeGameIds.includes(gameId),
     );
 
     if (readyForResolveGameIds.length > 0) {
-      emptyArrays = Array(readyForResolveGameIds.length).fill(0);
       // get results for unresolved markets
       const resultsForMarkets = await sportsAmmData.getResultsForMarkets(
         readyForResolveGameIds,
-        emptyArrays,
-        emptyArrays,
+        readyForResolveTypeIds,
+        readyForResolvePlayerIds,
       );
 
       console.log(`Resolver ${NETWORK_NAME[network]}: Total ready for resolve: ${readyForResolveGameIds.length}`);
