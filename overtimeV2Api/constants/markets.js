@@ -232,6 +232,7 @@ const MarketType = {
   PLAYER_PROPS_FIRST_SCORER: 11236,
   PLAYER_PROPS_LAST_SCORER: 11237,
   PLAYER_PROPS_SHOTS_ON_TARGET: 11238,
+  PLAYER_PROPS_TOTAL_SHOTS: 11239,
 
   // UFC market types
   WINNING_ROUND: 10151,
@@ -1422,6 +1423,12 @@ const MarketTypeMap = {
     name: "Shots on target",
     resultType: ResultType.OVER_UNDER,
   },
+  [MarketType.PLAYER_PROPS_TOTAL_SHOTS]: {
+    id: MarketType.PLAYER_PROPS_TOTAL_SHOTS,
+    key: "shots",
+    name: "Shots",
+    resultType: ResultType.OVER_UNDER,
+  },
 
   // UFC market types
   [MarketType.WINNING_ROUND]: {
@@ -1820,6 +1827,7 @@ const PLAYER_PROPS_MARKET_TYPES = [
   MarketType.PLAYER_PROPS_FIRST_SCORER,
   MarketType.PLAYER_PROPS_LAST_SCORER,
   MarketType.PLAYER_PROPS_SHOTS_ON_TARGET,
+  MarketType.PLAYER_PROPS_TOTAL_SHOTS,
 ];
 
 const ONE_SIDE_PLAYER_PROPS_MARKET_TYPES = [
