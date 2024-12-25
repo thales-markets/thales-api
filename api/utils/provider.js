@@ -39,7 +39,7 @@ const getProvider = (network) => {
   let rpcUrl = "";
   switch (process.env.RPC_PROVIDER) {
     case "infura":
-      rpcUrl = `${INFURA_URL[network]}${process.env.INFURA_ID}`;
+      rpcUrl = `${INFURA_URL[network]}${process.env.INFURA_ID_CACHE}`;
       break;
     case "llama":
       rpcUrl =
