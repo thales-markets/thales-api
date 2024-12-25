@@ -9,10 +9,12 @@ const {
   Status,
   PARENT_MARKET_PROPERTIES_TO_EXCLUDE,
   CHILD_MARKET_PROPERTIES_TO_EXCLUDE,
+  THALES_ADDED_PAYOUT_PERCENTAGE,
 } = require("../constants/markets");
 const bytes32 = require("bytes32");
 const { getLeagueSport, League, Sport, getLeagueLabel, UFC_LEAGUE_IDS } = require("overtime-live-trading-utils");
 const { bigNumberFormatter } = require("./formatters");
+const { isThales } = require("./collaterals");
 
 const formatMarketOdds = (odds, oddsType) => {
   if (!odds || odds === null) {
@@ -167,6 +169,9 @@ const excludePropertiesFromMarket = (market, shouldIncludeProofs, skipChildMarke
   return newMarket;
 };
 
+const getAddedPayoutOdds = (collateral, odds) =>
+  isThales(collateral) ? odds / (1 + THALES_ADDED_PAYOUT_PERCENTAGE - THALES_ADDED_PAYOUT_PERCENTAGE * odds) : odds;
+
 module.exports = {
   formatMarketOdds,
   isOneSideMarket,
@@ -179,4 +184,5 @@ module.exports = {
   isFuturesMarket,
   packMarket,
   excludePropertiesFromMarket,
+  getAddedPayoutOdds,
 };
