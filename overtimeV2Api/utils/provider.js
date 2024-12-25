@@ -28,9 +28,19 @@ const LLAMA_URL = {
   [NETWORK.Base]: "https://base.llamarpc.com/sk_llama_",
 };
 
+const INFURA_URL = {
+  [NETWORK.Optimism]: "https://optimism-mainnet.infura.io/v3/",
+  [NETWORK.OptimismSepolia]: "https://optimism-sepolia.infura.io/v3/",
+  [NETWORK.Arbitrum]: "https://arbitrum-mainnet.infura.io/v3/",
+  [NETWORK.Base]: "https://base-mainnet.infura.io/v3/",
+};
+
 const getProvider = (network) => {
   let rpcUrl = "";
   switch (process.env.RPC_PROVIDER) {
+    case "infura":
+      rpcUrl = `${INFURA_URL[network]}${process.env.INFURA_ID}`;
+      break;
     case "llama":
       rpcUrl =
         Number(network) === NETWORK.OptimismSepolia
