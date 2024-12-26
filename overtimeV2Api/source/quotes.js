@@ -103,13 +103,17 @@ async function fetchTicketAmmQuote(
 async function getCollateralRate(network, provider, collateral) {
   if (
     !collateral ||
-    (collateral.toUpperCase() !== "ETH" && collateral.toUpperCase() !== "WETH" && collateral.toUpperCase() !== "THALES")
+    (collateral.toUpperCase() !== "ETH" && collateral.toUpperCase() !== "WETH" && !isThales(collateral))
   ) {
     return 1;
   } else if (collateral.toUpperCase() === "ETH" || collateral.toUpperCase() === "WETH") {
     const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
     const ethRate = bigNumberFormatter(await priceFeed.rateForCurrency(formatBytes32String("ETH")));
     return ethRate;
+  } else if (collateral.toUpperCase() === "THALES-CONTRACT") {
+    const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
+    const thalesContractRate = bigNumberFormatter(await priceFeed.rateForCurrency(formatBytes32String("THALES")));
+    return thalesContractRate;
   } else {
     const obj = await redisClient.get(KEYS.TOKEN);
     const tokenMap = new Map(JSON.parse(obj));
@@ -392,6 +396,16 @@ async function getAmmQuote(network, tradeData, buyInAmount, collateral, isSystem
     ),
     getLiquidityData(network, mappedTradeData, provider),
   ]);
+
+  if (!liquidityDataResponse.error && isThales(collateral)) {
+    const [selectedCollateralCurrencyRate, thalesContractCurrencyRate] = await Promise.all([
+      getCollateralRate(network, provider, collateral),
+      getCollateralRate(network, provider, "THALES-CONTRACT"),
+    ]);
+    liquidityDataResponse.ticketLiquidityInUsd = Math.floor(
+      (liquidityDataResponse.ticketLiquidityInUsd * selectedCollateralCurrencyRate) / thalesContractCurrencyRate,
+    );
+  }
 
   const quoteData = quoteDataResponse.error
     ? {

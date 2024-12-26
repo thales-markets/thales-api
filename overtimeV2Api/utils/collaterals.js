@@ -33,7 +33,7 @@ const isLpSupported = (collateral) => {
 };
 
 const isThales = (collateral) => {
-  return !!collateral && collateral.toUpperCase() === "THALES";
+  return !!collateral && (collateral.toUpperCase() === "THALES" || collateral.toUpperCase() === "THALES-CONTRACT");
 };
 
 module.exports = {

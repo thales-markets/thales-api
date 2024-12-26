@@ -1657,6 +1657,11 @@ app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
     return;
   }
 
+  if (isSystemBet && (Number(systemBetDenominator) < 2 || Number(systemBetDenominator) >= tradeData.length)) {
+    res.send(`System bet denominator has to be greater than 1 and less than ${tradeData.length}.`);
+    return;
+  }
+
   try {
     const quote = await overtimeV2Quotes.getAmmQuote(
       Number(network),
