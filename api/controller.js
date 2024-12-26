@@ -1649,7 +1649,10 @@ app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
     return;
   }
 
-  if (isSystemBet && (!isNumeric(systemBetDenominator.toString()) || Number(systemBetDenominator) === 0)) {
+  if (
+    isSystemBet &&
+    (!systemBetDenominator || !isNumeric(systemBetDenominator.toString()) || Number(systemBetDenominator) === 0)
+  ) {
     res.send("Invalid value for system bet denominator. The system bet denominator must be a number greater than 0.");
     return;
   }

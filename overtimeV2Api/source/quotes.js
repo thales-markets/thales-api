@@ -160,12 +160,13 @@ async function getQuoteData(
     const maxSupportedAmount = bigNumberFormatter(sportsAmmParameters.maxSupportedAmount, defaultCollateral.decimals);
     const maxTicketSize = Number(sportsAmmParameters.maxTicketSize);
     const maxAllowedSystemCombinations = Number(sportsAmmParameters.maxAllowedSystemCombinations);
+    const maxSupportedOdds = bigNumberFormatter(sportsAmmParameters.maxSupportedOdds);
 
     if (maxTicketSize < mappedTradeData.length) {
       return { error: `The maximum number of positions on the ticket is ${maxTicketSize}.` };
     }
 
-    let numberOfSystemBetCombination = 1;
+    let numberOfSystemBetCombinations = 1;
     let systemBetData = {};
     if (isSystemBet) {
       if (SYSTEM_BET_MINIMUM_MARKETS > mappedTradeData.length) {
@@ -173,19 +174,14 @@ async function getQuoteData(
       }
 
       for (let i = 0; i < systemBetDenominator; i++) {
-        numberOfSystemBetCombination = (numberOfSystemBetCombination * (mappedTradeData.length - i)) / (i + 1);
+        numberOfSystemBetCombinations = (numberOfSystemBetCombinations * (mappedTradeData.length - i)) / (i + 1);
       }
 
-      if (numberOfSystemBetCombination > maxAllowedSystemCombinations) {
+      if (numberOfSystemBetCombinations > maxAllowedSystemCombinations) {
         return { error: `Max allowed number of system combinations is ${maxAllowedSystemCombinations}` };
       }
 
-      systemBetData = getSystemBetData(
-        tradeData,
-        systemBetDenominator,
-        collateral,
-        sportsAmmData.maxSupportedOdds || 1,
-      );
+      systemBetData = getSystemBetData(tradeData, systemBetDenominator, collateral, maxSupportedOdds);
     }
 
     const [minBuyInAmount, sportAmmQuote] = await Promise.all([
@@ -208,6 +204,7 @@ async function getQuoteData(
         collateralAddress,
         collateralDecimals,
         isDefaultCollateral,
+        isSystemBet,
         systemBetDenominator,
       ),
     ]);
@@ -258,7 +255,7 @@ async function getQuoteData(
     return isSystemBet
       ? {
           system: `${systemBetDenominator}/${mappedTradeData.length}`,
-          numberOfSystemBetCombination,
+          numberOfSystemBetCombination: numberOfSystemBetCombinations,
           minQuote: {
             american: formatMarketOdds(systemBetData.systemBetMinimumQuote, OddsType.AMERICAN),
             decimal: formatMarketOdds(systemBetData.systemBetMinimumQuote, OddsType.DECIMAL),
@@ -270,15 +267,15 @@ async function getQuoteData(
             normalizedImplied: formatMarketOdds(systemBetData.systemBetQuotePerCombination, OddsType.AMM),
           },
           buyInPerCombination: {
-            [collateral]: buyInAmount / numberOfSystemBetCombination,
-            usd: buyInAmountInDefaultCollateral / numberOfSystemBetCombination,
+            [collateral]: buyInAmount / numberOfSystemBetCombinations,
+            usd: buyInAmountInDefaultCollateral / numberOfSystemBetCombinations,
           },
           minPayout: {
             [collateral]:
               collateralHasLp && !isDefaultCollateral
-                ? buyInAmount / numberOfSystemBetCombination / systemBetData.systemBetMinimumQuote
+                ? buyInAmount / numberOfSystemBetCombinations / systemBetData.systemBetMinimumQuote
                 : undefined,
-            usd: buyInAmountInDefaultCollateral / numberOfSystemBetCombination / systemBetData.systemBetMinimumQuote,
+            usd: buyInAmountInDefaultCollateral / numberOfSystemBetCombinations / systemBetData.systemBetMinimumQuote,
             payoutCollateral: collateralHasLp ? collateral : defaultCollateral.symbol,
           },
           maxPayout: {
@@ -286,11 +283,6 @@ async function getQuoteData(
             usd: payoutInDefaultCollateral,
             payoutCollateral: collateralHasLp ? collateral : defaultCollateral.symbol,
           },
-          // potentialProfit: {
-          //   [collateral]: collateralHasLp && !isDefaultCollateral ? payout - buyInAmount : undefined,
-          //   usd: payoutInDefaultCollateral - buyInAmountInDefaultCollateral,
-          //   percentage: (payoutInDefaultCollateral - buyInAmountInDefaultCollateral) / buyInAmountInDefaultCollateral,
-          // },
           buyInAmountInUsd: buyInAmountInDefaultCollateral,
         }
       : {
