@@ -407,6 +407,12 @@ async function getAmmQuote(network, tradeData, buyInAmount, collateral, isSystem
     );
   }
 
+  if (!liquidityDataResponse.error && isSystemBet) {
+    liquidityDataResponse.ticketLiquidityInUsd = Math.floor(
+      (liquidityDataResponse.ticketLiquidityInUsd * tradeData.length) / systemBetDenominator,
+    );
+  }
+
   const quoteData = quoteDataResponse.error
     ? {
         error: quoteDataResponse.error,
