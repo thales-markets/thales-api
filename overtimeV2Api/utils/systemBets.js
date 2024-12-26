@@ -108,7 +108,7 @@ const getSystemBetPayoutData = (markets, systemBetDenominator, buyInAmount, tota
       const marketIndex = currentCombination[j];
       const market = markets[marketIndex];
 
-      originalCominationQuote *= market.odd;
+      originalCominationQuote *= market.odd.normalizedImplied;
 
       if (!market.isResolved) {
         areAllMarketsResolved = false;
@@ -118,7 +118,7 @@ const getSystemBetPayoutData = (markets, systemBetDenominator, buyInAmount, tota
         continue;
       }
       if (market.isWinning) {
-        combinationQuote *= market.odd;
+        combinationQuote *= market.odd.normalizedImplied;
       } else {
         combinationQuote = 0;
       }
@@ -141,6 +141,7 @@ const getSystemBetPayoutData = (markets, systemBetDenominator, buyInAmount, tota
 
   return {
     systemBetPayout: areAllMarketsResolved ? systemBetPayout : 0,
+    systemBetMinimumQuote,
     systemBetPayoutMinPayout: buyinPerCombination / systemBetMinimumQuote,
     numberOfCombinations,
     buyinPerCombination,

@@ -22,6 +22,7 @@ const { getLeagueSport, getLeagueLabel, League, UFC_LEAGUE_IDS } = require("over
 const { orderBy } = require("lodash");
 const positionNamesMap = require("../assets/positionNamesMap.json");
 const futuresPositionNamesMap = require("../assets/futuresPositionNamesMap.json");
+const { getSystemBetPayoutData } = require("../utils/systemBets");
 
 async function getPlayersInfoMap() {
   const obj = await redisClient.get(KEYS.OVERTIME_V2_PLAYERS_INFO);
@@ -67,6 +68,7 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
     finalPayout: bigNumberFormatter(ticket.finalPayout, collateralDecimals),
     isLive: ticket.isLive,
     isFreeBet: ticket.ticketOwner.toLowerCase() == freeBetsHolderContract.addresses[network].toLowerCase(),
+    isSystemBet: ticket.isSystem,
 
     sportMarkets: ticket.marketsData.map((market, index) => {
       const leagueId = `${market.sportId}`.startsWith("152")
@@ -168,11 +170,47 @@ const mapTicket = (ticket, network, gamesInfoMap, playersInfoMap) => {
     }),
   };
 
+  if (mappedTicket.isSystemBet) {
+    const systemBetDenominator = Number(ticket.systemBetDenominator);
+    const systemBetPayoutData = getSystemBetPayoutData(
+      mappedTicket.sportMarkets,
+      systemBetDenominator,
+      mappedTicket.buyInAmount,
+      mappedTicket.totalQuote,
+    );
+    mappedTicket.systemBetData = {
+      systemBetDenominator: Number(ticket.systemBetDenominator),
+      numberOfCombination: systemBetPayoutData.numberOfCombinations,
+      buyInPerCombination: systemBetPayoutData.buyinPerCombination,
+      minQuote: systemBetPayoutData.systemBetMinimumQuote,
+      maxQuote: mappedTicket.totalQuote / systemBetPayoutData.numberOfCombinations,
+      minPayout: systemBetPayoutData.systemBetPayoutMinPayout,
+      maxPayout: mappedTicket.buyInAmount / mappedTicket.totalQuote,
+      numberOfWinningCombinations: systemBetPayoutData.numberOfWinningCombinations,
+    };
+    if (mappedTicket.isUserTheWinner || mappedTicket.isCancelled) {
+      if (mappedTicket.isResolved) {
+        mappedTicket.payout = mappedTicket.finalPayout;
+      } else {
+        mappedTicket.payout = systemBetPayoutData.systemBetPayout;
+      }
+      mappedTicket.systemBetData.winningQuote = systemBetPayoutData.buyinPerCombination / mappedTicket.payout;
+      mappedTicket.totalQuote = mappedTicket.systemBetData.winningQuote;
+    } else {
+      mappedTicket.payout = mappedTicket.systemBetData.maxPayout;
+      mappedTicket.totalQuote = mappedTicket.systemBetData.maxQuote;
+    }
+  }
+
   return mappedTicket;
 };
 
 const updateTotalQuoteAndPayout = (tickets) => {
   const modifiedTickets = tickets.map((ticket) => {
+    // Skip system bet, payout is updated in separate function due to different logic and quote is not used
+    if (ticket.isSystemBet) {
+      return ticket;
+    }
     let totalQuote = ticket.totalQuote;
     let payout = ticket.payout;
 
