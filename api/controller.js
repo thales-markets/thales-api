@@ -1617,6 +1617,8 @@ app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
   const tradeData = req.body.tradeData;
   const buyInAmount = req.body.buyInAmount;
   const collateral = req.body.collateral;
+  const isSystemBet = !!req.body.isSystemBet;
+  const systemBetDenominator = req.body.systemBetDenominator;
 
   if (![10, 42161, 11155420].includes(Number(network))) {
     res.send("Unsupported network. Supported networks: 10 (optimism), 42161 (arbitrum), 11155420 (optimism sepolia).");
@@ -1647,8 +1649,28 @@ app.post(ENDPOINTS.OVERTIME_V2_QUOTE, async (req, res) => {
     return;
   }
 
+  if (
+    isSystemBet &&
+    (!systemBetDenominator || !isNumeric(systemBetDenominator.toString()) || Number(systemBetDenominator) === 0)
+  ) {
+    res.send("Invalid value for system bet denominator. The system bet denominator must be a number greater than 0.");
+    return;
+  }
+
+  if (isSystemBet && (Number(systemBetDenominator) < 2 || Number(systemBetDenominator) >= tradeData.length)) {
+    res.send(`System bet denominator has to be greater than 1 and less than ${tradeData.length}.`);
+    return;
+  }
+
   try {
-    const quote = await overtimeV2Quotes.getAmmQuote(Number(network), tradeData, Number(buyInAmount), collateral);
+    const quote = await overtimeV2Quotes.getAmmQuote(
+      Number(network),
+      tradeData,
+      Number(buyInAmount),
+      collateral,
+      isSystemBet,
+      Number(systemBetDenominator),
+    );
     res.send(quote);
   } catch (error) {
     console.log(error);

@@ -8,7 +8,7 @@ const multiCollateralOnOffRampContract = require("../contracts/multiCollateralOn
 const priceFeedContract = require("../contracts/priceFeedContract");
 const sportsAMMV2RiskManagerContract = require("../contracts/sportsAMMV2RiskManagerContract");
 const { ethers } = require("ethers");
-const { ZERO_ADDRESS, OddsType } = require("../constants/markets");
+const { ZERO_ADDRESS, OddsType, SYSTEM_BET_MINIMUM_MARKETS } = require("../constants/markets");
 const {
   getCollateralDecimals,
   getCollateralAddress,
@@ -20,6 +20,7 @@ const {
 const { bigNumberFormatter, ceilNumberToDecimals, bigNumberParser, getPrecision } = require("../utils/formatters");
 const KEYS = require("../../redis/redis-keys");
 const { formatBytes32String, parseEther } = require("ethers/lib/utils");
+const { getSystemBetData } = require("../utils/systemBets");
 
 const MIN_COLLATERAL_MULTIPLIER = 1.01;
 
@@ -61,20 +62,30 @@ async function fetchMultiCollateralData(
 
 async function fetchTicketAmmQuote(
   sportsAmm,
-  tradeData,
+  mappedTradeData,
   buyInAmount,
   collateralAddress,
   collateralDecimals,
   isDefaultCollateral,
+  isSystemBet,
+  systemBetDenominator,
 ) {
   try {
     const parsedBuyInAmount = bigNumberParser(buyInAmount.toString(), collateralDecimals);
-    const sportsAmmQuote = await sportsAmm.tradeQuote(
-      tradeData,
-      parsedBuyInAmount,
-      isDefaultCollateral ? ZERO_ADDRESS : collateralAddress,
-      false,
-    );
+    const sportsAmmQuote = isSystemBet
+      ? await sportsAmm.tradeQuoteSystem(
+          mappedTradeData,
+          parsedBuyInAmount,
+          isDefaultCollateral ? ZERO_ADDRESS : collateralAddress,
+          false,
+          systemBetDenominator,
+        )
+      : await sportsAmm.tradeQuote(
+          mappedTradeData,
+          parsedBuyInAmount,
+          isDefaultCollateral ? ZERO_ADDRESS : collateralAddress,
+          false,
+        );
     switch (sportsAmmQuote.riskStatus) {
       case 1:
         return { error: "Not enough liquidity for provided buy-in amount." };
@@ -92,13 +103,17 @@ async function fetchTicketAmmQuote(
 async function getCollateralRate(network, provider, collateral) {
   if (
     !collateral ||
-    (collateral.toUpperCase() !== "ETH" && collateral.toUpperCase() !== "WETH" && collateral.toUpperCase() !== "THALES")
+    (collateral.toUpperCase() !== "ETH" && collateral.toUpperCase() !== "WETH" && !isThales(collateral))
   ) {
     return 1;
   } else if (collateral.toUpperCase() === "ETH" || collateral.toUpperCase() === "WETH") {
     const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
     const ethRate = bigNumberFormatter(await priceFeed.rateForCurrency(formatBytes32String("ETH")));
     return ethRate;
+  } else if (collateral.toUpperCase() === "THALES-CONTRACT") {
+    const priceFeed = new ethers.Contract(priceFeedContract.addresses[network], priceFeedContract.abi, provider);
+    const thalesContractRate = bigNumberFormatter(await priceFeed.rateForCurrency(formatBytes32String("THALES")));
+    return thalesContractRate;
   } else {
     const obj = await redisClient.get(KEYS.TOKEN);
     const tokenMap = new Map(JSON.parse(obj));
@@ -107,7 +122,16 @@ async function getCollateralRate(network, provider, collateral) {
   }
 }
 
-async function getQuoteData(network, tradeData, buyInAmount, collateral, provider) {
+async function getQuoteData(
+  network,
+  mappedTradeData,
+  buyInAmount,
+  collateral,
+  provider,
+  isSystemBet,
+  systemBetDenominator,
+  tradeData,
+) {
   let totalQuote = 0;
   let payout = 0;
   let buyInAmountInDefaultCollateral = 0;
@@ -139,9 +163,29 @@ async function getQuoteData(network, tradeData, buyInAmount, collateral, provide
     );
     const maxSupportedAmount = bigNumberFormatter(sportsAmmParameters.maxSupportedAmount, defaultCollateral.decimals);
     const maxTicketSize = Number(sportsAmmParameters.maxTicketSize);
+    const maxAllowedSystemCombinations = Number(sportsAmmParameters.maxAllowedSystemCombinations);
+    const maxSupportedOdds = bigNumberFormatter(sportsAmmParameters.maxSupportedOdds);
 
-    if (maxTicketSize < tradeData.length) {
+    if (maxTicketSize < mappedTradeData.length) {
       return { error: `The maximum number of positions on the ticket is ${maxTicketSize}.` };
+    }
+
+    let numberOfSystemBetCombinations = 1;
+    let systemBetData = {};
+    if (isSystemBet) {
+      if (SYSTEM_BET_MINIMUM_MARKETS > mappedTradeData.length) {
+        return { error: `System bet requires minimum ${SYSTEM_BET_MINIMUM_MARKETS} games.` };
+      }
+
+      for (let i = 0; i < systemBetDenominator; i++) {
+        numberOfSystemBetCombinations = (numberOfSystemBetCombinations * (mappedTradeData.length - i)) / (i + 1);
+      }
+
+      if (numberOfSystemBetCombinations > maxAllowedSystemCombinations) {
+        return { error: `Max allowed number of system combinations is ${maxAllowedSystemCombinations}` };
+      }
+
+      systemBetData = getSystemBetData(tradeData, systemBetDenominator, collateral, maxSupportedOdds);
     }
 
     const [minBuyInAmount, sportAmmQuote] = await Promise.all([
@@ -159,11 +203,13 @@ async function getQuoteData(network, tradeData, buyInAmount, collateral, provide
       ),
       fetchTicketAmmQuote(
         sportsAmm,
-        tradeData,
+        mappedTradeData,
         buyInAmount,
         collateralAddress,
         collateralDecimals,
         isDefaultCollateral,
+        isSystemBet,
+        systemBetDenominator,
       ),
     ]);
 
@@ -210,31 +256,64 @@ async function getQuoteData(network, tradeData, buyInAmount, collateral, provide
       return { error: `The maximum supported profit is ${maxSupportedAmount}.` };
     }
 
-    return {
-      totalQuote: {
-        american: formatMarketOdds(totalQuote, OddsType.AMERICAN),
-        decimal: formatMarketOdds(totalQuote, OddsType.DECIMAL),
-        normalizedImplied: formatMarketOdds(totalQuote, OddsType.AMM),
-      },
-      payout: {
-        [collateral]: collateralHasLp && !isDefaultCollateral ? payout : undefined,
-        usd: payoutInDefaultCollateral,
-        payoutCollateral: collateralHasLp ? collateral : defaultCollateral.symbol,
-      },
-      potentialProfit: {
-        [collateral]: collateralHasLp && !isDefaultCollateral ? payout - buyInAmount : undefined,
-        usd: payoutInDefaultCollateral - buyInAmountInDefaultCollateral,
-        percentage: (payoutInDefaultCollateral - buyInAmountInDefaultCollateral) / buyInAmountInDefaultCollateral,
-      },
-      buyInAmountInUsd: buyInAmountInDefaultCollateral,
-    };
+    return isSystemBet
+      ? {
+          system: `${systemBetDenominator}/${mappedTradeData.length}`,
+          numberOfSystemBetCombination: numberOfSystemBetCombinations,
+          minQuote: {
+            american: formatMarketOdds(systemBetData.systemBetMinimumQuote, OddsType.AMERICAN),
+            decimal: formatMarketOdds(systemBetData.systemBetMinimumQuote, OddsType.DECIMAL),
+            normalizedImplied: formatMarketOdds(systemBetData.systemBetMinimumQuote, OddsType.AMM),
+          },
+          maxQuote: {
+            american: formatMarketOdds(systemBetData.systemBetQuotePerCombination, OddsType.AMERICAN),
+            decimal: formatMarketOdds(systemBetData.systemBetQuotePerCombination, OddsType.DECIMAL),
+            normalizedImplied: formatMarketOdds(systemBetData.systemBetQuotePerCombination, OddsType.AMM),
+          },
+          buyInPerCombination: {
+            [collateral]: buyInAmount / numberOfSystemBetCombinations,
+            usd: buyInAmountInDefaultCollateral / numberOfSystemBetCombinations,
+          },
+          minPayout: {
+            [collateral]:
+              collateralHasLp && !isDefaultCollateral
+                ? buyInAmount / numberOfSystemBetCombinations / systemBetData.systemBetMinimumQuote
+                : undefined,
+            usd: buyInAmountInDefaultCollateral / numberOfSystemBetCombinations / systemBetData.systemBetMinimumQuote,
+            payoutCollateral: collateralHasLp ? collateral : defaultCollateral.symbol,
+          },
+          maxPayout: {
+            [collateral]: collateralHasLp && !isDefaultCollateral ? payout : undefined,
+            usd: payoutInDefaultCollateral,
+            payoutCollateral: collateralHasLp ? collateral : defaultCollateral.symbol,
+          },
+          buyInAmountInUsd: buyInAmountInDefaultCollateral,
+        }
+      : {
+          totalQuote: {
+            american: formatMarketOdds(totalQuote, OddsType.AMERICAN),
+            decimal: formatMarketOdds(totalQuote, OddsType.DECIMAL),
+            normalizedImplied: formatMarketOdds(totalQuote, OddsType.AMM),
+          },
+          payout: {
+            [collateral]: collateralHasLp && !isDefaultCollateral ? payout : undefined,
+            usd: payoutInDefaultCollateral,
+            payoutCollateral: collateralHasLp ? collateral : defaultCollateral.symbol,
+          },
+          potentialProfit: {
+            [collateral]: collateralHasLp && !isDefaultCollateral ? payout - buyInAmount : undefined,
+            usd: payoutInDefaultCollateral - buyInAmountInDefaultCollateral,
+            percentage: (payoutInDefaultCollateral - buyInAmountInDefaultCollateral) / buyInAmountInDefaultCollateral,
+          },
+          buyInAmountInUsd: buyInAmountInDefaultCollateral,
+        };
   } catch (e) {
     console.log("Error: could not get quote.", e);
     return { error: `Error: could not get quote. ${e}` };
   }
 }
 
-async function getLiquidityData(network, tradeData, provider) {
+async function getLiquidityData(network, mappedTradeData, provider) {
   const defaultCollateral = getDefaultCollateral(network);
   try {
     const sportsAMMV2RiskManager = new ethers.Contract(
@@ -245,8 +324,8 @@ async function getLiquidityData(network, tradeData, provider) {
 
     const riskPromises = [];
     const capPromises = [];
-    for (let i = 0; i < tradeData.length; i++) {
-      const market = tradeData[i];
+    for (let i = 0; i < mappedTradeData.length; i++) {
+      const market = mappedTradeData[i];
       riskPromises.push(
         sportsAMMV2RiskManager.riskPerMarketTypeAndPosition(
           market.gameId,
@@ -272,8 +351,8 @@ async function getLiquidityData(network, tradeData, provider) {
     const caps = await Promise.all(capPromises);
 
     let ticketLiquidity = 0;
-    for (let i = 0; i < tradeData.length; i++) {
-      const market = tradeData[i];
+    for (let i = 0; i < mappedTradeData.length; i++) {
+      const market = mappedTradeData[i];
       const formattedRisk = bigNumberFormatter(risks[i], defaultCollateral.decimals);
       const formattedCap = bigNumberFormatter(caps[i], defaultCollateral.decimals);
       const marketLiquidity = Math.floor(
@@ -289,7 +368,7 @@ async function getLiquidityData(network, tradeData, provider) {
   }
 }
 
-async function getAmmQuote(network, tradeData, buyInAmount, collateral) {
+async function getAmmQuote(network, tradeData, buyInAmount, collateral, isSystemBet, systemBetDenominator) {
   const provider = getProvider(network);
 
   const mappedTradeData = tradeData.map((data) => ({
@@ -305,9 +384,34 @@ async function getAmmQuote(network, tradeData, buyInAmount, collateral) {
   }));
 
   const [quoteDataResponse, liquidityDataResponse] = await Promise.all([
-    getQuoteData(network, mappedTradeData, buyInAmount, collateral, provider),
+    getQuoteData(
+      network,
+      mappedTradeData,
+      buyInAmount,
+      collateral,
+      provider,
+      isSystemBet,
+      systemBetDenominator,
+      tradeData,
+    ),
     getLiquidityData(network, mappedTradeData, provider),
   ]);
+
+  if (!liquidityDataResponse.error && isThales(collateral)) {
+    const [selectedCollateralCurrencyRate, thalesContractCurrencyRate] = await Promise.all([
+      getCollateralRate(network, provider, collateral),
+      getCollateralRate(network, provider, "THALES-CONTRACT"),
+    ]);
+    liquidityDataResponse.ticketLiquidityInUsd = Math.floor(
+      (liquidityDataResponse.ticketLiquidityInUsd * selectedCollateralCurrencyRate) / thalesContractCurrencyRate,
+    );
+  }
+
+  if (!liquidityDataResponse.error && isSystemBet) {
+    liquidityDataResponse.ticketLiquidityInUsd = Math.floor(
+      (liquidityDataResponse.ticketLiquidityInUsd * tradeData.length) / systemBetDenominator,
+    );
+  }
 
   const quoteData = quoteDataResponse.error
     ? {
