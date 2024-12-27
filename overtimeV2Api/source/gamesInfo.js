@@ -4,7 +4,6 @@ require("dotenv").config();
 const { delay } = require("../utils/general");
 const axios = require("axios");
 const { format, addDays, subDays } = require("date-fns");
-const bytes32 = require("bytes32");
 const KEYS = require("../../redis/redis-keys");
 const { EnetpulseRounds } = require("../constants/markets");
 const {
@@ -15,6 +14,7 @@ const {
   League,
   PeriodType,
   Sport,
+  mapFromOpticOddsFormatToBytes32,
 } = require("overtime-live-trading-utils");
 const { getLeaguePeriodType, getLeagueSport } = require("overtime-live-trading-utils");
 const { MAX_NUMBER_OF_SCORE_PERIODS } = require("../constants/opticOdds");
@@ -109,7 +109,7 @@ const procesEnetpulseGamesInfoPerDate = async (leagues, formattedDate, gamesInfo
 
     Object.values(response.data.events).forEach((event) => {
       if (event.id) {
-        const gameId = bytes32({ input: event.id });
+        const gameId = mapFromOpticOddsFormatToBytes32(event.id);
         gamesInfoMap.set(gameId, {
           lastUpdate: new Date().getTime(),
           gameStatus: event.status_type,
@@ -229,7 +229,7 @@ const procesOpticOdssGamesInfo = async (leagues, formattedDate, gamesInfoMap) =>
 
       opticOddsApiFixturesResponseData.data.forEach((fixtureEvent) => {
         if (fixtureEvent.id) {
-          const gameId = bytes32({ input: fixtureEvent.id });
+          const gameId = mapFromOpticOddsFormatToBytes32(fixtureEvent.id);
           const gameResults = opticOddsResult.find((result) => result.gameId === fixtureEvent.id);
           const fixtureStatus = fixtureEvent.status.toLowerCase();
 

@@ -2,10 +2,11 @@ const { redisClient } = require("../../redis/client");
 require("dotenv").config();
 
 const { delay } = require("../utils/general");
-const { convertFromBytes32, packMarket } = require("../utils/markets");
+const { packMarket } = require("../utils/markets");
 const KEYS = require("../../redis/redis-keys");
 const { ListObjectsV2Command, S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { NETWORK } = require("../constants/networks");
+const { convertFromBytes32 } = require("overtime-live-trading-utils");
 
 const awsS3Client = new S3Client({
   region: process.env.AWS_REGION,

@@ -10,7 +10,6 @@ const {
   PARENT_MARKET_PROPERTIES_TO_EXCLUDE,
   CHILD_MARKET_PROPERTIES_TO_EXCLUDE,
 } = require("../constants/markets");
-const bytes32 = require("bytes32");
 const { getLeagueSport, League, Sport, getLeagueLabel, UFC_LEAGUE_IDS } = require("overtime-live-trading-utils");
 const { bigNumberFormatter } = require("./formatters");
 
@@ -56,11 +55,6 @@ const calculateImpliedOddsDifference = (impliedOddsA, impliedOddsB) => {
   const percentageDifference = (Math.abs(impliedOddsA - impliedOddsB) / impliedOddsA) * 100;
   console.log("% diff: " + percentageDifference);
   return percentageDifference;
-};
-
-const convertFromBytes32 = (value) => {
-  const result = bytes32({ input: value });
-  return result.replace(/\0/g, "");
 };
 
 const packMarket = (market, isChild) => {
@@ -174,7 +168,6 @@ module.exports = {
   isOneSidePlayerPropsMarket,
   isYesNoPlayerPropsMarket,
   calculateImpliedOddsDifference,
-  convertFromBytes32,
   getIsCombinedPositionsMarket,
   isFuturesMarket,
   packMarket,

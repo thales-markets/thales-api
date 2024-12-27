@@ -3,10 +3,9 @@ require("dotenv").config();
 
 const { delay } = require("../utils/general");
 const KEYS = require("../../redis/redis-keys");
-const { convertFromBytes32 } = require("../utils/markets");
 const { NETWORK } = require("../constants/networks");
 const { getOpticOddsScore } = require("./gamesInfo");
-const { getLeagueProvider, Provider } = require("overtime-live-trading-utils");
+const { getLeagueProvider, Provider, mapFromBytes32ToOpticOddsFormat } = require("overtime-live-trading-utils");
 const { getRedisKeyForOpticOddsStreamEventResults } = require("../utils/opticOdds/opticOddsStreamsConnector");
 const {
   mapOpticOddsStreamResults,
@@ -84,7 +83,7 @@ async function processAllLiveResults(resultsInitialization, isTestnet) {
 
   if (opticOddsGameIdsWithLeagueID.length > 0) {
     let liveResults = [];
-    const opticOddsGameIds = opticOddsGameIdsWithLeagueID.map((obj) => convertFromBytes32(obj.gameId));
+    const opticOddsGameIds = opticOddsGameIdsWithLeagueID.map((obj) => mapFromBytes32ToOpticOddsFormat(obj.gameId));
 
     if (!isOpticOddsStreamResultsDisabled && resultsInitialization.isInitialized) {
       // Read from Redis
@@ -104,7 +103,7 @@ async function processAllLiveResults(resultsInitialization, isTestnet) {
     }
 
     opticOddsGameIdsWithLeagueID.forEach((obj) => {
-      const opticOddsEvent = liveResults.find((event) => event.gameId === convertFromBytes32(obj.gameId));
+      const opticOddsEvent = liveResults.find((event) => event.gameId === mapFromBytes32ToOpticOddsFormat(obj.gameId));
       if (opticOddsEvent) {
         const homeScores = getOpticOddsScore(opticOddsEvent, obj.leagueId, "home");
         const awayScores = getOpticOddsScore(opticOddsEvent, obj.leagueId, "away");
